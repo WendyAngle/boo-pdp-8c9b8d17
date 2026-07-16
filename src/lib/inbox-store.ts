@@ -225,7 +225,7 @@ export interface Thread {
 /* -------------------- Storage -------------------- */
 
 const META_KEY = "boo:inbox:meta:v1";
-const SEED_FLAG = "boo:inbox:seed:v7";
+const SEED_FLAG = "boo:inbox:seed:v8";
 /** Phase 1 演示：当前登录员工，需与 conversations.tsx 中的 CURRENT_TEAM_USER_ID 保持一致 */
 const DEMO_CURRENT_USER = "u_zhang";
 
@@ -463,6 +463,69 @@ function pickIntent(seed: number): { intent: AiIntent; body: string; zh?: string
   const pick = tpl.bodies[seed % tpl.bodies.length];
   return { intent, body: pick.body, zh: pick.zh };
 }
+
+/* -------------------- Risk seed samples（对应真实度方案 §12）-------------------- */
+
+type RiskKind =
+  | "disposable"
+  | "bec"
+  | "intel"
+  | "freeBig"
+  | "emojiOnly"
+  | "stopHarass";
+
+interface RiskSample {
+  kind: RiskKind;
+  body: string;
+  zh?: string;
+  /** 覆盖 inbound 消息的 fromAddress，用于让 R001/R003b 命中 */
+  senderOverride?: string;
+  /** 覆盖 aiIntent（默认沿用普通抽签） */
+  intentOverride?: AiIntent;
+}
+
+const RISK_SAMPLES: RiskSample[] = [
+  {
+    kind: "disposable",
+    body: "Hi, we are a large European distributor and we'd like to discuss a bulk order for your catalog. Please share pricing.",
+    zh: "我们是欧洲大型分销商，希望批量采购贵司产品，请提供报价。",
+    senderOverride: "buyer_9921@mailinator.com",
+    intentOverride: "quote",
+  },
+  {
+    kind: "bec",
+    body: "Please note: we have changed our bank account. Kindly update payment details in your system and send remittance to the new wire instructions attached.",
+    zh: "请注意：我们已变更银行账户，请更新贵司系统的收款信息，按新汇款说明付款。",
+    intentOverride: "other",
+  },
+  {
+    kind: "intel",
+    body: "To move forward, please send: (1) your full price list for ALL SKUs, (2) your top-10 customer list and references, (3) BOM and cost breakdown of your best-selling model, (4) factory address & layout. Thanks.",
+    zh: "为推进合作，请提供：完整报价单、TOP10 客户名单、明星产品的 BOM 与成本结构、工厂地址与布局。",
+    intentOverride: "quote",
+  },
+  {
+    kind: "freeBig",
+    body: "Our group plans to place a 2 million USD order in Q1. We are a leading corporation in the region. Please quote your best price for 20 x 40HQ.",
+    zh: "我集团 Q1 计划下单 200 万美金，作为地区龙头企业请给出最优价 20 x 40HQ。",
+    senderOverride: "big.buyer.777@gmail.com",
+    intentOverride: "quote",
+  },
+  {
+    kind: "emojiOnly",
+    body: "👍👍👍",
+    intentOverride: "other",
+  },
+  {
+    kind: "stopHarass",
+    body: "STOP. Remove me from your list immediately or I'll report your domain as spam to authorities.",
+    zh: "请立刻把我从你们名单中移除，否则我会把贵司域名作为垃圾邮件举报。",
+    intentOverride: "complaint",
+  },
+];
+
+function pickRiskSample(seed: number): RiskSample {
+  return RISK_SAMPLES[seed % RISK_SAMPLES.length];
 
 /** 首次访问收件箱时，对已有邮件触达按 ~40% 概率补上一条对方回复 */
 function seedInboundIfNeeded(entries: LedgerEntry[]) {
