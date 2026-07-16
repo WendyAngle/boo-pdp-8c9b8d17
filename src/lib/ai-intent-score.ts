@@ -108,7 +108,7 @@ export function scoreIntent(thread: Thread): IntentScoreResult {
     dims.reduce((a, d) => a + d.value * weights[d.key], 0),
   );
 
-  const band: IntentBand = score >= 85 ? "high" : score >= 60 ? "mid" : "low";
+  const band: IntentBand = score >= 80 ? "high" : score >= 60 ? "mid" : "low";
 
   // 标签
   const tags: string[] = [BAND_LABEL[band]];

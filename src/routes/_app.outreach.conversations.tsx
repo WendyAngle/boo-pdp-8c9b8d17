@@ -107,7 +107,7 @@ import { generateAiContent } from "@/lib/api/ai-compose.functions";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { getApprovedSmsTemplates } from "@/lib/sms-templates-store";
 import { getAllLedger } from "@/lib/credits-ledger";
-import { IntentScorePanel } from "@/components/outreach/IntentScorePanel";
+import { IntelPanel } from "@/components/outreach/IntelPanel";
 import { scoreIntent } from "@/lib/ai-intent-score";
 import { Target as TargetIcon, PanelRightClose, PanelRightOpen } from "lucide-react";
 
@@ -606,7 +606,7 @@ function InboxPage() {
           </div>
           {current && scorePanelOpen && (
             <aside className="hidden lg:flex w-[300px] xl:w-[320px] shrink-0 border-l bg-muted/10 flex-col min-h-0">
-              <IntentScorePanel thread={current} />
+              <IntelPanel thread={current} />
             </aside>
           )}
         </div>
