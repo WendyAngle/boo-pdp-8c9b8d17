@@ -225,7 +225,7 @@ export interface Thread {
 /* -------------------- Storage -------------------- */
 
 const META_KEY = "boo:inbox:meta:v1";
-const SEED_FLAG = "boo:inbox:seed:v9";
+const SEED_FLAG = "boo:inbox:seed:v10";
 /** Phase 1 演示：当前登录员工，需与 conversations.tsx 中的 CURRENT_TEAM_USER_ID 保持一致 */
 const DEMO_CURRENT_USER = "u_zhang";
 
