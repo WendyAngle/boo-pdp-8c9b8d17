@@ -566,8 +566,8 @@ function seedInboundIfNeeded(entries: LedgerEntry[]) {
       let body = picked.body;
       let zh = picked.zh;
       let senderAddr = r.detail || "";
-      // 邮件渠道下按 ~15% 概率覆盖为风险样本（对应真实度方案 §12 mock 数据）
-      const isRisk = !isSms && h % 100 < 15;
+      // 邮件渠道下按 ~35% 概率覆盖为风险样本（对应真实度方案 §12 mock 数据）
+      const isRisk = !isSms && h % 100 < 35;
       if (isRisk) {
         const risk = pickRiskSample(h >> 4);
         body = risk.body;
