@@ -1397,6 +1397,63 @@ const DEMO_SEEDS: DemoSeed[] = [
     hoursAgo: 14,
     aiIntent: "reject",
   },
+  // -------- AI 真实度评分专项 mock：固定展示不同分值，避免依赖随机 ledger seed --------
+  {
+    id: "demo:auth:template-light",
+    channel: "email",
+    targetKind: "contact",
+    targetName: "Ravi Sharma",
+    parentRef: { id: "demo-auth-ent-1", name: "Mumbai Trade House" },
+    counterparty: "ravi.sharma@mumbaitrade.in",
+    lastInbound:
+      "Dear Sir/Madam, we are interested in your products. Please send catalog. Thanks.",
+    lastInboundZh: "Dear Sir/Madam，我们对贵司产品感兴趣，请发送目录。谢谢。",
+    hoursAgo: 8,
+    aiIntent: "quote",
+    tags: ["真实度样本", "轻扣分"],
+  },
+  {
+    id: "demo:auth:free-big-stack",
+    channel: "email",
+    targetKind: "enterprise",
+    targetName: "Global Trade Procurement",
+    counterparty: "global.trade.buyer@hotmail.com",
+    lastInbound:
+      "Dear Purchasing Manager, our group corporation urgently needs 3 million USD order. Please send full price list and BOM breakdown ASAP.",
+    lastInboundZh:
+      "Dear Purchasing Manager，我集团急需 300 万美金订单，请尽快发送完整报价单与 BOM 明细。",
+    hoursAgo: 9,
+    aiIntent: "quote",
+    tags: ["真实度样本", "多规则叠加"],
+  },
+  {
+    id: "demo:auth:intel-personal",
+    channel: "email",
+    targetKind: "contact",
+    targetName: "Kofi Mensah",
+    parentRef: { id: "demo-auth-ent-2", name: "Accra Sourcing Desk" },
+    counterparty: "quick.deal.2026@gmail.com",
+    lastInbound:
+      "Please share your customer list and full price list for evaluation. We can pay 100% TT prepay to personal account for the first order to speed things up.",
+    lastInboundZh:
+      "请提供客户名单与完整报价单用于评估，为加快进度首单可 100% 前 T/T 至个人账户。",
+    hoursAgo: 11,
+    aiIntent: "quote",
+    tags: ["真实度样本", "高危"],
+  },
+  {
+    id: "demo:auth:disposable",
+    channel: "email",
+    targetKind: "enterprise",
+    targetName: "Euro Bulk Distributor",
+    counterparty: "buyer_9921@mailinator.com",
+    lastInbound:
+      "Hi, we are a large European distributor and we'd like to discuss a bulk order for your catalog. Please share pricing.",
+    lastInboundZh: "我们是欧洲大型分销商，希望批量采购贵司产品，请提供报价。",
+    hoursAgo: 13,
+    aiIntent: "quote",
+    tags: ["真实度样本", "硬规则"],
+  },
   {
     id: "demo:wa:3",
     channel: "whatsapp",
