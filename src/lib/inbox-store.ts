@@ -225,7 +225,7 @@ export interface Thread {
 /* -------------------- Storage -------------------- */
 
 const META_KEY = "boo:inbox:meta:v1";
-const SEED_FLAG = "boo:inbox:seed:v9";
+const SEED_FLAG = "boo:inbox:seed:v10";
 /** Phase 1 演示：当前登录员工，需与 conversations.tsx 中的 CURRENT_TEAM_USER_ID 保持一致 */
 const DEMO_CURRENT_USER = "u_zhang";
 
@@ -472,7 +472,8 @@ type RiskKind =
   | "intel"
   | "freeBig"
   | "emojiOnly"
-  | "stopHarass";
+  | "stopHarass"
+  | "template";
 
 interface RiskSample {
   kind: RiskKind;
@@ -520,7 +521,7 @@ const RISK_SAMPLES: RiskSample[] = [
     zh: "请立刻把我从你们名单中移除，否则我会把贵司域名作为垃圾邮件举报。",
     intentOverride: "complaint",
   },
-  // —— neutral / suspicious 边界（单规则轻度扣分）——
+  // —— neutral / suspicious 边界（单规则轻度扣分，落入 60~85 区间）——
   {
     kind: "emojiOnly",
     body: "👍👍👍",
@@ -532,10 +533,32 @@ const RISK_SAMPLES: RiskSample[] = [
     intentOverride: "other",
   },
   {
+    kind: "template",
+    body: "Dear Sir/Madam, we are interested in your products. Please send catalog. Thanks.",
+    zh: "Dear Sir/Madam，我们对贵司产品感兴趣，请发送目录。谢谢。",
+    intentOverride: "quote",
+  },
+  {
     kind: "freeBig",
     body: "We are a corporation from West Africa, interested in a 1.5 million USD trial order. Please share your best price.",
     zh: "我司为西非集团客户，拟试单 150 万美金，请提供最优价。",
     senderOverride: "westafrica.trade@yahoo.com",
+    intentOverride: "quote",
+  },
+  // —— 多规则叠加（免费邮箱 + 大额 + 模板群发；落入 high_risk 区间）——
+  {
+    kind: "freeBig",
+    body: "Dear Purchasing Manager, our group corporation urgently needs 3 million USD order. Please send full price list and BOM breakdown ASAP.",
+    zh: "Dear Purchasing Manager，我集团急需 300 万美金订单，请尽快发送完整报价单与 BOM 明细。",
+    senderOverride: "global.trade.buyer@hotmail.com",
+    intentOverride: "quote",
+  },
+  // —— 多规则叠加（情报刺探 + 前 T/T 个人账户 + 免费邮箱）——
+  {
+    kind: "intel",
+    body: "Please share your customer list and full price list for evaluation. We can pay 100% TT prepay to personal account for the first order to speed things up.",
+    zh: "请提供客户名单与完整报价单用于评估，为加快进度首单可 100% 前 T/T 至个人账户。",
+    senderOverride: "quick.deal.2026@gmail.com",
     intentOverride: "quote",
   },
 ];
