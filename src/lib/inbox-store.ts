@@ -485,6 +485,7 @@ interface RiskSample {
 }
 
 const RISK_SAMPLES: RiskSample[] = [
+  // —— blocked（硬规则）——
   {
     kind: "disposable",
     body: "Hi, we are a large European distributor and we'd like to discuss a bulk order for your catalog. Please share pricing.",
@@ -498,29 +499,44 @@ const RISK_SAMPLES: RiskSample[] = [
     zh: "请注意：我们已变更银行账户，请更新贵司系统的收款信息，按新汇款说明付款。",
     intentOverride: "other",
   },
+  // —— high_risk / suspicious（多规则叠加，落入 30~55 区间）——
   {
     kind: "intel",
-    body: "To move forward, please send: (1) your full price list for ALL SKUs, (2) your top-10 customer list and references, (3) BOM and cost breakdown of your best-selling model, (4) factory address & layout. Thanks.",
-    zh: "为推进合作，请提供：完整报价单、TOP10 客户名单、明星产品的 BOM 与成本结构、工厂地址与布局。",
+    body: "Dear Sir, to move forward please send: (1) your full price list for ALL SKUs, (2) top-10 customer list with references, (3) BOM and cost breakdown of your best-selling model, (4) factory address & layout. We also require 100% TT prepay to our personal account for the first trial order. Thanks.",
+    zh: "请提供：完整报价单、TOP10 客户名单、明星产品的 BOM 与成本结构、工厂地址与布局；首单要求 100% 前 T/T 至个人账户。",
+    senderOverride: "sourcing.k88@gmail.com",
     intentOverride: "quote",
   },
   {
     kind: "freeBig",
-    body: "Our group plans to place a 2 million USD order in Q1. We are a leading corporation in the region. Please quote your best price for 20 x 40HQ.",
-    zh: "我集团 Q1 计划下单 200 万美金，作为地区龙头企业请给出最优价 20 x 40HQ。",
+    body: "Dear Purchasing, our group corporation plans a 2 million USD order in Q1 for 20 x 40HQ. Please send your best price list and BOM breakdown so we can compare with other suppliers.",
+    zh: "我集团 Q1 计划下单 200 万美金 20 x 40HQ，请发送最优报价单与 BOM 明细供比价。",
     senderOverride: "big.buyer.777@gmail.com",
     intentOverride: "quote",
-  },
-  {
-    kind: "emojiOnly",
-    body: "👍👍👍",
-    intentOverride: "other",
   },
   {
     kind: "stopHarass",
     body: "STOP. Remove me from your list immediately or I'll report your domain as spam to authorities.",
     zh: "请立刻把我从你们名单中移除，否则我会把贵司域名作为垃圾邮件举报。",
     intentOverride: "complaint",
+  },
+  // —— neutral / suspicious 边界（单规则轻度扣分）——
+  {
+    kind: "emojiOnly",
+    body: "👍👍👍",
+    intentOverride: "other",
+  },
+  {
+    kind: "emojiOnly",
+    body: "ok",
+    intentOverride: "other",
+  },
+  {
+    kind: "freeBig",
+    body: "We are a corporation from West Africa, interested in a 1.5 million USD trial order. Please share your best price.",
+    zh: "我司为西非集团客户，拟试单 150 万美金，请提供最优价。",
+    senderOverride: "westafrica.trade@yahoo.com",
+    intentOverride: "quote",
   },
 ];
 
