@@ -49,7 +49,7 @@ function ScoreRing({ value, level }: { value: number; level: AuthLevel }) {
         <span className={cn("text-3xl font-semibold tabular-nums leading-none", LEVEL_TEXT[level])}>
           {level === "blocked" ? "!" : value}
         </span>
-        <span className="mt-1 text-[10px] text-muted-foreground">AI 真实度</span>
+        <span className="mt-1 text-[10px] text-muted-foreground">AI 真实度评分</span>
       </div>
     </div>
   );
