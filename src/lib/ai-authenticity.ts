@@ -213,9 +213,11 @@ export function scoreAuthenticity(thread: Thread): AuthResult {
     { key: "risk", label: DIM_LABEL.risk, value: penalize(100, risk), hits: risk },
   ];
 
-  const softScore = Math.round(
-    dims.reduce((a, d) => a + d.value * DIM_WEIGHT[d.key], 0),
-  );
+  // 总分采用「100 − 累计扣分」，让单一维度的高扣分能直接反映到总分，
+  // 避免加权平均把明显风险稀释成接近满分。
+  const totalPenalty = [...identity, ...content, ...behavior, ...commercial, ...risk]
+    .reduce((a, h) => a + (h.penalty ?? 0), 0);
+  const softScore = Math.max(0, Math.min(100, 100 - totalPenalty));
 
   let level: AuthLevel;
   if (hardHits.length > 0) level = "blocked";
