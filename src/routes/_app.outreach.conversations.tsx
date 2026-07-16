@@ -109,6 +109,7 @@ import { getApprovedSmsTemplates } from "@/lib/sms-templates-store";
 import { getAllLedger } from "@/lib/credits-ledger";
 import { IntelPanel } from "@/components/outreach/IntelPanel";
 import { scoreIntent } from "@/lib/ai-intent-score";
+import { scoreAuthenticity } from "@/lib/ai-authenticity";
 import { Target as TargetIcon, PanelRightClose, PanelRightOpen } from "lucide-react";
 
 /** 邮件场景的快捷回复模板（Phase 1 hardcoded） */
@@ -641,6 +642,7 @@ function ThreadRow({
   const isPending = thread.meta.status === "pending";
   const last = thread.messages[thread.messages.length - 1];
   const sla = slaInfo(thread);
+  const authenticity = scoreAuthenticity(thread);
   const woken =
     thread.meta.wokenAt &&
     Date.now() - new Date(thread.meta.wokenAt).getTime() < 24 * 3600_000;
@@ -759,6 +761,24 @@ function ThreadRow({
               }
               return null;
             })()}
+            {(authenticity.level !== "trusted" || authenticity.score < 100) && (
+              <Badge
+                variant="outline"
+                className={cn(
+                  "h-4 py-0 px-1.5 text-[10px] gap-0.5",
+                  authenticity.level === "blocked"
+                    ? "bg-rose-50 text-rose-700 border-rose-200"
+                    : authenticity.score < 40
+                      ? "bg-orange-50 text-orange-700 border-orange-200"
+                      : authenticity.score < 60
+                        ? "bg-amber-50 text-amber-700 border-amber-200"
+                        : "bg-sky-50 text-sky-700 border-sky-200",
+                )}
+              >
+                <ShieldAlert className="h-2.5 w-2.5" />
+                真实度 {authenticity.level === "blocked" ? "拦截" : authenticity.score}
+              </Badge>
+            )}
             {(() => {
               // 单一优先级徽标：逾期 > 即将超时 > 高意向 > 接管中 > 未分配
               if (sla?.overdue) {
