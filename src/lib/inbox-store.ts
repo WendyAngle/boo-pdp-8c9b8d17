@@ -545,7 +545,20 @@ function seedInboundIfNeeded(entries: LedgerEntry[]) {
     // SMS 回复率更低（~25%），邮件 ~40%
     const threshold = isSms ? 25 : 40;
     if (h % 100 < threshold) {
-      const { intent, body, zh } = isSms ? pickSmsIntent(h) : pickIntent(h);
+      const picked = isSms ? pickSmsIntent(h) : pickIntent(h);
+      let intent = picked.intent;
+      let body = picked.body;
+      let zh = picked.zh;
+      let senderAddr = r.detail || "";
+      // 邮件渠道下按 ~15% 概率覆盖为风险样本（对应真实度方案 §12 mock 数据）
+      const isRisk = !isSms && h % 100 < 15;
+      if (isRisk) {
+        const risk = pickRiskSample(h >> 4);
+        body = risk.body;
+        zh = risk.zh;
+        if (risk.senderOverride) senderAddr = risk.senderOverride;
+        if (risk.intentOverride) intent = risk.intentOverride;
+      }
       // 回复时间：发送后 4~72 小时
       const sentAt = new Date(r.createdAt).getTime();
       const delayH = 4 + (h % 68);
@@ -558,7 +571,7 @@ function seedInboundIfNeeded(entries: LedgerEntry[]) {
         fromName: r.parentRef?.name
           ? `${r.targetName} · ${r.parentRef.name}`
           : r.targetName,
-        fromAddress: r.detail || "",
+        fromAddress: senderAddr,
         subject: r.subject ? `Re: ${r.subject}` : undefined,
         content: body,
         contentZh: zh && !isChinese(body) ? zh : undefined,
