@@ -526,6 +526,9 @@ const RISK_SAMPLES: RiskSample[] = [
 
 function pickRiskSample(seed: number): RiskSample {
   return RISK_SAMPLES[seed % RISK_SAMPLES.length];
+}
+
+
 
 /** 首次访问收件箱时，对已有邮件触达按 ~40% 概率补上一条对方回复 */
 function seedInboundIfNeeded(entries: LedgerEntry[]) {
