@@ -11,6 +11,8 @@ import { useEffect, type ReactNode } from "react";
 
 import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
+import { Toaster } from "@/components/ui/sonner";
+import { AssistantProvider } from "@/components/ai-assistant/AssistantProvider";
 
 function NotFoundComponent() {
   return (
@@ -78,20 +80,23 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
       { title: "Lovable App" },
-      { name: "description", content: "Lovable Generated Project" },
+      { name: "description", content: "Boo Identity Hub is a platform for managing tenant and user identities, facilitating real-name authentication and verification processes." },
       { name: "author", content: "Lovable" },
       { property: "og:title", content: "Lovable App" },
-      { property: "og:description", content: "Lovable Generated Project" },
+      { property: "og:description", content: "Boo Identity Hub is a platform for managing tenant and user identities, facilitating real-name authentication and verification processes." },
       { property: "og:type", content: "website" },
-      { name: "twitter:card", content: "summary_large_image" },
+      { name: "twitter:card", content: "summary" },
       { name: "twitter:site", content: "@Lovable" },
+      { name: "twitter:title", content: "Lovable App" },
+      { name: "twitter:description", content: "Boo Identity Hub is a platform for managing tenant and user identities, facilitating real-name authentication and verification processes." },
+      { property: "og:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/5be319dc-dc6d-4ce2-a352-c3d53ef83d15/id-preview-391f7468--a18df9dc-a128-4b16-aa06-87512445748b.lovable.app-1781513818814.png" },
+      { name: "twitter:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/5be319dc-dc6d-4ce2-a352-c3d53ef83d15/id-preview-391f7468--a18df9dc-a128-4b16-aa06-87512445748b.lovable.app-1781513818814.png" },
     ],
     links: [
       {
         rel: "stylesheet",
         href: appCss,
       },
-      { rel: "icon", href: "/favicon.ico", type: "image/x-icon" },
     ],
   }),
   shellComponent: RootShell,
@@ -121,6 +126,8 @@ function RootComponent() {
     <QueryClientProvider client={queryClient}>
       {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
       <Outlet />
+      <AssistantProvider />
+      <Toaster richColors position="top-center" />
     </QueryClientProvider>
   );
 }
