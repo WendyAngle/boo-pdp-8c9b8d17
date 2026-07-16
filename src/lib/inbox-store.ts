@@ -472,7 +472,8 @@ type RiskKind =
   | "intel"
   | "freeBig"
   | "emojiOnly"
-  | "stopHarass";
+  | "stopHarass"
+  | "template";
 
 interface RiskSample {
   kind: RiskKind;
