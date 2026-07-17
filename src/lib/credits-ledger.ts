@@ -230,7 +230,7 @@ export interface LedgerEntry {
 }
 
 const LEDGER_KEY = "boo:ledger:v2";
-const LEDGER_SEED_VERSION = "v15";
+const LEDGER_SEED_VERSION = "v14";
 const LEDGER_SEED_FLAG = `boo:ledger:${LEDGER_SEED_VERSION}:seeded`;
 const REVEAL_KEY = "boo:reveal:v1";
 const UNLOCK_KEY = "boo:unlocked:v1";
@@ -1254,35 +1254,7 @@ export function seedDemoLedgerIfEmpty() {
       })(),
       viewEnt(7, "address", 6 * D + 30, pickEnt(7).address),
       viewContact(23, 0, "phone", 7 * D + 15, maskPhone(pickEnt(23).contacts[0].phone ?? pickEnt(23).phone)),
-      // ---- recharge (9) ----
-      {
-        id: makeId("rc"),
-        kind: "recharge",
-        cost: 11200,
-        createdAt: isoMinutesAgo(60 * 24 * 118),
-        targetKind: "enterprise",
-        targetId: "—",
-        targetName: "企业套餐",
-        orderNo: "R20251221101533",
-        paymentMethod: "corp",
-        bonus: 1200,
-        price: 799,
-        detail: "订单 R20251221101533 · ¥799 · 赠 1200 积分",
-      },
-      {
-        id: makeId("rc"),
-        kind: "recharge",
-        cost: 2100,
-        createdAt: isoMinutesAgo(60 * 24 * 96),
-        targetKind: "enterprise",
-        targetId: "—",
-        targetName: "标准套餐",
-        orderNo: "R20260212094411",
-        paymentMethod: "alipay",
-        bonus: 100,
-        price: 179,
-        detail: "订单 R20260212094411 · ¥179 · 赠 100 积分",
-      },
+      // ---- recharge (3) ----
       {
         id: makeId("rc"),
         kind: "recharge",
@@ -1296,20 +1268,6 @@ export function seedDemoLedgerIfEmpty() {
         bonus: 400,
         price: 429,
         detail: "订单 R20260408164422 · ¥429 · 赠 400 积分",
-      },
-      {
-        id: makeId("rc"),
-        kind: "recharge",
-        cost: 3000,
-        createdAt: isoMinutesAgo(60 * 24 * 52),
-        targetKind: "enterprise",
-        targetId: "—",
-        targetName: "自定义",
-        orderNo: "R20260426150822",
-        paymentMethod: "wechat",
-        bonus: 0,
-        price: 300,
-        detail: "订单 R20260426150822 · ¥300",
       },
       {
         id: makeId("rc"),
@@ -1329,20 +1287,6 @@ export function seedDemoLedgerIfEmpty() {
         id: makeId("rc"),
         kind: "recharge",
         cost: 2100,
-        createdAt: isoMinutesAgo(60 * 24 * 18),
-        targetKind: "enterprise",
-        targetId: "—",
-        targetName: "标准套餐",
-        orderNo: "R20260531112044",
-        paymentMethod: "wechat",
-        bonus: 100,
-        price: 179,
-        detail: "订单 R20260531112044 · ¥179 · 赠 100 积分",
-      },
-      {
-        id: makeId("rc"),
-        kind: "recharge",
-        cost: 2100,
         createdAt: isoMinutesAgo(60 * 24 * 6),
         targetKind: "enterprise",
         targetId: "—",
@@ -1352,34 +1296,6 @@ export function seedDemoLedgerIfEmpty() {
         bonus: 100,
         price: 179,
         detail: "订单 R20260612143012 · ¥179 · 赠 100 积分",
-      },
-      {
-        id: makeId("rc"),
-        kind: "recharge",
-        cost: 5400,
-        createdAt: isoMinutesAgo(60 * 24 * 3),
-        targetKind: "enterprise",
-        targetId: "—",
-        targetName: "专业套餐",
-        orderNo: "R20260615183355",
-        paymentMethod: "alipay",
-        bonus: 400,
-        price: 429,
-        detail: "订单 R20260615183355 · ¥429 · 赠 400 积分",
-      },
-      {
-        id: makeId("rc"),
-        kind: "recharge",
-        cost: 800,
-        createdAt: isoMinutesAgo(60 * 20),
-        targetKind: "enterprise",
-        targetId: "—",
-        targetName: "自定义",
-        orderNo: "R20260617203040",
-        paymentMethod: "wechat",
-        bonus: 0,
-        price: 80,
-        detail: "订单 R20260617203040 · ¥80",
       },
     ];
     ledger = legacySeeded || staleSingleDaySeed ? seed : [...seed, ...ledger];
