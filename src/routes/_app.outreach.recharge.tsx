@@ -403,13 +403,83 @@ function RechargePage() {
             )}
           </section>
 
-          {/* Step 2 支付方式 */}
+          {/* 最近充值（原第 2 步位置） */}
           <section className="rounded-xl border bg-card">
-            <header className="px-5 py-4 border-b flex items-center gap-2">
-              <span className="h-6 w-6 rounded-full bg-primary text-primary-foreground text-xs font-semibold flex items-center justify-center">
+            <header className="px-5 py-4 border-b flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <Receipt className="h-4 w-4 text-primary" />
+                <h2 className="text-sm font-semibold">最近充值</h2>
+                <span className="text-xs text-muted-foreground">
+                  最近 {recentRecharges.length} 笔
+                </span>
+              </div>
+              <Link
+                to="/outreach/billing"
+                search={{ tab: "recharge" }}
+                className="text-xs text-primary hover:underline inline-flex items-center"
+              >
+                查看全部消费记录 <ChevronRight className="h-3.5 w-3.5" />
+              </Link>
+            </header>
+            {recentRecharges.length === 0 ? (
+              <div className="px-5 py-10 text-center text-sm text-muted-foreground">
+                还没有充值记录，完成首次充值后将在此显示
+              </div>
+            ) : (
+              <div className="divide-y">
+                {recentRecharges.map((r) => (
+                  <div
+                    key={r.id}
+                    className="px-5 py-3 flex items-center justify-between text-sm hover:bg-muted/30"
+                  >
+                    <div className="flex items-center gap-3">
+                      <div className="h-8 w-8 rounded-lg bg-emerald-500/10 text-emerald-600 flex items-center justify-center">
+                        <Receipt className="h-4 w-4" />
+                      </div>
+                      <div>
+                        <div className="font-medium tabular-nums">{r.orderNo ?? r.id}</div>
+                        <div className="text-xs text-muted-foreground tabular-nums">
+                          {formatExpiry(r.createdAt).slice(0, 16)} · {r.targetName}
+                          {r.paymentMethod && (
+                            <> · {PAYMENT_METHODS.find((m) => m.id === r.paymentMethod)?.label ?? r.paymentMethod}</>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                    <div className="text-right">
+                      <div className="font-semibold text-emerald-600 tabular-nums">
+                        +{r.cost.toLocaleString()} 积分
+                      </div>
+                      <div className="text-xs text-muted-foreground tabular-nums">
+                        ¥ {r.price ?? "—"}
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </section>
+
+          {/* 下一步分隔标题 */}
+          <div className="flex items-center gap-3 pt-1">
+            <div className="h-px flex-1 bg-border" />
+            <span className="text-xs text-muted-foreground inline-flex items-center gap-1">
+              <ChevronRight className="h-3.5 w-3.5" />
+              下一步操作
+            </span>
+            <div className="h-px flex-1 bg-border" />
+          </div>
+
+          {/* Step 2 支付方式（下一步） */}
+          <section className="rounded-xl border border-dashed bg-muted/20">
+            <header className="px-5 py-4 border-b border-dashed flex items-center gap-2">
+              <span className="h-6 w-6 rounded-full bg-muted text-muted-foreground text-xs font-semibold flex items-center justify-center">
                 2
               </span>
               <h2 className="text-sm font-semibold">选择支付方式</h2>
+              <Badge variant="outline" className="ml-1 text-[10px] h-4 px-1.5 border-dashed">
+                下一步
+              </Badge>
             </header>
             <RadioGroup
               value={method}
@@ -423,10 +493,10 @@ function RechargePage() {
                     key={m.id}
                     htmlFor={`pm-${m.id}`}
                     className={cn(
-                      "relative rounded-xl ring-1 p-4 cursor-pointer transition-all",
+                      "relative rounded-xl ring-1 p-4 cursor-pointer transition-all bg-card",
                       active
                         ? "ring-2 ring-primary bg-primary/5"
-                        : "ring-border bg-card hover:ring-primary/40",
+                        : "ring-border hover:ring-primary/40",
                     )}
                   >
                     <div className="flex items-start gap-3">
@@ -463,15 +533,18 @@ function RechargePage() {
             )}
           </section>
 
-          {/* Step 3 发票 */}
-          <section className="rounded-xl border bg-card">
-            <header className="px-5 py-4 border-b flex items-center justify-between gap-2">
+          {/* Step 3 发票（下一步） */}
+          <section className="rounded-xl border border-dashed bg-muted/20">
+            <header className="px-5 py-4 border-b border-dashed flex items-center justify-between gap-2">
               <div className="flex items-center gap-2">
-                <span className="h-6 w-6 rounded-full bg-primary text-primary-foreground text-xs font-semibold flex items-center justify-center">
+                <span className="h-6 w-6 rounded-full bg-muted text-muted-foreground text-xs font-semibold flex items-center justify-center">
                   3
                 </span>
                 <h2 className="text-sm font-semibold">发票信息</h2>
                 <span className="text-xs text-muted-foreground">（可选）</span>
+                <Badge variant="outline" className="ml-1 text-[10px] h-4 px-1.5 border-dashed">
+                  下一步
+                </Badge>
               </div>
               <div className="flex items-center gap-2 text-xs text-muted-foreground">
                 <span>需要发票</span>
@@ -479,7 +552,7 @@ function RechargePage() {
               </div>
             </header>
             {needInvoice && (
-              <div className="p-5 space-y-4">
+              <div className="p-5 space-y-4 bg-card rounded-b-xl">
                 <RadioGroup
                   value={invoice.type}
                   onValueChange={(v) =>
@@ -528,52 +601,6 @@ function RechargePage() {
                 <div className="text-[11px] text-muted-foreground">
                   电子发票将在到账后 1-3 个工作日内发送至所填邮箱。
                 </div>
-              </div>
-            )}
-          </section>
-
-          {/* 最近记录 */}
-          <section className="rounded-xl border bg-card">
-            <header className="px-5 py-4 border-b flex items-center justify-between">
-              <h2 className="text-sm font-semibold">最近充值</h2>
-              <Link
-                to="/outreach/billing"
-                search={{ tab: "recharge" }}
-                className="text-xs text-primary hover:underline inline-flex items-center"
-              >
-                查看全部账单 <ChevronRight className="h-3.5 w-3.5" />
-              </Link>
-            </header>
-            {recentRecharges.length === 0 ? (
-              <div className="px-5 py-10 text-center text-sm text-muted-foreground">
-                还没有充值记录，完成首次充值后将在此显示
-              </div>
-            ) : (
-              <div className="divide-y">
-                {recentRecharges.map((r) => (
-                  <div
-                    key={r.id}
-                    className="px-5 py-3 flex items-center justify-between text-sm hover:bg-muted/30"
-                  >
-                    <div className="flex items-center gap-3">
-                      <Receipt className="h-4 w-4 text-muted-foreground" />
-                      <div>
-                        <div className="font-medium tabular-nums">{r.orderNo ?? r.id}</div>
-                        <div className="text-xs text-muted-foreground tabular-nums">
-                          {formatExpiry(r.createdAt).slice(0, 16)} · {r.targetName}
-                        </div>
-                      </div>
-                    </div>
-                    <div className="text-right">
-                      <div className="font-semibold text-emerald-600 tabular-nums">
-                        +{r.cost.toLocaleString()} 积分
-                      </div>
-                      <div className="text-xs text-muted-foreground tabular-nums">
-                        ¥ {r.price ?? "—"}
-                      </div>
-                    </div>
-                  </div>
-                ))}
               </div>
             )}
           </section>
