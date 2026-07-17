@@ -288,6 +288,9 @@ function RechargePage() {
         </div>
       )}
 
+      {/* 充值步骤指引 */}
+      <StepGuide currentStep={lastOrder ? 4 : 1} />
+
       {/* 主体：左 step / 右 summary */}
       <div className="grid grid-cols-1 lg:grid-cols-[1fr_340px] gap-6">
         <div className="space-y-6">
