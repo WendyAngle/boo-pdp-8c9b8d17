@@ -705,3 +705,77 @@ function Row({ label, children }: { label: string; children: React.ReactNode }) 
     </div>
   );
 }
+
+const STEPS: { key: number; title: string; desc: string }[] = [
+  { key: 1, title: "选择套餐", desc: "按需选择套餐或自定义金额" },
+  { key: 2, title: "确认支付方式", desc: "微信 / 支付宝 / 对公转账" },
+  { key: 3, title: "补充发票信息", desc: "可选，支持企业与个人抬头" },
+  { key: 4, title: "完成支付", desc: "积分实时到账、有效期顺延" },
+];
+
+function StepGuide({ currentStep }: { currentStep: number }) {
+  return (
+    <section className="rounded-xl border bg-card p-4 lg:p-5">
+      <div className="flex items-center gap-2 mb-3">
+        <Sparkles className="h-4 w-4 text-primary" />
+        <h2 className="text-sm font-semibold">充值步骤指引</h2>
+        <span className="text-xs text-muted-foreground">共 {STEPS.length} 步 · 全流程约 1 分钟</span>
+      </div>
+      <ol className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+        {STEPS.map((s, i) => {
+          const done = currentStep > s.key;
+          const active = currentStep === s.key;
+          const upcoming = currentStep < s.key;
+          return (
+            <li
+              key={s.key}
+              className={cn(
+                "relative rounded-lg ring-1 p-3 pl-11 transition-all",
+                active && "ring-2 ring-primary bg-primary/5",
+                done && "ring-border bg-emerald-500/5",
+                upcoming && "ring-border bg-card",
+              )}
+            >
+              <span
+                className={cn(
+                  "absolute left-3 top-3 h-6 w-6 rounded-full text-xs font-semibold flex items-center justify-center",
+                  active && "bg-primary text-primary-foreground",
+                  done && "bg-emerald-500 text-white",
+                  upcoming && "bg-muted text-muted-foreground",
+                )}
+              >
+                {done ? <Check className="h-3.5 w-3.5" /> : s.key}
+              </span>
+              <div className="text-sm font-medium leading-none flex items-center gap-1.5">
+                {s.title}
+                {active && (
+                  <Badge className="h-4 px-1.5 text-[10px] bg-primary text-primary-foreground">
+                    当前
+                  </Badge>
+                )}
+                {done && (
+                  <Badge variant="outline" className="h-4 px-1.5 text-[10px] border-emerald-300 text-emerald-700">
+                    已完成
+                  </Badge>
+                )}
+              </div>
+              <div className="mt-1.5 text-xs text-muted-foreground leading-relaxed">{s.desc}</div>
+              {i < STEPS.length - 1 && (
+                <ChevronRight className="hidden lg:block absolute -right-2.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground/50" />
+              )}
+            </li>
+          );
+        })}
+      </ol>
+    </section>
+  );
+}
+
+function Row({ label, children }: { label: string; children: React.ReactNode }) {
+  return (
+    <div className="flex items-center justify-between">
+      <span className="text-muted-foreground">{label}</span>
+      {children}
+    </div>
+  );
+}
