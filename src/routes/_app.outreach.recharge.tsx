@@ -115,7 +115,7 @@ function RechargePage() {
   );
   const ledger = useLedger();
   const recentRecharges = useMemo(
-    () => ledger.filter((e) => e.kind === "recharge").slice(0, 5),
+    () => ledger.filter((e) => e.kind === "recharge").slice(0, 8),
     [ledger],
   );
 
