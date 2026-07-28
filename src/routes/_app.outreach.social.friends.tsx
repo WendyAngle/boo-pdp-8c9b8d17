@@ -275,6 +275,38 @@ function FriendsPage() {
           </Table>
         )}
       </Card>
+
+      <CreateDmDialog
+        open={dmOpen}
+        onOpenChange={(v) => { setDmOpen(v); if (!v) setDmPrefillState(null); }}
+        balance={balance.balance}
+        prefill={dmPrefill}
+        onCreate={({ name, platform: p, template, sourceTaskId, sendTargets }) => {
+          const cost = sendTargets.length * COST_SOCIAL_DM;
+          if (balance.balance < cost) return toast.error("积分不足");
+          spendCredits(cost);
+          const sends = sendTargets.map((tgt, i) => {
+            chargeSocialDm({
+              platform: p,
+              targetName: tgt.name,
+              detail: `${p} 私信首发 · ${tgt.handle}`,
+            });
+            return {
+              id: `s_${Date.now().toString(36)}_${i}`,
+              targetName: tgt.name,
+              targetHandle: tgt.handle,
+              platform: p,
+              status: "sent" as const,
+              sentAt: new Date().toISOString(),
+            };
+          });
+          addDmTask({ name, platform: p, template, sourceTaskId, sends });
+          toast.success(`已发出 ${sendTargets.length} 条私信，扣 ${cost.toLocaleString()} 积分`);
+          setDmOpen(false);
+          setDmPrefillState(null);
+          setSelected(new Set());
+        }}
+      />
     </div>
   );
 }
