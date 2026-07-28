@@ -1,15 +1,29 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { MessageCircle, Plus, Facebook, Music2, Search } from "lucide-react";
+import {
+  MessageCircle,
+  Plus,
+  Facebook,
+  Music2,
+  Search,
+  Sparkles,
+  Loader2,
+  Eye,
+  Send,
+} from "lucide-react";
+import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import { Label } from "@/components/ui/label";
+import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogFooter,
   DialogHeader,
   DialogTitle,
@@ -37,8 +51,22 @@ import {
   type SocialTaskPlatform,
 } from "@/lib/social-tasks";
 import { useCreditBalance, spendCredits } from "@/lib/credits-balance";
-import { chargeSocialDm, COST_SOCIAL_DM } from "@/lib/credits-ledger";
+import {
+  chargeSocialDm,
+  chargeAiGeneration,
+  COST_SOCIAL_DM,
+  COST_AI_SOCIAL,
+} from "@/lib/credits-ledger";
 import { useSocialFriends, consumeDmPrefill } from "@/lib/social-friends";
+import {
+  MESSAGE_VARIABLES,
+  renderTemplate,
+  myContext,
+  type VarContext,
+} from "@/lib/message-vars";
+import { useLeadProfile } from "@/lib/lead-profile";
+import { useCurrentUser } from "@/lib/current-user";
+import { generateAiContent } from "@/lib/api/ai-compose.functions";
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/_app/outreach/social/dm")({
@@ -47,7 +75,7 @@ export const Route = createFileRoute("/_app/outreach/social/dm")({
       { title: "社媒私信触达 · 出海大数据平台" },
       { name: "description", content: "对已通过好友的 Facebook / TikTok 目标批量发送私信。" },
       { property: "og:title", content: "社媒私信触达" },
-      { property: "og:description", content: "首发 300 积分/次，同会话 24h 内追发免费。" },
+      { property: "og:description", content: `首发 ${COST_SOCIAL_DM} 积分/条，同会话 24h 内追发免费。` },
     ],
   }),
   component: DmPage,
@@ -83,7 +111,7 @@ function DmPage() {
           <div>
             <h1 className="text-lg font-semibold">社媒私信触达</h1>
             <p className="text-xs text-muted-foreground mt-0.5">
-              仅可对"已通过好友"目标发送；首条私信按 {COST_SOCIAL_DM} 积分/次扣分，同会话 24h 内追发免费。
+              仅可对"已通过好友"目标发送；首条私信按 {COST_SOCIAL_DM} 积分/条扣分，同会话 24h 内追发免费。
               首条问候语命中敏感词将被拦截且不扣分。
             </p>
           </div>
@@ -118,7 +146,7 @@ function DmPage() {
               <TableRow>
                 <TableHead>任务名</TableHead>
                 <TableHead className="w-[100px]">平台</TableHead>
-                <TableHead>模板</TableHead>
+                <TableHead>私信内容</TableHead>
                 <TableHead className="w-[110px]">状态</TableHead>
                 <TableHead className="w-[160px]">发送 / 回复</TableHead>
                 <TableHead className="w-[140px]">创建时间</TableHead>
@@ -237,14 +265,25 @@ function CreateDmDialog({
 }) {
   const prosTasks = useProspectingTasks();
   const friends = useSocialFriends();
+  const profile = useLeadProfile();
+  const user = useCurrentUser();
+  const callGenerate = useServerFn(generateAiContent);
 
   const [name, setName] = useState("");
   const [platform, setPlatform] = useState<SocialTaskPlatform>("Facebook");
-  const [template, setTemplate] = useState("");
+  const [content, setContent] = useState("");
   const [sourceMode, setSourceMode] = useState<SourceMode>("pool");
   const [sourceId, setSourceId] = useState<string>("");
-  const [poolSelected, setPoolSelected] = useState<Set<string>>(new Set()); // friend.id set
+  const [poolSelected, setPoolSelected] = useState<Set<string>>(new Set());
   const [poolKw, setPoolKw] = useState("");
+  const [previewIdx, setPreviewIdx] = useState(0);
+
+  // AI 生成
+  const [aiUsed, setAiUsed] = useState(false);
+  const [aiCount, setAiCount] = useState(0);
+  const [aiOpen, setAiOpen] = useState(false);
+  const [aiLoading, setAiLoading] = useState(false);
+  const [targetLang, setTargetLang] = useState<"zh" | "en">("zh");
 
   // 处理 prefill：从好友池跳转过来
   useEffect(() => {
@@ -258,13 +297,16 @@ function CreateDmDialog({
       );
       setPoolSelected(ids);
     } else {
-      // 打开新弹窗时重置
       setPoolSelected(new Set());
       setSourceId("");
       setPoolKw("");
       setName("");
-      setTemplate("");
     }
+    setContent("");
+    setAiUsed(false);
+    setAiCount(0);
+    setPreviewIdx(0);
+    setTargetLang("zh");
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open, prefill]);
 
@@ -297,8 +339,19 @@ function CreateDmDialog({
     return acceptedFromTask;
   }, [sourceMode, friends, poolSelected, acceptedFromTask]);
 
-  const cost = sendTargets.length * COST_SOCIAL_DM;
-  const hit = SENSITIVE_WORDS.find((w) => template.toLowerCase().includes(w.toLowerCase()));
+  const my = useMemo<VarContext>(() => myContext(profile, user), [profile, user]);
+  const buildCtx = (t: { name: string; handle: string }): VarContext => ({
+    联系人名: t.name,
+    ...my,
+  });
+
+  const sendCost = sendTargets.length * COST_SOCIAL_DM;
+  const aiCost = aiCount * COST_AI_SOCIAL;
+  const grandTotal = sendCost + aiCost;
+  const hit = SENSITIVE_WORDS.find((w) => content.toLowerCase().includes(w.toLowerCase()));
+
+  const previewTarget = sendTargets[Math.min(previewIdx, Math.max(0, sendTargets.length - 1))];
+  const previewContent = previewTarget ? renderTemplate(content, buildCtx(previewTarget)) : "";
 
   const allChecked = poolFiltered.length > 0 && poolFiltered.every((f) => poolSelected.has(f.id));
   function toggleAllPool() {
@@ -314,21 +367,94 @@ function CreateDmDialog({
     setPoolSelected(next);
   }
 
+  const contentRef = useRef<HTMLTextAreaElement | null>(null);
+  function insertVarAt(v: string) {
+    const token = `{${v}}`;
+    const el = contentRef.current;
+    const s = content;
+    if (!el) return setContent(s + token);
+    const start = el.selectionStart ?? s.length;
+    const end = el.selectionEnd ?? s.length;
+    setContent(s.slice(0, start) + token + s.slice(end));
+    requestAnimationFrame(() => {
+      el.focus();
+      const pos = start + token.length;
+      el.setSelectionRange(pos, pos);
+    });
+  }
+
+  async function handleAiGenerate(params: {
+    scene: string;
+    tone: "formal" | "friendly" | "concise";
+    language: "zh" | "en";
+    extra?: string;
+  }) {
+    if (balance < COST_AI_SOCIAL) {
+      toast.error(`积分不足，AI 生成需 ${COST_AI_SOCIAL} 积分`);
+      return;
+    }
+    setAiLoading(true);
+    try {
+      const sample = sendTargets[0];
+      const res = await callGenerate({
+        data: {
+          channel: "social",
+          platform,
+          ...params,
+          myCompany: profile.companyName,
+          myName: user.name,
+          sampleEnterprise: sample?.name,
+        },
+      });
+      spendCredits(COST_AI_SOCIAL);
+      chargeAiGeneration({ channel: "social", targetName: sample?.name ?? "AI 生成" });
+      setTargetLang(params.language);
+      if (res.content) setContent(res.content);
+      setAiUsed(true);
+      setAiCount((c) => c + 1);
+      setAiOpen(false);
+      toast.success(`AI 已生成 ${platform} 文案，扣除 ${COST_AI_SOCIAL} 积分`);
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : String(e);
+      toast.error("AI 生成失败", { description: msg });
+    } finally {
+      setAiLoading(false);
+    }
+  }
+
+  const canSend =
+    !hit &&
+    !!name.trim() &&
+    content.trim().length > 0 &&
+    sendTargets.length > 0 &&
+    balance >= sendCost;
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-2xl">
+      <DialogContent className="max-w-3xl max-h-[92vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>新建私信任务</DialogTitle>
+          <DialogTitle className="flex items-center gap-2">
+            <MessageCircle className="h-5 w-5 text-primary" />
+            新建私信任务
+            <Badge variant="secondary" className="ml-1 font-normal">
+              {sendTargets.length > 0 ? `选中 ${sendTargets.length} 位好友` : "未选择"}
+            </Badge>
+          </DialogTitle>
+          <DialogDescription className="sr-only">对已通过好友批量发送私信</DialogDescription>
         </DialogHeader>
-        <div className="space-y-3">
+
+        <div className="space-y-4">
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-1">
-              <div className="text-xs text-muted-foreground">任务名</div>
+              <Label className="text-xs text-muted-foreground">任务名</Label>
               <Input value={name} onChange={(e) => setName(e.target.value)} placeholder="例如：首轮问询" />
             </div>
             <div className="space-y-1">
-              <div className="text-xs text-muted-foreground">平台</div>
-              <Select value={platform} onValueChange={(v) => { setPlatform(v as SocialTaskPlatform); setPoolSelected(new Set()); setSourceId(""); }}>
+              <Label className="text-xs text-muted-foreground">平台</Label>
+              <Select
+                value={platform}
+                onValueChange={(v) => { setPlatform(v as SocialTaskPlatform); setPoolSelected(new Set()); setSourceId(""); }}
+              >
                 <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>
                   <SelectItem value="Facebook">Facebook</SelectItem>
@@ -339,7 +465,7 @@ function CreateDmDialog({
           </div>
 
           <div className="space-y-1">
-            <div className="text-xs text-muted-foreground">目标来源</div>
+            <Label className="text-xs text-muted-foreground">目标来源</Label>
             <div className="flex gap-2 text-xs">
               <button
                 type="button"
@@ -425,7 +551,7 @@ function CreateDmDialog({
             </div>
           ) : (
             <div className="space-y-1">
-              <div className="text-xs text-muted-foreground">加友任务（自动取该任务全部已通过好友）</div>
+              <Label className="text-xs text-muted-foreground">加友任务（自动取该任务全部已通过好友）</Label>
               <Select value={sourceId} onValueChange={setSourceId}>
                 <SelectTrigger><SelectValue placeholder="选择一个搜索加友任务" /></SelectTrigger>
                 <SelectContent>
@@ -442,52 +568,253 @@ function CreateDmDialog({
             </div>
           )}
 
-          <div className="space-y-1">
-            <div className="text-xs text-muted-foreground">
-              私信模板（支持变量 {"{联系人名}"} {"{我的公司}"}）
+          {/* 撰写内容 */}
+          <section className="space-y-3">
+            <div className="flex items-center justify-between">
+              <Label className="text-sm font-medium flex items-center gap-2">
+                撰写内容
+                {aiUsed && (
+                  <Badge variant="secondary" className="gap-1 bg-amber-100 text-amber-800">
+                    <Sparkles className="h-3 w-3" />
+                    AI 已生成 · 可手动调整
+                  </Badge>
+                )}
+              </Label>
+              <Button
+                type="button"
+                size="sm"
+                variant="outline"
+                onClick={() => setAiOpen(true)}
+                className="h-7 gap-1"
+              >
+                <Sparkles className="h-3.5 w-3.5 text-primary" />
+                {aiUsed ? "AI 重新生成" : "AI 生成"}
+                <span className="text-xs text-muted-foreground">-{COST_AI_SOCIAL} 积分/次</span>
+              </Button>
             </div>
-            <Textarea
-              value={template}
-              onChange={(e) => setTemplate(e.target.value)}
-              rows={4}
-              placeholder="Hi {联系人名}, 感谢通过好友请求。{我的公司} 主营 …"
-            />
-            {hit && (
-              <div className="text-xs text-rose-600">
-                命中敏感词 "{hit}"，请修改后再发送（否则将被拦截且不扣分）。
+
+            <div className="flex flex-wrap items-center gap-1.5">
+              <span className="text-xs text-muted-foreground">插入变量：</span>
+              {MESSAGE_VARIABLES.map((v) => (
+                <button
+                  key={v}
+                  type="button"
+                  onClick={() => insertVarAt(v)}
+                  className="rounded border bg-background px-1.5 py-0.5 text-[11px] font-mono text-primary hover:bg-primary/10"
+                >
+                  {`{${v}}`}
+                </button>
+              ))}
+            </div>
+
+            <div className="space-y-1">
+              <Label className="text-xs text-muted-foreground">私信内容 *</Label>
+              <Textarea
+                ref={contentRef}
+                value={content}
+                onChange={(e) => setContent(e.target.value)}
+                rows={6}
+                maxLength={4096}
+                placeholder={`Hi {联系人名}，感谢通过好友请求。我是{我的公司}的{我的姓名}……`}
+              />
+              <div className="text-[11px] text-muted-foreground">{content.length} / 4096 字</div>
+              {hit && (
+                <div className="text-xs text-rose-600">
+                  命中敏感词 "{hit}"，请修改后再发送（否则将被拦截且不扣分）。
+                </div>
+              )}
+            </div>
+          </section>
+
+          {/* 预览 */}
+          {sendTargets.length > 0 && (
+            <section className="space-y-2 rounded-md border bg-muted/30 p-3">
+              <div className="flex items-center justify-between">
+                <Label className="text-xs font-medium flex items-center gap-1">
+                  <Eye className="h-3.5 w-3.5" />
+                  预览（变量已替换）
+                </Label>
+                {sendTargets.length > 1 && (
+                  <Select value={String(previewIdx)} onValueChange={(v) => setPreviewIdx(Number(v))}>
+                    <SelectTrigger className="h-7 w-[220px] text-xs">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {sendTargets.map((r, i) => (
+                        <SelectItem key={`${r.handle}-${i}`} value={String(i)}>
+                          第 {i + 1} 条 · {r.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                )}
+              </div>
+              <div className="text-xs whitespace-pre-wrap text-foreground/90 max-h-40 overflow-y-auto">
+                {previewContent || <span className="text-muted-foreground">（暂无内容）</span>}
+              </div>
+            </section>
+          )}
+
+          {/* 费用 */}
+          <section className="rounded-md border border-rose-200 bg-rose-50 p-3 text-xs space-y-1">
+            <div className="flex justify-between">
+              <span className="text-muted-foreground">
+                发送费用（{sendTargets.length} 条 × {COST_SOCIAL_DM} 积分）
+              </span>
+              <span className="font-medium">{sendCost.toLocaleString()} 积分</span>
+            </div>
+            {aiCost > 0 && (
+              <div className="flex justify-between">
+                <span className="text-muted-foreground">
+                  AI 生成（{aiCount} 次 × {COST_AI_SOCIAL} 积分）
+                </span>
+                <span className="font-medium">{aiCost.toLocaleString()} 积分</span>
               </div>
             )}
-          </div>
-          <div className="rounded-lg bg-muted/50 px-3 py-2 text-xs flex items-center justify-between">
-            <span>本次发送 {sendTargets.length} 条，合计</span>
-            <span className="font-semibold tabular-nums text-rose-600">
-              -{cost.toLocaleString()}
-            </span>
-          </div>
-          {balance < cost && (
-            <div className="text-xs text-rose-600">
-              当前余额 {balance.toLocaleString()}，尚缺 {(cost - balance).toLocaleString()} 积分。
+            <div className="flex justify-between border-t border-rose-200/70 pt-1">
+              <span className="font-semibold text-rose-700">合计</span>
+              <span className="font-semibold text-rose-700">-{grandTotal.toLocaleString()}</span>
             </div>
-          )}
+            {balance < sendCost && (
+              <div className="text-[11px] text-rose-700/90 pt-0.5">
+                当前余额 {balance.toLocaleString()}，尚缺 {(sendCost - balance).toLocaleString()} 积分。
+              </div>
+            )}
+          </section>
         </div>
+
         <DialogFooter>
           <Button variant="outline" onClick={() => onOpenChange(false)}>取消</Button>
           <Button
-            disabled={!!hit}
+            disabled={!canSend}
             onClick={() => {
               if (!name.trim()) return toast.error("请填写任务名");
-              if (!template.trim()) return toast.error("请填写私信模板");
+              if (!content.trim()) return toast.error("请填写私信内容");
               if (sendTargets.length === 0) return toast.error("请选择至少 1 位好友");
               onCreate({
                 name: name.trim(),
                 platform,
-                template: template.trim(),
+                template: content.trim(),
                 sourceTaskId: sourceMode === "task" ? (sourceId || undefined) : undefined,
                 sendTargets,
               });
             }}
           >
-            立即发送
+            <Send className="h-4 w-4" />
+            确认发送（-{grandTotal.toLocaleString()}）
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+
+      <AiComposeMiniDialog
+        open={aiOpen}
+        onOpenChange={setAiOpen}
+        loading={aiLoading}
+        platform={platform}
+        defaultLanguage={targetLang}
+        onGenerate={handleAiGenerate}
+      />
+    </Dialog>
+  );
+}
+
+/* -------------------- AI 子弹窗（与 WhatsApp 触达一致） -------------------- */
+function AiComposeMiniDialog({
+  open,
+  onOpenChange,
+  loading,
+  platform,
+  defaultLanguage = "zh",
+  onGenerate,
+}: {
+  open: boolean;
+  onOpenChange: (v: boolean) => void;
+  loading: boolean;
+  platform: SocialTaskPlatform;
+  defaultLanguage?: "zh" | "en";
+  onGenerate: (p: {
+    scene: string;
+    tone: "formal" | "friendly" | "concise";
+    language: "zh" | "en";
+    extra?: string;
+  }) => void;
+}) {
+  const [scene, setScene] = useState("开发信");
+  const [tone, setTone] = useState<"formal" | "friendly" | "concise">("friendly");
+  const [language, setLanguage] = useState<"zh" | "en">(defaultLanguage);
+  const [extra, setExtra] = useState("");
+  useEffect(() => {
+    if (open) setLanguage(defaultLanguage);
+  }, [open, defaultLanguage]);
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="max-w-md">
+        <DialogHeader>
+          <DialogTitle className="flex items-center gap-2">
+            <Sparkles className="h-5 w-5 text-primary" />
+            AI 生成 {platform} 文案
+          </DialogTitle>
+          <DialogDescription className="text-xs">
+            生成成功即扣 {COST_AI_SOCIAL} 积分；失败不扣费。
+          </DialogDescription>
+        </DialogHeader>
+        <div className="space-y-3">
+          <div className="space-y-1">
+            <Label className="text-xs">场景</Label>
+            <Select value={scene} onValueChange={setScene}>
+              <SelectTrigger className="h-9"><SelectValue /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="开发信">开发信（首次接触）</SelectItem>
+                <SelectItem value="跟进">跟进未回复客户</SelectItem>
+                <SelectItem value="报价">报价 / 商品推荐</SelectItem>
+                <SelectItem value="展会邀请">展会邀请</SelectItem>
+                <SelectItem value="节日问候">节日问候</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="grid grid-cols-2 gap-3">
+            <div className="space-y-1">
+              <Label className="text-xs">语气</Label>
+              <Select value={tone} onValueChange={(v) => setTone(v as typeof tone)}>
+                <SelectTrigger className="h-9"><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="formal">正式商务</SelectItem>
+                  <SelectItem value="friendly">友好诚恳</SelectItem>
+                  <SelectItem value="concise">简洁直接</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-1">
+              <Label className="text-xs">目标语言</Label>
+              <Select value={language} onValueChange={(v) => setLanguage(v as typeof language)}>
+                <SelectTrigger className="h-9"><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="zh">中文</SelectItem>
+                  <SelectItem value="en">英文</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+          <div className="space-y-1">
+            <Label className="text-xs">补充要求（可选）</Label>
+            <Input
+              value={extra}
+              onChange={(e) => setExtra(e.target.value)}
+              placeholder="如：突出报价、请求预约会议等"
+              maxLength={200}
+            />
+          </div>
+        </div>
+        <DialogFooter>
+          <Button variant="outline" onClick={() => onOpenChange(false)} disabled={loading}>取消</Button>
+          <Button
+            disabled={loading}
+            onClick={() => onGenerate({ scene, tone, language, extra: extra.trim() || undefined })}
+            className={cn("bg-primary", loading && "opacity-80")}
+          >
+            {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />}
+            {loading ? "生成中…" : "生成"}
           </Button>
         </DialogFooter>
       </DialogContent>
