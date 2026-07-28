@@ -203,6 +203,19 @@ interface ThreadMeta {
   updatedAt: string;
 }
 
+export interface SocialSignals {
+  /** 账号注册天数（Facebook / TikTok） */
+  accountAgeDays?: number;
+  /** 是否设置头像 */
+  hasAvatar?: boolean;
+  /** 粉丝 / 好友数 */
+  followers?: number;
+  /** 历史贴文 / 视频数 */
+  postsCount?: number;
+  /** 该条内容在最近同渠道中被重复出现的次数（>=2 视为批量转发） */
+  duplicateBroadcastCount?: number;
+}
+
 export interface Thread {
   id: string;
   targetKind: "enterprise" | "contact";
@@ -220,6 +233,8 @@ export interface Thread {
   lastAt: string;
   lastPreview: string;
   lastDirection: "outbound" | "inbound";
+  /** 社媒渠道专属信号（facebook / tiktok），供真实度评分使用 */
+  socialSignals?: SocialSignals;
 }
 
 /* -------------------- Storage -------------------- */
@@ -1233,6 +1248,7 @@ interface DemoSeed {
   aiIntent?: AiIntent;
   assigneeId?: string;
   tags?: string[];
+  socialSignals?: SocialSignals;
 }
 
 const DEMO_SEEDS: DemoSeed[] = [
