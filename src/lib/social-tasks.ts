@@ -56,9 +56,9 @@ export interface DmTask {
   sends: DmSend[];
 }
 
-const PROS_KEY = "boo:social-prospecting:v1";
-const DM_KEY = "boo:social-dm:v1";
-const SEED_FLAG = "boo:social-tasks:v1:seeded";
+const PROS_KEY = "boo:social-prospecting:v2";
+const DM_KEY = "boo:social-dm:v2";
+const SEED_FLAG = "boo:social-tasks:v2:seeded";
 
 function readArr<T>(key: string): T[] {
   if (typeof window === "undefined") return [];
