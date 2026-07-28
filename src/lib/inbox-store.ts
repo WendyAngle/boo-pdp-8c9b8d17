@@ -203,6 +203,19 @@ interface ThreadMeta {
   updatedAt: string;
 }
 
+export interface SocialSignals {
+  /** 账号注册天数（Facebook / TikTok） */
+  accountAgeDays?: number;
+  /** 是否设置头像 */
+  hasAvatar?: boolean;
+  /** 粉丝 / 好友数 */
+  followers?: number;
+  /** 历史贴文 / 视频数 */
+  postsCount?: number;
+  /** 该条内容在最近同渠道中被重复出现的次数（>=2 视为批量转发） */
+  duplicateBroadcastCount?: number;
+}
+
 export interface Thread {
   id: string;
   targetKind: "enterprise" | "contact";
@@ -220,12 +233,14 @@ export interface Thread {
   lastAt: string;
   lastPreview: string;
   lastDirection: "outbound" | "inbound";
+  /** 社媒渠道专属信号（facebook / tiktok），供真实度评分使用 */
+  socialSignals?: SocialSignals;
 }
 
 /* -------------------- Storage -------------------- */
 
 const META_KEY = "boo:inbox:meta:v1";
-const SEED_FLAG = "boo:inbox:seed:v10";
+const SEED_FLAG = "boo:inbox:seed:v11";
 /** Phase 1 演示：当前登录员工，需与 conversations.tsx 中的 CURRENT_TEAM_USER_ID 保持一致 */
 const DEMO_CURRENT_USER = "u_zhang";
 
@@ -1233,6 +1248,7 @@ interface DemoSeed {
   aiIntent?: AiIntent;
   assigneeId?: string;
   tags?: string[];
+  socialSignals?: SocialSignals;
 }
 
 const DEMO_SEEDS: DemoSeed[] = [
@@ -1285,6 +1301,7 @@ const DEMO_SEEDS: DemoSeed[] = [
     lastInboundZh: "FOB 上海的价格是多少？",
     hoursAgo: 10,
     aiIntent: "quote",
+    socialSignals: { accountAgeDays: 640, hasAvatar: true, followers: 312, postsCount: 87 },
   },
   {
     id: "demo:tt:1",
@@ -1297,6 +1314,53 @@ const DEMO_SEEDS: DemoSeed[] = [
     hoursAgo: 2,
     aiIntent: "interested",
     assigneeId: "u_wang",
+    socialSignals: { accountAgeDays: 420, hasAvatar: true, followers: 1240, postsCount: 46 },
+  },
+  // ---- 社媒渠道真实度专项 mock（P1，触发 S001-S004） ----
+  {
+    id: "demo:auth:fb-new",
+    channel: "facebook",
+    targetKind: "contact",
+    targetName: "John Buyer",
+    counterparty: "psid:9998887771",
+    lastInbound: "Hi, please send price list and MOQ, we plan a big order.",
+    lastInboundZh: "你好，请发送价格表与起订量，我们计划下大单。",
+    hoursAgo: 6,
+    aiIntent: "quote",
+    tags: ["真实度样本", "社媒新号"],
+    socialSignals: { accountAgeDays: 9, hasAvatar: false, followers: 3, postsCount: 0 },
+  },
+  {
+    id: "demo:auth:tt-zombie",
+    channel: "tiktok",
+    targetKind: "contact",
+    targetName: "@buyer_x88",
+    counterparty: "openid:tt_zombie_01",
+    lastInbound: "Interested, send catalog to my WhatsApp +8613100001111.",
+    lastInboundZh: "有意向，请把目录发到我 WhatsApp +8613100001111。",
+    hoursAgo: 4,
+    aiIntent: "interested",
+    tags: ["真实度样本", "僵尸粉"],
+    socialSignals: { accountAgeDays: 210, hasAvatar: true, followers: 4, postsCount: 0 },
+  },
+  {
+    id: "demo:auth:fb-broadcast",
+    channel: "facebook",
+    targetKind: "contact",
+    targetName: "Group Buyer 01",
+    counterparty: "psid:5551110001",
+    lastInbound: "Send me best price for bulk order 1,000,000 USD. Reply ASAP.",
+    lastInboundZh: "请发送百万美金大单最优价，尽快回复。",
+    hoursAgo: 3,
+    aiIntent: "quote",
+    tags: ["真实度样本", "批量转发"],
+    socialSignals: {
+      accountAgeDays: 55,
+      hasAvatar: true,
+      followers: 21,
+      postsCount: 2,
+      duplicateBroadcastCount: 6,
+    },
   },
   // -------- Email replies (3) --------
   {
@@ -1528,6 +1592,7 @@ export function getDemoSocialThreads(): Thread[] {
       lastPreview: s.lastInbound.slice(0, 120),
       lastDirection: (meta.extraMessages[meta.extraMessages.length - 1]?.direction ??
         "inbound") as "inbound" | "outbound",
+      socialSignals: s.socialSignals,
     };
   });
 }
