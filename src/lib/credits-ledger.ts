@@ -243,7 +243,7 @@ export interface LedgerEntry {
 }
 
 const LEDGER_KEY = "boo:ledger:v2";
-const LEDGER_SEED_VERSION = "v15";
+const LEDGER_SEED_VERSION = "v16";
 const LEDGER_SEED_FLAG = `boo:ledger:${LEDGER_SEED_VERSION}:seeded`;
 const REVEAL_KEY = "boo:reveal:v1";
 const UNLOCK_KEY = "boo:unlocked:v1";
@@ -996,6 +996,7 @@ export function seedDemoLedgerIfEmpty() {
     // 天为单位的分钟数,用于将 seed 数据按日打散到最近两周,
     // 避免所有解锁/触达记录都堆到今天,更贴近真实使用节奏。
     const D = 1440;
+    const H = 60;
     // 所有 seed 数据均基于真实企业，避免出现"未找到该企业"
     const E = ENTERPRISES;
     const pickEnt = (i: number) => E[i % E.length];
@@ -1417,6 +1418,28 @@ export function seedDemoLedgerIfEmpty() {
         platform: "Facebook",
         detail: "购买 Facebook 社媒账号 1 个 · 单价 1,000 积分",
       },
+      {
+        id: makeId("sap"),
+        kind: "social_account_purchase",
+        cost: COST_SOCIAL_ACCOUNT_PURCHASE * 5,
+        createdAt: isoMinutesAgo(12 * D + 45),
+        targetKind: "enterprise",
+        targetId: "—",
+        targetName: "TikTok 账号 × 5",
+        platform: "TikTok",
+        detail: "购买 TikTok 社媒账号 5 个 · 单价 1,000 积分",
+      },
+      {
+        id: makeId("sap"),
+        kind: "social_account_purchase",
+        cost: COST_SOCIAL_ACCOUNT_PURCHASE * 2,
+        createdAt: isoMinutesAgo(20 * H),
+        targetKind: "enterprise",
+        targetId: "—",
+        targetName: "Facebook 账号 × 2",
+        platform: "Facebook",
+        detail: "购买 Facebook 社媒账号 2 个 · 单价 1,000 积分",
+      },
       /* ---------------- 触达社媒 · 加友 ---------------- */
       ...([
         { name: "Marcus Chen", handle: "@marcus.chen", platform: "Facebook" as const, min: 6 * D + 210 },
@@ -1427,6 +1450,12 @@ export function seedDemoLedgerIfEmpty() {
         { name: "Aiko Tanaka", handle: "@aiko.tanaka", platform: "Facebook" as const, min: 1 * D + 340 },
         { name: "Omar Hassan", handle: "@omar.hassan", platform: "TikTok" as const, min: 1 * D + 60 },
         { name: "Lucia Rossi", handle: "@lucia.rossi", platform: "Facebook" as const, min: 220 },
+        { name: "Hannah Weber", handle: "@hannah.weber", platform: "Facebook" as const, min: 8 * H },
+        { name: "Ravi Kapoor", handle: "@ravi.kapoor", platform: "TikTok" as const, min: 6 * H + 20 },
+        { name: "Sofia Martins", handle: "@sofia.martins", platform: "Facebook" as const, min: 4 * H + 5 },
+        { name: "Kenji Watanabe", handle: "@kenji.w", platform: "TikTok" as const, min: 2 * H + 40 },
+        { name: "Emma Laurent", handle: "@emma.laurent", platform: "Facebook" as const, min: 95 },
+        { name: "Noah Becker", handle: "@noah.becker", platform: "TikTok" as const, min: 35 },
       ].map((t) => ({
         id: makeId("saf"),
         kind: "social_add_friend" as LedgerKind,
@@ -1448,6 +1477,11 @@ export function seedDemoLedgerIfEmpty() {
         { name: "Aiko Tanaka", handle: "@aiko.tanaka", platform: "Facebook" as const, min: 1 * D + 60 },
         { name: "Omar Hassan", handle: "@omar.hassan", platform: "TikTok" as const, min: 320 },
         { name: "Lucia Rossi", handle: "@lucia.rossi", platform: "Facebook" as const, min: 90 },
+        { name: "Hannah Weber", handle: "@hannah.weber", platform: "Facebook" as const, min: 5 * H + 15 },
+        { name: "Ravi Kapoor", handle: "@ravi.kapoor", platform: "TikTok" as const, min: 3 * H + 25 },
+        { name: "Sofia Martins", handle: "@sofia.martins", platform: "Facebook" as const, min: 110 },
+        { name: "Kenji Watanabe", handle: "@kenji.w", platform: "TikTok" as const, min: 55 },
+        { name: "Emma Laurent", handle: "@emma.laurent", platform: "Facebook" as const, min: 20 },
       ].map((t) => ({
         id: makeId("sdm"),
         kind: "social_dm" as LedgerKind,
