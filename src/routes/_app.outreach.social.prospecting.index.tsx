@@ -261,10 +261,18 @@ function CreateProspectingDialog({
   const [cap, setCap] = useState(30);
   const [greet, setGreet] = useState("");
   const accounts = useSocialAccounts();
-  const usable = useMemo(
-    () => accounts.filter((a) => a.platform === platform && a.status === "正常"),
+  const platformAccounts = useMemo(
+    () => accounts.filter((a) => a.platform === platform),
     [accounts, platform],
   );
+  const usable = useMemo(
+    () => platformAccounts.filter((a) => a.status === "正常"),
+    [platformAccounts],
+  );
+  const warming = platformAccounts.filter((a) => a.status === "养号中").length;
+  const abnormal = platformAccounts.filter(
+    (a) => a.status === "异常" || a.status === "停用",
+  ).length;
   const freeze = cap * COST_SOCIAL_ADD_FRIEND;
 
   return (
@@ -304,9 +312,18 @@ function CreateProspectingDialog({
                 onChange={(e) => setCap(Math.max(1, Math.min(500, Number(e.target.value) || 1)))}
               />
             </Field>
-            <Field label={`可用账号：${usable.length}`}>
+            <Field
+              label={`可用账号：${usable.length}${
+                warming || abnormal ? ` （养号中 ${warming} · 异常 ${abnormal}）` : ""
+              }`}
+            >
               <div className="text-xs text-muted-foreground pt-2">
                 单账号 5 个/天 · 池上限 {usable.length * 5}/天
+                {(warming > 0 || abnormal > 0) && (
+                  <div className="mt-1 text-[11px] text-amber-600">
+                    养号中 / 异常账号不参与派发，可到「社媒账号」页处理。
+                  </div>
+                )}
               </div>
             </Field>
           </div>
