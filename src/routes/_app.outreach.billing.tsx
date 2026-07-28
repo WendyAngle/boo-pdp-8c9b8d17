@@ -843,6 +843,38 @@ function FieldCell({ entry }: { entry: LedgerEntry }) {
       </span>
     );
   }
+  if (entry.kind === "ai_generate") {
+    return (
+      <span className="inline-flex items-center gap-1.5 text-xs text-muted-foreground">
+        <Sparkles className="h-3.5 w-3.5" />
+        <span className="text-foreground">AI 文案生成</span>
+      </span>
+    );
+  }
+  if (entry.kind === "social_account_purchase") {
+    return (
+      <span className="inline-flex items-center gap-1.5 text-xs text-muted-foreground">
+        <Wallet className="h-3.5 w-3.5" />
+        <span className="text-foreground">购买社媒账号</span>
+      </span>
+    );
+  }
+  if (entry.kind === "social_add_friend") {
+    return (
+      <span className="inline-flex items-center gap-1.5 text-xs text-muted-foreground">
+        <Globe className="h-3.5 w-3.5" />
+        <span className="text-foreground">触达社媒 · 加友</span>
+      </span>
+    );
+  }
+  if (entry.kind === "social_dm") {
+    return (
+      <span className="inline-flex items-center gap-1.5 text-xs text-muted-foreground">
+        <Globe className="h-3.5 w-3.5" />
+        <span className="text-foreground">触达社媒 · 私信</span>
+      </span>
+    );
+  }
   // reach or refund — both use channel
   if (!entry.channel) return <span className="text-xs text-muted-foreground">—</span>;
   const Icon: Record<ReachChannel, typeof Mail> = {
