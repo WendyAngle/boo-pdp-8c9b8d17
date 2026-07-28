@@ -45,13 +45,15 @@ function FriendsPage() {
   const friends = useSocialFriends();
   const accounts = useSocialAccounts();
   const tasks = useProspectingTasks();
-  const navigate = useNavigate();
+  const balance = useCreditBalance();
 
   const [platform, setPlatform] = useState<"all" | "Facebook" | "TikTok">("all");
   const [accountId, setAccountId] = useState<string>("all");
   const [taskId, setTaskId] = useState<string>("all");
   const [kw, setKw] = useState("");
   const [selected, setSelected] = useState<Set<string>>(new Set());
+  const [dmOpen, setDmOpen] = useState(false);
+  const [dmPrefill, setDmPrefillState] = useState<Prefill | null>(null);
 
   // 支持从「账号购买」下钻带入过滤：?accountId=xxx
   useEffect(() => {
@@ -109,12 +111,13 @@ function FriendsPage() {
       toast.error("同一私信任务需属于同一平台，请拆分选择");
       return;
     }
-    setDmPrefill({
+    setDmPrefillState({
       platform: selectedFriends[0].platform,
       friends: selectedFriends.map((f) => ({ name: f.name, handle: f.handle })),
     });
-    navigate({ to: "/outreach/social/dm" });
+    setDmOpen(true);
   }
+
 
 
   const total = friends.length;
