@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { createFileRoute, Link, useParams } from "@tanstack/react-router";
+import { createFileRoute, Link, useParams, useSearch } from "@tanstack/react-router";
 import {
   ArrowLeft,
   Users,
@@ -37,6 +37,11 @@ import {
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/_app/outreach/social/prospecting/$taskId")({
+  validateSearch: (s: Record<string, unknown>) => {
+    const status = s.status;
+    const allowed = ["all", "requested", "accepted", "rejected", "failed", "pending"];
+    return { status: typeof status === "string" && allowed.includes(status) ? (status as "all" | TargetStatus) : undefined };
+  },
   head: () => ({
     meta: [
       { title: "搜索加友任务详情 · 出海大数据平台" },
@@ -58,9 +63,10 @@ const STATUS_META: Record<TargetStatus, { label: string; tone: string; icon: Rea
 
 function ProspectingDetailPage() {
   const { taskId } = useParams({ from: "/_app/outreach/social/prospecting/$taskId" });
+  const search = useSearch({ from: "/_app/outreach/social/prospecting/$taskId" });
   const tasks = useProspectingTasks();
   const task = tasks.find((t) => t.id === taskId);
-  const [filter, setFilter] = useState<"all" | TargetStatus>("all");
+  const [filter, setFilter] = useState<"all" | TargetStatus>(search.status ?? "all");
   const [q, setQ] = useState("");
 
   const stats = useMemo(() => {
