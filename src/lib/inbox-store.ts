@@ -1544,6 +1544,7 @@ export function getDemoSocialThreads(): Thread[] {
       lastPreview: s.lastInbound.slice(0, 120),
       lastDirection: (meta.extraMessages[meta.extraMessages.length - 1]?.direction ??
         "inbound") as "inbound" | "outbound",
+      socialSignals: s.socialSignals,
     };
   });
 }
