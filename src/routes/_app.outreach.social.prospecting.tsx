@@ -168,7 +168,15 @@ function TaskRow({ task }: { task: ProspectingTask }) {
   };
   return (
     <TableRow>
-      <TableCell className="font-medium">{task.name}</TableCell>
+      <TableCell className="font-medium">
+        <Link
+          to="/outreach/social/prospecting/$taskId"
+          params={{ taskId: task.id }}
+          className="text-primary hover:underline"
+        >
+          {task.name}
+        </Link>
+      </TableCell>
       <TableCell>
         <div className="flex items-center gap-1">
           {task.platform.includes("Facebook") && <Facebook className="h-3.5 w-3.5 text-sky-600" />}
