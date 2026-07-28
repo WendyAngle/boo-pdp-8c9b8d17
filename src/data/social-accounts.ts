@@ -8,7 +8,7 @@ export interface SocialAccount {
   platform: SocialPlatform;
   handle: string;
   displayName: string;
-  /** WhatsApp 沿用：每日发送额度 */
+  /** 每日发送额度（私信） */
   dailyLimit: number;
   sentToday: number;
   /** Facebook / TikTok：每日加友额度（默认 5） */
