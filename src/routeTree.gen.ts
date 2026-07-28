@@ -36,6 +36,7 @@ import { Route as AppOutreachBillingRouteImport } from './routes/_app.outreach.b
 import { Route as AppOutreachProductsIndexRouteImport } from './routes/_app.outreach.products.index'
 import { Route as AppOutreachEnterpriseIndexRouteImport } from './routes/_app.outreach.enterprise.index'
 import { Route as AppOutreachSocialProspectingRouteImport } from './routes/_app.outreach.social.prospecting'
+import { Route as AppOutreachSocialFriendsRouteImport } from './routes/_app.outreach.social.friends'
 import { Route as AppOutreachSocialDmRouteImport } from './routes/_app.outreach.social.dm'
 import { Route as AppOutreachSocialAccountsRouteImport } from './routes/_app.outreach.social.accounts'
 import { Route as AppOutreachProductsHsRouteImport } from './routes/_app.outreach.products.$hs'
@@ -190,6 +191,12 @@ const AppOutreachSocialProspectingRoute =
     path: '/outreach/social/prospecting',
     getParentRoute: () => AppRoute,
   } as any)
+const AppOutreachSocialFriendsRoute =
+  AppOutreachSocialFriendsRouteImport.update({
+    id: '/outreach/social/friends',
+    path: '/outreach/social/friends',
+    getParentRoute: () => AppRoute,
+  } as any)
 const AppOutreachSocialDmRoute = AppOutreachSocialDmRouteImport.update({
   id: '/outreach/social/dm',
   path: '/outreach/social/dm',
@@ -294,6 +301,7 @@ export interface FileRoutesByFullPath {
   '/outreach/products/$hs': typeof AppOutreachProductsHsRoute
   '/outreach/social/accounts': typeof AppOutreachSocialAccountsRoute
   '/outreach/social/dm': typeof AppOutreachSocialDmRoute
+  '/outreach/social/friends': typeof AppOutreachSocialFriendsRoute
   '/outreach/social/prospecting': typeof AppOutreachSocialProspectingRoute
   '/outreach/enterprise/': typeof AppOutreachEnterpriseIndexRoute
   '/outreach/products/': typeof AppOutreachProductsIndexRoute
@@ -332,6 +340,7 @@ export interface FileRoutesByTo {
   '/outreach/products/$hs': typeof AppOutreachProductsHsRoute
   '/outreach/social/accounts': typeof AppOutreachSocialAccountsRoute
   '/outreach/social/dm': typeof AppOutreachSocialDmRoute
+  '/outreach/social/friends': typeof AppOutreachSocialFriendsRoute
   '/outreach/social/prospecting': typeof AppOutreachSocialProspectingRoute
   '/outreach/enterprise': typeof AppOutreachEnterpriseIndexRoute
   '/outreach/products': typeof AppOutreachProductsIndexRoute
@@ -374,6 +383,7 @@ export interface FileRoutesById {
   '/_app/outreach/products/$hs': typeof AppOutreachProductsHsRoute
   '/_app/outreach/social/accounts': typeof AppOutreachSocialAccountsRoute
   '/_app/outreach/social/dm': typeof AppOutreachSocialDmRoute
+  '/_app/outreach/social/friends': typeof AppOutreachSocialFriendsRoute
   '/_app/outreach/social/prospecting': typeof AppOutreachSocialProspectingRoute
   '/_app/outreach/enterprise/': typeof AppOutreachEnterpriseIndexRoute
   '/_app/outreach/products/': typeof AppOutreachProductsIndexRoute
@@ -416,6 +426,7 @@ export interface FileRouteTypes {
     | '/outreach/products/$hs'
     | '/outreach/social/accounts'
     | '/outreach/social/dm'
+    | '/outreach/social/friends'
     | '/outreach/social/prospecting'
     | '/outreach/enterprise/'
     | '/outreach/products/'
@@ -454,6 +465,7 @@ export interface FileRouteTypes {
     | '/outreach/products/$hs'
     | '/outreach/social/accounts'
     | '/outreach/social/dm'
+    | '/outreach/social/friends'
     | '/outreach/social/prospecting'
     | '/outreach/enterprise'
     | '/outreach/products'
@@ -495,6 +507,7 @@ export interface FileRouteTypes {
     | '/_app/outreach/products/$hs'
     | '/_app/outreach/social/accounts'
     | '/_app/outreach/social/dm'
+    | '/_app/outreach/social/friends'
     | '/_app/outreach/social/prospecting'
     | '/_app/outreach/enterprise/'
     | '/_app/outreach/products/'
@@ -697,6 +710,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppOutreachSocialProspectingRouteImport
       parentRoute: typeof AppRoute
     }
+    '/_app/outreach/social/friends': {
+      id: '/_app/outreach/social/friends'
+      path: '/outreach/social/friends'
+      fullPath: '/outreach/social/friends'
+      preLoaderRoute: typeof AppOutreachSocialFriendsRouteImport
+      parentRoute: typeof AppRoute
+    }
     '/_app/outreach/social/dm': {
       id: '/_app/outreach/social/dm'
       path: '/outreach/social/dm'
@@ -849,6 +869,7 @@ interface AppRouteChildren {
   AppOutreachProductsHsRoute: typeof AppOutreachProductsHsRoute
   AppOutreachSocialAccountsRoute: typeof AppOutreachSocialAccountsRoute
   AppOutreachSocialDmRoute: typeof AppOutreachSocialDmRoute
+  AppOutreachSocialFriendsRoute: typeof AppOutreachSocialFriendsRoute
   AppOutreachSocialProspectingRoute: typeof AppOutreachSocialProspectingRoute
   AppOutreachProductsIndexRoute: typeof AppOutreachProductsIndexRoute
 }
@@ -886,6 +907,7 @@ const AppRouteChildren: AppRouteChildren = {
   AppOutreachProductsHsRoute: AppOutreachProductsHsRoute,
   AppOutreachSocialAccountsRoute: AppOutreachSocialAccountsRoute,
   AppOutreachSocialDmRoute: AppOutreachSocialDmRoute,
+  AppOutreachSocialFriendsRoute: AppOutreachSocialFriendsRoute,
   AppOutreachSocialProspectingRoute: AppOutreachSocialProspectingRoute,
   AppOutreachProductsIndexRoute: AppOutreachProductsIndexRoute,
 }

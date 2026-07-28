@@ -1,7 +1,8 @@
 import { useMemo, useState } from "react";
-import { createFileRoute } from "@tanstack/react-router";
-import { ShoppingBag, Facebook, Music2, Minus, Plus, CheckCircle2, Wallet } from "lucide-react";
+import { createFileRoute, Link } from "@tanstack/react-router";
+import { ShoppingBag, Facebook, Music2, Minus, Plus, CheckCircle2, Wallet, UserCheck } from "lucide-react";
 import { toast } from "sonner";
+import { useSocialFriends } from "@/lib/social-friends";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import {
@@ -51,6 +52,12 @@ const MAX_QTY = 50;
 function SocialAccountsPage() {
   const balance = useCreditBalance();
   const accounts = useSocialAccounts();
+  const friends = useSocialFriends();
+  const friendCountByAccount = useMemo(() => {
+    const m = new Map<string, number>();
+    friends.forEach((f) => m.set(f.accountId, (m.get(f.accountId) ?? 0) + 1));
+    return m;
+  }, [friends]);
   const [confirm, setConfirm] = useState<{ platform: "Facebook" | "TikTok"; qty: number } | null>(null);
 
   const fbCount = useMemo(() => accounts.filter((a) => a.platform === "Facebook").length, [accounts]);
@@ -124,15 +131,16 @@ function SocialAccountsPage() {
                 <TableHead>平台</TableHead>
                 <TableHead>账号</TableHead>
                 <TableHead>显示名</TableHead>
-                <TableHead className="w-[130px]">状态</TableHead>
-                <TableHead className="w-[140px]">今日加友</TableHead>
-                <TableHead className="w-[140px]">今日私信</TableHead>
-                <TableHead className="w-[150px]">购买时间</TableHead>
+                <TableHead className="w-[110px]">状态</TableHead>
+                <TableHead className="w-[130px]">名下好友</TableHead>
+                <TableHead className="w-[130px]">今日加友</TableHead>
+                <TableHead className="w-[130px]">今日私信</TableHead>
+                <TableHead className="w-[140px]">购买时间</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {accounts.map((a) => (
-                <AccountRow key={a.id} account={a} />
+                <AccountRow key={a.id} account={a} friendCount={friendCountByAccount.get(a.id) ?? 0} />
               ))}
             </TableBody>
           </Table>
@@ -278,7 +286,7 @@ function BuyCard({
   );
 }
 
-function AccountRow({ account }: { account: SocialAccount }) {
+function AccountRow({ account, friendCount }: { account: SocialAccount; friendCount: number }) {
   const statusTone: Record<SocialAccount["status"], string> = {
     正常: "bg-emerald-50 text-emerald-700 border-emerald-200",
     养号中: "bg-amber-50 text-amber-700 border-amber-200",
@@ -305,6 +313,21 @@ function AccountRow({ account }: { account: SocialAccount }) {
         <span className={cn("inline-flex items-center px-2 py-0.5 rounded-md border text-xs", statusTone[account.status])}>
           {account.status}
         </span>
+      </TableCell>
+      <TableCell className="text-xs tabular-nums">
+        {friendCount > 0 ? (
+          <Link
+            to="/outreach/social/friends"
+            search={{ accountId: account.id } as never}
+            className="inline-flex items-center gap-1 text-primary hover:underline"
+            title="查看该账号名下的所有好友"
+          >
+            <UserCheck className="h-3 w-3" />
+            {friendCount}
+          </Link>
+        ) : (
+          <span className="text-muted-foreground">0</span>
+        )}
       </TableCell>
       <TableCell className="text-xs tabular-nums text-muted-foreground">
         {account.dailyFriendLimit != null
