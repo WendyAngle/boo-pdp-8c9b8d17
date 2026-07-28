@@ -37,6 +37,11 @@ import {
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/_app/outreach/social/prospecting/$taskId")({
+  validateSearch: (s: Record<string, unknown>) => {
+    const status = s.status;
+    const allowed = ["all", "requested", "accepted", "rejected", "failed", "pending"];
+    return { status: typeof status === "string" && allowed.includes(status) ? (status as "all" | TargetStatus) : undefined };
+  },
   head: () => ({
     meta: [
       { title: "搜索加友任务详情 · 出海大数据平台" },
