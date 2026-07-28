@@ -30,9 +30,15 @@ import {
 } from "@/lib/credits-ledger";
 import {
   addPurchasedAccounts,
+  updateAccountStatus,
   useSocialAccounts,
   type SocialAccount,
 } from "@/data/social-accounts";
+import {
+  computeHealth,
+  poolAverageHealth,
+  healthToneClass,
+} from "@/lib/social-account-health";
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/_app/outreach/social/accounts")({
