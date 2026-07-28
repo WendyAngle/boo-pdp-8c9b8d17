@@ -56,9 +56,9 @@ export interface DmTask {
   sends: DmSend[];
 }
 
-const PROS_KEY = "boo:social-prospecting:v1";
-const DM_KEY = "boo:social-dm:v1";
-const SEED_FLAG = "boo:social-tasks:v1:seeded";
+const PROS_KEY = "boo:social-prospecting:v2";
+const DM_KEY = "boo:social-dm:v2";
+const SEED_FLAG = "boo:social-tasks:v2:seeded";
 
 function readArr<T>(key: string): T[] {
   if (typeof window === "undefined") return [];
@@ -98,8 +98,8 @@ function seed() {
       greetOnAccept: "Hi {联系人名}, 我们是 {我的公司}，专注钢材出口，方便聊聊吗？",
       status: "running",
       createdAt: daysAgo(1),
-      frozenCredits: 6000,
-      usedCredits: 3400,
+      frozenCredits: 1500,
+      usedCredits: 850,
       targets: [
         { id: "t1", name: "Northwind Steel", handle: "@northwind.steel", kind: "enterprise", status: "accepted", requestedAt: daysAgo(1), acceptedAt: daysAgo(0.5) },
         { id: "t2", name: "Mike O'Brien", handle: "@mike.obrien.buyer", kind: "user", status: "accepted", requestedAt: daysAgo(1), acceptedAt: daysAgo(0.4) },
@@ -120,7 +120,7 @@ function seed() {
       accountIds: ["sa_tt_1"],
       status: "queued",
       createdAt: daysAgo(0.2),
-      frozenCredits: 4000,
+      frozenCredits: 1000,
       usedCredits: 0,
       targets: [],
     },

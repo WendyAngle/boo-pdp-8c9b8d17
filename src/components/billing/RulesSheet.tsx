@@ -24,7 +24,9 @@ import {
   COST_AI_EMAIL,
   COST_AI_SMS,
   COST_AI_SOCIAL,
+  COST_SOCIAL_ACCOUNT_PURCHASE,
 } from "@/lib/credits-ledger";
+import { Users } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -94,7 +96,7 @@ const REACH_RULES: Rule[] = [
     icon: <Send className="h-4 w-4" />,
     title: "触达社媒",
     cost: COST_REACH_SOCIAL,
-    desc: "通过社媒渠道向单个联系人发送一条私信，按有效账号计费；若社媒账号未解锁，将自动解锁并合并扣费。",
+    desc: "通过社媒渠道触达单个联系人，含「加好友」与「发私信」两类动作，每次成功执行按次计费；同会话 24h 内追发私信免费。",
   },
 ];
 
@@ -121,6 +123,16 @@ const AI_RULES: Rule[] = [
     desc: "调用 AI 一键生成社媒私信文案，每次生成按调用计费。",
   },
 ];
+const SOCIAL_ACCOUNT_RULES: Rule[] = [
+  {
+    tone: "emerald",
+    icon: <Users className="h-4 w-4" />,
+    title: "购买社媒账号",
+    cost: COST_SOCIAL_ACCOUNT_PURCHASE,
+    desc: "开通 1 个可用于加友与私信的社媒账号（Facebook / TikTok），按账号一次性扣费；账号成功入池后不退款。",
+  },
+];
+
 
 export function RulesSheet({
   open,
@@ -164,6 +176,12 @@ export function RulesSheet({
             title="AI 文案生成"
             hint="每次调用 AI 生成按次扣费，与后续发送分别计费。"
             rules={AI_RULES}
+          />
+          <RuleGroup
+            icon={<Users className="h-3.5 w-3.5" />}
+            title="社媒账号"
+            hint="社媒账号购买后可用于加友与私信触达。"
+            rules={SOCIAL_ACCOUNT_RULES}
           />
           <PolicySection />
         </div>
