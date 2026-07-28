@@ -8,7 +8,7 @@ export interface SocialAccount {
   platform: SocialPlatform;
   handle: string;
   displayName: string;
-  /** WhatsApp 沿用：每日发送额度 */
+  /** 每日发送额度（私信） */
   dailyLimit: number;
   sentToday: number;
   /** Facebook / TikTok：每日加友额度（默认 5） */
@@ -21,8 +21,8 @@ export interface SocialAccount {
   purchasedAt?: string;
 }
 
-const KEY = "boo:social-accounts:v2";
-const SEED_FLAG = "boo:social-accounts:v2:seeded";
+const KEY = "boo:social-accounts:v3";
+const SEED_FLAG = "boo:social-accounts:v3:seeded";
 
 function read(): SocialAccount[] {
   if (typeof window === "undefined") return [];
@@ -46,33 +46,6 @@ function seed() {
   if (window.localStorage.getItem(SEED_FLAG)) return;
   const now = new Date().toISOString();
   const seedData: SocialAccount[] = [
-    {
-      id: "sa_wa_1",
-      platform: "WhatsApp",
-      handle: "+8613800001111",
-      displayName: "ByteTech WA · 主号",
-      dailyLimit: 100,
-      sentToday: 12,
-      status: "正常",
-    },
-    {
-      id: "sa_wa_2",
-      platform: "WhatsApp",
-      handle: "+8613800002222",
-      displayName: "ByteTech WA · 备号",
-      dailyLimit: 100,
-      sentToday: 4,
-      status: "正常",
-    },
-    {
-      id: "sa_wa_3",
-      platform: "WhatsApp",
-      handle: "+8613800003333",
-      displayName: "ByteTech WA · 客服",
-      dailyLimit: 80,
-      sentToday: 0,
-      status: "正常",
-    },
     // Facebook 预置 2 个（历史购买示例）
     {
       id: "sa_fb_1",
