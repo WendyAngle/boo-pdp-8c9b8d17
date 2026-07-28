@@ -39,7 +39,7 @@ import { useCreditBalance, spendCredits } from "@/lib/credits-balance";
 import { COST_SOCIAL_ADD_FRIEND } from "@/lib/credits-ledger";
 import { cn } from "@/lib/utils";
 
-export const Route = createFileRoute("/_app/outreach/social/prospecting/")({
+export const Route = createFileRoute("/_app/outreach/social/reach/prospecting/")({
   head: () => ({
     meta: [
       { title: "社媒搜索加友 · 出海大数据平台" },
@@ -170,7 +170,7 @@ function TaskRow({ task }: { task: ProspectingTask }) {
     <TableRow>
       <TableCell className="font-medium">
         <Link
-          to="/outreach/social/prospecting/$taskId"
+          to="/outreach/social/reach/prospecting/$taskId"
           params={{ taskId: task.id }}
           className="text-primary hover:underline"
         >
@@ -203,7 +203,7 @@ function TaskRow({ task }: { task: ProspectingTask }) {
         {total > 0 ? (
           <div className="flex items-center gap-1.5">
             <Link
-              to="/outreach/social/prospecting/$taskId"
+              to="/outreach/social/reach/prospecting/$taskId"
               params={{ taskId: task.id }}
               search={{ status: "requested" as const }}
               className="px-1.5 py-0.5 rounded border border-sky-200 bg-sky-50 text-sky-700 hover:bg-sky-100"
@@ -211,7 +211,7 @@ function TaskRow({ task }: { task: ProspectingTask }) {
               已请求 {requested}
             </Link>
             <Link
-              to="/outreach/social/prospecting/$taskId"
+              to="/outreach/social/reach/prospecting/$taskId"
               params={{ taskId: task.id }}
               search={{ status: "accepted" as const }}
               className="px-1.5 py-0.5 rounded border border-emerald-200 bg-emerald-50 text-emerald-700 hover:bg-emerald-100"

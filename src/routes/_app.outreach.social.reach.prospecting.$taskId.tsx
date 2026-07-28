@@ -36,7 +36,7 @@ import {
 } from "@/lib/social-tasks";
 import { cn } from "@/lib/utils";
 
-export const Route = createFileRoute("/_app/outreach/social/prospecting/$taskId")({
+export const Route = createFileRoute("/_app/outreach/social/reach/prospecting/$taskId")({
   validateSearch: (s: Record<string, unknown>) => {
     const status = s.status;
     const allowed = ["all", "requested", "accepted", "rejected", "failed", "pending"];
@@ -62,8 +62,8 @@ const STATUS_META: Record<TargetStatus, { label: string; tone: string; icon: Rea
 };
 
 function ProspectingDetailPage() {
-  const { taskId } = useParams({ from: "/_app/outreach/social/prospecting/$taskId" });
-  const search = useSearch({ from: "/_app/outreach/social/prospecting/$taskId" });
+  const { taskId } = useParams({ from: "/_app/outreach/social/reach/prospecting/$taskId" });
+  const search = useSearch({ from: "/_app/outreach/social/reach/prospecting/$taskId" });
   const tasks = useProspectingTasks();
   const task = tasks.find((t) => t.id === taskId);
   const [filter, setFilter] = useState<"all" | TargetStatus>(search.status ?? "all");
@@ -94,7 +94,7 @@ function ProspectingDetailPage() {
   if (!task) {
     return (
       <div className="p-6">
-        <Link to="/outreach/social/prospecting" className="inline-flex items-center gap-1 text-sm text-primary hover:underline">
+        <Link to="/outreach/social/reach/prospecting" className="inline-flex items-center gap-1 text-sm text-primary hover:underline">
           <ArrowLeft className="h-3.5 w-3.5" /> 返回任务列表
         </Link>
         <Card className="mt-4 p-10 text-center text-sm text-muted-foreground">未找到该任务。</Card>
@@ -105,7 +105,7 @@ function ProspectingDetailPage() {
   return (
     <div className="p-6 space-y-5">
       <div className="rounded-2xl bg-gradient-to-br from-primary/10 via-primary/5 to-transparent border border-primary/10 px-6 py-5">
-        <Link to="/outreach/social/prospecting" className="inline-flex items-center gap-1 text-xs text-muted-foreground hover:text-primary mb-3">
+        <Link to="/outreach/social/reach/prospecting" className="inline-flex items-center gap-1 text-xs text-muted-foreground hover:text-primary mb-3">
           <ArrowLeft className="h-3.5 w-3.5" /> 返回搜索任务
         </Link>
         <div className="flex items-center gap-3">

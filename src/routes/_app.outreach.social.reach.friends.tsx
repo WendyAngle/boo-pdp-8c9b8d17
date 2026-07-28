@@ -29,7 +29,7 @@ import { chargeSocialDm, COST_SOCIAL_DM } from "@/lib/credits-ledger";
 import { CreateDmDialog, type Prefill } from "./_app.outreach.social.dm";
 import { cn } from "@/lib/utils";
 
-export const Route = createFileRoute("/_app/outreach/social/friends")({
+export const Route = createFileRoute("/_app/outreach/social/reach/friends")({
   head: () => ({
     meta: [
       { title: "社媒好友池 · 出海大数据平台" },
@@ -206,7 +206,7 @@ function FriendsPage() {
         {filtered.length === 0 ? (
           <div className="p-10 text-center text-sm text-muted-foreground">
             暂无匹配好友。请先在{" "}
-            <Link to="/outreach/social/prospecting" className="text-primary hover:underline">
+            <Link to="/outreach/social/reach/prospecting" className="text-primary hover:underline">
               社媒搜索加友
             </Link>{" "}
             中获取"已通过好友"目标。
@@ -259,7 +259,7 @@ function FriendsPage() {
                     </TableCell>
                     <TableCell className="text-xs">
                       <Link
-                        to="/outreach/social/prospecting"
+                        to="/outreach/social/reach/prospecting"
                         className="text-primary hover:underline"
                       >
                         {f.sourceTaskName}

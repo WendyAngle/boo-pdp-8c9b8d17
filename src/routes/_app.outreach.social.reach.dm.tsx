@@ -69,7 +69,7 @@ import { useCurrentUser } from "@/lib/current-user";
 import { generateAiContent } from "@/lib/api/ai-compose.functions";
 import { cn } from "@/lib/utils";
 
-export const Route = createFileRoute("/_app/outreach/social/dm")({
+export const Route = createFileRoute("/_app/outreach/social/reach/dm")({
   head: () => ({
     meta: [
       { title: "社媒私信触达 · 出海大数据平台" },
@@ -131,11 +131,11 @@ function DmPage() {
         {tasks.length === 0 ? (
           <div className="p-10 text-center text-sm text-muted-foreground">
             尚无私信任务。请先在{" "}
-            <Link to="/outreach/social/friends" className="text-primary hover:underline">
+            <Link to="/outreach/social/reach/friends" className="text-primary hover:underline">
               社媒好友池
             </Link>{" "}
             中挑选目标，或在{" "}
-            <Link to="/outreach/social/prospecting" className="text-primary hover:underline">
+            <Link to="/outreach/social/reach/prospecting" className="text-primary hover:underline">
               社媒搜索加友
             </Link>{" "}
             中获得"已通过好友"目标。
@@ -512,7 +512,7 @@ export function CreateDmDialog({
                 {poolFiltered.length === 0 ? (
                   <div className="p-6 text-center text-xs text-muted-foreground">
                     {platform} 尚无已通过好友。请先{" "}
-                    <Link to="/outreach/social/prospecting" className="text-primary hover:underline">
+                    <Link to="/outreach/social/reach/prospecting" className="text-primary hover:underline">
                       创建搜索加友任务
                     </Link>
                     。
