@@ -244,7 +244,7 @@ const SENSITIVE_WORDS = ["赌博", "色情", "毒品", "洗钱", "枪支", "porn
 
 type SourceMode = "pool" | "task";
 
-function CreateDmDialog({
+export function CreateDmDialog({
   open,
   onOpenChange,
   balance,
