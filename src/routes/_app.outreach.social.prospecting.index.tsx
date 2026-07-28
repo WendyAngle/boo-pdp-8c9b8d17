@@ -39,7 +39,7 @@ import { useCreditBalance, spendCredits } from "@/lib/credits-balance";
 import { COST_SOCIAL_ADD_FRIEND } from "@/lib/credits-ledger";
 import { cn } from "@/lib/utils";
 
-export const Route = createFileRoute("/_app/outreach/social/prospecting")({
+export const Route = createFileRoute("/_app/outreach/social/prospecting/")({
   head: () => ({
     meta: [
       { title: "社媒搜索加友 · 出海大数据平台" },
