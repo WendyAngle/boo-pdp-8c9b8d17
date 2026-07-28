@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { UserCheck, Facebook, Music2, Send, Search } from "lucide-react";
 import { toast } from "sonner";
 import { Card } from "@/components/ui/card";
@@ -21,9 +21,12 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { useSocialFriends, setDmPrefill } from "@/lib/social-friends";
+import { useSocialFriends } from "@/lib/social-friends";
 import { useSocialAccounts } from "@/data/social-accounts";
-import { useProspectingTasks } from "@/lib/social-tasks";
+import { useProspectingTasks, addDmTask } from "@/lib/social-tasks";
+import { useCreditBalance, spendCredits } from "@/lib/credits-balance";
+import { chargeSocialDm, COST_SOCIAL_DM } from "@/lib/credits-ledger";
+import { CreateDmDialog, type Prefill } from "./_app.outreach.social.dm";
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/_app/outreach/social/friends")({
