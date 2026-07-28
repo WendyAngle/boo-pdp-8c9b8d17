@@ -2,7 +2,7 @@ import { createFileRoute, Link, Outlet, useRouterState } from "@tanstack/react-r
 import { Send, Users, MessageSquare, Facebook, Music2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useSocialAccounts, friendRemaining } from "@/data/social-accounts";
-import { avgHealth } from "@/lib/social-account-health";
+import { poolAverageHealth } from "@/lib/social-account-health";
 
 export const Route = createFileRoute("/_app/outreach/social/reach")({
   head: () => ({
