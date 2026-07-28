@@ -113,30 +113,6 @@ function FriendsPage() {
     navigate({ to: "/outreach/social/dm" });
   }
 
-  function handleExport() {
-    const rows = [
-      ["姓名", "Handle", "平台", "我方账号", "来源任务", "通过时间"],
-      ...filtered.map((f) => {
-        const acc = accounts.find((a) => a.id === f.accountId);
-        return [
-          f.name,
-          f.handle,
-          f.platform,
-          acc ? `${acc.handle}` : f.accountId,
-          f.sourceTaskName,
-          f.acceptedAt ? new Date(f.acceptedAt).toLocaleString() : "",
-        ];
-      }),
-    ];
-    const csv = rows.map((r) => r.map((v) => `"${String(v).replace(/"/g, '""')}"`).join(",")).join("\n");
-    const blob = new Blob(["\uFEFF" + csv], { type: "text/csv;charset=utf-8;" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = `social-friends-${new Date().toISOString().slice(0, 10)}.csv`;
-    a.click();
-    URL.revokeObjectURL(url);
-  }
 
   const total = friends.length;
   const fbCount = friends.filter((f) => f.platform === "Facebook").length;
