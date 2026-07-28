@@ -191,9 +191,6 @@ function FriendsPage() {
             <div className="text-xs text-muted-foreground">
               已选 <span className="font-semibold text-foreground tabular-nums">{selected.size}</span> / {filtered.length}
             </div>
-            <Button variant="outline" size="sm" onClick={handleExport}>
-              <Download className="h-3.5 w-3.5" /> 导出 CSV
-            </Button>
             <Button size="sm" onClick={handleBatchDm} disabled={selected.size === 0}>
               <Send className="h-3.5 w-3.5" /> 批量发起私信
             </Button>
