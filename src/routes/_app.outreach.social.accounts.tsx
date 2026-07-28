@@ -126,7 +126,18 @@ function SocialAccountsPage() {
       <Card className="overflow-hidden">
         <div className="px-5 py-3.5 border-b flex items-center justify-between">
           <div className="text-sm font-semibold">我的社媒账号</div>
-          <div className="text-xs text-muted-foreground">共 {accounts.length} 个</div>
+          <div className="flex items-center gap-3 text-xs text-muted-foreground">
+            {accounts.length > 0 && (
+              <span>
+                池平均健康度：
+                <span className="font-semibold text-foreground tabular-nums">
+                  {poolAverageHealth(accounts)}
+                </span>
+                <span> / 100</span>
+              </span>
+            )}
+            <span>共 {accounts.length} 个</span>
+          </div>
         </div>
         {accounts.length === 0 ? (
           <div className="p-10 text-center text-sm text-muted-foreground">尚无社媒账号，请先购买。</div>
@@ -138,10 +149,12 @@ function SocialAccountsPage() {
                 <TableHead>账号</TableHead>
                 <TableHead>显示名</TableHead>
                 <TableHead className="w-[110px]">状态</TableHead>
-                <TableHead className="w-[130px]">名下好友</TableHead>
-                <TableHead className="w-[130px]">今日加友</TableHead>
-                <TableHead className="w-[130px]">今日私信</TableHead>
-                <TableHead className="w-[140px]">购买时间</TableHead>
+                <TableHead className="w-[130px]">健康度</TableHead>
+                <TableHead className="w-[110px]">名下好友</TableHead>
+                <TableHead className="w-[110px]">今日加友</TableHead>
+                <TableHead className="w-[110px]">今日私信</TableHead>
+                <TableHead className="w-[120px]">购买时间</TableHead>
+                <TableHead className="w-[120px]">操作</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
