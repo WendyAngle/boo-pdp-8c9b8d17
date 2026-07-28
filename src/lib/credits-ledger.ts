@@ -1,7 +1,15 @@
 import { useSyncExternalStore } from "react";
 import { ENTERPRISES } from "@/data/enterprises";
 
-export type LedgerKind = "view" | "reach" | "refund" | "recharge" | "ai_generate";
+export type LedgerKind =
+  | "view"
+  | "reach"
+  | "refund"
+  | "recharge"
+  | "ai_generate"
+  | "social_account_purchase"
+  | "social_add_friend"
+  | "social_dm";
 export type ViewField =
   | "email"
   | "phone"
@@ -46,6 +54,11 @@ export const COST_REACH_SOCIAL_WHATSAPP = 100;
 export const COST_AI_EMAIL = 3;
 export const COST_AI_SMS = 2;
 export const COST_AI_SOCIAL = 3;
+
+/** 社媒账号购买 & 触达单价（P0） */
+export const COST_SOCIAL_ACCOUNT_PURCHASE = 1000; // 1 个账号
+export const COST_SOCIAL_ADD_FRIEND = 200; // 每次成功发出加友请求
+export const COST_SOCIAL_DM = 300; // 首条私信；同会话 24h 内追发免费
 
 export function costForChannel(channel: ReachChannel, platform?: string): number {
   if (channel === "email") return COST_REACH_EMAIL;
@@ -383,6 +396,79 @@ export function chargeAiGeneration(input: {
         : input.channel === "social"
           ? "AI 生成社媒文案"
           : "AI 生成短信文案",
+  };
+  ledger = [entry, ...ledger];
+  writeLedger(ledger);
+  emitLedger();
+  return entry;
+}
+
+/** 购买社媒账号：一次性扣费 N × 1000 */
+export function chargeSocialAccountPurchase(input: {
+  platform: "Facebook" | "TikTok";
+  quantity: number;
+}): LedgerEntry {
+  const entry: LedgerEntry = {
+    id: makeId("sap"),
+    kind: "social_account_purchase",
+    cost: COST_SOCIAL_ACCOUNT_PURCHASE * input.quantity,
+    createdAt: new Date().toISOString(),
+    targetKind: "enterprise",
+    targetId: "—",
+    targetName: `社媒账号购买 · ${input.platform}`,
+    platform: input.platform,
+    channel: "social",
+    detail: `${input.platform} × ${input.quantity}（1000 积分/账号）`,
+  };
+  ledger = [entry, ...ledger];
+  writeLedger(ledger);
+  emitLedger();
+  return entry;
+}
+
+/** 社媒加友请求成功发出 */
+export function chargeSocialAddFriend(input: {
+  platform: "Facebook" | "TikTok";
+  targetName: string;
+  detail?: string;
+  taskId?: string;
+}): LedgerEntry {
+  const entry: LedgerEntry = {
+    id: makeId("saf"),
+    kind: "social_add_friend",
+    cost: COST_SOCIAL_ADD_FRIEND,
+    createdAt: new Date().toISOString(),
+    targetKind: "contact",
+    targetId: input.taskId ?? "—",
+    targetName: input.targetName,
+    platform: input.platform,
+    channel: "social",
+    detail: input.detail ?? `${input.platform} 加友请求`,
+  };
+  ledger = [entry, ...ledger];
+  writeLedger(ledger);
+  emitLedger();
+  return entry;
+}
+
+/** 社媒私信首发 */
+export function chargeSocialDm(input: {
+  platform: "Facebook" | "TikTok";
+  targetName: string;
+  detail?: string;
+  taskId?: string;
+}): LedgerEntry {
+  const entry: LedgerEntry = {
+    id: makeId("sdm"),
+    kind: "social_dm",
+    cost: COST_SOCIAL_DM,
+    createdAt: new Date().toISOString(),
+    targetKind: "contact",
+    targetId: input.taskId ?? "—",
+    targetName: input.targetName,
+    platform: input.platform,
+    channel: "social",
+    detail: input.detail ?? `${input.platform} 私信首发`,
   };
   ledger = [entry, ...ledger];
   writeLedger(ledger);

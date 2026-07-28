@@ -35,6 +35,9 @@ import { Route as AppOutreachBillingEmptyRouteImport } from './routes/_app.outre
 import { Route as AppOutreachBillingRouteImport } from './routes/_app.outreach.billing'
 import { Route as AppOutreachProductsIndexRouteImport } from './routes/_app.outreach.products.index'
 import { Route as AppOutreachEnterpriseIndexRouteImport } from './routes/_app.outreach.enterprise.index'
+import { Route as AppOutreachSocialProspectingRouteImport } from './routes/_app.outreach.social.prospecting'
+import { Route as AppOutreachSocialDmRouteImport } from './routes/_app.outreach.social.dm'
+import { Route as AppOutreachSocialAccountsRouteImport } from './routes/_app.outreach.social.accounts'
 import { Route as AppOutreachProductsHsRouteImport } from './routes/_app.outreach.products.$hs'
 import { Route as AppOutreachEnterpriseIdRouteImport } from './routes/_app.outreach.enterprise.$id'
 import { Route as AppOutreachAdminSmsTemplatesRouteImport } from './routes/_app.outreach.admin.sms-templates'
@@ -181,6 +184,23 @@ const AppOutreachEnterpriseIndexRoute =
     path: '/',
     getParentRoute: () => AppOutreachEnterpriseRoute,
   } as any)
+const AppOutreachSocialProspectingRoute =
+  AppOutreachSocialProspectingRouteImport.update({
+    id: '/outreach/social/prospecting',
+    path: '/outreach/social/prospecting',
+    getParentRoute: () => AppRoute,
+  } as any)
+const AppOutreachSocialDmRoute = AppOutreachSocialDmRouteImport.update({
+  id: '/outreach/social/dm',
+  path: '/outreach/social/dm',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppOutreachSocialAccountsRoute =
+  AppOutreachSocialAccountsRouteImport.update({
+    id: '/outreach/social/accounts',
+    path: '/outreach/social/accounts',
+    getParentRoute: () => AppRoute,
+  } as any)
 const AppOutreachProductsHsRoute = AppOutreachProductsHsRouteImport.update({
   id: '/outreach/products/$hs',
   path: '/outreach/products/$hs',
@@ -272,6 +292,9 @@ export interface FileRoutesByFullPath {
   '/outreach/admin/sms-templates': typeof AppOutreachAdminSmsTemplatesRoute
   '/outreach/enterprise/$id': typeof AppOutreachEnterpriseIdRouteWithChildren
   '/outreach/products/$hs': typeof AppOutreachProductsHsRoute
+  '/outreach/social/accounts': typeof AppOutreachSocialAccountsRoute
+  '/outreach/social/dm': typeof AppOutreachSocialDmRoute
+  '/outreach/social/prospecting': typeof AppOutreachSocialProspectingRoute
   '/outreach/enterprise/': typeof AppOutreachEnterpriseIndexRoute
   '/outreach/products/': typeof AppOutreachProductsIndexRoute
   '/outreach/enterprise/$id/': typeof AppOutreachEnterpriseIdIndexRoute
@@ -307,6 +330,9 @@ export interface FileRoutesByTo {
   '/outreach/admin/sms-routing': typeof AppOutreachAdminSmsRoutingRoute
   '/outreach/admin/sms-templates': typeof AppOutreachAdminSmsTemplatesRoute
   '/outreach/products/$hs': typeof AppOutreachProductsHsRoute
+  '/outreach/social/accounts': typeof AppOutreachSocialAccountsRoute
+  '/outreach/social/dm': typeof AppOutreachSocialDmRoute
+  '/outreach/social/prospecting': typeof AppOutreachSocialProspectingRoute
   '/outreach/enterprise': typeof AppOutreachEnterpriseIndexRoute
   '/outreach/products': typeof AppOutreachProductsIndexRoute
   '/outreach/enterprise/$id': typeof AppOutreachEnterpriseIdIndexRoute
@@ -346,6 +372,9 @@ export interface FileRoutesById {
   '/_app/outreach/admin/sms-templates': typeof AppOutreachAdminSmsTemplatesRoute
   '/_app/outreach/enterprise/$id': typeof AppOutreachEnterpriseIdRouteWithChildren
   '/_app/outreach/products/$hs': typeof AppOutreachProductsHsRoute
+  '/_app/outreach/social/accounts': typeof AppOutreachSocialAccountsRoute
+  '/_app/outreach/social/dm': typeof AppOutreachSocialDmRoute
+  '/_app/outreach/social/prospecting': typeof AppOutreachSocialProspectingRoute
   '/_app/outreach/enterprise/': typeof AppOutreachEnterpriseIndexRoute
   '/_app/outreach/products/': typeof AppOutreachProductsIndexRoute
   '/_app/outreach/enterprise/$id/': typeof AppOutreachEnterpriseIdIndexRoute
@@ -385,6 +414,9 @@ export interface FileRouteTypes {
     | '/outreach/admin/sms-templates'
     | '/outreach/enterprise/$id'
     | '/outreach/products/$hs'
+    | '/outreach/social/accounts'
+    | '/outreach/social/dm'
+    | '/outreach/social/prospecting'
     | '/outreach/enterprise/'
     | '/outreach/products/'
     | '/outreach/enterprise/$id/'
@@ -420,6 +452,9 @@ export interface FileRouteTypes {
     | '/outreach/admin/sms-routing'
     | '/outreach/admin/sms-templates'
     | '/outreach/products/$hs'
+    | '/outreach/social/accounts'
+    | '/outreach/social/dm'
+    | '/outreach/social/prospecting'
     | '/outreach/enterprise'
     | '/outreach/products'
     | '/outreach/enterprise/$id'
@@ -458,6 +493,9 @@ export interface FileRouteTypes {
     | '/_app/outreach/admin/sms-templates'
     | '/_app/outreach/enterprise/$id'
     | '/_app/outreach/products/$hs'
+    | '/_app/outreach/social/accounts'
+    | '/_app/outreach/social/dm'
+    | '/_app/outreach/social/prospecting'
     | '/_app/outreach/enterprise/'
     | '/_app/outreach/products/'
     | '/_app/outreach/enterprise/$id/'
@@ -652,6 +690,27 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppOutreachEnterpriseIndexRouteImport
       parentRoute: typeof AppOutreachEnterpriseRoute
     }
+    '/_app/outreach/social/prospecting': {
+      id: '/_app/outreach/social/prospecting'
+      path: '/outreach/social/prospecting'
+      fullPath: '/outreach/social/prospecting'
+      preLoaderRoute: typeof AppOutreachSocialProspectingRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/outreach/social/dm': {
+      id: '/_app/outreach/social/dm'
+      path: '/outreach/social/dm'
+      fullPath: '/outreach/social/dm'
+      preLoaderRoute: typeof AppOutreachSocialDmRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/outreach/social/accounts': {
+      id: '/_app/outreach/social/accounts'
+      path: '/outreach/social/accounts'
+      fullPath: '/outreach/social/accounts'
+      preLoaderRoute: typeof AppOutreachSocialAccountsRouteImport
+      parentRoute: typeof AppRoute
+    }
     '/_app/outreach/products/$hs': {
       id: '/_app/outreach/products/$hs'
       path: '/outreach/products/$hs'
@@ -788,6 +847,9 @@ interface AppRouteChildren {
   AppOutreachAdminSmsRoutingRoute: typeof AppOutreachAdminSmsRoutingRoute
   AppOutreachAdminSmsTemplatesRoute: typeof AppOutreachAdminSmsTemplatesRoute
   AppOutreachProductsHsRoute: typeof AppOutreachProductsHsRoute
+  AppOutreachSocialAccountsRoute: typeof AppOutreachSocialAccountsRoute
+  AppOutreachSocialDmRoute: typeof AppOutreachSocialDmRoute
+  AppOutreachSocialProspectingRoute: typeof AppOutreachSocialProspectingRoute
   AppOutreachProductsIndexRoute: typeof AppOutreachProductsIndexRoute
 }
 
@@ -822,6 +884,9 @@ const AppRouteChildren: AppRouteChildren = {
   AppOutreachAdminSmsRoutingRoute: AppOutreachAdminSmsRoutingRoute,
   AppOutreachAdminSmsTemplatesRoute: AppOutreachAdminSmsTemplatesRoute,
   AppOutreachProductsHsRoute: AppOutreachProductsHsRoute,
+  AppOutreachSocialAccountsRoute: AppOutreachSocialAccountsRoute,
+  AppOutreachSocialDmRoute: AppOutreachSocialDmRoute,
+  AppOutreachSocialProspectingRoute: AppOutreachSocialProspectingRoute,
   AppOutreachProductsIndexRoute: AppOutreachProductsIndexRoute,
 }
 
@@ -833,13 +898,3 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}

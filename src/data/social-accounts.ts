@@ -8,13 +8,21 @@ export interface SocialAccount {
   platform: SocialPlatform;
   handle: string;
   displayName: string;
+  /** WhatsApp 沿用：每日发送额度 */
   dailyLimit: number;
   sentToday: number;
-  status: "正常" | "停用" | "异常";
+  /** Facebook / TikTok：每日加友额度（默认 5） */
+  dailyFriendLimit?: number;
+  friendSentToday?: number;
+  /** Facebook / TikTok：每日私信额度（默认 20） */
+  dailyDmLimit?: number;
+  dmSentToday?: number;
+  status: "正常" | "停用" | "异常" | "养号中";
+  purchasedAt?: string;
 }
 
-const KEY = "boo:social-accounts:v1";
-const SEED_FLAG = "boo:social-accounts:v1:seeded";
+const KEY = "boo:social-accounts:v2";
+const SEED_FLAG = "boo:social-accounts:v2:seeded";
 
 function read(): SocialAccount[] {
   if (typeof window === "undefined") return [];
@@ -36,6 +44,7 @@ function write(arr: SocialAccount[]) {
 function seed() {
   if (typeof window === "undefined") return;
   if (window.localStorage.getItem(SEED_FLAG)) return;
+  const now = new Date().toISOString();
   const seedData: SocialAccount[] = [
     {
       id: "sa_wa_1",
@@ -63,6 +72,64 @@ function seed() {
       dailyLimit: 80,
       sentToday: 0,
       status: "正常",
+    },
+    // Facebook 预置 2 个（历史购买示例）
+    {
+      id: "sa_fb_1",
+      platform: "Facebook",
+      handle: "@bytetech.export",
+      displayName: "ByteTech FB · Global",
+      dailyLimit: 20,
+      sentToday: 3,
+      dailyFriendLimit: 5,
+      friendSentToday: 2,
+      dailyDmLimit: 20,
+      dmSentToday: 3,
+      status: "正常",
+      purchasedAt: now,
+    },
+    {
+      id: "sa_fb_2",
+      platform: "Facebook",
+      handle: "@bytetech.trade",
+      displayName: "ByteTech FB · Trade",
+      dailyLimit: 20,
+      sentToday: 0,
+      dailyFriendLimit: 5,
+      friendSentToday: 0,
+      dailyDmLimit: 20,
+      dmSentToday: 0,
+      status: "养号中",
+      purchasedAt: now,
+    },
+    // TikTok 预置 2 个
+    {
+      id: "sa_tt_1",
+      platform: "TikTok",
+      handle: "@bytetech_official",
+      displayName: "ByteTech TT · Official",
+      dailyLimit: 20,
+      sentToday: 1,
+      dailyFriendLimit: 5,
+      friendSentToday: 1,
+      dailyDmLimit: 20,
+      dmSentToday: 2,
+      status: "正常",
+      purchasedAt: now,
+    },
+    {
+      id: "sa_tt_2",
+      platform: "TikTok",
+      handle: "@bytetech_biz",
+      displayName: "ByteTech TT · Biz",
+      dailyLimit: 20,
+      sentToday: 0,
+      dailyFriendLimit: 5,
+      friendSentToday: 0,
+      dailyDmLimit: 20,
+      dmSentToday: 0,
+      status: "正常",
+      purchasedAt: now,
     },
   ];
   write(seedData);
@@ -106,6 +173,10 @@ export function useSocialAccounts(): SocialAccount[] {
   );
 }
 
+export function getSocialAccounts(): SocialAccount[] {
+  return cache;
+}
+
 /** 平台可用账号（状态=正常） */
 export function usableAccountsOf(list: SocialAccount[], platform: SocialPlatform) {
   return list.filter((a) => a.platform === platform && a.status === "正常");
@@ -132,7 +203,6 @@ export function dispatchSend(platform: SocialPlatform, count: number): number {
   let remaining = count;
   const next = cache.map((a) => ({ ...a }));
   while (remaining > 0) {
-    // 每轮选剩余最多的正常账号
     const idx = next
       .map((a, i) => ({ a, i }))
       .filter(
@@ -151,4 +221,57 @@ export function dispatchSend(platform: SocialPlatform, count: number): number {
   }
   commit(next);
   return count - remaining;
+}
+
+/** 购买后向池中追加 N 个账号 */
+export function addPurchasedAccounts(
+  platform: "Facebook" | "TikTok",
+  quantity: number,
+): SocialAccount[] {
+  const now = new Date().toISOString();
+  const existing = cache.filter((a) => a.platform === platform).length;
+  const newOnes: SocialAccount[] = Array.from({ length: quantity }).map((_, i) => {
+    const seq = existing + i + 1;
+    const handle =
+      platform === "Facebook"
+        ? `@bytetech.fb${String(seq).padStart(3, "0")}`
+        : `@bytetech_tt${String(seq).padStart(3, "0")}`;
+    return {
+      id: `sa_${platform === "Facebook" ? "fb" : "tt"}_${Date.now().toString(36)}_${i}`,
+      platform,
+      handle,
+      displayName: `ByteTech ${platform} · #${seq}`,
+      dailyLimit: 20,
+      sentToday: 0,
+      dailyFriendLimit: 5,
+      friendSentToday: 0,
+      dailyDmLimit: 20,
+      dmSentToday: 0,
+      status: "养号中",
+      purchasedAt: now,
+    };
+  });
+  commit([...newOnes, ...cache]);
+  return newOnes;
+}
+
+/** 平台已购账号数 */
+export function countAccountsByPlatform(
+  list: SocialAccount[],
+  platform: SocialPlatform,
+): number {
+  return list.filter((a) => a.platform === platform).length;
+}
+
+/** 平台今日加友剩余额度合计 */
+export function friendRemaining(
+  list: SocialAccount[],
+  platform: "Facebook" | "TikTok",
+): number {
+  return list
+    .filter((a) => a.platform === platform && a.status === "正常")
+    .reduce(
+      (s, a) => s + Math.max(0, (a.dailyFriendLimit ?? 5) - (a.friendSentToday ?? 0)),
+      0,
+    );
 }
