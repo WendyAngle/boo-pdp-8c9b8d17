@@ -150,6 +150,12 @@ export function getSocialAccounts(): SocialAccount[] {
   return cache;
 }
 
+/** 更新账号状态（用于一键恢复 / 转入养号） */
+export function updateAccountStatus(id: string, status: SocialAccount["status"]) {
+  const next = cache.map((a) => (a.id === id ? { ...a, status } : a));
+  commit(next);
+}
+
 /** 平台可用账号（状态=正常） */
 export function usableAccountsOf(list: SocialAccount[], platform: SocialPlatform) {
   return list.filter((a) => a.platform === platform && a.status === "正常");
