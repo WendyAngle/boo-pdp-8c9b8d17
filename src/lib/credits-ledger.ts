@@ -403,6 +403,79 @@ export function chargeAiGeneration(input: {
   return entry;
 }
 
+/** 购买社媒账号：一次性扣费 N × 1000 */
+export function chargeSocialAccountPurchase(input: {
+  platform: "Facebook" | "TikTok";
+  quantity: number;
+}): LedgerEntry {
+  const entry: LedgerEntry = {
+    id: makeId("sap"),
+    kind: "social_account_purchase",
+    cost: COST_SOCIAL_ACCOUNT_PURCHASE * input.quantity,
+    createdAt: new Date().toISOString(),
+    targetKind: "enterprise",
+    targetId: "—",
+    targetName: `社媒账号购买 · ${input.platform}`,
+    platform: input.platform,
+    channel: "social",
+    detail: `${input.platform} × ${input.quantity}（1000 积分/账号）`,
+  };
+  ledger = [entry, ...ledger];
+  writeLedger(ledger);
+  emitLedger();
+  return entry;
+}
+
+/** 社媒加友请求成功发出 */
+export function chargeSocialAddFriend(input: {
+  platform: "Facebook" | "TikTok";
+  targetName: string;
+  detail?: string;
+  taskId?: string;
+}): LedgerEntry {
+  const entry: LedgerEntry = {
+    id: makeId("saf"),
+    kind: "social_add_friend",
+    cost: COST_SOCIAL_ADD_FRIEND,
+    createdAt: new Date().toISOString(),
+    targetKind: "contact",
+    targetId: input.taskId ?? "—",
+    targetName: input.targetName,
+    platform: input.platform,
+    channel: "social",
+    detail: input.detail ?? `${input.platform} 加友请求`,
+  };
+  ledger = [entry, ...ledger];
+  writeLedger(ledger);
+  emitLedger();
+  return entry;
+}
+
+/** 社媒私信首发 */
+export function chargeSocialDm(input: {
+  platform: "Facebook" | "TikTok";
+  targetName: string;
+  detail?: string;
+  taskId?: string;
+}): LedgerEntry {
+  const entry: LedgerEntry = {
+    id: makeId("sdm"),
+    kind: "social_dm",
+    cost: COST_SOCIAL_DM,
+    createdAt: new Date().toISOString(),
+    targetKind: "contact",
+    targetId: input.taskId ?? "—",
+    targetName: input.targetName,
+    platform: input.platform,
+    channel: "social",
+    detail: input.detail ?? `${input.platform} 私信首发`,
+  };
+  ledger = [entry, ...ledger];
+  writeLedger(ledger);
+  emitLedger();
+  return entry;
+}
+
 export function recordRecharge(input: {
   orderNo: string;
   packageLabel: string;
