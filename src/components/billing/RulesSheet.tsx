@@ -123,6 +123,16 @@ const AI_RULES: Rule[] = [
     desc: "调用 AI 一键生成社媒私信文案，每次生成按调用计费。",
   },
 ];
+const SOCIAL_ACCOUNT_RULES: Rule[] = [
+  {
+    tone: "emerald",
+    icon: <Users className="h-4 w-4" />,
+    title: "购买社媒账号",
+    cost: COST_SOCIAL_ACCOUNT_PURCHASE,
+    desc: "开通 1 个可用于加友与私信的社媒账号（Facebook / TikTok），按账号一次性扣费；账号成功入池后不退款。",
+  },
+];
+
 
 export function RulesSheet({
   open,
