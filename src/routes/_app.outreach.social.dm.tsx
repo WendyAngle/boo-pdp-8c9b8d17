@@ -1,11 +1,12 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { MessageCircle, Plus, Facebook, Music2 } from "lucide-react";
+import { MessageCircle, Plus, Facebook, Music2, Search } from "lucide-react";
 import { toast } from "sonner";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
   Dialog,
   DialogContent,
@@ -37,6 +38,7 @@ import {
 } from "@/lib/social-tasks";
 import { useCreditBalance, spendCredits } from "@/lib/credits-balance";
 import { chargeSocialDm, COST_SOCIAL_DM } from "@/lib/credits-ledger";
+import { useSocialFriends, consumeDmPrefill } from "@/lib/social-friends";
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/_app/outreach/social/dm")({
@@ -51,10 +53,25 @@ export const Route = createFileRoute("/_app/outreach/social/dm")({
   component: DmPage,
 });
 
+interface Prefill {
+  platform: SocialTaskPlatform;
+  friends: { name: string; handle: string }[];
+}
+
 function DmPage() {
   const tasks = useDmTasks();
   const balance = useCreditBalance();
   const [open, setOpen] = useState(false);
+  const [prefill, setPrefill] = useState<Prefill | null>(null);
+
+  // 好友池 → 私信页 交接
+  useEffect(() => {
+    const p = consumeDmPrefill();
+    if (p && p.friends.length > 0) {
+      setPrefill(p);
+      setOpen(true);
+    }
+  }, []);
 
   return (
     <div className="p-6 space-y-5">
@@ -71,7 +88,7 @@ function DmPage() {
             </p>
           </div>
           <div className="ml-auto">
-            <Button size="sm" onClick={() => setOpen(true)}>
+            <Button size="sm" onClick={() => { setPrefill(null); setOpen(true); }}>
               <Plus className="h-3.5 w-3.5" /> 新建私信任务
             </Button>
           </div>
@@ -86,6 +103,10 @@ function DmPage() {
         {tasks.length === 0 ? (
           <div className="p-10 text-center text-sm text-muted-foreground">
             尚无私信任务。请先在{" "}
+            <Link to="/outreach/social/friends" className="text-primary hover:underline">
+              社媒好友池
+            </Link>{" "}
+            中挑选目标，或在{" "}
             <Link to="/outreach/social/prospecting" className="text-primary hover:underline">
               社媒搜索加友
             </Link>{" "}
@@ -114,8 +135,9 @@ function DmPage() {
 
       <CreateDmDialog
         open={open}
-        onOpenChange={setOpen}
+        onOpenChange={(v) => { setOpen(v); if (!v) setPrefill(null); }}
         balance={balance.balance}
+        prefill={prefill}
         onCreate={({ name, platform, template, sourceTaskId, sendTargets }) => {
           const cost = sendTargets.length * COST_SOCIAL_DM;
           if (balance.balance < cost) return toast.error("积分不足");
@@ -138,6 +160,7 @@ function DmPage() {
           addDmTask({ name, platform, template, sourceTaskId, sends });
           toast.success(`已发出 ${sendTargets.length} 条私信，扣 ${cost.toLocaleString()} 积分`);
           setOpen(false);
+          setPrefill(null);
         }}
       />
     </div>
@@ -189,18 +212,21 @@ function DmRow({ task }: { task: DmTask }) {
   );
 }
 
-// 极简敏感词（P0 占位；后续接平台敏感词表）
 const SENSITIVE_WORDS = ["赌博", "色情", "毒品", "洗钱", "枪支", "porn", "casino"];
+
+type SourceMode = "pool" | "task";
 
 function CreateDmDialog({
   open,
   onOpenChange,
   balance,
+  prefill,
   onCreate,
 }: {
   open: boolean;
   onOpenChange: (v: boolean) => void;
   balance: number;
+  prefill: Prefill | null;
   onCreate: (payload: {
     name: string;
     platform: SocialTaskPlatform;
@@ -210,24 +236,87 @@ function CreateDmDialog({
   }) => void;
 }) {
   const prosTasks = useProspectingTasks();
+  const friends = useSocialFriends();
+
   const [name, setName] = useState("");
   const [platform, setPlatform] = useState<SocialTaskPlatform>("Facebook");
   const [template, setTemplate] = useState("");
+  const [sourceMode, setSourceMode] = useState<SourceMode>("pool");
   const [sourceId, setSourceId] = useState<string>("");
+  const [poolSelected, setPoolSelected] = useState<Set<string>>(new Set()); // friend.id set
+  const [poolKw, setPoolKw] = useState("");
 
-  const acceptedTargets = useMemo(() => {
-    if (!sourceId) return [];
+  // 处理 prefill：从好友池跳转过来
+  useEffect(() => {
+    if (!open) return;
+    if (prefill) {
+      setSourceMode("pool");
+      setPlatform(prefill.platform);
+      const handles = new Set(prefill.friends.map((f) => f.handle));
+      const ids = new Set(
+        friends.filter((f) => f.platform === prefill.platform && handles.has(f.handle)).map((f) => f.id),
+      );
+      setPoolSelected(ids);
+    } else {
+      // 打开新弹窗时重置
+      setPoolSelected(new Set());
+      setSourceId("");
+      setPoolKw("");
+      setName("");
+      setTemplate("");
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open, prefill]);
+
+  const platformFriends = useMemo(
+    () => friends.filter((f) => f.platform === platform),
+    [friends, platform],
+  );
+  const poolFiltered = useMemo(() => {
+    if (!poolKw) return platformFriends;
+    const s = poolKw.toLowerCase();
+    return platformFriends.filter(
+      (f) => f.name.toLowerCase().includes(s) || f.handle.toLowerCase().includes(s),
+    );
+  }, [platformFriends, poolKw]);
+
+  const acceptedFromTask = useMemo(() => {
+    if (!sourceId) return [] as { name: string; handle: string }[];
     const src = prosTasks.find((t) => t.id === sourceId);
-    return (src?.targets ?? []).filter((t) => t.status === "accepted");
+    return (src?.targets ?? [])
+      .filter((t) => t.status === "accepted")
+      .map((t) => ({ name: t.name, handle: t.handle }));
   }, [prosTasks, sourceId]);
 
-  const cost = acceptedTargets.length * COST_SOCIAL_DM;
+  const sendTargets = useMemo<{ name: string; handle: string }[]>(() => {
+    if (sourceMode === "pool") {
+      return friends
+        .filter((f) => poolSelected.has(f.id))
+        .map((f) => ({ name: f.name, handle: f.handle }));
+    }
+    return acceptedFromTask;
+  }, [sourceMode, friends, poolSelected, acceptedFromTask]);
 
+  const cost = sendTargets.length * COST_SOCIAL_DM;
   const hit = SENSITIVE_WORDS.find((w) => template.toLowerCase().includes(w.toLowerCase()));
+
+  const allChecked = poolFiltered.length > 0 && poolFiltered.every((f) => poolSelected.has(f.id));
+  function toggleAllPool() {
+    const next = new Set(poolSelected);
+    if (allChecked) poolFiltered.forEach((f) => next.delete(f.id));
+    else poolFiltered.forEach((f) => next.add(f.id));
+    setPoolSelected(next);
+  }
+  function togglePool(id: string) {
+    const next = new Set(poolSelected);
+    if (next.has(id)) next.delete(id);
+    else next.add(id);
+    setPoolSelected(next);
+  }
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-lg">
+      <DialogContent className="max-w-2xl">
         <DialogHeader>
           <DialogTitle>新建私信任务</DialogTitle>
         </DialogHeader>
@@ -239,7 +328,7 @@ function CreateDmDialog({
             </div>
             <div className="space-y-1">
               <div className="text-xs text-muted-foreground">平台</div>
-              <Select value={platform} onValueChange={(v) => setPlatform(v as SocialTaskPlatform)}>
+              <Select value={platform} onValueChange={(v) => { setPlatform(v as SocialTaskPlatform); setPoolSelected(new Set()); setSourceId(""); }}>
                 <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>
                   <SelectItem value="Facebook">Facebook</SelectItem>
@@ -248,22 +337,111 @@ function CreateDmDialog({
               </Select>
             </div>
           </div>
+
           <div className="space-y-1">
-            <div className="text-xs text-muted-foreground">目标来源（已通过好友池）</div>
-            <Select value={sourceId} onValueChange={setSourceId}>
-              <SelectTrigger><SelectValue placeholder="选择一个搜索加友任务" /></SelectTrigger>
-              <SelectContent>
-                {prosTasks.length === 0 && (
-                  <div className="px-3 py-2 text-xs text-muted-foreground">尚无搜索任务</div>
+            <div className="text-xs text-muted-foreground">目标来源</div>
+            <div className="flex gap-2 text-xs">
+              <button
+                type="button"
+                onClick={() => setSourceMode("pool")}
+                className={cn(
+                  "px-3 py-1.5 rounded-md border transition-colors",
+                  sourceMode === "pool"
+                    ? "bg-primary text-primary-foreground border-primary"
+                    : "bg-background hover:bg-muted",
                 )}
-                {prosTasks.map((t) => (
-                  <SelectItem key={t.id} value={t.id}>
-                    {t.name} · 已通过 {t.targets.filter((x) => x.status === "accepted").length}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+              >
+                好友池筛选（推荐）
+              </button>
+              <button
+                type="button"
+                onClick={() => setSourceMode("task")}
+                className={cn(
+                  "px-3 py-1.5 rounded-md border transition-colors",
+                  sourceMode === "task"
+                    ? "bg-primary text-primary-foreground border-primary"
+                    : "bg-background hover:bg-muted",
+                )}
+              >
+                指定加友任务
+              </button>
+            </div>
           </div>
+
+          {sourceMode === "pool" ? (
+            <div className="rounded-md border overflow-hidden">
+              <div className="px-3 py-2 border-b flex items-center gap-2 bg-muted/30">
+                <Search className="h-3.5 w-3.5 text-muted-foreground" />
+                <Input
+                  value={poolKw}
+                  onChange={(e) => setPoolKw(e.target.value)}
+                  placeholder={`搜索 ${platform} 好友（姓名 / Handle）`}
+                  className="h-7 border-0 shadow-none focus-visible:ring-0 px-0"
+                />
+                <div className="text-[11px] text-muted-foreground whitespace-nowrap">
+                  已选 {poolSelected.size} · 平台内 {platformFriends.length}
+                </div>
+              </div>
+              <div className="max-h-56 overflow-y-auto">
+                {poolFiltered.length === 0 ? (
+                  <div className="p-6 text-center text-xs text-muted-foreground">
+                    {platform} 尚无已通过好友。请先{" "}
+                    <Link to="/outreach/social/prospecting" className="text-primary hover:underline">
+                      创建搜索加友任务
+                    </Link>
+                    。
+                  </div>
+                ) : (
+                  <table className="w-full text-xs">
+                    <thead className="bg-muted/40 sticky top-0">
+                      <tr className="text-left">
+                        <th className="px-3 py-1.5 w-8">
+                          <Checkbox checked={allChecked} onCheckedChange={toggleAllPool} />
+                        </th>
+                        <th className="px-2 py-1.5">好友</th>
+                        <th className="px-2 py-1.5 w-40">来源任务</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {poolFiltered.map((f) => (
+                        <tr key={f.id} className="border-t hover:bg-muted/30">
+                          <td className="px-3 py-1.5">
+                            <Checkbox
+                              checked={poolSelected.has(f.id)}
+                              onCheckedChange={() => togglePool(f.id)}
+                            />
+                          </td>
+                          <td className="px-2 py-1.5">
+                            <div className="font-medium">{f.name}</div>
+                            <div className="text-[10px] text-muted-foreground font-mono">{f.handle}</div>
+                          </td>
+                          <td className="px-2 py-1.5 text-muted-foreground truncate">{f.sourceTaskName}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                )}
+              </div>
+            </div>
+          ) : (
+            <div className="space-y-1">
+              <div className="text-xs text-muted-foreground">加友任务（自动取该任务全部已通过好友）</div>
+              <Select value={sourceId} onValueChange={setSourceId}>
+                <SelectTrigger><SelectValue placeholder="选择一个搜索加友任务" /></SelectTrigger>
+                <SelectContent>
+                  {prosTasks.length === 0 && (
+                    <div className="px-3 py-2 text-xs text-muted-foreground">尚无搜索任务</div>
+                  )}
+                  {prosTasks.map((t) => (
+                    <SelectItem key={t.id} value={t.id}>
+                      {t.name} · 已通过 {t.targets.filter((x) => x.status === "accepted").length}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          )}
+
           <div className="space-y-1">
             <div className="text-xs text-muted-foreground">
               私信模板（支持变量 {"{联系人名}"} {"{我的公司}"}）
@@ -281,7 +459,7 @@ function CreateDmDialog({
             )}
           </div>
           <div className="rounded-lg bg-muted/50 px-3 py-2 text-xs flex items-center justify-between">
-            <span>本次发送 {acceptedTargets.length} 条，合计</span>
+            <span>本次发送 {sendTargets.length} 条，合计</span>
             <span className="font-semibold tabular-nums text-rose-600">
               -{cost.toLocaleString()}
             </span>
@@ -299,13 +477,13 @@ function CreateDmDialog({
             onClick={() => {
               if (!name.trim()) return toast.error("请填写任务名");
               if (!template.trim()) return toast.error("请填写私信模板");
-              if (acceptedTargets.length === 0) return toast.error("所选任务尚无已通过好友");
+              if (sendTargets.length === 0) return toast.error("请选择至少 1 位好友");
               onCreate({
                 name: name.trim(),
                 platform,
                 template: template.trim(),
-                sourceTaskId: sourceId || undefined,
-                sendTargets: acceptedTargets.map((t) => ({ name: t.name, handle: t.handle })),
+                sourceTaskId: sourceMode === "task" ? (sourceId || undefined) : undefined,
+                sendTargets,
               });
             }}
           >
