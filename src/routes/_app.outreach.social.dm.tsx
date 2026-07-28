@@ -81,7 +81,7 @@ export const Route = createFileRoute("/_app/outreach/social/dm")({
   component: DmPage,
 });
 
-interface Prefill {
+export interface Prefill {
   platform: SocialTaskPlatform;
   friends: { name: string; handle: string }[];
 }
