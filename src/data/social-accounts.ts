@@ -21,8 +21,8 @@ export interface SocialAccount {
   purchasedAt?: string;
 }
 
-const KEY = "boo:social-accounts:v3";
-const SEED_FLAG = "boo:social-accounts:v3:seeded";
+const KEY = "boo:social-accounts:v4";
+const SEED_FLAG = "boo:social-accounts:v4:seeded";
 
 function read(): SocialAccount[] {
   if (typeof window === "undefined") return [];
