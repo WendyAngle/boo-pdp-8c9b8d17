@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { UserCheck, Facebook, Music2, Send, Search } from "lucide-react";
 import { toast } from "sonner";
 import { Card } from "@/components/ui/card";
@@ -21,9 +21,12 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { useSocialFriends, setDmPrefill } from "@/lib/social-friends";
+import { useSocialFriends } from "@/lib/social-friends";
 import { useSocialAccounts } from "@/data/social-accounts";
-import { useProspectingTasks } from "@/lib/social-tasks";
+import { useProspectingTasks, addDmTask } from "@/lib/social-tasks";
+import { useCreditBalance, spendCredits } from "@/lib/credits-balance";
+import { chargeSocialDm, COST_SOCIAL_DM } from "@/lib/credits-ledger";
+import { CreateDmDialog, type Prefill } from "./_app.outreach.social.dm";
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/_app/outreach/social/friends")({
@@ -42,13 +45,15 @@ function FriendsPage() {
   const friends = useSocialFriends();
   const accounts = useSocialAccounts();
   const tasks = useProspectingTasks();
-  const navigate = useNavigate();
+  const balance = useCreditBalance();
 
   const [platform, setPlatform] = useState<"all" | "Facebook" | "TikTok">("all");
   const [accountId, setAccountId] = useState<string>("all");
   const [taskId, setTaskId] = useState<string>("all");
   const [kw, setKw] = useState("");
   const [selected, setSelected] = useState<Set<string>>(new Set());
+  const [dmOpen, setDmOpen] = useState(false);
+  const [dmPrefill, setDmPrefillState] = useState<Prefill | null>(null);
 
   // 支持从「账号购买」下钻带入过滤：?accountId=xxx
   useEffect(() => {
@@ -106,12 +111,13 @@ function FriendsPage() {
       toast.error("同一私信任务需属于同一平台，请拆分选择");
       return;
     }
-    setDmPrefill({
+    setDmPrefillState({
       platform: selectedFriends[0].platform,
       friends: selectedFriends.map((f) => ({ name: f.name, handle: f.handle })),
     });
-    navigate({ to: "/outreach/social/dm" });
+    setDmOpen(true);
   }
+
 
 
   const total = friends.length;
@@ -269,6 +275,38 @@ function FriendsPage() {
           </Table>
         )}
       </Card>
+
+      <CreateDmDialog
+        open={dmOpen}
+        onOpenChange={(v) => { setDmOpen(v); if (!v) setDmPrefillState(null); }}
+        balance={balance.balance}
+        prefill={dmPrefill}
+        onCreate={({ name, platform: p, template, sourceTaskId, sendTargets }) => {
+          const cost = sendTargets.length * COST_SOCIAL_DM;
+          if (balance.balance < cost) return toast.error("积分不足");
+          spendCredits(cost);
+          const sends = sendTargets.map((tgt, i) => {
+            chargeSocialDm({
+              platform: p,
+              targetName: tgt.name,
+              detail: `${p} 私信首发 · ${tgt.handle}`,
+            });
+            return {
+              id: `s_${Date.now().toString(36)}_${i}`,
+              targetName: tgt.name,
+              targetHandle: tgt.handle,
+              platform: p,
+              status: "sent" as const,
+              sentAt: new Date().toISOString(),
+            };
+          });
+          addDmTask({ name, platform: p, template, sourceTaskId, sends });
+          toast.success(`已发出 ${sendTargets.length} 条私信，扣 ${cost.toLocaleString()} 积分`);
+          setDmOpen(false);
+          setDmPrefillState(null);
+          setSelected(new Set());
+        }}
+      />
     </div>
   );
 }

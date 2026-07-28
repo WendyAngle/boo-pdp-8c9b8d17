@@ -81,7 +81,7 @@ export const Route = createFileRoute("/_app/outreach/social/dm")({
   component: DmPage,
 });
 
-interface Prefill {
+export interface Prefill {
   platform: SocialTaskPlatform;
   friends: { name: string; handle: string }[];
 }
@@ -244,7 +244,7 @@ const SENSITIVE_WORDS = ["赌博", "色情", "毒品", "洗钱", "枪支", "porn
 
 type SourceMode = "pool" | "task";
 
-function CreateDmDialog({
+export function CreateDmDialog({
   open,
   onOpenChange,
   balance,
