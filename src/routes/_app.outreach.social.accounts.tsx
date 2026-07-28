@@ -353,7 +353,7 @@ function AccountRow({ account, friendCount }: { account: SocialAccount; friendCo
       <TableCell className="text-xs tabular-nums">
         {friendCount > 0 ? (
           <Link
-            to="/outreach/social/friends"
+            to="/outreach/social/reach/friends"
             search={{ accountId: account.id } as never}
             className="inline-flex items-center gap-1 text-primary hover:underline"
             title="查看该账号名下的所有好友"
