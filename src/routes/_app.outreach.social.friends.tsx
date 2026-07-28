@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { UserCheck, Facebook, Music2, Send, Search, Download } from "lucide-react";
+import { UserCheck, Facebook, Music2, Send, Search } from "lucide-react";
 import { toast } from "sonner";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -113,30 +113,6 @@ function FriendsPage() {
     navigate({ to: "/outreach/social/dm" });
   }
 
-  function handleExport() {
-    const rows = [
-      ["姓名", "Handle", "平台", "我方账号", "来源任务", "通过时间"],
-      ...filtered.map((f) => {
-        const acc = accounts.find((a) => a.id === f.accountId);
-        return [
-          f.name,
-          f.handle,
-          f.platform,
-          acc ? `${acc.handle}` : f.accountId,
-          f.sourceTaskName,
-          f.acceptedAt ? new Date(f.acceptedAt).toLocaleString() : "",
-        ];
-      }),
-    ];
-    const csv = rows.map((r) => r.map((v) => `"${String(v).replace(/"/g, '""')}"`).join(",")).join("\n");
-    const blob = new Blob(["\uFEFF" + csv], { type: "text/csv;charset=utf-8;" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = `social-friends-${new Date().toISOString().slice(0, 10)}.csv`;
-    a.click();
-    URL.revokeObjectURL(url);
-  }
 
   const total = friends.length;
   const fbCount = friends.filter((f) => f.platform === "Facebook").length;
@@ -215,9 +191,6 @@ function FriendsPage() {
             <div className="text-xs text-muted-foreground">
               已选 <span className="font-semibold text-foreground tabular-nums">{selected.size}</span> / {filtered.length}
             </div>
-            <Button variant="outline" size="sm" onClick={handleExport}>
-              <Download className="h-3.5 w-3.5" /> 导出 CSV
-            </Button>
             <Button size="sm" onClick={handleBatchDm} disabled={selected.size === 0}>
               <Send className="h-3.5 w-3.5" /> 批量发起私信
             </Button>
