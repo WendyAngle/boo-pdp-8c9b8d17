@@ -200,9 +200,29 @@ function TaskRow({ task }: { task: ProspectingTask }) {
         </span>
       </TableCell>
       <TableCell className="text-xs tabular-nums text-muted-foreground">
-        {total > 0
-          ? `已请求 ${requested} · 已通过 ${accepted} / 上限 ${task.targetCap}`
-          : `上限 ${task.targetCap}`}
+        {total > 0 ? (
+          <div className="flex items-center gap-1.5">
+            <Link
+              to="/outreach/social/prospecting/$taskId"
+              params={{ taskId: task.id }}
+              search={{ status: "requested" as const }}
+              className="px-1.5 py-0.5 rounded border border-sky-200 bg-sky-50 text-sky-700 hover:bg-sky-100"
+            >
+              已请求 {requested}
+            </Link>
+            <Link
+              to="/outreach/social/prospecting/$taskId"
+              params={{ taskId: task.id }}
+              search={{ status: "accepted" as const }}
+              className="px-1.5 py-0.5 rounded border border-emerald-200 bg-emerald-50 text-emerald-700 hover:bg-emerald-100"
+            >
+              已通过 {accepted}
+            </Link>
+            <span className="text-muted-foreground">/ 上限 {task.targetCap}</span>
+          </div>
+        ) : (
+          `上限 ${task.targetCap}`
+        )}
       </TableCell>
       <TableCell className="text-xs tabular-nums text-muted-foreground">
         {task.usedCredits.toLocaleString()} / {task.frozenCredits.toLocaleString()}
