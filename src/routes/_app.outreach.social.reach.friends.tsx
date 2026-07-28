@@ -26,7 +26,7 @@ import { useSocialAccounts } from "@/data/social-accounts";
 import { useProspectingTasks, addDmTask } from "@/lib/social-tasks";
 import { useCreditBalance, spendCredits } from "@/lib/credits-balance";
 import { chargeSocialDm, COST_SOCIAL_DM } from "@/lib/credits-ledger";
-import { CreateDmDialog, type Prefill } from "./_app.outreach.social.dm";
+import { CreateDmDialog, type Prefill } from "./_app.outreach.social.reach.dm";
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/_app/outreach/social/reach/friends")({
