@@ -55,6 +55,11 @@ export const COST_AI_EMAIL = 3;
 export const COST_AI_SMS = 2;
 export const COST_AI_SOCIAL = 3;
 
+/** 社媒账号购买 & 触达单价（P0） */
+export const COST_SOCIAL_ACCOUNT_PURCHASE = 1000; // 1 个账号
+export const COST_SOCIAL_ADD_FRIEND = 200; // 每次成功发出加友请求
+export const COST_SOCIAL_DM = 300; // 首条私信；同会话 24h 内追发免费
+
 export function costForChannel(channel: ReachChannel, platform?: string): number {
   if (channel === "email") return COST_REACH_EMAIL;
   if (channel === "phone") return COST_REACH_SMS;
