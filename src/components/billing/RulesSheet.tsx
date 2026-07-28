@@ -24,7 +24,9 @@ import {
   COST_AI_EMAIL,
   COST_AI_SMS,
   COST_AI_SOCIAL,
+  COST_SOCIAL_ACCOUNT_PURCHASE,
 } from "@/lib/credits-ledger";
+import { Users } from "lucide-react";
 import {
   Dialog,
   DialogContent,
