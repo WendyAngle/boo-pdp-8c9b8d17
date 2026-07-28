@@ -49,7 +49,7 @@ function SocialReachLayout() {
   const accounts = useSocialAccounts();
   const fbRemain = friendRemaining(accounts, "Facebook");
   const ttRemain = friendRemaining(accounts, "TikTok");
-  const health = avgHealth(accounts);
+  const health = poolAverageHealth(accounts);
 
   return (
     <div className="flex flex-col">
