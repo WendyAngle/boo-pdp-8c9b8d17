@@ -73,10 +73,13 @@ export function scoreAuthenticity(thread: Thread): AuthResult {
   const senderAddr = last?.fromAddress || thread.counterpartyAddress || "";
   const senderDomain = domainOf(senderAddr);
   const isEmailChannel = thread.channel === "email";
+  const isSocialChannel =
+    thread.channel === "facebook" || thread.channel === "tiktok";
   const isFreeEmail = isEmailChannel && FREE_EMAIL_DOMAINS.includes(senderDomain);
   const isDisposable = isEmailChannel && DISPOSABLE_DOMAINS.includes(senderDomain);
   const bigMoney = BIG_AMOUNT.test(corpus);
   const intelHits = INTEL_KEYWORDS.filter((r) => r.test(corpus)).length;
+  const sig = thread.socialSignals;
 
   const identity: RuleHit[] = [];
   const content: RuleHit[] = [];
@@ -204,6 +207,59 @@ export function scoreAuthenticity(thread: Thread): AuthResult {
     });
   }
   // R011 邮件头（无字段可读，跳过；保留位置）
+
+  // ---- 社媒渠道专属规则（Facebook / TikTok） ----
+  if (isSocialChannel && sig) {
+    // S001 新注册账号（<30 天）
+    if (typeof sig.accountAgeDays === "number" && sig.accountAgeDays < 30) {
+      identity.push({
+        id: "S001",
+        label: "社媒新号（注册 <30 天）",
+        hard: false,
+        dimension: "identity",
+        penalty: 18,
+        evidence: `账号注册仅 ${sig.accountAgeDays} 天`,
+      });
+    }
+    // S002 无头像
+    if (sig.hasAvatar === false) {
+      identity.push({
+        id: "S002",
+        label: "社媒账号未设置头像",
+        hard: false,
+        dimension: "identity",
+        penalty: 10,
+        evidence: "profile 未上传头像",
+      });
+    }
+    // S003 僵尸粉：粉丝<10 且 贴文<3
+    if (
+      typeof sig.followers === "number" &&
+      typeof sig.postsCount === "number" &&
+      sig.followers < 10 &&
+      sig.postsCount < 3
+    ) {
+      behavior.push({
+        id: "S003",
+        label: "疑似僵尸账号（粉丝/贴文极少）",
+        hard: false,
+        dimension: "behavior",
+        penalty: 20,
+        evidence: `粉丝 ${sig.followers} · 贴文 ${sig.postsCount}`,
+      });
+    }
+    // S004 批量转发：同内容在最近渠道中重复出现 >=2 次
+    if (typeof sig.duplicateBroadcastCount === "number" && sig.duplicateBroadcastCount >= 2) {
+      content.push({
+        id: "S004",
+        label: "同文批量转发",
+        hard: false,
+        dimension: "content",
+        penalty: 15,
+        evidence: `相同内容在最近渠道中重复 ${sig.duplicateBroadcastCount} 次`,
+      });
+    }
+  }
 
   const dims: AuthDimension[] = [
     { key: "identity", label: DIM_LABEL.identity, value: penalize(100, identity), hits: identity },
