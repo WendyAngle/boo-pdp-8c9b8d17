@@ -21,8 +21,8 @@ export interface SocialAccount {
   purchasedAt?: string;
 }
 
-const KEY = "boo:social-accounts:v3";
-const SEED_FLAG = "boo:social-accounts:v3:seeded";
+const KEY = "boo:social-accounts:v4";
+const SEED_FLAG = "boo:social-accounts:v4:seeded";
 
 function read(): SocialAccount[] {
   if (typeof window === "undefined") return [];
@@ -148,6 +148,12 @@ export function useSocialAccounts(): SocialAccount[] {
 
 export function getSocialAccounts(): SocialAccount[] {
   return cache;
+}
+
+/** 更新账号状态（用于一键恢复 / 转入养号） */
+export function updateAccountStatus(id: string, status: SocialAccount["status"]) {
+  const next = cache.map((a) => (a.id === id ? { ...a, status } : a));
+  commit(next);
 }
 
 /** 平台可用账号（状态=正常） */
