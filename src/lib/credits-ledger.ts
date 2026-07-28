@@ -1,7 +1,15 @@
 import { useSyncExternalStore } from "react";
 import { ENTERPRISES } from "@/data/enterprises";
 
-export type LedgerKind = "view" | "reach" | "refund" | "recharge" | "ai_generate";
+export type LedgerKind =
+  | "view"
+  | "reach"
+  | "refund"
+  | "recharge"
+  | "ai_generate"
+  | "social_account_purchase"
+  | "social_add_friend"
+  | "social_dm";
 export type ViewField =
   | "email"
   | "phone"
