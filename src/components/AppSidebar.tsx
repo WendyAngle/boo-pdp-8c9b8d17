@@ -37,6 +37,7 @@ const menu: Root[] = [
           { label: "询盘与回复", to: "/outreach/conversations" },
           { label: "社媒账号购买", to: "/outreach/social/accounts" },
           { label: "社媒搜索加友", to: "/outreach/social/prospecting" },
+          { label: "社媒好友池", to: "/outreach/social/friends" },
           { label: "社媒私信触达", to: "/outreach/social/dm" },
           { label: "退订名单", to: "/outreach/suppressions" },
         ],
