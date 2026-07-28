@@ -35,7 +35,6 @@ import { Route as AppOutreachBillingEmptyRouteImport } from './routes/_app.outre
 import { Route as AppOutreachBillingRouteImport } from './routes/_app.outreach.billing'
 import { Route as AppOutreachProductsIndexRouteImport } from './routes/_app.outreach.products.index'
 import { Route as AppOutreachEnterpriseIndexRouteImport } from './routes/_app.outreach.enterprise.index'
-import { Route as AppOutreachSocialProspectingRouteImport } from './routes/_app.outreach.social.prospecting'
 import { Route as AppOutreachSocialFriendsRouteImport } from './routes/_app.outreach.social.friends'
 import { Route as AppOutreachSocialDmRouteImport } from './routes/_app.outreach.social.dm'
 import { Route as AppOutreachSocialAccountsRouteImport } from './routes/_app.outreach.social.accounts'
@@ -47,6 +46,7 @@ import { Route as AppOutreachAdminSmsProvidersRouteImport } from './routes/_app.
 import { Route as AppOutreachAdminInvoiceReviewRouteImport } from './routes/_app.outreach.admin.invoice-review'
 import { Route as AppOutreachAdminEmailProvidersRouteImport } from './routes/_app.outreach.admin.email-providers'
 import { Route as AppOutreachAdminEmailAccountsRouteImport } from './routes/_app.outreach.admin.email-accounts'
+import { Route as AppOutreachSocialProspectingIndexRouteImport } from './routes/_app.outreach.social.prospecting.index'
 import { Route as AppOutreachEnterpriseIdIndexRouteImport } from './routes/_app.outreach.enterprise.$id.index'
 import { Route as AppOutreachSocialProspectingTaskIdRouteImport } from './routes/_app.outreach.social.prospecting.$taskId'
 import { Route as AppOutreachEnterpriseIdContactIdxRouteImport } from './routes/_app.outreach.enterprise.$id.contact.$idx'
@@ -186,12 +186,6 @@ const AppOutreachEnterpriseIndexRoute =
     path: '/',
     getParentRoute: () => AppOutreachEnterpriseRoute,
   } as any)
-const AppOutreachSocialProspectingRoute =
-  AppOutreachSocialProspectingRouteImport.update({
-    id: '/outreach/social/prospecting',
-    path: '/outreach/social/prospecting',
-    getParentRoute: () => AppRoute,
-  } as any)
 const AppOutreachSocialFriendsRoute =
   AppOutreachSocialFriendsRouteImport.update({
     id: '/outreach/social/friends',
@@ -255,6 +249,12 @@ const AppOutreachAdminEmailAccountsRoute =
     path: '/outreach/admin/email-accounts',
     getParentRoute: () => AppRoute,
   } as any)
+const AppOutreachSocialProspectingIndexRoute =
+  AppOutreachSocialProspectingIndexRouteImport.update({
+    id: '/outreach/social/prospecting/',
+    path: '/outreach/social/prospecting/',
+    getParentRoute: () => AppRoute,
+  } as any)
 const AppOutreachEnterpriseIdIndexRoute =
   AppOutreachEnterpriseIdIndexRouteImport.update({
     id: '/',
@@ -263,9 +263,9 @@ const AppOutreachEnterpriseIdIndexRoute =
   } as any)
 const AppOutreachSocialProspectingTaskIdRoute =
   AppOutreachSocialProspectingTaskIdRouteImport.update({
-    id: '/$taskId',
-    path: '/$taskId',
-    getParentRoute: () => AppOutreachSocialProspectingRoute,
+    id: '/outreach/social/prospecting/$taskId',
+    path: '/outreach/social/prospecting/$taskId',
+    getParentRoute: () => AppRoute,
   } as any)
 const AppOutreachEnterpriseIdContactIdxRoute =
   AppOutreachEnterpriseIdContactIdxRouteImport.update({
@@ -309,11 +309,11 @@ export interface FileRoutesByFullPath {
   '/outreach/social/accounts': typeof AppOutreachSocialAccountsRoute
   '/outreach/social/dm': typeof AppOutreachSocialDmRoute
   '/outreach/social/friends': typeof AppOutreachSocialFriendsRoute
-  '/outreach/social/prospecting': typeof AppOutreachSocialProspectingRouteWithChildren
   '/outreach/enterprise/': typeof AppOutreachEnterpriseIndexRoute
   '/outreach/products/': typeof AppOutreachProductsIndexRoute
   '/outreach/social/prospecting/$taskId': typeof AppOutreachSocialProspectingTaskIdRoute
   '/outreach/enterprise/$id/': typeof AppOutreachEnterpriseIdIndexRoute
+  '/outreach/social/prospecting/': typeof AppOutreachSocialProspectingIndexRoute
   '/outreach/enterprise/$id/contact/$idx': typeof AppOutreachEnterpriseIdContactIdxRoute
 }
 export interface FileRoutesByTo {
@@ -349,11 +349,11 @@ export interface FileRoutesByTo {
   '/outreach/social/accounts': typeof AppOutreachSocialAccountsRoute
   '/outreach/social/dm': typeof AppOutreachSocialDmRoute
   '/outreach/social/friends': typeof AppOutreachSocialFriendsRoute
-  '/outreach/social/prospecting': typeof AppOutreachSocialProspectingRouteWithChildren
   '/outreach/enterprise': typeof AppOutreachEnterpriseIndexRoute
   '/outreach/products': typeof AppOutreachProductsIndexRoute
   '/outreach/social/prospecting/$taskId': typeof AppOutreachSocialProspectingTaskIdRoute
   '/outreach/enterprise/$id': typeof AppOutreachEnterpriseIdIndexRoute
+  '/outreach/social/prospecting': typeof AppOutreachSocialProspectingIndexRoute
   '/outreach/enterprise/$id/contact/$idx': typeof AppOutreachEnterpriseIdContactIdxRoute
 }
 export interface FileRoutesById {
@@ -393,11 +393,11 @@ export interface FileRoutesById {
   '/_app/outreach/social/accounts': typeof AppOutreachSocialAccountsRoute
   '/_app/outreach/social/dm': typeof AppOutreachSocialDmRoute
   '/_app/outreach/social/friends': typeof AppOutreachSocialFriendsRoute
-  '/_app/outreach/social/prospecting': typeof AppOutreachSocialProspectingRouteWithChildren
   '/_app/outreach/enterprise/': typeof AppOutreachEnterpriseIndexRoute
   '/_app/outreach/products/': typeof AppOutreachProductsIndexRoute
   '/_app/outreach/social/prospecting/$taskId': typeof AppOutreachSocialProspectingTaskIdRoute
   '/_app/outreach/enterprise/$id/': typeof AppOutreachEnterpriseIdIndexRoute
+  '/_app/outreach/social/prospecting/': typeof AppOutreachSocialProspectingIndexRoute
   '/_app/outreach/enterprise/$id/contact/$idx': typeof AppOutreachEnterpriseIdContactIdxRoute
 }
 export interface FileRouteTypes {
@@ -437,11 +437,11 @@ export interface FileRouteTypes {
     | '/outreach/social/accounts'
     | '/outreach/social/dm'
     | '/outreach/social/friends'
-    | '/outreach/social/prospecting'
     | '/outreach/enterprise/'
     | '/outreach/products/'
     | '/outreach/social/prospecting/$taskId'
     | '/outreach/enterprise/$id/'
+    | '/outreach/social/prospecting/'
     | '/outreach/enterprise/$id/contact/$idx'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -477,11 +477,11 @@ export interface FileRouteTypes {
     | '/outreach/social/accounts'
     | '/outreach/social/dm'
     | '/outreach/social/friends'
-    | '/outreach/social/prospecting'
     | '/outreach/enterprise'
     | '/outreach/products'
     | '/outreach/social/prospecting/$taskId'
     | '/outreach/enterprise/$id'
+    | '/outreach/social/prospecting'
     | '/outreach/enterprise/$id/contact/$idx'
   id:
     | '__root__'
@@ -520,11 +520,11 @@ export interface FileRouteTypes {
     | '/_app/outreach/social/accounts'
     | '/_app/outreach/social/dm'
     | '/_app/outreach/social/friends'
-    | '/_app/outreach/social/prospecting'
     | '/_app/outreach/enterprise/'
     | '/_app/outreach/products/'
     | '/_app/outreach/social/prospecting/$taskId'
     | '/_app/outreach/enterprise/$id/'
+    | '/_app/outreach/social/prospecting/'
     | '/_app/outreach/enterprise/$id/contact/$idx'
   fileRoutesById: FileRoutesById
 }
@@ -716,13 +716,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppOutreachEnterpriseIndexRouteImport
       parentRoute: typeof AppOutreachEnterpriseRoute
     }
-    '/_app/outreach/social/prospecting': {
-      id: '/_app/outreach/social/prospecting'
-      path: '/outreach/social/prospecting'
-      fullPath: '/outreach/social/prospecting'
-      preLoaderRoute: typeof AppOutreachSocialProspectingRouteImport
-      parentRoute: typeof AppRoute
-    }
     '/_app/outreach/social/friends': {
       id: '/_app/outreach/social/friends'
       path: '/outreach/social/friends'
@@ -800,6 +793,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppOutreachAdminEmailAccountsRouteImport
       parentRoute: typeof AppRoute
     }
+    '/_app/outreach/social/prospecting/': {
+      id: '/_app/outreach/social/prospecting/'
+      path: '/outreach/social/prospecting'
+      fullPath: '/outreach/social/prospecting/'
+      preLoaderRoute: typeof AppOutreachSocialProspectingIndexRouteImport
+      parentRoute: typeof AppRoute
+    }
     '/_app/outreach/enterprise/$id/': {
       id: '/_app/outreach/enterprise/$id/'
       path: '/'
@@ -809,10 +809,10 @@ declare module '@tanstack/react-router' {
     }
     '/_app/outreach/social/prospecting/$taskId': {
       id: '/_app/outreach/social/prospecting/$taskId'
-      path: '/$taskId'
+      path: '/outreach/social/prospecting/$taskId'
       fullPath: '/outreach/social/prospecting/$taskId'
       preLoaderRoute: typeof AppOutreachSocialProspectingTaskIdRouteImport
-      parentRoute: typeof AppOutreachSocialProspectingRoute
+      parentRoute: typeof AppRoute
     }
     '/_app/outreach/enterprise/$id/contact/$idx': {
       id: '/_app/outreach/enterprise/$id/contact/$idx'
@@ -856,21 +856,6 @@ const AppOutreachEnterpriseRouteWithChildren =
     AppOutreachEnterpriseRouteChildren,
   )
 
-interface AppOutreachSocialProspectingRouteChildren {
-  AppOutreachSocialProspectingTaskIdRoute: typeof AppOutreachSocialProspectingTaskIdRoute
-}
-
-const AppOutreachSocialProspectingRouteChildren: AppOutreachSocialProspectingRouteChildren =
-  {
-    AppOutreachSocialProspectingTaskIdRoute:
-      AppOutreachSocialProspectingTaskIdRoute,
-  }
-
-const AppOutreachSocialProspectingRouteWithChildren =
-  AppOutreachSocialProspectingRoute._addFileChildren(
-    AppOutreachSocialProspectingRouteChildren,
-  )
-
 interface AppRouteChildren {
   AppIndexRoute: typeof AppIndexRoute
   AppOutreachBillingRoute: typeof AppOutreachBillingRoute
@@ -905,8 +890,9 @@ interface AppRouteChildren {
   AppOutreachSocialAccountsRoute: typeof AppOutreachSocialAccountsRoute
   AppOutreachSocialDmRoute: typeof AppOutreachSocialDmRoute
   AppOutreachSocialFriendsRoute: typeof AppOutreachSocialFriendsRoute
-  AppOutreachSocialProspectingRoute: typeof AppOutreachSocialProspectingRouteWithChildren
   AppOutreachProductsIndexRoute: typeof AppOutreachProductsIndexRoute
+  AppOutreachSocialProspectingTaskIdRoute: typeof AppOutreachSocialProspectingTaskIdRoute
+  AppOutreachSocialProspectingIndexRoute: typeof AppOutreachSocialProspectingIndexRoute
 }
 
 const AppRouteChildren: AppRouteChildren = {
@@ -943,9 +929,11 @@ const AppRouteChildren: AppRouteChildren = {
   AppOutreachSocialAccountsRoute: AppOutreachSocialAccountsRoute,
   AppOutreachSocialDmRoute: AppOutreachSocialDmRoute,
   AppOutreachSocialFriendsRoute: AppOutreachSocialFriendsRoute,
-  AppOutreachSocialProspectingRoute:
-    AppOutreachSocialProspectingRouteWithChildren,
   AppOutreachProductsIndexRoute: AppOutreachProductsIndexRoute,
+  AppOutreachSocialProspectingTaskIdRoute:
+    AppOutreachSocialProspectingTaskIdRoute,
+  AppOutreachSocialProspectingIndexRoute:
+    AppOutreachSocialProspectingIndexRoute,
 }
 
 const AppRouteWithChildren = AppRoute._addFileChildren(AppRouteChildren)
