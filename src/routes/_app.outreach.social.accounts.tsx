@@ -333,6 +333,23 @@ function AccountRow({ account, friendCount }: { account: SocialAccount; friendCo
           {account.status}
         </span>
       </TableCell>
+      <TableCell className="text-xs">
+        {(() => {
+          const h = computeHealth(account);
+          return (
+            <span
+              className={cn(
+                "inline-flex items-center gap-1 px-2 py-0.5 rounded-md border tabular-nums",
+                healthToneClass(h.band),
+              )}
+              title={h.reasons.length ? h.reasons.join(" · ") : "无扣分项"}
+            >
+              {h.score}
+              <span className="opacity-70">· {h.band}</span>
+            </span>
+          );
+        })()}
+      </TableCell>
       <TableCell className="text-xs tabular-nums">
         {friendCount > 0 ? (
           <Link
@@ -360,6 +377,35 @@ function AccountRow({ account, friendCount }: { account: SocialAccount; friendCo
       </TableCell>
       <TableCell className="text-xs text-muted-foreground">
         {account.purchasedAt ? new Date(account.purchasedAt).toLocaleDateString() : "—"}
+      </TableCell>
+      <TableCell className="text-xs">
+        {account.status === "异常" ? (
+          <Button
+            size="sm"
+            variant="outline"
+            className="h-7 text-xs"
+            onClick={() => {
+              updateAccountStatus(account.id, "养号中");
+              toast.success(`${account.handle} 已转入养号中`);
+            }}
+          >
+            一键恢复
+          </Button>
+        ) : account.status === "养号中" ? (
+          <Button
+            size="sm"
+            variant="outline"
+            className="h-7 text-xs"
+            onClick={() => {
+              updateAccountStatus(account.id, "正常");
+              toast.success(`${account.handle} 已启用`);
+            }}
+          >
+            结束养号
+          </Button>
+        ) : (
+          <span className="text-muted-foreground">—</span>
+        )}
       </TableCell>
     </TableRow>
   );
