@@ -86,11 +86,11 @@ import {
   type SocialCandidate,
 } from "@/components/BatchSocialDialog";
 import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
+  BatchSocialPlatformDialog,
+  type PlatformCandidate,
+  type ReachPlatform,
+} from "@/components/BatchSocialPlatformDialog";
+
 
 export const Route = createFileRoute("/_app/outreach/favorites")({
   head: () => ({ meta: [{ title: "出海大数据平台 · 收藏 | 出海大数据平台" }] }),
