@@ -28,7 +28,9 @@ import {
   Facebook,
   Twitter,
   MessageCircle,
-  ChevronDown,
+  Users,
+  
+
 } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -86,11 +88,11 @@ import {
   type SocialCandidate,
 } from "@/components/BatchSocialDialog";
 import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
+  BatchSocialPlatformDialog,
+  type PlatformCandidate,
+  type ReachPlatform,
+} from "@/components/BatchSocialPlatformDialog";
+
 
 export const Route = createFileRoute("/_app/outreach/favorites")({
   head: () => ({ meta: [{ title: "出海大数据平台 · 收藏 | 出海大数据平台" }] }),
@@ -161,6 +163,8 @@ function FavoritesPage() {
   const [batchSmsOpen, setBatchSmsOpen] = useState(false);
   const [batchSenderId, setBatchSenderId] = useState("");
   const [batchSocialOpen, setBatchSocialOpen] = useState(false);
+  const [batchPlatformOpen, setBatchPlatformOpen] = useState(false);
+
   const [calOpen, setCalOpen] = useState(false);
   const profile = useLeadProfile();
   const user = useCurrentUser();
@@ -228,6 +232,30 @@ function FavoritesPage() {
     }
     return out;
   }, [selectedRecords, myVars]);
+
+  // 社媒（Facebook / TikTok）候选人：由 WhatsApp 候选人复用上下文，按企业社媒资料判定各平台是否有联系方式
+  const platformCandidates = useMemo<PlatformCandidate[]>(() => {
+    const slug = (s: string) =>
+      s
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, ".")
+        .replace(/^\.|\.$/g, "")
+        .slice(0, 24) || "user";
+    const hash = (s: string) =>
+      Array.from(s).reduce((a, ch) => (a * 31 + ch.charCodeAt(0)) % 997, 7);
+
+    return waCandidates.map((c) => {
+      const entId = c.enterpriseId ?? c.targetId;
+      const ent = entId ? findEnterprise(entId.split(":")[0]) : undefined;
+      const handles: Partial<Record<ReachPlatform, string>> = {};
+      const base = slug(c.name);
+      if (ent?.socials?.facebook) handles.Facebook = `@${base}`;
+      if (hash(`${entId}:${c.name}`) % 3 !== 0) handles.TikTok = `@${base}.tt`;
+      return { ...c, handles };
+    });
+  }, [waCandidates]);
+
+
 
   const counts = useMemo(() => {
     const c: Record<string, number> = {
@@ -601,43 +629,18 @@ function FavoritesPage() {
               <MessageCircle className="h-4 w-4" />
               批量 WhatsApp 触达
             </Button>
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  disabled={selected.size === 0}
-                  className="gap-1.5 border-primary/30 text-primary hover:bg-primary/10 hover:text-primary disabled:opacity-50"
-                  title="批量社媒触达"
-                >
-                  批量社媒触达
-                  <ChevronDown className="h-3 w-3 opacity-70" />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-44">
-                <DropdownMenuItem disabled>
-                  <span className="inline-block h-4 w-4" />
-                  TikTok
-                  <span className="ml-auto text-[10px] text-muted-foreground">
-                    即将上线
-                  </span>
-                </DropdownMenuItem>
-                <DropdownMenuItem disabled>
-                  <span className="inline-block h-4 w-4" />
-                  Facebook
-                  <span className="ml-auto text-[10px] text-muted-foreground">
-                    即将上线
-                  </span>
-                </DropdownMenuItem>
-                <DropdownMenuItem disabled>
-                  <span className="inline-block h-4 w-4" />
-                  LinkedIn
-                  <span className="ml-auto text-[10px] text-muted-foreground">
-                    即将上线
-                  </span>
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
+            <Button
+              variant="outline"
+              size="sm"
+              disabled={selected.size === 0}
+              className="gap-1.5 border-primary/30 text-primary hover:bg-primary/10 hover:text-primary disabled:opacity-50"
+              onClick={() => setBatchPlatformOpen(true)}
+              title="批量社媒触达"
+            >
+              <Users className="h-4 w-4" />
+              批量社媒触达
+            </Button>
+
             <Button
               variant="outline"
               size="sm"
@@ -737,6 +740,12 @@ function FavoritesPage() {
         platform="WhatsApp"
         candidates={waCandidates}
       />
+      <BatchSocialPlatformDialog
+        open={batchPlatformOpen}
+        onOpenChange={setBatchPlatformOpen}
+        candidates={platformCandidates}
+      />
+
     </div>
   );
 }
