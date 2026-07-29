@@ -260,6 +260,14 @@ function SocialAccountsPage() {
           onClose={() => setFriendsAccount(null)}
         />
       )}
+
+      {allFriendsOpen && (
+        <AllFriendsDialog
+          friends={friends}
+          accounts={accounts}
+          onClose={() => setAllFriendsOpen(false)}
+        />
+      )}
     </div>
   );
 }
