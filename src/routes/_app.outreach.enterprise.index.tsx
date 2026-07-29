@@ -34,6 +34,8 @@ import { ListPagination } from "@/components/ListPagination";
 import heroBg from "@/assets/enterprise-hero.jpg";
 import { ENTERPRISES } from "@/data/enterprises";
 import { FavoriteToggle } from "@/components/FavoriteToggle";
+import { useUnlockedContacts } from "@/lib/unlocked-contacts";
+
 
 export const Route = createFileRoute("/_app/outreach/enterprise/")({
   head: () => ({ meta: [{ title: "出海大数据平台 · 企业 | 出海大数据平台" }] }),
@@ -103,6 +105,18 @@ function OutreachEnterprisePage() {
     () => filtered.slice((page - 1) * pageSize, page * pageSize),
     [filtered, page],
   );
+
+  const unlockedList = useUnlockedContacts();
+  const unlockedEnterpriseIds = useMemo(() => {
+    const s = new Set<string>();
+    for (const u of unlockedList) {
+      if (u.owner_type === "enterprise") s.add(u.owner_id);
+      if (u.parent_ref?.id) s.add(u.parent_ref.id);
+    }
+    return s;
+  }, [unlockedList]);
+
+
 
   const resetFilters = () => {
     setIndustry("all");
@@ -353,9 +367,20 @@ function OutreachEnterprisePage() {
                   />
                 </div>
                 <div className="mt-4 space-y-2">
-                  <div className="font-semibold text-foreground truncate group-hover:text-primary transition-colors">
-                    {e.name}
+                  <div className="flex items-start gap-2">
+                    <div className="font-semibold text-foreground truncate group-hover:text-primary transition-colors">
+                      {e.name}
+                    </div>
+                    {unlockedEnterpriseIds.has(e.id) && (
+                      <Badge
+                        variant="secondary"
+                        className="shrink-0 h-5 px-1.5 text-[10px] bg-emerald-500/10 text-emerald-600 border-emerald-500/20"
+                      >
+                        已解锁
+                      </Badge>
+                    )}
                   </div>
+
                   {e.industry && (
                     <div className="flex items-center gap-2 text-sm text-muted-foreground">
                       <Briefcase className="h-4 w-4 shrink-0" />
