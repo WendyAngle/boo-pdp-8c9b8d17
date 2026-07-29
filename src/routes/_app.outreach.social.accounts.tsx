@@ -229,20 +229,9 @@ function SocialAccountsPage() {
 }
 
 function AccountRow({ account, friendCount }: { account: SocialAccount; friendCount: number }) {
-  const statusTone: Record<SocialAccount["status"], string> = {
-    正常: "bg-emerald-50 text-emerald-700 border-emerald-200",
-    养号中: "bg-amber-50 text-amber-700 border-amber-200",
-    停用: "bg-slate-100 text-slate-600 border-slate-200",
-    异常: "bg-rose-50 text-rose-700 border-rose-200",
-    备货中: "bg-sky-50 text-sky-700 border-sky-200",
-  };
-  const isPending = account.status === "备货中";
-  const remainingDays = isPending && account.expectedDeliveryAt
-    ? workdaysUntil(account.expectedDeliveryAt)
-    : 0;
-
+  const bucket = getExpiryBucket(account.expiresAt);
   return (
-    <TableRow className={cn(isPending && "bg-sky-50/30")}>
+    <TableRow className={cn(EXPIRY_ROW_TONE[bucket])}>
       <TableCell>
         <span className="inline-flex items-center gap-1.5 text-xs font-medium">
           {account.platform === "Facebook" ? (
@@ -255,23 +244,16 @@ function AccountRow({ account, friendCount }: { account: SocialAccount; friendCo
           {account.platform}
         </span>
       </TableCell>
-      <TableCell className="font-mono text-xs">
-        {isPending ? <span className="text-muted-foreground">备货中…</span> : account.handle}
-      </TableCell>
-      <TableCell className="text-sm">
-        {isPending ? <span className="text-muted-foreground">—</span> : account.displayName}
-      </TableCell>
+      <TableCell className="font-mono text-xs">{account.handle}</TableCell>
+      <TableCell className="text-sm">{account.displayName}</TableCell>
       <TableCell>
-        <span className={cn("inline-flex items-center gap-1 px-2 py-0.5 rounded-md border text-xs", statusTone[account.status])}>
-          {isPending && <Clock className="h-3 w-3" />}
-          {account.status}
+        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md border text-xs bg-emerald-50 text-emerald-700 border-emerald-200">
+          正常
         </span>
       </TableCell>
       <TableCell className="text-xs text-muted-foreground">{regionLabel(account.ownerRegion)}</TableCell>
       <TableCell className="text-xs tabular-nums">
-        {isPending ? (
-          <span className="text-muted-foreground">—</span>
-        ) : friendCount > 0 ? (
+        {friendCount > 0 ? (
           <Link
             to="/outreach/social/reach/friends"
             search={{ accountId: account.id } as never}
@@ -286,21 +268,19 @@ function AccountRow({ account, friendCount }: { account: SocialAccount; friendCo
         )}
       </TableCell>
       <TableCell className="text-xs text-muted-foreground">
-        {isPending && account.expectedDeliveryAt ? (
-          <span className="inline-flex flex-col leading-tight">
-            <span className="text-amber-700 font-medium">
-              预计 {new Date(account.expectedDeliveryAt).toLocaleDateString()}
-            </span>
-            <span className="text-[11px]">还剩 {remainingDays} 个工作日</span>
-          </span>
-        ) : account.deliveredAt ? (
-          new Date(account.deliveredAt).toLocaleDateString()
-        ) : (
-          "—"
-        )}
+        {account.deliveredAt ? new Date(account.deliveredAt).toLocaleDateString() : "—"}
       </TableCell>
-      <TableCell className="text-xs text-muted-foreground">
-        {account.expiresAt ? new Date(account.expiresAt).toLocaleDateString() : "—"}
+      <TableCell className="text-xs">
+        {account.expiresAt ? (
+          <span className={cn("inline-flex flex-col leading-tight", EXPIRY_TEXT_TONE[bucket])}>
+            <span className="tabular-nums">{new Date(account.expiresAt).toLocaleDateString()}</span>
+            {bucket !== "safe" && bucket !== "none" && (
+              <span className="text-[11px]">{EXPIRY_LABEL[bucket]}</span>
+            )}
+          </span>
+        ) : (
+          <span className="text-muted-foreground">—</span>
+        )}
       </TableCell>
     </TableRow>
   );
