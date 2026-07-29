@@ -112,19 +112,24 @@ export function AppSidebar() {
                     const hasKids = g.children.length > 0;
                     const gOpen = open[g.label] ?? true;
                     const gActive = g.to ? location.pathname === g.to : false;
+                    const GIcon = g.icon;
                     return (
-                      <div key={g.label}>
+                      <div
+                        key={g.label}
+                        className={g.divider ? "pb-1.5 mb-1.5 border-b border-sidebar-border" : undefined}
+                      >
                         {g.to ? (
                           <div className="flex items-center">
                             <Link
                               to={g.to}
-                              className={`flex-1 block px-3 py-1.5 rounded-md text-sm transition-colors ${
+                              className={`flex-1 flex items-center gap-2 px-3 py-1.5 rounded-md text-sm transition-colors ${
                                 gActive
                                   ? "bg-sidebar-accent text-sidebar-accent-foreground font-medium"
                                   : "text-sidebar-foreground/80 hover:bg-sidebar-accent/60"
                               }`}
                             >
-                              {g.label}
+                              {GIcon && <GIcon className="h-3.5 w-3.5 text-primary" />}
+                              <span>{g.label}</span>
                             </Link>
                             {hasKids && (
                               <button
