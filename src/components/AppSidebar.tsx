@@ -23,7 +23,7 @@ const menu: Root[] = [
         children: [
           { label: "企业名录", to: "/outreach/enterprise" },
           { label: "商品目录", to: "/outreach/products" },
-          { label: "提单", to: "/outreach/bills" },
+          
           { label: "浏览足迹", to: "/outreach/footprints" },
         ],
       },
