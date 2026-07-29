@@ -74,11 +74,9 @@ import {
   backfillAiGenerationEntries,
   resetDemoLedger,
   syncFailedRefunds,
-  isReachRefunded,
   triggerReachNow,
   cancelPendingReach,
   retryFailedReach,
-  COST_REACH,
   isRetryableFailReason,
   REACH_STATUS_LABEL,
   REACH_STATUS_COLOR,
@@ -88,7 +86,19 @@ import {
 } from "@/lib/credits-ledger";
 import { ListPagination } from "@/components/ListPagination";
 import { useThreads, threadKeyFor, type Thread } from "@/lib/inbox-store";
-import { Inbox as InboxIcon, MessageCircleReply, Plus, UserCircle2 } from "lucide-react";
+import {
+  Inbox as InboxIcon,
+  MessageCircleReply,
+  Plus,
+  UserCircle2,
+  Users,
+  ListChecks,
+  Facebook,
+  Music2,
+  MessageSquare,
+} from "lucide-react";
+import { useSocialAccounts, friendRemaining } from "@/data/social-accounts";
+import { poolAverageHealth } from "@/lib/social-account-health";
 import { CreateReachTaskDialog } from "@/components/outreach/CreateReachTaskDialog";
 
 export const Route = createFileRoute("/_app/outreach/reach")({
@@ -222,11 +232,6 @@ function ReachPage() {
     [filtered, page],
   );
 
-  const grossCost = reachRows.reduce((s, r) => s + r.cost, 0);
-  const refundTotal = reachRows
-    .filter((r) => r.status === "failed")
-    .reduce((s, r) => s + (isReachRefunded(r.id) ? r.cost : 0), 0);
-  const netCost = grossCost - refundTotal;
 
   return (
     <TooltipProvider delayDuration={150}>
@@ -279,19 +284,40 @@ function ReachPage() {
               统一管理对目标企业 / 关键人物的触达动作、渠道与跟进结果
             </p>
           </div>
-          <div className="text-right text-white/90">
-            <div className="text-xs opacity-80">净消耗（消耗 - 退还）</div>
-            <div className="text-2xl font-bold tabular-nums">
-              -{netCost}
-              <span className="text-sm font-normal ml-1">积分</span>
+          <div className="flex items-center gap-5 text-right text-white/90">
+            <div>
+              <div className="text-xs opacity-80">触达总数</div>
+              <div className="text-2xl font-bold tabular-nums">{reachRows.length}</div>
             </div>
-            {refundTotal > 0 && (
-              <div className="text-[11px] text-white/75 mt-0.5 tabular-nums">
-                含失败退还 +{refundTotal}
-              </div>
-            )}
+            <div>
+              <div className="text-xs opacity-80">触达成功率</div>
+              <div className="text-2xl font-bold tabular-nums">{successRate}%</div>
+            </div>
+            <div>
+              <div className="text-xs opacity-80">客户回复</div>
+              <div className="text-2xl font-bold tabular-nums">{replyTotal}</div>
+            </div>
           </div>
         </div>
+        <div className="mt-3 flex flex-wrap items-center gap-4 text-xs text-white/85">
+          <span className="inline-flex items-center gap-1">
+            <Facebook className="h-3.5 w-3.5" />
+            Facebook 今日加友剩余
+            <span className="font-semibold tabular-nums">{fbRemain}</span>
+          </span>
+          <span className="inline-flex items-center gap-1">
+            <Music2 className="h-3.5 w-3.5" />
+            TikTok 今日加友剩余
+            <span className="font-semibold tabular-nums">{ttRemain}</span>
+          </span>
+          <span className="inline-flex items-center gap-1">
+            账号池平均健康度
+            <span className="font-semibold tabular-nums">{poolHealth}</span>
+          </span>
+          <span className="inline-flex items-center gap-1">
+            可用社媒账号
+            <span className="font-semibold tabular-nums">{usableAccounts}</span>
+          </span>
         <div className="relative mt-4 flex flex-wrap items-center gap-2">
           <Button
             asChild
@@ -438,7 +464,6 @@ function ReachPage() {
                 <TableHead className="w-[170px]">时间</TableHead>
                 <TableHead className="w-[140px]">渠道</TableHead>
                 <TableHead className="w-[220px]">状态 / 原因</TableHead>
-                <TableHead className="w-[90px]">积分变动</TableHead>
                 <TableHead>明细说明</TableHead>
                 {statusTab !== "pending" && statusTab !== "in_progress" && statusTab !== "failed" && (
                   <TableHead className="w-[110px]">回复</TableHead>
@@ -475,7 +500,6 @@ function ReachPage() {
                               <div className="font-medium">失败原因</div>
                               <div className="mt-0.5">{r.failReason}</div>
                               <div className="mt-1 text-muted-foreground">
-                                已自动退还 {r.cost} 积分。
                                 {!isRetryableFailReason(r.failReason) && (
                                   <> 该原因不支持重新触达，建议核实联系方式后重新发起。</>
                                 )}
@@ -485,14 +509,6 @@ function ReachPage() {
                         </Tooltip>
                       )}
                     </div>
-                  </TableCell>
-                  <TableCell className="tabular-nums">
-                    <div className="font-semibold text-rose-600">-{r.cost}</div>
-                    {r.status === "failed" && isReachRefunded(r.id) && (
-                      <div className="text-[11px] font-medium text-emerald-600 mt-0.5">
-                        已退还 +{r.cost}
-                      </div>
-                    )}
                   </TableCell>
                   <TableCell className="text-xs max-w-[420px]">
                     <DetailCell row={r} onViewContent={() => setViewing(r)} />
@@ -532,10 +548,10 @@ function ReachPage() {
                 <>对象：<span className="font-medium text-foreground">{confirm.target}</span>。该条触达将立即进入"触达中"状态。</>
               )}
               {confirm?.kind === "cancel" && (
-                <>对象：<span className="font-medium text-foreground">{confirm.target}</span>。取消后将自动退还 {reachRows.find((r) => r.id === confirm.id)?.cost ?? COST_REACH} 积分。</>
+                <>对象：<span className="font-medium text-foreground">{confirm.target}</span>。取消后该条触达将不再执行。</>
               )}
               {confirm?.kind === "retry" && (
-                <>对象：<span className="font-medium text-foreground">{confirm.target}</span>。将基于原渠道与明细发起一条新的触达，并扣除 {reachRows.find((r) => r.id === confirm.id)?.cost ?? COST_REACH} 积分。</>
+                <>对象：<span className="font-medium text-foreground">{confirm.target}</span>。将基于原渠道与明细重新发起一条触达。</>
               )}
             </AlertDialogDescription>
           </AlertDialogHeader>
@@ -553,14 +569,10 @@ function ReachPage() {
                     toast.success("已立即触达，状态切换为「触达中」");
                   else toast.error("当前状态不可执行立即触达");
                 } else if (confirm.kind === "cancel") {
-                  const c = reachRows.find((r) => r.id === confirm.id)?.cost ?? COST_REACH;
-                  if (cancelPendingReach(confirm.id))
-                    toast.success(`已取消触达，退还 ${c} 积分`);
+                  if (cancelPendingReach(confirm.id)) toast.success("已取消触达");
                   else toast.error("仅「待触达」状态可取消");
                 } else if (confirm.kind === "retry") {
-                  const c = reachRows.find((r) => r.id === confirm.id)?.cost ?? COST_REACH;
-                  if (retryFailedReach(confirm.id))
-                    toast.success(`已重新触达，扣除 ${c} 积分`);
+                  if (retryFailedReach(confirm.id)) toast.success("已重新发起触达");
                   else toast.error("仅「触达失败」记录可重新触达");
                 }
                 setConfirm(null);
