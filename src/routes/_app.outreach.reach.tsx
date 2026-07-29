@@ -137,6 +137,7 @@ function ReachPage() {
   const [kw, setKw] = useState("");
   const [page, setPage] = useState(1);
   const pageSize = 10;
+  const [createOpen, setCreateOpen] = useState(false);
   const [confirm, setConfirm] = useState<
     | null
     | {
