@@ -186,11 +186,7 @@ function SocialAccountsPage() {
             </Button>
           )}
           <div className="ml-auto flex items-center gap-3 text-xs text-muted-foreground">
-            {pendingCount > 0 && (
-              <span className="inline-flex items-center gap-1 text-amber-600">
-                <Clock className="h-3 w-3" /> 备货中 {pendingCount}
-              </span>
-            )}
+
             <span>
               共 <b className="text-foreground tabular-nums">{filtered.length}</b>
               {filtered.length !== accounts.length && (
