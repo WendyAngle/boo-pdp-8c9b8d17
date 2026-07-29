@@ -61,6 +61,7 @@ import { cn } from "@/lib/utils";
 import {
   useLedger,
   seedDemoLedgerIfEmpty,
+  backfillAiGenerationEntries,
   syncFailedRefunds,
   REACH_CHANNEL_LABEL,
   VIEW_FIELD_LABEL,
@@ -114,6 +115,7 @@ function BillingPage() {
   const { tab: tabFromUrl } = Route.useSearch();
   useEffect(() => {
     seedDemoLedgerIfEmpty();
+    backfillAiGenerationEntries();
     syncFailedRefunds();
     const t = setInterval(() => syncFailedRefunds(), 10000);
     return () => clearInterval(t);
