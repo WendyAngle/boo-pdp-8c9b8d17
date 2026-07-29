@@ -358,10 +358,14 @@ export function BatchSocialPlatformDialog({
           </section>
 
           {overLimit && (
-            <div className="rounded-md border border-rose-200 bg-rose-50 p-2 text-xs text-rose-700 flex items-center gap-1.5">
-              <Info className="h-3.5 w-3.5" />
-              目标 {targetCount} 条超出今日可触达额度，系统将先执行前{" "}
-              {sendableCount} 条，其余请明日再试。
+            <div className="rounded-md border border-amber-200 bg-amber-50 p-2 text-xs text-amber-800 flex items-start gap-1.5">
+              <Info className="mt-0.5 h-3.5 w-3.5 shrink-0" />
+              <span>
+                目标 {targetCount} 条超出今日可触达额度：系统今日先执行{" "}
+                <b>{todayCount}</b> 条，剩余 <b>{deferredCount}</b>{" "}
+                条将自动顺延至<b>明日 09:00</b>继续执行，无需重复提交；积分按目标总数
+                {targetCount} 条一次性扣除。
+              </span>
             </div>
           )}
 
