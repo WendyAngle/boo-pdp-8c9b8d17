@@ -1039,7 +1039,10 @@ export function seedDemoLedgerIfEmpty() {
     const existingLedger = readLedger();
     const legacySeeded = hasLegacyLedgerSeedFlag();
     const dateKeys = unlockableSeedDateKeys(existingLedger);
-    const staleSingleDaySeed = existingLedger.length >= 20 && dateKeys.size <= 1;
+    // 用户自己创建的记录（如新建触达任务）不算历史 seed，不能被清掉
+    const hasUserCreated = existingLedger.some((e) => e.userCreated);
+    const staleSingleDaySeed =
+      !hasUserCreated && existingLedger.length >= 20 && dateKeys.size <= 1;
     // 天为单位的分钟数,用于将 seed 数据按日打散到最近两周,
     // 避免所有解锁/触达记录都堆到今天,更贴近真实使用节奏。
     const D = 1440;
