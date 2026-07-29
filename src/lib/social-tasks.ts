@@ -233,3 +233,8 @@ export function addDmTask(t: Omit<DmTask, "id" | "createdAt" | "status" | "sends
   emitDm();
   return task;
 }
+
+/** 非 hook 快照：供 inbox-store 等模块在渲染外读取拓客任务 */
+export function getProspectingTasksSnapshot(): ProspectingTask[] {
+  return prosCache;
+}
