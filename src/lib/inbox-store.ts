@@ -5,6 +5,13 @@ import {
   type LedgerEntry,
 } from "@/lib/credits-ledger";
 import { addSuppression } from "@/lib/suppressions-store";
+import { deriveFriends } from "@/lib/social-friends";
+import {
+  useProspectingTasks,
+  getProspectingTasksSnapshot,
+  type ProspectingTask,
+} from "@/lib/social-tasks";
+
 
 /* -------------------- Types -------------------- */
 
