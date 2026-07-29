@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute } from "@tanstack/react-router";
 import {
   Users,
   Facebook,
@@ -9,11 +9,21 @@ import {
   UserCheck,
   Search,
   RotateCcw,
+  X,
 } from "lucide-react";
-import { useSocialFriends } from "@/lib/social-friends";
+import { useSocialFriends, type SocialFriend } from "@/lib/social-friends";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+} from "@/components/ui/dialog";
+import { ListPagination } from "@/components/ListPagination";
 import {
   Select,
   SelectContent,
@@ -99,6 +109,8 @@ function SocialAccountsPage() {
     friends.forEach((f) => m.set(f.accountId, (m.get(f.accountId) ?? 0) + 1));
     return m;
   }, [friends]);
+
+  const [friendsAccount, setFriendsAccount] = useState<SocialAccount | null>(null);
 
   const [keyword, setKeyword] = useState("");
   const [platform, setPlatform] = useState<PlatformFilter>("all");
@@ -216,17 +228,30 @@ function SocialAccountsPage() {
             </TableHeader>
             <TableBody>
               {filtered.map((a) => (
-                <AccountRow key={a.id} account={a} friendCount={friendCountByAccount.get(a.id) ?? 0} />
+                <AccountRow
+                  key={a.id}
+                  account={a}
+                  friendCount={friendCountByAccount.get(a.id) ?? 0}
+                  onFriendsClick={() => setFriendsAccount(a)}
+                />
               ))}
             </TableBody>
           </Table>
         )}
       </Card>
+
+      {friendsAccount && (
+        <FriendsDialog
+          account={friendsAccount}
+          friends={friends.filter((f) => f.accountId === friendsAccount.id)}
+          onClose={() => setFriendsAccount(null)}
+        />
+      )}
     </div>
   );
 }
 
-function AccountRow({ account, friendCount }: { account: SocialAccount; friendCount: number }) {
+function AccountRow({ account, friendCount, onFriendsClick }: { account: SocialAccount; friendCount: number; onFriendsClick?: () => void }) {
   const bucket = getExpiryBucket(account.expiresAt);
   return (
     <TableRow className={cn(EXPIRY_ROW_TONE[bucket])}>
@@ -252,15 +277,15 @@ function AccountRow({ account, friendCount }: { account: SocialAccount; friendCo
       <TableCell className="text-xs text-muted-foreground">{regionLabel(account.ownerRegion)}</TableCell>
       <TableCell className="text-xs tabular-nums">
         {friendCount > 0 ? (
-          <Link
-            to="/outreach/conversations"
-            search={{ accountId: account.id } as never}
+          <button
+            type="button"
+            onClick={onFriendsClick}
             className="inline-flex items-center gap-1 text-primary hover:underline"
             title="查看该账号名下的所有好友"
           >
             <UserCheck className="h-3 w-3" />
             {friendCount}
-          </Link>
+          </button>
         ) : (
           <span className="text-muted-foreground">0</span>
         )}
@@ -281,5 +306,121 @@ function AccountRow({ account, friendCount }: { account: SocialAccount; friendCo
         )}
       </TableCell>
     </TableRow>
+  );
+}
+
+function FriendsDialog({
+  account,
+  friends,
+  onClose,
+}: {
+  account: SocialAccount;
+  friends: SocialFriend[];
+  onClose: () => void;
+}) {
+  const [kw, setKw] = useState("");
+  const [page, setPage] = useState(1);
+  const pageSize = 10;
+
+  const filtered = useMemo(() => {
+    const k = kw.trim().toLowerCase();
+    if (!k) return friends;
+    return friends.filter(
+      (f) =>
+        (f.handle ?? "").toLowerCase().includes(k) ||
+        (f.name ?? "").toLowerCase().includes(k),
+    );
+  }, [friends, kw]);
+
+  const pageData = useMemo(
+    () => filtered.slice((page - 1) * pageSize, page * pageSize),
+    [filtered, page],
+  );
+
+  return (
+    <Dialog open onOpenChange={(o) => !o && onClose()}>
+      <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
+        <DialogHeader>
+          <DialogTitle className="flex items-center gap-2">
+            <UserCheck className="h-5 w-5 text-primary" />
+            好友列表
+            <Badge variant="secondary" className="ml-1 font-normal">
+              {account.platform} · {account.handle}
+            </Badge>
+          </DialogTitle>
+          <DialogDescription className="sr-only">
+            账号 {account.handle} 的好友数据
+          </DialogDescription>
+        </DialogHeader>
+
+        <div className="relative mb-3">
+          <Search className="h-3.5 w-3.5 absolute left-2.5 top-1/2 -translate-y-1/2 text-muted-foreground" />
+          <Input
+            value={kw}
+            onChange={(e) => {
+              setKw(e.target.value);
+              setPage(1);
+            }}
+            placeholder="按账号 / 显示名搜索"
+            className="h-8 pl-8 text-xs"
+          />
+          {kw && (
+            <button
+              type="button"
+              onClick={() => setKw("")}
+              className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+            >
+              <X className="h-3.5 w-3.5" />
+            </button>
+          )}
+        </div>
+
+        {filtered.length === 0 ? (
+          <div className="py-10 text-center text-sm text-muted-foreground">
+            {kw ? "没有匹配的好友" : "该账号暂无好友"}
+          </div>
+        ) : (
+          <>
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead className="w-[100px]">平台</TableHead>
+                  <TableHead>账号</TableHead>
+                  <TableHead>显示名</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {pageData.map((f) => (
+                  <TableRow key={f.id}>
+                    <TableCell>
+                      <span className="inline-flex items-center gap-1.5 text-xs font-medium">
+                        {f.platform === "Facebook" ? (
+                          <Facebook className="h-3.5 w-3.5 text-sky-600" />
+                        ) : f.platform === "TikTok" ? (
+                          <Music2 className="h-3.5 w-3.5 text-rose-600" />
+                        ) : (
+                          <CheckCircle2 className="h-3.5 w-3.5 text-emerald-600" />
+                        )}
+                        {f.platform}
+                      </span>
+                    </TableCell>
+                    <TableCell className="font-mono text-xs">{f.handle || "—"}</TableCell>
+                    <TableCell className="text-sm">{f.name || "—"}</TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+            <div className="pb-1 pt-3">
+              <ListPagination
+                page={page}
+                pageSize={pageSize}
+                total={filtered.length}
+                onPageChange={setPage}
+              />
+            </div>
+          </>
+        )}
+      </DialogContent>
+    </Dialog>
   );
 }
