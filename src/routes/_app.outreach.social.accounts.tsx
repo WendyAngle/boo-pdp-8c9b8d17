@@ -155,9 +155,21 @@ function SocialAccountsPage() {
               统一查看与管理已购买的社媒触达账号，支持按平台、状态、所属地区、关键字筛选。
             </p>
           </div>
-          <div className="ml-auto flex items-center gap-2 text-xs text-muted-foreground">
-            <Wallet className="h-3.5 w-3.5" />
-            当前积分：<span className="font-semibold text-foreground tabular-nums">{balance.balance.toLocaleString()}</span>
+          <div className="ml-auto flex items-center gap-3 text-xs text-muted-foreground">
+            <span className="inline-flex items-center gap-1.5">
+              <Wallet className="h-3.5 w-3.5" />
+              当前积分：<span className="font-semibold text-foreground tabular-nums">{balance.balance.toLocaleString()}</span>
+            </span>
+            <Button
+              variant="outline"
+              size="sm"
+              className="h-8 gap-1.5 text-xs"
+              onClick={() => setAllFriendsOpen(true)}
+            >
+              <UserCheck className="h-3.5 w-3.5" />
+              查看全部好友
+              <span className="tabular-nums text-muted-foreground">({friends.length})</span>
+            </Button>
           </div>
         </div>
       </div>
