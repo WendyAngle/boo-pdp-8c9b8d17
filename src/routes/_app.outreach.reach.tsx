@@ -150,6 +150,7 @@ function ReachPage() {
   const [page, setPage] = useState(1);
   const pageSize = 10;
   const [createOpen, setCreateOpen] = useState(false);
+  const [view, setView] = useState<"task" | "record">("task");
   const [confirm, setConfirm] = useState<
     | null
     | {
@@ -215,7 +216,7 @@ function ReachPage() {
 
   useEffect(() => {
     setPage(1);
-  }, [statusTab, channel, targetKind, kw]);
+  }, [statusTab, channel, targetKind, kw, view]);
 
   const targetKindCounts = useMemo(() => {
     let ent = 0;
@@ -230,6 +231,69 @@ function ReachPage() {
   const pageData = useMemo(
     () => filtered.slice((page - 1) * pageSize, page * pageSize),
     [filtered, page],
+  );
+
+  // 社媒账号池运营指标（替代原积分口径，突出触达任务本身的执行能力）
+  const accounts = useSocialAccounts();
+  const fbRemain = friendRemaining(accounts, "Facebook");
+  const ttRemain = friendRemaining(accounts, "TikTok");
+  const poolHealth = poolAverageHealth(accounts);
+  const usableAccounts = accounts.filter((a) => a.status === "正常").length;
+
+  const doneTotal = counts.success + counts.failed;
+  const successRate = doneTotal === 0 ? 0 : Math.round((counts.success / doneTotal) * 100);
+  const replyTotal = useMemo(
+    () =>
+      reachRows.reduce((n, r) => {
+        const t = threadByKey.get(threadKeyFor(r) ?? "");
+        return n + (t?.meta.inboundMessages.length ?? 0);
+      }, 0),
+    [reachRows, threadByKey],
+  );
+
+  // 任务视图：把逐条触达记录按「任务」聚合（社媒批量任务按任务名聚合，其余按渠道 + 动作 + 日期聚合）
+  const taskGroups = useMemo(() => {
+    const map = new Map<string, TaskGroup>();
+    for (const r of filtered) {
+      const action = reachAction(r);
+      const day = r.createdAt.slice(0, 10);
+      const key = r.subject
+        ? `s:${r.subject}:${r.platform ?? r.channel}`
+        : `c:${r.channel}:${r.platform ?? ""}:${action}:${day}`;
+      let g = map.get(key);
+      if (!g) {
+        g = {
+          key,
+          name: r.subject ?? `${r.platform ?? REACH_CHANNEL_LABEL[r.channel!]}${action}`,
+          channel: r.channel!,
+          platform: r.platform,
+          action,
+          total: 0,
+          pending: 0,
+          in_progress: 0,
+          success: 0,
+          failed: 0,
+          replies: 0,
+          aiGenerated: false,
+          createdAt: r.createdAt,
+          lastAt: r.createdAt,
+        };
+        map.set(key, g);
+      }
+      g.total++;
+      g[r.status]++;
+      if (r.aiGenerated) g.aiGenerated = true;
+      const t = threadByKey.get(threadKeyFor(r) ?? "");
+      g.replies += t?.meta.inboundMessages.length ?? 0;
+      if (r.createdAt < g.createdAt) g.createdAt = r.createdAt;
+      if (r.createdAt > g.lastAt) g.lastAt = r.createdAt;
+    }
+    return [...map.values()].sort((a, b) => (a.lastAt < b.lastAt ? 1 : -1));
+  }, [filtered, threadByKey]);
+
+  const taskPageData = useMemo(
+    () => taskGroups.slice((page - 1) * pageSize, page * pageSize),
+    [taskGroups, page],
   );
 
 
