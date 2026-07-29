@@ -296,7 +296,7 @@ function ReachPage() {
           key,
           name:
             batchName ??
-            `${r.platform ?? REACH_CHANNEL_LABEL[r.channel!]}${action} · ${day}`,
+            (r.platform ? `${r.platform}${action}` : action) + ` · ${day.slice(5)}`,
           channel: r.channel!,
           platform: r.platform,
           action,
@@ -590,7 +590,7 @@ function ReachPage() {
           <Table>
             <TableHeader>
               <TableRow className="bg-primary/5 hover:bg-primary/5">
-                <TableHead>任务名</TableHead>
+                <TableHead className="min-w-[220px]">任务名</TableHead>
                 <TableHead className="w-[150px]">渠道 / 平台</TableHead>
                 <TableHead className="w-[90px]">动作</TableHead>
                 <TableHead className="w-[80px]">目标数</TableHead>
