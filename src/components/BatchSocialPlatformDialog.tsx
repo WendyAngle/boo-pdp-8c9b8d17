@@ -163,12 +163,14 @@ export function BatchSocialPlatformDialog({
   );
 
   const targetCount = jobs.length;
-  const sendableCount = Math.min(targetCount, capacity);
-  const overLimit = targetCount > capacity;
+  /** 今日可执行条数，其余顺延次日 */
+  const todayCount = Math.min(targetCount, capacity);
+  const deferredCount = Math.max(0, targetCount - capacity);
+  const overLimit = deferredCount > 0;
 
-  // 费用
+  // 费用：按目标数量全额扣除（含顺延次日执行的部分）
   const unit = costForSocialPlatform("Facebook");
-  const sendTotal = sendableCount * unit;
+  const sendTotal = targetCount * unit;
   const aiCost = aiCount * COST_AI_SOCIAL;
   const grandTotal = sendTotal + aiCost;
 
@@ -193,12 +195,21 @@ export function BatchSocialPlatformDialog({
     ? renderTemplate(content, previewJob.candidate.ctx)
     : "";
 
-  const canSend = sendableCount > 0 && content.trim().length > 0;
+  const canSend = targetCount > 0 && content.trim().length > 0;
+
+  /** 次日 09:00 起继续执行 */
+  function nextDayStart(): string {
+    const d = new Date();
+    d.setDate(d.getDate() + 1);
+    d.setHours(9, 0, 0, 0);
+    return d.toISOString();
+  }
 
   function handleSend() {
     if (!canSend) return;
+    const scheduled = nextDayStart();
     let n = 0;
-    for (const job of jobs.slice(0, sendableCount)) {
+    jobs.forEach((job, i) => {
       const r = job.candidate;
       createReach({
         targetKind: r.targetKind,
@@ -211,12 +222,18 @@ export function BatchSocialPlatformDialog({
         content: renderTemplate(content, r.ctx),
         aiGenerated: aiUsed,
         cost: unit,
+        userCreated: true,
+        ...(i >= capacity ? { scheduledAt: scheduled } : {}),
       });
       n++;
-    }
+    });
     onOpenChange(false);
     toast.success(`已加入触达队列：${n} 条社媒私信`, {
-      description: `共扣除 ${grandTotal} 积分${
+      description: `${
+        deferredCount > 0
+          ? `今日执行 ${todayCount} 条，剩余 ${deferredCount} 条将于明日 09:00 自动继续执行；`
+          : ""
+      }共扣除 ${grandTotal} 积分${
         aiCost > 0 ? `（含 AI 文案 ${aiCost} 积分）` : ""
       }，可在「触达任务」模块查看进度`,
     });
@@ -341,10 +358,14 @@ export function BatchSocialPlatformDialog({
           </section>
 
           {overLimit && (
-            <div className="rounded-md border border-rose-200 bg-rose-50 p-2 text-xs text-rose-700 flex items-center gap-1.5">
-              <Info className="h-3.5 w-3.5" />
-              目标 {targetCount} 条超出今日可触达额度，系统将先执行前{" "}
-              {sendableCount} 条，其余请明日再试。
+            <div className="rounded-md border border-amber-200 bg-amber-50 p-2 text-xs text-amber-800 flex items-start gap-1.5">
+              <Info className="mt-0.5 h-3.5 w-3.5 shrink-0" />
+              <span>
+                目标 {targetCount} 条超出今日可触达额度：系统今日先执行{" "}
+                <b>{todayCount}</b> 条，剩余 <b>{deferredCount}</b>{" "}
+                条将自动顺延至<b>明日 09:00</b>继续执行，无需重复提交；积分按目标总数
+                {targetCount} 条一次性扣除。
+              </span>
             </div>
           )}
 
@@ -451,10 +472,15 @@ export function BatchSocialPlatformDialog({
           <section className="rounded-md border border-rose-200 bg-rose-50 p-3 text-xs space-y-1">
             <div className="flex justify-between">
               <span className="text-muted-foreground">
-                发送费用（{sendableCount} 条 × {unit} 积分）
+                发送费用（{targetCount} 条 × {unit} 积分）
               </span>
               <span className="font-medium">{sendTotal} 积分</span>
             </div>
+            {deferredCount > 0 && (
+              <div className="text-[11px] text-amber-700">
+                其中 {deferredCount} 条顺延至明日 09:00 执行
+              </div>
+            )}
             {aiCost > 0 && (
               <div className="flex justify-between">
                 <span className="text-muted-foreground">

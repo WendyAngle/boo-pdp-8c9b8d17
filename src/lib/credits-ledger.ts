@@ -233,6 +233,8 @@ export interface LedgerEntry {
   aiGenerated?: boolean;
   // demo / override: when set, getReachStatus returns this value directly
   forcedStatus?: ReachStatus;
+  // reach-only: 因当日账号额度不足而顺延执行的时间（ISO），到点前恒为「待触达」
+  scheduledAt?: string;
   // reach-only: populated when status is failed
   failReason?: string;
   // refund-only: id of the related reach entry being refunded
@@ -337,6 +339,9 @@ export function createReach(input: {
   content?: string;
   aiGenerated?: boolean;
   cost?: number;
+  /** 顺延执行时间（ISO）：额度不足时排队到次日 */
+  scheduledAt?: string;
+  userCreated?: boolean;
 }): LedgerEntry {
   const { cost, ...rest } = input;
   const entry: LedgerEntry = {
@@ -629,7 +634,9 @@ function hashStr(s: string) {
 export function getReachStatus(r: LedgerEntry, now = Date.now()): ReachStatus {
   if (r.kind !== "reach") return "success";
   if (r.forcedStatus) return r.forcedStatus;
-  const t = new Date(r.createdAt).getTime();
+  // 顺延执行：未到计划时间前恒为「待触达」
+  if (r.scheduledAt && new Date(r.scheduledAt).getTime() > now) return "pending";
+  const t = new Date(r.scheduledAt ?? r.createdAt).getTime();
   const elapsedSec = (now - t) / 1000;
   if (elapsedSec < 30) return "pending";
   if (elapsedSec < 180) return "in_progress";
