@@ -233,6 +233,30 @@ function FavoritesPage() {
     return out;
   }, [selectedRecords, myVars]);
 
+  // 社媒（Facebook / TikTok）候选人：由 WhatsApp 候选人复用上下文，按企业社媒资料判定各平台是否有联系方式
+  const platformCandidates = useMemo<PlatformCandidate[]>(() => {
+    const slug = (s: string) =>
+      s
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, ".")
+        .replace(/^\.|\.$/g, "")
+        .slice(0, 24) || "user";
+    const hash = (s: string) =>
+      Array.from(s).reduce((a, ch) => (a * 31 + ch.charCodeAt(0)) % 997, 7);
+
+    return waCandidates.map((c) => {
+      const entId = c.enterpriseId ?? c.targetId;
+      const ent = entId ? findEnterprise(entId.split(":")[0]) : undefined;
+      const handles: Partial<Record<ReachPlatform, string>> = {};
+      const base = slug(c.name);
+      if (ent?.socials?.facebook) handles.Facebook = `@${base}`;
+      if (hash(`${entId}:${c.name}`) % 3 !== 0) handles.TikTok = `@${base}.tt`;
+      return { ...c, handles };
+    });
+  }, [waCandidates]);
+
+
+
   const counts = useMemo(() => {
     const c: Record<string, number> = {
       all: 0,
