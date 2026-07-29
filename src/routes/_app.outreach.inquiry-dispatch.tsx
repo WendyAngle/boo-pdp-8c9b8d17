@@ -57,7 +57,7 @@ import {
 } from "@/lib/inbox-store";
 
 export const Route = createFileRoute("/_app/outreach/inquiry-dispatch")({
-  head: () => ({ meta: [{ title: "询盘分派 | 出海大数据平台" }] }),
+  head: () => ({ meta: [{ title: "询盘分派规则 | 出海大数据平台" }] }),
   component: InboxRoutingAdmin,
 });
 
@@ -291,7 +291,7 @@ function InboxRoutingAdmin() {
             <Users className="h-7 w-7" />
           </div>
           <div className="flex-1">
-            <h1 className="text-2xl font-bold tracking-wide">询盘分派</h1>
+            <h1 className="text-2xl font-bold tracking-wide">询盘分派规则</h1>
             <p className="text-white/90 text-sm mt-1">
               按目标类型内置两个分组：企业分组、人物分组。全部会话人工分配，不做自动派单。
             </p>
