@@ -1,0 +1,643 @@
+import { useEffect, useMemo, useRef, useState } from "react";
+import {
+  Send,
+  Sparkles,
+  Loader2,
+  Eye,
+  X,
+  ServerCog,
+  Users,
+  Info,
+} from "lucide-react";
+import { useServerFn } from "@tanstack/react-start";
+import { toast } from "sonner";
+
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+  DialogDescription,
+} from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import { Textarea } from "@/components/ui/textarea";
+import { Label } from "@/components/ui/label";
+import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { cn } from "@/lib/utils";
+
+import {
+  MESSAGE_VARIABLES,
+  renderTemplate,
+  type Recipient,
+} from "@/lib/message-vars";
+import {
+  createReach,
+  chargeAiGeneration,
+  costForSocialPlatform,
+  COST_AI_SOCIAL,
+} from "@/lib/credits-ledger";
+import { useSocialAccounts, type SocialAccount } from "@/data/social-accounts";
+import { useLeadProfile } from "@/lib/lead-profile";
+import { useCurrentUser } from "@/lib/current-user";
+import { generateAiContent } from "@/lib/api/ai-compose.functions";
+
+export type ReachPlatform = "Facebook" | "TikTok";
+export const REACH_PLATFORMS: ReachPlatform[] = ["Facebook", "TikTok"];
+
+/** 单日单账号触达上限 */
+export const DAILY_PER_ACCOUNT = 5;
+
+/** 社媒目标候选人（收藏 → 社媒收件人） */
+export interface PlatformCandidate extends Recipient {
+  enterpriseId?: string;
+  /** 该目标在各平台上的社媒联系方式（handle），无则表示该平台不可触达 */
+  handles: Partial<Record<ReachPlatform, string>>;
+}
+
+/** 账号当日已触达次数（私信 + 加友） */
+export function accountTouchesToday(a: SocialAccount): number {
+  return (a.dmSentToday ?? a.sentToday ?? 0) + (a.friendSentToday ?? 0);
+}
+
+/** 可用执行账号：状态正常 且 当日触达次数未超过 5 */
+export function usableExecAccounts(
+  list: SocialAccount[],
+  platform: ReachPlatform | "all",
+): SocialAccount[] {
+  return list.filter(
+    (a) =>
+      a.status === "正常" &&
+      (platform === "all" || a.platform === platform) &&
+      accountTouchesToday(a) < DAILY_PER_ACCOUNT,
+  );
+}
+
+export interface BatchSocialPlatformDialogProps {
+  open: boolean;
+  onOpenChange: (v: boolean) => void;
+  candidates: PlatformCandidate[];
+}
+
+export function BatchSocialPlatformDialog({
+  open,
+  onOpenChange,
+  candidates,
+}: BatchSocialPlatformDialogProps) {
+  const accounts = useSocialAccounts();
+  const profile = useLeadProfile();
+  const user = useCurrentUser();
+  const callGenerate = useServerFn(generateAiContent);
+
+  const [platform, setPlatform] = useState<ReachPlatform | "all">("all");
+  const [content, setContent] = useState("");
+  const [aiUsed, setAiUsed] = useState(false);
+  const [aiCount, setAiCount] = useState(0);
+  const [previewIdx, setPreviewIdx] = useState(0);
+  const [aiOpen, setAiOpen] = useState(false);
+  const [aiLoading, setAiLoading] = useState(false);
+  const [targetLang, setTargetLang] = useState<"zh" | "en">("zh");
+
+  useEffect(() => {
+    if (!open) return;
+    setPlatform("all");
+    setContent("");
+    setAiUsed(false);
+    setAiCount(0);
+    setPreviewIdx(0);
+    setTargetLang("zh");
+  }, [open]);
+
+  /** 按平台联系方式分组数量 */
+  const groups = useMemo(() => {
+    const g: Record<ReachPlatform, PlatformCandidate[]> = {
+      Facebook: [],
+      TikTok: [],
+    };
+    const none: PlatformCandidate[] = [];
+    for (const c of candidates) {
+      let hit = false;
+      for (const p of REACH_PLATFORMS) {
+        if (c.handles[p]) {
+          g[p].push(c);
+          hit = true;
+        }
+      }
+      if (!hit) none.push(c);
+    }
+    return { ...g, none };
+  }, [candidates]);
+
+  /** 当前平台筛选下的触达目标（平台 + 目标 的组合） */
+  type Job = { candidate: PlatformCandidate; platform: ReachPlatform; handle: string };
+  const jobs = useMemo<Job[]>(() => {
+    const out: Job[] = [];
+    for (const p of REACH_PLATFORMS) {
+      if (platform !== "all" && platform !== p) continue;
+      for (const c of groups[p]) {
+        out.push({ candidate: c, platform: p, handle: c.handles[p]! });
+      }
+    }
+    return out;
+  }, [groups, platform]);
+
+  const usable = useMemo(
+    () => usableExecAccounts(accounts, platform),
+    [accounts, platform],
+  );
+  const capacity = useMemo(
+    () =>
+      usable.reduce(
+        (s, a) => s + Math.max(0, DAILY_PER_ACCOUNT - accountTouchesToday(a)),
+        0,
+      ),
+    [usable],
+  );
+
+  const targetCount = jobs.length;
+  const sendableCount = Math.min(targetCount, capacity);
+  const overLimit = targetCount > capacity;
+
+  // 费用
+  const unit = costForSocialPlatform("Facebook");
+  const sendTotal = sendableCount * unit;
+  const aiCost = aiCount * COST_AI_SOCIAL;
+  const grandTotal = sendTotal + aiCost;
+
+  const contentRef = useRef<HTMLTextAreaElement | null>(null);
+  function insertVarAt(v: string) {
+    const token = `{${v}}`;
+    const el = contentRef.current;
+    const s = content;
+    if (!el) return setContent(s + token);
+    const start = el.selectionStart ?? s.length;
+    const end = el.selectionEnd ?? s.length;
+    setContent(s.slice(0, start) + token + s.slice(end));
+    requestAnimationFrame(() => {
+      el.focus();
+      const pos = start + token.length;
+      el.setSelectionRange(pos, pos);
+    });
+  }
+
+  const previewJob = jobs[Math.min(previewIdx, Math.max(0, jobs.length - 1))];
+  const previewContent = previewJob
+    ? renderTemplate(content, previewJob.candidate.ctx)
+    : "";
+
+  const canSend = sendableCount > 0 && content.trim().length > 0;
+
+  function handleSend() {
+    if (!canSend) return;
+    let n = 0;
+    for (const job of jobs.slice(0, sendableCount)) {
+      const r = job.candidate;
+      createReach({
+        targetKind: r.targetKind,
+        targetId: r.targetId,
+        targetName: r.name,
+        parentRef: r.parentRef,
+        channel: "social",
+        platform: job.platform,
+        detail: job.handle,
+        content: renderTemplate(content, r.ctx),
+        aiGenerated: aiUsed,
+        cost: unit,
+      });
+      n++;
+    }
+    onOpenChange(false);
+    toast.success(`已加入触达队列：${n} 条社媒私信`, {
+      description: `共扣除 ${grandTotal} 积分${
+        aiCost > 0 ? `（含 AI 文案 ${aiCost} 积分）` : ""
+      }，可在「触达任务」模块查看进度`,
+    });
+  }
+
+  async function handleAiGenerate(params: {
+    scene: string;
+    tone: "formal" | "friendly" | "concise";
+    language: "zh" | "en";
+    extra?: string;
+  }) {
+    setAiLoading(true);
+    try {
+      const sample = jobs[0]?.candidate ?? candidates[0];
+      const res = await callGenerate({
+        data: {
+          channel: "social",
+          platform: platform === "all" ? "Facebook" : platform,
+          ...params,
+          myCompany: profile.companyName,
+          myName: user.name,
+          sampleEnterprise: sample?.ctx.企业名,
+        },
+      });
+      chargeAiGeneration({
+        channel: "social",
+        targetName: sample?.name ?? "AI 生成",
+      });
+      setTargetLang(params.language);
+      if (res.content) setContent(res.content);
+      setAiUsed(true);
+      setAiCount((c) => c + 1);
+      setAiOpen(false);
+      toast.success(`AI 已生成社媒文案，扣除 ${COST_AI_SOCIAL} 积分`);
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : String(e);
+      toast.error("AI 生成失败", { description: msg });
+    } finally {
+      setAiLoading(false);
+    }
+  }
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="max-w-3xl max-h-[92vh] overflow-y-auto">
+        <DialogHeader>
+          <DialogTitle className="flex items-center gap-2">
+            <Users className="h-5 w-5 text-primary" />
+            社媒平台 系统自动触达
+            <Badge variant="secondary" className="ml-1 font-normal">
+              选中 {candidates.length} · 可触达 {targetCount}
+            </Badge>
+          </DialogTitle>
+          <DialogDescription className="sr-only">
+            社媒平台批量私信触达
+          </DialogDescription>
+        </DialogHeader>
+
+        <div className="space-y-5">
+          {/* 分组统计 */}
+          <section className="rounded-md border bg-muted/30 p-3 space-y-2">
+            <Label className="text-xs font-medium">
+              选中数据 · 社媒联系方式分布
+            </Label>
+            <div className="grid grid-cols-3 gap-2 text-xs">
+              <StatCell
+                tone="sky"
+                label="Facebook"
+                value={groups.Facebook.length}
+              />
+              <StatCell tone="violet" label="TikTok" value={groups.TikTok.length} />
+              <StatCell tone="slate" label="无社媒账号" value={groups.none.length} />
+            </div>
+          </section>
+
+          {/* 目标平台 + 可用账号 */}
+          <section className="grid gap-3 sm:grid-cols-2">
+            <div className="space-y-1">
+              <Label className="text-xs text-muted-foreground">目标平台</Label>
+              <Select
+                value={platform}
+                onValueChange={(v) => {
+                  setPlatform(v as ReachPlatform | "all");
+                  setPreviewIdx(0);
+                }}
+              >
+                <SelectTrigger className="h-9">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">全部</SelectItem>
+                  <SelectItem value="Facebook">Facebook</SelectItem>
+                  <SelectItem value="TikTok">TikTok</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-1">
+              <Label className="text-xs text-muted-foreground flex items-center gap-1">
+                <ServerCog className="h-3.5 w-3.5" /> 可用执行账号
+              </Label>
+              <div
+                className={cn(
+                  "flex h-9 items-center justify-between rounded-md border px-3 text-xs",
+                  usable.length === 0
+                    ? "border-amber-200 bg-amber-50 text-amber-800"
+                    : "bg-muted/40 text-muted-foreground",
+                )}
+              >
+                <span>
+                  <span className="text-foreground font-semibold mx-0.5">
+                    {usable.length}
+                  </span>
+                  个账号 · 今日可触达
+                  <span className="text-foreground font-semibold mx-0.5">
+                    {capacity}
+                  </span>
+                  次
+                </span>
+                <span className="text-[11px]">单账号 {DAILY_PER_ACCOUNT} 次/天</span>
+              </div>
+            </div>
+          </section>
+
+          {overLimit && (
+            <div className="rounded-md border border-rose-200 bg-rose-50 p-2 text-xs text-rose-700 flex items-center gap-1.5">
+              <Info className="h-3.5 w-3.5" />
+              目标 {targetCount} 条超出今日可触达额度，系统将先执行前{" "}
+              {sendableCount} 条，其余请明日再试。
+            </div>
+          )}
+
+          {/* 撰写内容 */}
+          <section className="space-y-3">
+            <div className="flex items-center justify-between">
+              <Label className="text-sm font-medium flex items-center gap-2">
+                撰写内容
+                {aiUsed && (
+                  <Badge
+                    variant="secondary"
+                    className="gap-1 bg-amber-100 text-amber-800"
+                  >
+                    <Sparkles className="h-3 w-3" />
+                    AI 已生成 · 可手动调整
+                  </Badge>
+                )}
+              </Label>
+              <Button
+                type="button"
+                size="sm"
+                variant="outline"
+                onClick={() => setAiOpen(true)}
+                className="h-7 gap-1"
+              >
+                <Sparkles className="h-3.5 w-3.5 text-primary" />
+                {aiUsed ? "AI 重新生成" : "AI 生成"}
+                <span className="text-xs text-muted-foreground">
+                  -{COST_AI_SOCIAL} 积分/次
+                </span>
+              </Button>
+            </div>
+
+            <div className="flex flex-wrap items-center gap-1.5">
+              <span className="text-xs text-muted-foreground">插入变量：</span>
+              {MESSAGE_VARIABLES.map((v) => (
+                <button
+                  key={v}
+                  type="button"
+                  onClick={() => insertVarAt(v)}
+                  className="rounded border bg-background px-1.5 py-0.5 text-[11px] font-mono text-primary hover:bg-primary/10"
+                >
+                  {`{${v}}`}
+                </button>
+              ))}
+            </div>
+
+            <div className="space-y-1">
+              <Label className="text-xs text-muted-foreground">私信内容 *</Label>
+              <Textarea
+                ref={contentRef}
+                value={content}
+                onChange={(e) => setContent(e.target.value)}
+                rows={6}
+                maxLength={4096}
+                placeholder={`{联系人名}您好，我是{我的公司}的{我的姓名}，看到贵司在{行业}方向的业务……`}
+              />
+              <div className="text-[11px] text-muted-foreground">
+                {content.length} / 4096 字
+              </div>
+            </div>
+          </section>
+
+          {/* 预览 */}
+          {jobs.length > 0 && (
+            <section className="space-y-2 rounded-md border bg-muted/30 p-3">
+              <div className="flex items-center justify-between">
+                <Label className="text-xs font-medium flex items-center gap-1">
+                  <Eye className="h-3.5 w-3.5" />
+                  内容预览（变量已替换）
+                </Label>
+                {jobs.length > 1 && (
+                  <Select
+                    value={String(Math.min(previewIdx, jobs.length - 1))}
+                    onValueChange={(v) => setPreviewIdx(Number(v))}
+                  >
+                    <SelectTrigger className="h-7 w-[220px] text-xs">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {jobs.map((j, i) => (
+                        <SelectItem key={`${j.platform}:${j.candidate.key}`} value={String(i)}>
+                          第 {i + 1} 条 · {j.platform} · {j.candidate.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                )}
+              </div>
+              {previewJob && (
+                <div className="text-[11px] text-muted-foreground">
+                  {previewJob.platform} · {previewJob.handle}
+                </div>
+              )}
+              <div className="text-xs whitespace-pre-wrap text-foreground/90 max-h-40 overflow-y-auto">
+                {previewContent || (
+                  <span className="text-muted-foreground">（暂无内容）</span>
+                )}
+              </div>
+            </section>
+          )}
+
+          {/* 费用 */}
+          <section className="rounded-md border border-rose-200 bg-rose-50 p-3 text-xs space-y-1">
+            <div className="flex justify-between">
+              <span className="text-muted-foreground">
+                发送费用（{sendableCount} 条 × {unit} 积分）
+              </span>
+              <span className="font-medium">{sendTotal} 积分</span>
+            </div>
+            {aiCost > 0 && (
+              <div className="flex justify-between">
+                <span className="text-muted-foreground">
+                  AI 生成（{aiCount} 次 × {COST_AI_SOCIAL} 积分）
+                </span>
+                <span className="font-medium">{aiCost} 积分</span>
+              </div>
+            )}
+            <div className="flex justify-between border-t border-rose-200/70 pt-1">
+              <span className="font-semibold text-rose-700">合计</span>
+              <span className="font-semibold text-rose-700">{grandTotal} 积分</span>
+            </div>
+          </section>
+        </div>
+
+        <DialogFooter>
+          <Button variant="outline" onClick={() => onOpenChange(false)}>
+            取消
+          </Button>
+          <Button onClick={handleSend} disabled={!canSend} className="bg-primary">
+            <Send className="h-4 w-4" />
+            确认发送（-{grandTotal}）
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+
+      <AiComposeMiniDialog
+        open={aiOpen}
+        onOpenChange={setAiOpen}
+        loading={aiLoading}
+        defaultLanguage={targetLang}
+        onGenerate={handleAiGenerate}
+      />
+    </Dialog>
+  );
+}
+
+function StatCell({
+  tone,
+  label,
+  value,
+}: {
+  tone: "sky" | "violet" | "slate";
+  label: string;
+  value: number;
+}) {
+  const cls = {
+    sky: "border-sky-200 bg-sky-50 text-sky-700",
+    violet: "border-violet-200 bg-violet-50 text-violet-700",
+    slate: "border-slate-200 bg-slate-50 text-slate-600",
+  }[tone];
+  return (
+    <div
+      className={cn(
+        "flex items-center justify-between rounded border px-2 py-1.5",
+        cls,
+      )}
+    >
+      <span>{label}</span>
+      <span className="font-semibold tabular-nums">{value}</span>
+    </div>
+  );
+}
+
+/* -------------------- AI 子弹窗 -------------------- */
+function AiComposeMiniDialog({
+  open,
+  onOpenChange,
+  loading,
+  defaultLanguage = "zh",
+  onGenerate,
+}: {
+  open: boolean;
+  onOpenChange: (v: boolean) => void;
+  loading: boolean;
+  defaultLanguage?: "zh" | "en";
+  onGenerate: (p: {
+    scene: string;
+    tone: "formal" | "friendly" | "concise";
+    language: "zh" | "en";
+    extra?: string;
+  }) => void;
+}) {
+  const [scene, setScene] = useState("开发信");
+  const [tone, setTone] = useState<"formal" | "friendly" | "concise">("friendly");
+  const [language, setLanguage] = useState<"zh" | "en">(defaultLanguage);
+  const [extra, setExtra] = useState("");
+  useEffect(() => {
+    if (open) setLanguage(defaultLanguage);
+  }, [open, defaultLanguage]);
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="max-w-md">
+        <DialogHeader>
+          <DialogTitle className="flex items-center gap-2">
+            <Sparkles className="h-5 w-5 text-primary" />
+            AI 生成社媒文案
+          </DialogTitle>
+          <DialogDescription className="text-xs">
+            生成成功即扣 {COST_AI_SOCIAL} 积分；失败不扣费。
+          </DialogDescription>
+        </DialogHeader>
+        <div className="space-y-3">
+          <div className="space-y-1">
+            <Label className="text-xs">场景</Label>
+            <Select value={scene} onValueChange={setScene}>
+              <SelectTrigger className="h-9">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="开发信">开发信（首次接触）</SelectItem>
+                <SelectItem value="跟进">跟进未回复客户</SelectItem>
+                <SelectItem value="报价">报价 / 商品推荐</SelectItem>
+                <SelectItem value="展会邀请">展会邀请</SelectItem>
+                <SelectItem value="节日问候">节日问候</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="grid grid-cols-2 gap-3">
+            <div className="space-y-1">
+              <Label className="text-xs">语气</Label>
+              <Select value={tone} onValueChange={(v) => setTone(v as typeof tone)}>
+                <SelectTrigger className="h-9">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="formal">正式商务</SelectItem>
+                  <SelectItem value="friendly">友好诚恳</SelectItem>
+                  <SelectItem value="concise">简洁直接</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-1">
+              <Label className="text-xs">目标语言</Label>
+              <Select
+                value={language}
+                onValueChange={(v) => setLanguage(v as typeof language)}
+              >
+                <SelectTrigger className="h-9">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="zh">中文</SelectItem>
+                  <SelectItem value="en">英文</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+          <div className="space-y-1">
+            <Label className="text-xs">补充要求（可选）</Label>
+            <Input
+              value={extra}
+              onChange={(e) => setExtra(e.target.value)}
+              placeholder="如：突出报价、请求预约会议等"
+              maxLength={200}
+            />
+          </div>
+        </div>
+        <DialogFooter>
+          <Button
+            variant="outline"
+            onClick={() => onOpenChange(false)}
+            disabled={loading}
+          >
+            取消
+          </Button>
+          <Button
+            disabled={loading}
+            onClick={() =>
+              onGenerate({ scene, tone, language, extra: extra.trim() || undefined })
+            }
+            className={cn("bg-primary", loading && "opacity-80")}
+          >
+            {loading ? (
+              <Loader2 className="h-4 w-4 animate-spin" />
+            ) : (
+              <Sparkles className="h-4 w-4" />
+            )}
+            {loading ? "生成中…" : "生成"}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
