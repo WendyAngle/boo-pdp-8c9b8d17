@@ -699,7 +699,7 @@ function FavoritesPage() {
                   批量发邮件需要先在「邮箱」模块配置至少一个状态为「正常」的发件邮箱。
                 </p>
                 <div className="rounded-md bg-amber-50 border border-amber-200 p-3 text-xs text-amber-800">
-                  请先前往「系统管理 · 邮箱」新增邮箱并完成连接测试。
+                  请先前往「企业设置 · 发信邮箱」新增邮箱并完成连接测试。
                 </div>
               </div>
             </AlertDialogDescription>

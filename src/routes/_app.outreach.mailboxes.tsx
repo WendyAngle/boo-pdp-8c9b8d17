@@ -210,7 +210,7 @@ function MailboxesPage() {
       <div className="flex items-center gap-1.5 text-sm text-muted-foreground">
         <span>出海大数据平台</span>
         <ChevronRight className="h-3.5 w-3.5" />
-        <span>系统管理</span>
+        <span>企业设置</span>
         <ChevronRight className="h-3.5 w-3.5" />
         <span className="text-foreground font-medium">邮箱</span>
       </div>

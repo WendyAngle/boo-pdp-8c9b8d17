@@ -473,7 +473,7 @@ function EmailProvidersPage() {
         <Settings2 className="h-4 w-4 text-amber-600 mt-0.5" />
         <div className="text-xs text-amber-800 leading-relaxed">
           此处为平台侧统一对接的邮件通道，用于系统事务邮件（验证码、通知）与平台代发营销邮件。
-          企业租户员工在「系统管理 → 发信邮箱」中配置的自建 SMTP 由租户自行维护，不受此处路由控制。
+          企业租户员工在「企业设置 → 发信邮箱」中配置的自建 SMTP 由租户自行维护，不受此处路由控制。
         </div>
       </Card>
     </div>
