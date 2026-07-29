@@ -285,14 +285,18 @@ function ReachPage() {
     for (const r of filtered) {
       const action = reachAction(r);
       const day = r.createdAt.slice(0, 10);
-      const key = r.subject
+      // 批量创建的触达任务按任务名聚合；单条触达按「渠道 + 平台 + 动作 + 日期」归入当日任务
+      const key = r.userCreated && r.subject
         ? `s:${r.subject}:${r.platform ?? r.channel}`
         : `c:${r.channel}:${r.platform ?? ""}:${action}:${day}`;
       let g = map.get(key);
       if (!g) {
         g = {
           key,
-          name: r.subject ?? `${r.platform ?? REACH_CHANNEL_LABEL[r.channel!]}${action}`,
+          name:
+            r.userCreated && r.subject
+              ? r.subject
+              : `${r.platform ?? REACH_CHANNEL_LABEL[r.channel!]}${action} · ${day}`,
           channel: r.channel!,
           platform: r.platform,
           action,
