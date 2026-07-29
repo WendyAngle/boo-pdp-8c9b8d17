@@ -34,8 +34,6 @@ const menu: Root[] = [
           { label: "客户触达", to: "/outreach/conversations" },
           { label: "触达任务", to: "/outreach/reach" },
           { label: "我的账号", to: "/outreach/social/accounts" },
-          { label: "解锁记录", to: "/outreach/unlocked" },
-
           { label: "退订名单", to: "/outreach/suppressions" },
         ],
       },
