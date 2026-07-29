@@ -3,6 +3,33 @@ import { useSyncExternalStore } from "react";
 /** 我方社媒执行账号池（对最终用户隐藏，仅后台调度使用） */
 export type SocialPlatform = "WhatsApp" | "TikTok" | "Facebook";
 
+/** 账号 / 代理 地区枚举（ISO code + 中文标签） */
+export const REGION_OPTIONS: { code: string; label: string }[] = [
+  { code: "US", label: "美国" },
+  { code: "JP", label: "日本" },
+  { code: "SG", label: "新加坡" },
+  { code: "ID", label: "印度尼西亚" },
+  { code: "CN", label: "中国" },
+  { code: "MY", label: "马来西亚" },
+  { code: "KR", label: "韩国" },
+  { code: "TH", label: "泰国" },
+  { code: "VN", label: "越南" },
+  { code: "PH", label: "菲律宾" },
+  { code: "GB", label: "英国" },
+  { code: "DE", label: "德国" },
+  { code: "FR", label: "法国" },
+  { code: "CA", label: "加拿大" },
+  { code: "AU", label: "澳大利亚" },
+  { code: "BR", label: "巴西" },
+  { code: "IN", label: "印度" },
+  { code: "MX", label: "墨西哥" },
+  { code: "OTHER", label: "其他" },
+];
+export function regionLabel(code?: string): string {
+  if (!code) return "—";
+  return REGION_OPTIONS.find((r) => r.code === code)?.label ?? code;
+}
+
 export interface SocialAccount {
   id: string;
   platform: SocialPlatform;
@@ -17,12 +44,20 @@ export interface SocialAccount {
   /** Facebook / TikTok：每日私信额度（默认 20） */
   dailyDmLimit?: number;
   dmSentToday?: number;
-  status: "正常" | "停用" | "异常" | "养号中";
+  status: "正常" | "停用" | "异常" | "养号中" | "备货中";
   purchasedAt?: string;
+  /** 下单时间 */
+  orderedAt?: string;
+  /** 预计交付时间（下单 + 7 个工作日） */
+  expectedDeliveryAt?: string;
+  /** 账号"人设"归属地（ISO code） */
+  ownerRegion?: string;
+  /** 出口 IP / 代理所在地（ISO code） */
+  proxyRegion?: string;
 }
 
-const KEY = "boo:social-accounts:v5";
-const SEED_FLAG = "boo:social-accounts:v5:seeded";
+const KEY = "boo:social-accounts:v6";
+const SEED_FLAG = "boo:social-accounts:v6:seeded";
 
 function read(): SocialAccount[] {
   if (typeof window === "undefined") return [];
@@ -41,12 +76,42 @@ function write(arr: SocialAccount[]) {
   } catch {}
 }
 
+/** 在指定日期基础上加 N 个工作日（跳过周六、周日） */
+export function addWorkdays(from: Date, days: number): Date {
+  const d = new Date(from);
+  let added = 0;
+  while (added < days) {
+    d.setDate(d.getDate() + 1);
+    const dow = d.getDay();
+    if (dow !== 0 && dow !== 6) added++;
+  }
+  return d;
+}
+
+/** 返回距离目标日期还剩多少个工作日（今天算 0） */
+export function workdaysUntil(target: string): number {
+  const now = new Date();
+  now.setHours(0, 0, 0, 0);
+  const t = new Date(target);
+  t.setHours(0, 0, 0, 0);
+  if (t <= now) return 0;
+  let count = 0;
+  const cur = new Date(now);
+  while (cur < t) {
+    cur.setDate(cur.getDate() + 1);
+    const dow = cur.getDay();
+    if (dow !== 0 && dow !== 6) count++;
+  }
+  return count;
+}
+
 function seed() {
   if (typeof window === "undefined") return;
   if (window.localStorage.getItem(SEED_FLAG)) return;
   const now = new Date().toISOString();
+  const inFiveDays = addWorkdays(new Date(), 5).toISOString();
   const seedData: SocialAccount[] = [
-    // Facebook 预置 2 个（历史购买示例）
+    // Facebook 预置 2 个
     {
       id: "sa_fb_1",
       platform: "Facebook",
@@ -60,6 +125,8 @@ function seed() {
       dmSentToday: 3,
       status: "正常",
       purchasedAt: now,
+      ownerRegion: "US",
+      proxyRegion: "US",
     },
     {
       id: "sa_fb_2",
@@ -74,6 +141,8 @@ function seed() {
       dmSentToday: 0,
       status: "养号中",
       purchasedAt: now,
+      ownerRegion: "SG",
+      proxyRegion: "SG",
     },
     // TikTok 预置 2 个
     {
@@ -89,6 +158,8 @@ function seed() {
       dmSentToday: 2,
       status: "正常",
       purchasedAt: now,
+      ownerRegion: "JP",
+      proxyRegion: "JP",
     },
     {
       id: "sa_tt_2",
@@ -103,8 +174,10 @@ function seed() {
       dmSentToday: 0,
       status: "正常",
       purchasedAt: now,
+      ownerRegion: "MY",
+      proxyRegion: "SG",
     },
-    // 异常账号 x2（用于演示一键恢复）
+    // 异常账号 x2
     {
       id: "sa_fb_x1",
       platform: "Facebook",
@@ -118,6 +191,8 @@ function seed() {
       dmSentToday: 12,
       status: "异常",
       purchasedAt: now,
+      ownerRegion: "US",
+      proxyRegion: "US",
     },
     {
       id: "sa_tt_x1",
@@ -132,8 +207,10 @@ function seed() {
       dmSentToday: 8,
       status: "异常",
       purchasedAt: now,
+      ownerRegion: "VN",
+      proxyRegion: "SG",
     },
-    // 养号中 x1（新增 TikTok）
+    // 养号中 x1
     {
       id: "sa_tt_warm1",
       platform: "TikTok",
@@ -147,6 +224,26 @@ function seed() {
       dmSentToday: 0,
       status: "养号中",
       purchasedAt: now,
+      ownerRegion: "TH",
+      proxyRegion: "SG",
+    },
+    // 备货中 x1（演示新流程）
+    {
+      id: "sa_fb_pending1",
+      platform: "Facebook",
+      handle: "",
+      displayName: "",
+      dailyLimit: 0,
+      sentToday: 0,
+      dailyFriendLimit: 0,
+      friendSentToday: 0,
+      dailyDmLimit: 0,
+      dmSentToday: 0,
+      status: "备货中",
+      orderedAt: now,
+      expectedDeliveryAt: inFiveDays,
+      ownerRegion: "DE",
+      proxyRegion: "DE",
     },
   ];
   write(seedData);
@@ -246,36 +343,67 @@ export function dispatchSend(platform: SocialPlatform, count: number): number {
   return count - remaining;
 }
 
-/** 购买后向池中追加 N 个账号 */
+/**
+ * 购买后向池中追加 N 个「备货中」账号（7 个工作日后交付）。
+ */
 export function addPurchasedAccounts(
   platform: "Facebook" | "TikTok",
   quantity: number,
+  options?: { ownerRegion?: string; proxyRegion?: string },
 ): SocialAccount[] {
-  const now = new Date().toISOString();
-  const existing = cache.filter((a) => a.platform === platform).length;
-  const newOnes: SocialAccount[] = Array.from({ length: quantity }).map((_, i) => {
-    const seq = existing + i + 1;
-    const handle =
-      platform === "Facebook"
-        ? `@bytetech.fb${String(seq).padStart(3, "0")}`
-        : `@bytetech_tt${String(seq).padStart(3, "0")}`;
-    return {
-      id: `sa_${platform === "Facebook" ? "fb" : "tt"}_${Date.now().toString(36)}_${i}`,
-      platform,
-      handle,
-      displayName: `ByteTech ${platform} · #${seq}`,
-      dailyLimit: 20,
-      sentToday: 0,
-      dailyFriendLimit: 5,
-      friendSentToday: 0,
-      dailyDmLimit: 20,
-      dmSentToday: 0,
-      status: "养号中",
-      purchasedAt: now,
-    };
-  });
+  const now = new Date();
+  const nowIso = now.toISOString();
+  const deliverAt = addWorkdays(now, 7).toISOString();
+  const newOnes: SocialAccount[] = Array.from({ length: quantity }).map((_, i) => ({
+    id: `sa_${platform === "Facebook" ? "fb" : "tt"}_${Date.now().toString(36)}_${i}`,
+    platform,
+    handle: "",
+    displayName: "",
+    dailyLimit: 0,
+    sentToday: 0,
+    dailyFriendLimit: 0,
+    friendSentToday: 0,
+    dailyDmLimit: 0,
+    dmSentToday: 0,
+    status: "备货中",
+    orderedAt: nowIso,
+    expectedDeliveryAt: deliverAt,
+    ownerRegion: options?.ownerRegion,
+    proxyRegion: options?.proxyRegion,
+  }));
   commit([...newOnes, ...cache]);
   return newOnes;
+}
+
+/**
+ * 【演示环境】立即交付一个备货中账号：填充 handle / displayName，
+ * 状态转为「养号中」，额度恢复默认值。
+ */
+export function simulateDeliver(id: string): void {
+  const target = cache.find((a) => a.id === id);
+  if (!target || target.status !== "备货中") return;
+  const samePlatform = cache.filter((a) => a.platform === target.platform).length;
+  const seq = samePlatform;
+  const prefix = target.platform === "Facebook" ? "fb" : "tt";
+  const handle =
+    target.platform === "Facebook"
+      ? `@bytetech.${prefix}${String(seq).padStart(3, "0")}`
+      : `@bytetech_${prefix}${String(seq).padStart(3, "0")}`;
+  const next = cache.map((a) =>
+    a.id === id
+      ? {
+          ...a,
+          handle,
+          displayName: `ByteTech ${target.platform} · #${seq}`,
+          dailyLimit: 20,
+          dailyFriendLimit: 5,
+          dailyDmLimit: 20,
+          status: "养号中" as const,
+          purchasedAt: new Date().toISOString(),
+        }
+      : a,
+  );
+  commit(next);
 }
 
 /** 平台已购账号数 */

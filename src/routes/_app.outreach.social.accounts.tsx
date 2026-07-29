@@ -1,10 +1,28 @@
 import { useMemo, useState } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { ShoppingBag, Facebook, Music2, Minus, Plus, CheckCircle2, Wallet, UserCheck } from "lucide-react";
+import {
+  ShoppingBag,
+  Facebook,
+  Music2,
+  Minus,
+  Plus,
+  CheckCircle2,
+  Wallet,
+  UserCheck,
+  Clock,
+  Zap,
+} from "lucide-react";
 import { toast } from "sonner";
 import { useSocialFriends } from "@/lib/social-friends";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -30,8 +48,13 @@ import {
 } from "@/lib/credits-ledger";
 import {
   addPurchasedAccounts,
+  addWorkdays,
+  regionLabel,
+  REGION_OPTIONS,
+  simulateDeliver,
   updateAccountStatus,
   useSocialAccounts,
+  workdaysUntil,
   type SocialAccount,
 } from "@/data/social-accounts";
 import {
@@ -47,13 +70,20 @@ export const Route = createFileRoute("/_app/outreach/social/accounts")({
       { title: "社媒账号购买 · 出海大数据平台" },
       { name: "description", content: "购买 Facebook / TikTok 触达账号，用于社媒搜索加友与私信触达。" },
       { property: "og:title", content: "社媒账号购买" },
-      { property: "og:description", content: "1000 积分 / 账号，即时到账。" },
+      { property: "og:description", content: "1000 积分 / 账号，7 个工作日交付。" },
     ],
   }),
   component: SocialAccountsPage,
 });
 
 const MAX_QTY = 50;
+
+interface PurchaseIntent {
+  platform: "Facebook" | "TikTok";
+  qty: number;
+  ownerRegion: string;
+  proxyRegion: string;
+}
 
 function SocialAccountsPage() {
   const balance = useCreditBalance();
@@ -64,22 +94,27 @@ function SocialAccountsPage() {
     friends.forEach((f) => m.set(f.accountId, (m.get(f.accountId) ?? 0) + 1));
     return m;
   }, [friends]);
-  const [confirm, setConfirm] = useState<{ platform: "Facebook" | "TikTok"; qty: number } | null>(null);
+  const [confirm, setConfirm] = useState<PurchaseIntent | null>(null);
 
   const fbCount = useMemo(() => accounts.filter((a) => a.platform === "Facebook").length, [accounts]);
   const ttCount = useMemo(() => accounts.filter((a) => a.platform === "TikTok").length, [accounts]);
+  const pendingCount = useMemo(() => accounts.filter((a) => a.status === "备货中").length, [accounts]);
 
-  function doPurchase(platform: "Facebook" | "TikTok", qty: number) {
-    const total = qty * COST_SOCIAL_ACCOUNT_PURCHASE;
+  function doPurchase(intent: PurchaseIntent) {
+    const total = intent.qty * COST_SOCIAL_ACCOUNT_PURCHASE;
     if (balance.balance < total) {
       toast.error("积分不足，请先充值");
       return;
     }
     spendCredits(total);
-    chargeSocialAccountPurchase({ platform, quantity: qty });
-    const added = addPurchasedAccounts(platform, qty);
-    toast.success(`已购买 ${qty} 个 ${platform} 账号，共扣 ${total.toLocaleString()} 积分`, {
-      description: `${added.map((a) => a.handle).slice(0, 3).join("、")}${added.length > 3 ? ` 等 ${added.length} 个` : ""} 已入池`,
+    chargeSocialAccountPurchase({ platform: intent.platform, quantity: intent.qty });
+    addPurchasedAccounts(intent.platform, intent.qty, {
+      ownerRegion: intent.ownerRegion,
+      proxyRegion: intent.proxyRegion,
+    });
+    const deliverAt = addWorkdays(new Date(), 7);
+    toast.success(`已下单 ${intent.qty} 个 ${intent.platform} 账号，共扣 ${total.toLocaleString()} 积分`, {
+      description: `账号所属 ${regionLabel(intent.ownerRegion)} · 代理 ${regionLabel(intent.proxyRegion)}，预计 ${deliverAt.toLocaleDateString()} 交付`,
     });
     setConfirm(null);
   }
@@ -94,7 +129,7 @@ function SocialAccountsPage() {
           <div>
             <h1 className="text-lg font-semibold">社媒账号购买</h1>
             <p className="text-xs text-muted-foreground mt-0.5">
-              选择平台与数量即可下单，1 个账号消耗 1000 积分。账号将立即入池，可用于「社媒搜索加友」「社媒私信触达」。
+              1 个账号 1000 积分，下单后需为账号配置设备与代理，预计 <b>7 个工作日</b>交付；下单时请指定「账号所属地区」与「代理国家/地区」。
             </p>
           </div>
           <div className="ml-auto flex items-center gap-2 text-xs text-muted-foreground">
@@ -111,7 +146,7 @@ function SocialAccountsPage() {
           Icon={Facebook}
           owned={fbCount}
           balance={balance.balance}
-          onBuy={(qty) => setConfirm({ platform: "Facebook", qty })}
+          onBuy={(intent) => setConfirm(intent)}
         />
         <BuyCard
           platform="TikTok"
@@ -119,7 +154,7 @@ function SocialAccountsPage() {
           Icon={Music2}
           owned={ttCount}
           balance={balance.balance}
-          onBuy={(qty) => setConfirm({ platform: "TikTok", qty })}
+          onBuy={(intent) => setConfirm(intent)}
         />
       </div>
 
@@ -136,6 +171,11 @@ function SocialAccountsPage() {
                 <span> / 100</span>
               </span>
             )}
+            {pendingCount > 0 && (
+              <span className="inline-flex items-center gap-1 text-amber-600">
+                <Clock className="h-3 w-3" /> 备货中 {pendingCount}
+              </span>
+            )}
             <span>共 {accounts.length} 个</span>
           </div>
         </div>
@@ -149,12 +189,14 @@ function SocialAccountsPage() {
                 <TableHead>账号</TableHead>
                 <TableHead>显示名</TableHead>
                 <TableHead className="w-[110px]">状态</TableHead>
+                <TableHead className="w-[110px]">所属地区</TableHead>
+                <TableHead className="w-[110px]">代理地区</TableHead>
                 <TableHead className="w-[130px]">健康度</TableHead>
-                <TableHead className="w-[110px]">名下好友</TableHead>
+                <TableHead className="w-[100px]">名下好友</TableHead>
                 <TableHead className="w-[110px]">今日加友</TableHead>
                 <TableHead className="w-[110px]">今日私信</TableHead>
-                <TableHead className="w-[120px]">购买时间</TableHead>
-                <TableHead className="w-[120px]">操作</TableHead>
+                <TableHead className="w-[130px]">交付 / 购买</TableHead>
+                <TableHead className="w-[140px]">操作</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -169,21 +211,34 @@ function SocialAccountsPage() {
       <AlertDialog open={!!confirm} onOpenChange={(v) => !v && setConfirm(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>确认购买</AlertDialogTitle>
-            <AlertDialogDescription>
-              将购买 <span className="font-semibold text-foreground">{confirm?.qty}</span> 个{" "}
-              <span className="font-semibold text-foreground">{confirm?.platform}</span> 账号，
-              共扣除{" "}
-              <span className="font-semibold text-rose-600 tabular-nums">
-                {((confirm?.qty ?? 0) * COST_SOCIAL_ACCOUNT_PURCHASE).toLocaleString()}
-              </span>{" "}
-              积分。账号绑定当前账户，不可转让 / 退款。
+            <AlertDialogTitle>确认下单</AlertDialogTitle>
+            <AlertDialogDescription asChild>
+              <div className="space-y-2 text-sm">
+                <div>
+                  将下单 <span className="font-semibold text-foreground">{confirm?.qty}</span> 个{" "}
+                  <span className="font-semibold text-foreground">{confirm?.platform}</span> 账号，共扣除{" "}
+                  <span className="font-semibold text-rose-600 tabular-nums">
+                    {((confirm?.qty ?? 0) * COST_SOCIAL_ACCOUNT_PURCHASE).toLocaleString()}
+                  </span>{" "}
+                  积分。
+                </div>
+                <div className="text-xs text-muted-foreground">
+                  账号所属地区：<b className="text-foreground">{regionLabel(confirm?.ownerRegion)}</b>
+                  {" · "}代理国家/地区：<b className="text-foreground">{regionLabel(confirm?.proxyRegion)}</b>
+                </div>
+                <div className="text-xs text-muted-foreground">
+                  预计交付时间：<b className="text-foreground">{addWorkdays(new Date(), 7).toLocaleDateString()}</b>（7 个工作日）
+                </div>
+                <div className="text-xs text-amber-600">
+                  备货期间账号不可用于触达；若备货失败将全额退还积分。
+                </div>
+              </div>
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>取消</AlertDialogCancel>
-            <AlertDialogAction onClick={() => confirm && doPurchase(confirm.platform, confirm.qty)}>
-              确认购买
+            <AlertDialogAction onClick={() => confirm && doPurchase(confirm)}>
+              确认下单
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
@@ -205,11 +260,14 @@ function BuyCard({
   Icon: typeof Facebook;
   owned: number;
   balance: number;
-  onBuy: (qty: number) => void;
+  onBuy: (intent: PurchaseIntent) => void;
 }) {
   const [qty, setQty] = useState(1);
+  const [ownerRegion, setOwnerRegion] = useState<string>("US");
+  const [proxyRegion, setProxyRegion] = useState<string>("US");
   const total = qty * COST_SOCIAL_ACCOUNT_PURCHASE;
   const afford = balance >= total;
+  const deliverDate = useMemo(() => addWorkdays(new Date(), 7), []);
   const tones =
     tone === "sky"
       ? "from-sky-500/10 via-sky-500/5 to-transparent border-sky-200 text-sky-700"
@@ -227,11 +285,36 @@ function BuyCard({
           </span>
           <div>
             <div className="font-semibold text-foreground">{platform}</div>
-            <div className="text-xs text-muted-foreground">已拥有 {owned} 个 · 1000 积分 / 账号</div>
+            <div className="text-xs text-muted-foreground">已拥有 {owned} 个 · 1000 积分 / 账号 · 7 个工作日交付</div>
           </div>
         </div>
 
         <div className="rounded-xl bg-background/70 backdrop-blur border p-3.5 space-y-3">
+          <div className="grid grid-cols-2 gap-2">
+            <div className="space-y-1">
+              <div className="text-[11px] text-muted-foreground">账号所属地区</div>
+              <Select value={ownerRegion} onValueChange={setOwnerRegion}>
+                <SelectTrigger className="h-8 text-xs"><SelectValue /></SelectTrigger>
+                <SelectContent className="max-h-72">
+                  {REGION_OPTIONS.map((r) => (
+                    <SelectItem key={r.code} value={r.code} className="text-xs">{r.label}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-1">
+              <div className="text-[11px] text-muted-foreground">代理国家/地区</div>
+              <Select value={proxyRegion} onValueChange={setProxyRegion}>
+                <SelectTrigger className="h-8 text-xs"><SelectValue /></SelectTrigger>
+                <SelectContent className="max-h-72">
+                  {REGION_OPTIONS.map((r) => (
+                    <SelectItem key={r.code} value={r.code} className="text-xs">{r.label}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+
           <div className="flex items-center justify-between">
             <div className="text-xs text-muted-foreground">购买数量</div>
             <div className="flex items-center gap-1">
@@ -287,18 +370,26 @@ function BuyCard({
                 : `不足 ${(total - balance).toLocaleString()}`}
             </span>
           </div>
+          <div className="flex items-center justify-between text-xs pt-1 border-t">
+            <span className="text-muted-foreground inline-flex items-center gap-1">
+              <Clock className="h-3 w-3" /> 预计交付
+            </span>
+            <span className="text-foreground tabular-nums">
+              {deliverDate.toLocaleDateString()}
+            </span>
+          </div>
         </div>
 
         <Button
           type="button"
           className="w-full"
-          onClick={() => onBuy(qty)}
+          onClick={() => onBuy({ platform, qty, ownerRegion, proxyRegion })}
           disabled={!afford || qty < 1}
         >
-          {afford ? "立即购买" : "积分不足"}
+          {afford ? "立即下单" : "积分不足"}
         </Button>
         <div className="text-[11px] text-muted-foreground text-center">
-          单次上限 {MAX_QTY} 个 · 下单即入池，账号绑定当前账户
+          单次上限 {MAX_QTY} 个 · 备货期间账号不可用，若失败将退还积分
         </div>
       </div>
     </Card>
@@ -311,9 +402,15 @@ function AccountRow({ account, friendCount }: { account: SocialAccount; friendCo
     养号中: "bg-amber-50 text-amber-700 border-amber-200",
     停用: "bg-slate-100 text-slate-600 border-slate-200",
     异常: "bg-rose-50 text-rose-700 border-rose-200",
+    备货中: "bg-sky-50 text-sky-700 border-sky-200",
   };
+  const isPending = account.status === "备货中";
+  const remainingDays = isPending && account.expectedDeliveryAt
+    ? workdaysUntil(account.expectedDeliveryAt)
+    : 0;
+
   return (
-    <TableRow>
+    <TableRow className={cn(isPending && "bg-sky-50/30")}>
       <TableCell>
         <span className="inline-flex items-center gap-1.5 text-xs font-medium">
           {account.platform === "Facebook" ? (
@@ -326,15 +423,24 @@ function AccountRow({ account, friendCount }: { account: SocialAccount; friendCo
           {account.platform}
         </span>
       </TableCell>
-      <TableCell className="font-mono text-xs">{account.handle}</TableCell>
-      <TableCell className="text-sm">{account.displayName}</TableCell>
+      <TableCell className="font-mono text-xs">
+        {isPending ? <span className="text-muted-foreground">备货中…</span> : account.handle}
+      </TableCell>
+      <TableCell className="text-sm">
+        {isPending ? <span className="text-muted-foreground">—</span> : account.displayName}
+      </TableCell>
       <TableCell>
-        <span className={cn("inline-flex items-center px-2 py-0.5 rounded-md border text-xs", statusTone[account.status])}>
+        <span className={cn("inline-flex items-center gap-1 px-2 py-0.5 rounded-md border text-xs", statusTone[account.status])}>
+          {isPending && <Clock className="h-3 w-3" />}
           {account.status}
         </span>
       </TableCell>
+      <TableCell className="text-xs text-muted-foreground">{regionLabel(account.ownerRegion)}</TableCell>
+      <TableCell className="text-xs text-muted-foreground">{regionLabel(account.proxyRegion)}</TableCell>
       <TableCell className="text-xs">
-        {(() => {
+        {isPending ? (
+          <span className="text-muted-foreground">—</span>
+        ) : (() => {
           const h = computeHealth(account);
           return (
             <span
@@ -351,7 +457,9 @@ function AccountRow({ account, friendCount }: { account: SocialAccount; friendCo
         })()}
       </TableCell>
       <TableCell className="text-xs tabular-nums">
-        {friendCount > 0 ? (
+        {isPending ? (
+          <span className="text-muted-foreground">—</span>
+        ) : friendCount > 0 ? (
           <Link
             to="/outreach/social/reach/friends"
             search={{ accountId: account.id } as never}
@@ -366,20 +474,49 @@ function AccountRow({ account, friendCount }: { account: SocialAccount; friendCo
         )}
       </TableCell>
       <TableCell className="text-xs tabular-nums text-muted-foreground">
-        {account.dailyFriendLimit != null
+        {isPending
+          ? "—"
+          : account.dailyFriendLimit != null
           ? `${account.friendSentToday ?? 0} / ${account.dailyFriendLimit}`
           : "—"}
       </TableCell>
       <TableCell className="text-xs tabular-nums text-muted-foreground">
-        {account.dailyDmLimit != null
+        {isPending
+          ? "—"
+          : account.dailyDmLimit != null
           ? `${account.dmSentToday ?? 0} / ${account.dailyDmLimit}`
           : `${account.sentToday} / ${account.dailyLimit}`}
       </TableCell>
       <TableCell className="text-xs text-muted-foreground">
-        {account.purchasedAt ? new Date(account.purchasedAt).toLocaleDateString() : "—"}
+        {isPending && account.expectedDeliveryAt ? (
+          <span className="inline-flex flex-col leading-tight">
+            <span className="text-amber-700 font-medium">
+              {new Date(account.expectedDeliveryAt).toLocaleDateString()}
+            </span>
+            <span className="text-[11px]">还剩 {remainingDays} 个工作日</span>
+          </span>
+        ) : account.purchasedAt ? (
+          new Date(account.purchasedAt).toLocaleDateString()
+        ) : (
+          "—"
+        )}
       </TableCell>
       <TableCell className="text-xs">
-        {account.status === "异常" ? (
+        {isPending ? (
+          <Button
+            size="sm"
+            variant="outline"
+            className="h-7 text-xs gap-1"
+            onClick={() => {
+              simulateDeliver(account.id);
+              toast.success("已模拟交付，账号进入养号中");
+            }}
+            title="演示环境：跳过 7 工作日备货直接交付"
+          >
+            <Zap className="h-3 w-3" />
+            立即交付
+          </Button>
+        ) : account.status === "异常" ? (
           <Button
             size="sm"
             variant="outline"
