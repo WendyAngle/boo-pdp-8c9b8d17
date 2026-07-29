@@ -46,9 +46,9 @@ const menu: Root[] = [
         ],
       },
       {
-        label: "系统管理",
+        label: "企业设置",
         children: [
-          { label: "企业画像", to: "/outreach/my-profile" },
+          { label: "我的企业信息", to: "/outreach/my-profile" },
           { label: "员工管理", to: "/outreach/users" },
           { label: "社媒账号", to: "/outreach/social/accounts" },
           { label: "发信邮箱", to: "/outreach/mailboxes" },
