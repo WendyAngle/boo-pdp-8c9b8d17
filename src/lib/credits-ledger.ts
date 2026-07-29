@@ -376,6 +376,8 @@ export function chargeAiGeneration(input: {
   targetName: string;
   targetKind?: TargetKind;
   targetId?: string;
+  platform?: string;
+  detailSuffix?: string;
 }): LedgerEntry {
   const cost =
     input.channel === "email"
@@ -383,6 +385,12 @@ export function chargeAiGeneration(input: {
       : input.channel === "social"
         ? COST_AI_SOCIAL
         : COST_AI_SMS;
+  const label =
+    input.channel === "email"
+      ? "AI 生成邮件文案"
+      : input.channel === "social"
+        ? `AI 生成${input.platform ? `${input.platform} ` : ""}社媒文案`
+        : "AI 生成短信文案";
   const entry: LedgerEntry = {
     id: makeId("ai"),
     kind: "ai_generate",
@@ -392,13 +400,10 @@ export function chargeAiGeneration(input: {
     targetId: input.targetId ?? "—",
     targetName: input.targetName,
     channel: input.channel,
-    detail:
-      input.channel === "email"
-        ? "AI 生成邮件文案"
-        : input.channel === "social"
-          ? "AI 生成社媒文案"
-          : "AI 生成短信文案",
+    platform: input.platform,
+    detail: input.detailSuffix ? `${label} · ${input.detailSuffix}` : label,
   };
+
   ledger = [entry, ...ledger];
   writeLedger(ledger);
   emitLedger();
@@ -523,6 +528,53 @@ export function createSocialReachBatch(input: {
   emitLedger();
   return entries;
 }
+
+/**
+ * 补齐历史「触达任务」缺失的 AI 生成消费明细：
+ * 对使用了 AI 文案（aiGenerated）却没有对应 ai_generate 流水的触达记录，
+ * 按渠道单价补写一条 AI 生成消费明细（时间取触达前 2 分钟，便于对账）。
+ * 幂等：以 relatedReachId 去重；用户在应用内新建的记录（userCreated）已实时扣费，跳过。
+ */
+export function backfillAiGenerationEntries(): number {
+  if (typeof window === "undefined") return 0;
+  const charged = new Set(
+    ledger.filter((e) => e.kind === "ai_generate" && e.relatedReachId).map((e) => e.relatedReachId!),
+  );
+  const missing = ledger.filter(
+    (e) => e.kind === "reach" && e.aiGenerated && !e.userCreated && !charged.has(e.id),
+  );
+  if (missing.length === 0) return 0;
+  const added: LedgerEntry[] = missing.map((r) => {
+    const channel: ReachChannel = r.channel ?? "email";
+    const cost =
+      channel === "email" ? COST_AI_EMAIL : channel === "social" ? COST_AI_SOCIAL : COST_AI_SMS;
+    const label =
+      channel === "email"
+        ? "AI 生成邮件文案"
+        : channel === "social"
+          ? `AI 生成${r.platform ? `${r.platform} ` : ""}社媒文案`
+          : "AI 生成短信文案";
+    return {
+      id: makeId("ai"),
+      kind: "ai_generate",
+      cost,
+      createdAt: new Date(new Date(r.createdAt).getTime() - 2 * 60 * 1000).toISOString(),
+      targetKind: r.targetKind,
+      targetId: r.targetId,
+      targetName: r.targetName,
+      parentRef: r.parentRef,
+      channel,
+      platform: r.platform,
+      detail: `${label} · ${r.detail ?? r.targetName}`,
+      relatedReachId: r.id,
+    };
+  });
+  ledger = [...added, ...ledger];
+  writeLedger(ledger);
+  emitLedger();
+  return added.length;
+}
+
 
 
 
@@ -1597,7 +1649,10 @@ export function seedDemoLedgerIfEmpty() {
     emitLedger();
     // seed 完成后同步一次永久解锁集,保证 mock view 数据默认呈现明文
     syncUnlocksFromLedger();
+    // 为使用了 AI 文案的触达任务补齐 AI 生成消费明细
+    backfillAiGenerationEntries();
   } catch {}
+
 }
 
 export function resetDemoLedger() {

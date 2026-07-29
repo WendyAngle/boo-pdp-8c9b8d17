@@ -71,6 +71,7 @@ import {
   useLedger,
   getReachStatus,
   seedDemoLedgerIfEmpty,
+  backfillAiGenerationEntries,
   resetDemoLedger,
   syncFailedRefunds,
   isReachRefunded,
@@ -108,6 +109,7 @@ function relative(iso: string, now: number) {
 function ReachPage() {
   useEffect(() => {
     seedDemoLedgerIfEmpty();
+    backfillAiGenerationEntries();
     syncFailedRefunds();
   }, []);
 
