@@ -243,7 +243,7 @@ export interface LedgerEntry {
 }
 
 const LEDGER_KEY = "boo:ledger:v2";
-const LEDGER_SEED_VERSION = "v17";
+const LEDGER_SEED_VERSION = "v18";
 const LEDGER_SEED_FLAG = `boo:ledger:${LEDGER_SEED_VERSION}:seeded`;
 const REVEAL_KEY = "boo:reveal:v1";
 const UNLOCK_KEY = "boo:unlocked:v1";
@@ -1337,23 +1337,19 @@ export function seedDemoLedgerIfEmpty() {
         { kind: "dm", platform: "TikTok", entI: 22, conIdx: 2, min: 0.2, status: "pending" },
         { kind: "dm", platform: "TikTok", entI: 31, conIdx: 0, min: 11 * D + 200, status: "failed", failReason: "消息被平台拦截" },
       ].map((t) => {
-        const e = pickEnt(t.entI);
-        const isContact = t.conIdx >= 0 && t.conIdx < e.contacts.length;
-        const c = isContact ? e.contacts[t.conIdx] : null;
         const actionLabel = t.kind === "friend" ? "加好友" : "私信";
-        const handle = isContact
-          ? `@${c!.name.toLowerCase().replace(/\s+/g, ".")}`
-          : `@${e.name.toLowerCase().replace(/[^a-z0-9]/g, "")}`;
-        const targetName = isContact ? c!.name : e.name;
+        // 社媒触达目标为社媒账号（@handle），不关联 CRM 企业 / 人物，无明细跳转
+        const handleSeed = `u${t.entI}${t.conIdx >= 0 ? t.conIdx : ""}${t.kind === "friend" ? "f" : "d"}`;
+        const handle = `@${t.platform.toLowerCase()}_${handleSeed}`;
         return {
           id: makeId("r"),
           kind: "reach" as LedgerKind,
           cost: COST_REACH_SOCIAL,
           createdAt: isoMinutesAgo(t.min),
-          targetKind: (isContact ? "contact" : "enterprise") as TargetKind,
-          targetId: isContact ? `${e.id}:${t.conIdx}` : e.id,
-          targetName,
-          parentRef: isContact ? { id: e.id, name: e.name } : undefined,
+          targetKind: "enterprise" as TargetKind,
+          targetId: "—",
+          targetName: `${t.platform}平台${actionLabel}`,
+          parentRef: undefined,
           channel: "social" as ReachChannel,
           platform: t.platform,
           detail: `${t.platform}平台${actionLabel} · ${handle}`,
@@ -1361,8 +1357,8 @@ export function seedDemoLedgerIfEmpty() {
           ...(t.failReason ? { failReason: t.failReason } : {}),
           content:
             t.kind === "friend"
-              ? `Hi ${targetName}, 我们是 Boo 出海平台，专注跨境供应链合作，希望能与您建立联系，方便通过好友请求吗？`
-              : `Hi ${targetName},\n\n关注到贵司在 ${e.industry} 领域的业务表现，我们希望能就跨境采购 / 供应合作做一次简短沟通，期待回复。\n\n— Boo team`,
+              ? `Hi，我们是 Boo 出海平台，专注跨境供应链合作，希望能与您建立联系，方便通过好友请求吗？`
+              : `Hi，\n\n我们是 Boo 出海平台，专注跨境供应链合作，希望能就跨境采购 / 供应合作做一次简短沟通，期待回复。\n\n— Boo team`,
           aiGenerated: t.entI % 2 === 0,
         };
       })),
