@@ -110,7 +110,9 @@ import { getAllLedger } from "@/lib/credits-ledger";
 import { IntelPanel } from "@/components/outreach/IntelPanel";
 import { scoreIntent } from "@/lib/ai-intent-score";
 import { scoreAuthenticity } from "@/lib/ai-authenticity";
-import { Target as TargetIcon, PanelRightClose, PanelRightOpen } from "lucide-react";
+import { Target as TargetIcon, PanelRightClose, PanelRightOpen, Plus, UserCircle2 } from "lucide-react";
+import { CreateReachTaskDialog } from "@/components/outreach/CreateReachTaskDialog";
+
 
 /** 邮件场景的快捷回复模板（Phase 1 hardcoded） */
 const EMAIL_QUICK_REPLIES: { id: string; name: string; body: string }[] = [
