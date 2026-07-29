@@ -74,11 +74,9 @@ import {
   backfillAiGenerationEntries,
   resetDemoLedger,
   syncFailedRefunds,
-  isReachRefunded,
   triggerReachNow,
   cancelPendingReach,
   retryFailedReach,
-  COST_REACH,
   isRetryableFailReason,
   REACH_STATUS_LABEL,
   REACH_STATUS_COLOR,
@@ -88,7 +86,19 @@ import {
 } from "@/lib/credits-ledger";
 import { ListPagination } from "@/components/ListPagination";
 import { useThreads, threadKeyFor, type Thread } from "@/lib/inbox-store";
-import { Inbox as InboxIcon, MessageCircleReply, Plus, UserCircle2 } from "lucide-react";
+import {
+  Inbox as InboxIcon,
+  MessageCircleReply,
+  Plus,
+  UserCircle2,
+  Users,
+  ListChecks,
+  Facebook,
+  Music2,
+  MessageSquare,
+} from "lucide-react";
+import { useSocialAccounts, friendRemaining } from "@/data/social-accounts";
+import { poolAverageHealth } from "@/lib/social-account-health";
 import { CreateReachTaskDialog } from "@/components/outreach/CreateReachTaskDialog";
 
 export const Route = createFileRoute("/_app/outreach/reach")({
@@ -104,6 +114,42 @@ function relative(iso: string, now: number) {
   if (diff < 3600) return `${Math.floor(diff / 60)} 分钟前`;
   if (diff < 86400) return `${Math.floor(diff / 3600)} 小时前`;
   return `${Math.floor(diff / 86400)} 天前`;
+}
+
+
+type TaskGroup = {
+  key: string;
+  name: string;
+  channel: ReachChannel;
+  platform?: string;
+  action: string;
+  total: number;
+  pending: number;
+  in_progress: number;
+  success: number;
+  failed: number;
+  replies: number;
+  aiGenerated: boolean;
+  createdAt: string;
+  lastAt: string;
+};
+
+function groupKeyOf(r: { channel?: ReachChannel; platform?: string; subject?: string; detail?: string; createdAt: string }) {
+  const day = r.createdAt.slice(0, 10);
+  const batchName = r.channel === "social" && r.subject ? r.subject : null;
+  return batchName
+    ? `s:${batchName}:${r.platform ?? ""}`
+    : `c:${r.channel}:${r.platform ?? ""}:${reachAction(r)}:${day}`;
+}
+
+/** 从明细中提取触达动作：社媒区分「加好友 / 私信」，其余按渠道语义 */
+function reachAction(r: { channel?: ReachChannel; detail?: string; platform?: string }) {
+  const d = r.detail ?? "";
+  if (d.includes("加好友")) return "加好友";
+  if (r.channel === "social") return "私信";
+  if (r.channel === "email") return "邮件触达";
+  if (r.channel === "phone") return "短信触达";
+  return "触达";
 }
 
 function ReachPage() {
@@ -140,6 +186,8 @@ function ReachPage() {
   const [page, setPage] = useState(1);
   const pageSize = 10;
   const [createOpen, setCreateOpen] = useState(false);
+  const [view, setView] = useState<"task" | "record">("task");
+  const [taskKey, setTaskKey] = useState<string | null>(null);
   const [confirm, setConfirm] = useState<
     | null
     | {
@@ -205,7 +253,7 @@ function ReachPage() {
 
   useEffect(() => {
     setPage(1);
-  }, [statusTab, channel, targetKind, kw]);
+  }, [statusTab, channel, targetKind, kw, view, taskKey]);
 
   const targetKindCounts = useMemo(() => {
     let ent = 0;
@@ -217,16 +265,81 @@ function ReachPage() {
     return { ent, con };
   }, [reachRows]);
 
-  const pageData = useMemo(
-    () => filtered.slice((page - 1) * pageSize, page * pageSize),
-    [filtered, page],
+  const recordRows = useMemo(
+    () => (taskKey ? filtered.filter((r) => groupKeyOf(r) === taskKey) : filtered),
+    [filtered, taskKey],
   );
 
-  const grossCost = reachRows.reduce((s, r) => s + r.cost, 0);
-  const refundTotal = reachRows
-    .filter((r) => r.status === "failed")
-    .reduce((s, r) => s + (isReachRefunded(r.id) ? r.cost : 0), 0);
-  const netCost = grossCost - refundTotal;
+  const pageData = useMemo(
+    () => recordRows.slice((page - 1) * pageSize, page * pageSize),
+    [recordRows, page],
+  );
+
+  // 社媒账号池运营指标（替代原积分口径，突出触达任务本身的执行能力）
+  const accounts = useSocialAccounts();
+  const fbRemain = friendRemaining(accounts, "Facebook");
+  const ttRemain = friendRemaining(accounts, "TikTok");
+  const poolHealth = poolAverageHealth(accounts);
+  const usableAccounts = accounts.filter((a) => a.status === "正常").length;
+
+  const doneTotal = counts.success + counts.failed;
+  const successRate = doneTotal === 0 ? 0 : Math.round((counts.success / doneTotal) * 100);
+  const replyTotal = useMemo(
+    () =>
+      reachRows.reduce((n, r) => {
+        const t = threadByKey.get(threadKeyFor(r) ?? "");
+        return n + (t?.meta.inboundMessages.length ?? 0);
+      }, 0),
+    [reachRows, threadByKey],
+  );
+
+  // 任务视图：把逐条触达记录按「任务」聚合（社媒批量任务按任务名聚合，其余按渠道 + 动作 + 日期聚合）
+  const taskGroups = useMemo(() => {
+    const map = new Map<string, TaskGroup>();
+    for (const r of filtered) {
+      const action = reachAction(r);
+      const day = r.createdAt.slice(0, 10);
+      // 批量创建的触达任务按任务名聚合；单条触达按「渠道 + 平台 + 动作 + 日期」归入当日任务
+      const batchName = r.channel === "social" && r.subject ? r.subject : null;
+      const key = groupKeyOf(r);
+      let g = map.get(key);
+      if (!g) {
+        g = {
+          key,
+          name:
+            batchName ??
+            (r.platform ? `${r.platform}${action}` : action) + ` · ${day.slice(5)}`,
+          channel: r.channel!,
+          platform: r.platform,
+          action,
+          total: 0,
+          pending: 0,
+          in_progress: 0,
+          success: 0,
+          failed: 0,
+          replies: 0,
+          aiGenerated: false,
+          createdAt: r.createdAt,
+          lastAt: r.createdAt,
+        };
+        map.set(key, g);
+      }
+      g.total++;
+      g[r.status]++;
+      if (r.aiGenerated) g.aiGenerated = true;
+      const t = threadByKey.get(threadKeyFor(r) ?? "");
+      g.replies += t?.meta.inboundMessages.length ?? 0;
+      if (r.createdAt < g.createdAt) g.createdAt = r.createdAt;
+      if (r.createdAt > g.lastAt) g.lastAt = r.createdAt;
+    }
+    return [...map.values()].sort((a, b) => (a.lastAt < b.lastAt ? 1 : -1));
+  }, [filtered, threadByKey]);
+
+  const taskPageData = useMemo(
+    () => taskGroups.slice((page - 1) * pageSize, page * pageSize),
+    [taskGroups, page],
+  );
+
 
   return (
     <TooltipProvider delayDuration={150}>
@@ -279,18 +392,40 @@ function ReachPage() {
               统一管理对目标企业 / 关键人物的触达动作、渠道与跟进结果
             </p>
           </div>
-          <div className="text-right text-white/90">
-            <div className="text-xs opacity-80">净消耗（消耗 - 退还）</div>
-            <div className="text-2xl font-bold tabular-nums">
-              -{netCost}
-              <span className="text-sm font-normal ml-1">积分</span>
+          <div className="flex items-center gap-5 text-right text-white/90">
+            <div>
+              <div className="text-xs opacity-80">触达总数</div>
+              <div className="text-2xl font-bold tabular-nums">{reachRows.length}</div>
             </div>
-            {refundTotal > 0 && (
-              <div className="text-[11px] text-white/75 mt-0.5 tabular-nums">
-                含失败退还 +{refundTotal}
-              </div>
-            )}
+            <div>
+              <div className="text-xs opacity-80">触达成功率</div>
+              <div className="text-2xl font-bold tabular-nums">{successRate}%</div>
+            </div>
+            <div>
+              <div className="text-xs opacity-80">客户回复</div>
+              <div className="text-2xl font-bold tabular-nums">{replyTotal}</div>
+            </div>
           </div>
+        </div>
+        <div className="mt-3 flex flex-wrap items-center gap-4 text-xs text-white/85">
+          <span className="inline-flex items-center gap-1">
+            <Facebook className="h-3.5 w-3.5" />
+            Facebook 今日加友剩余
+            <span className="font-semibold tabular-nums">{fbRemain}</span>
+          </span>
+          <span className="inline-flex items-center gap-1">
+            <Music2 className="h-3.5 w-3.5" />
+            TikTok 今日加友剩余
+            <span className="font-semibold tabular-nums">{ttRemain}</span>
+          </span>
+          <span className="inline-flex items-center gap-1">
+            账号池平均健康度
+            <span className="font-semibold tabular-nums">{poolHealth}</span>
+          </span>
+          <span className="inline-flex items-center gap-1">
+            可用社媒账号
+            <span className="font-semibold tabular-nums">{usableAccounts}</span>
+          </span>
         </div>
         <div className="relative mt-4 flex flex-wrap items-center gap-2">
           <Button
@@ -346,6 +481,37 @@ function ReachPage() {
               {REACH_STATUS_LABEL[s]} <span className="ml-1 text-muted-foreground">{counts[s]}</span>
             </StatusTab>
           ))}
+          <div className="ml-auto mb-2 inline-flex rounded-md border bg-muted/40 p-0.5">
+            <button
+              type="button"
+              onClick={() => {
+                setView("task");
+                setTaskKey(null);
+              }}
+              className={cn(
+                "inline-flex items-center gap-1 rounded px-2.5 py-1 text-xs font-medium transition-colors",
+                view === "task"
+                  ? "bg-background text-foreground shadow-sm"
+                  : "text-muted-foreground hover:text-foreground",
+              )}
+            >
+              <ListChecks className="h-3.5 w-3.5" />
+              任务视图
+            </button>
+            <button
+              type="button"
+              onClick={() => setView("record")}
+              className={cn(
+                "inline-flex items-center gap-1 rounded px-2.5 py-1 text-xs font-medium transition-colors",
+                view === "record"
+                  ? "bg-background text-foreground shadow-sm"
+                  : "text-muted-foreground hover:text-foreground",
+              )}
+            >
+              <Users className="h-3.5 w-3.5" />
+              记录视图
+            </button>
+          </div>
         </div>
         <div className="px-5 py-3 flex items-center gap-3 flex-wrap border-b border-border bg-muted/20">
           <div className="flex items-center gap-2">
@@ -394,7 +560,15 @@ function ReachPage() {
               className="pl-9 h-9 bg-background"
             />
           </div>
-          {(kw || channel !== "all" || statusTab !== "all" || targetKind !== "all") && (
+          {taskKey && view === "record" && (
+            <Badge variant="secondary" className="gap-1 font-normal">
+              任务：{taskGroups.find((g) => g.key === taskKey)?.name ?? "已选任务"}
+              <button type="button" onClick={() => setTaskKey(null)} className="ml-1">
+                <X className="h-3 w-3" />
+              </button>
+            </Badge>
+          )}
+          {(kw || channel !== "all" || statusTab !== "all" || targetKind !== "all" || taskKey) && (
             <Button
               variant="ghost"
               size="sm"
@@ -403,6 +577,7 @@ function ReachPage() {
                 setChannel("all");
                 setStatusTab("all");
                 setTargetKind("all");
+                setTaskKey(null);
               }}
               className="gap-1"
             >
@@ -411,7 +586,11 @@ function ReachPage() {
             </Button>
           )}
           <div className="text-sm text-muted-foreground ml-auto">
-            共 <span className="text-foreground font-semibold">{filtered.length}</span> 条
+            共{" "}
+            <span className="text-foreground font-semibold">
+              {view === "task" ? taskGroups.length : recordRows.length}
+            </span>{" "}
+            {view === "task" ? "个任务" : "条记录"}
           </div>
         </div>
 
@@ -431,6 +610,81 @@ function ReachPage() {
               </Link>
             </Button>
           </div>
+        ) : view === "task" ? (
+          <Table>
+            <TableHeader>
+              <TableRow className="bg-primary/5 hover:bg-primary/5">
+                <TableHead className="min-w-[220px]">任务名</TableHead>
+                <TableHead className="w-[150px]">渠道 / 平台</TableHead>
+                <TableHead className="w-[90px]">动作</TableHead>
+                <TableHead className="w-[80px]">目标数</TableHead>
+                <TableHead className="w-[260px]">执行进度</TableHead>
+                <TableHead className="w-[90px]">成功率</TableHead>
+                <TableHead className="w-[90px]">回复</TableHead>
+                <TableHead className="w-[170px]">最近执行</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {taskPageData.map((g) => (
+                <TableRow
+                  key={g.key}
+                  className="hover:bg-muted/30 cursor-pointer"
+                  onClick={() => {
+                    setTaskKey(g.key);
+                    setView("record");
+                  }}
+                  title="点击查看该任务下的触达记录"
+                >
+                  <TableCell className="max-w-[280px]">
+                    <div className="flex items-center gap-1.5">
+                      <span className="font-medium">{g.name}</span>
+                      {g.aiGenerated && (
+                        <Badge variant="secondary" className="gap-1 font-normal shrink-0">
+                          <Sparkles className="h-3 w-3 text-primary" />
+                          AI
+                        </Badge>
+                      )}
+                    </div>
+                    <div className="text-[11px] text-muted-foreground mt-0.5">
+                      创建于 {fmtTime(g.createdAt)}
+                    </div>
+                  </TableCell>
+                  <TableCell>
+                    <ChannelBadge channel={g.channel} platform={g.platform} />
+                  </TableCell>
+                  <TableCell className="text-xs">
+                    <span className="inline-flex items-center gap-1">
+                      {g.action === "加好友" ? (
+                        <Users className="h-3.5 w-3.5 text-muted-foreground" />
+                      ) : (
+                        <MessageSquare className="h-3.5 w-3.5 text-muted-foreground" />
+                      )}
+                      {g.action}
+                    </span>
+                  </TableCell>
+                  <TableCell className="tabular-nums font-semibold">{g.total}</TableCell>
+                  <TableCell>
+                    <TaskProgress group={g} />
+                  </TableCell>
+                  <TableCell className="tabular-nums text-sm font-semibold">
+                    {g.success + g.failed === 0
+                      ? "—"
+                      : `${Math.round((g.success / (g.success + g.failed)) * 100)}%`}
+                  </TableCell>
+                  <TableCell className="tabular-nums text-sm">
+                    {g.replies > 0 ? (
+                      <span className="text-emerald-600 font-semibold">{g.replies}</span>
+                    ) : (
+                      <span className="text-muted-foreground">—</span>
+                    )}
+                  </TableCell>
+                  <TableCell className="font-mono tabular-nums text-xs text-muted-foreground whitespace-nowrap">
+                    {fmtTime(g.lastAt)}
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
         ) : (
           <Table>
             <TableHeader>
@@ -438,7 +692,6 @@ function ReachPage() {
                 <TableHead className="w-[170px]">时间</TableHead>
                 <TableHead className="w-[140px]">渠道</TableHead>
                 <TableHead className="w-[220px]">状态 / 原因</TableHead>
-                <TableHead className="w-[90px]">积分变动</TableHead>
                 <TableHead>明细说明</TableHead>
                 {statusTab !== "pending" && statusTab !== "in_progress" && statusTab !== "failed" && (
                   <TableHead className="w-[110px]">回复</TableHead>
@@ -475,7 +728,6 @@ function ReachPage() {
                               <div className="font-medium">失败原因</div>
                               <div className="mt-0.5">{r.failReason}</div>
                               <div className="mt-1 text-muted-foreground">
-                                已自动退还 {r.cost} 积分。
                                 {!isRetryableFailReason(r.failReason) && (
                                   <> 该原因不支持重新触达，建议核实联系方式后重新发起。</>
                                 )}
@@ -485,14 +737,6 @@ function ReachPage() {
                         </Tooltip>
                       )}
                     </div>
-                  </TableCell>
-                  <TableCell className="tabular-nums">
-                    <div className="font-semibold text-rose-600">-{r.cost}</div>
-                    {r.status === "failed" && isReachRefunded(r.id) && (
-                      <div className="text-[11px] font-medium text-emerald-600 mt-0.5">
-                        已退还 +{r.cost}
-                      </div>
-                    )}
                   </TableCell>
                   <TableCell className="text-xs max-w-[420px]">
                     <DetailCell row={r} onViewContent={() => setViewing(r)} />
@@ -512,7 +756,7 @@ function ReachPage() {
             <ListPagination
               page={page}
               pageSize={pageSize}
-              total={filtered.length}
+              total={view === "task" ? taskGroups.length : recordRows.length}
               onPageChange={setPage}
             />
           </div>
@@ -532,10 +776,10 @@ function ReachPage() {
                 <>对象：<span className="font-medium text-foreground">{confirm.target}</span>。该条触达将立即进入"触达中"状态。</>
               )}
               {confirm?.kind === "cancel" && (
-                <>对象：<span className="font-medium text-foreground">{confirm.target}</span>。取消后将自动退还 {reachRows.find((r) => r.id === confirm.id)?.cost ?? COST_REACH} 积分。</>
+                <>对象：<span className="font-medium text-foreground">{confirm.target}</span>。取消后该条触达将不再执行。</>
               )}
               {confirm?.kind === "retry" && (
-                <>对象：<span className="font-medium text-foreground">{confirm.target}</span>。将基于原渠道与明细发起一条新的触达，并扣除 {reachRows.find((r) => r.id === confirm.id)?.cost ?? COST_REACH} 积分。</>
+                <>对象：<span className="font-medium text-foreground">{confirm.target}</span>。将基于原渠道与明细重新发起一条触达。</>
               )}
             </AlertDialogDescription>
           </AlertDialogHeader>
@@ -553,14 +797,10 @@ function ReachPage() {
                     toast.success("已立即触达，状态切换为「触达中」");
                   else toast.error("当前状态不可执行立即触达");
                 } else if (confirm.kind === "cancel") {
-                  const c = reachRows.find((r) => r.id === confirm.id)?.cost ?? COST_REACH;
-                  if (cancelPendingReach(confirm.id))
-                    toast.success(`已取消触达，退还 ${c} 积分`);
+                  if (cancelPendingReach(confirm.id)) toast.success("已取消触达");
                   else toast.error("仅「待触达」状态可取消");
                 } else if (confirm.kind === "retry") {
-                  const c = reachRows.find((r) => r.id === confirm.id)?.cost ?? COST_REACH;
-                  if (retryFailedReach(confirm.id))
-                    toast.success(`已重新触达，扣除 ${c} 积分`);
+                  if (retryFailedReach(confirm.id)) toast.success("已重新发起触达");
                   else toast.error("仅「触达失败」记录可重新触达");
                 }
                 setConfirm(null);
@@ -628,6 +868,37 @@ function ReachPage() {
       <CreateReachTaskDialog open={createOpen} onOpenChange={setCreateOpen} />
     </div>
     </TooltipProvider>
+  );
+}
+
+function TaskProgress({ group }: { group: TaskGroup }) {
+  const segs = [
+    { n: group.success, cls: "bg-emerald-500", label: REACH_STATUS_LABEL.success },
+    { n: group.in_progress, cls: "bg-amber-500", label: REACH_STATUS_LABEL.in_progress },
+    { n: group.pending, cls: "bg-slate-300", label: REACH_STATUS_LABEL.pending },
+    { n: group.failed, cls: "bg-rose-500", label: REACH_STATUS_LABEL.failed },
+  ].filter((x) => x.n > 0);
+  return (
+    <div className="space-y-1">
+      <div className="flex h-1.5 w-full overflow-hidden rounded-full bg-muted">
+        {segs.map((x) => (
+          <div
+            key={x.label}
+            className={x.cls}
+            style={{ width: `${(x.n / group.total) * 100}%` }}
+            title={`${x.label} ${x.n}`}
+          />
+        ))}
+      </div>
+      <div className="flex flex-wrap gap-x-2.5 gap-y-0.5 text-[11px] text-muted-foreground">
+        {segs.map((x) => (
+          <span key={x.label} className="inline-flex items-center gap-1">
+            <span className={cn("h-1.5 w-1.5 rounded-full", x.cls)} />
+            {x.label} <span className="tabular-nums text-foreground">{x.n}</span>
+          </span>
+        ))}
+      </div>
+    </div>
   );
 }
 
