@@ -110,7 +110,9 @@ import { getAllLedger } from "@/lib/credits-ledger";
 import { IntelPanel } from "@/components/outreach/IntelPanel";
 import { scoreIntent } from "@/lib/ai-intent-score";
 import { scoreAuthenticity } from "@/lib/ai-authenticity";
-import { Target as TargetIcon, PanelRightClose, PanelRightOpen } from "lucide-react";
+import { Target as TargetIcon, PanelRightClose, PanelRightOpen, Plus, UserCircle2 } from "lucide-react";
+import { CreateReachTaskDialog } from "@/components/outreach/CreateReachTaskDialog";
+
 
 /** 邮件场景的快捷回复模板（Phase 1 hardcoded） */
 const EMAIL_QUICK_REPLIES: { id: string; name: string; body: string }[] = [
@@ -282,6 +284,8 @@ function InboxPage() {
   const view: ViewKey = search.view ?? "all";
   const intent = search.intent ?? "all";
   const [scorePanelOpen, setScorePanelOpen] = useState(true);
+  const [createReachOpen, setCreateReachOpen] = useState(false);
+
   const q = search.q ?? "";
   const ch = search.ch ?? "all";
   const group = search.group ?? "all";
@@ -505,7 +509,21 @@ function InboxPage() {
             className="pl-7 h-8 text-xs"
           />
         </div>
+        <div className="ml-auto flex items-center gap-2 shrink-0">
+          <Button size="sm" className="h-8 text-xs gap-1" onClick={() => setCreateReachOpen(true)}>
+            <Plus className="h-3.5 w-3.5" />
+            创建触达任务
+          </Button>
+          <Button asChild size="sm" variant="outline" className="h-8 text-xs gap-1">
+            <Link to="/outreach/social/accounts">
+              <UserCircle2 className="h-3.5 w-3.5" />
+              我的账号
+            </Link>
+          </Button>
+        </div>
       </div>
+      <CreateReachTaskDialog open={createReachOpen} onOpenChange={setCreateReachOpen} />
+
       <div className="flex-1 flex min-h-0">
         {/* 中栏：会话列表 */}
         <div className="w-[320px] xl:w-[380px] shrink-0 border-r flex flex-col min-h-0">
