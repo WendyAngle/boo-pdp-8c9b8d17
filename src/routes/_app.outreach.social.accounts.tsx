@@ -227,7 +227,12 @@ function SocialAccountsPage() {
             </TableHeader>
             <TableBody>
               {filtered.map((a) => (
-                <AccountRow key={a.id} account={a} friendCount={friendCountByAccount.get(a.id) ?? 0} />
+                <AccountRow
+                  key={a.id}
+                  account={a}
+                  friendCount={friendCountByAccount.get(a.id) ?? 0}
+                  onFriendsClick={() => setFriendsAccount(a)}
+                />
               ))}
             </TableBody>
           </Table>
