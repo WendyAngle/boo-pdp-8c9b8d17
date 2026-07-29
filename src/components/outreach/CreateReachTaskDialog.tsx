@@ -39,6 +39,7 @@ import {
   COST_SOCIAL_DM,
   COST_AI_SOCIAL,
   createSocialReachBatch,
+  chargeAiGeneration,
 } from "@/lib/credits-ledger";
 
 import {
