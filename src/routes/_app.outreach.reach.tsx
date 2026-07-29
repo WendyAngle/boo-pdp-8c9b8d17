@@ -89,8 +89,6 @@ import { useThreads, threadKeyFor, type Thread } from "@/lib/inbox-store";
 import {
   Inbox as InboxIcon,
   MessageCircleReply,
-  Plus,
-  UserCircle2,
   Users,
   ListChecks,
   Facebook,
@@ -99,7 +97,6 @@ import {
 } from "lucide-react";
 import { useSocialAccounts, friendRemaining } from "@/data/social-accounts";
 import { poolAverageHealth } from "@/lib/social-account-health";
-import { CreateReachTaskDialog } from "@/components/outreach/CreateReachTaskDialog";
 
 export const Route = createFileRoute("/_app/outreach/reach")({
   head: () => ({ meta: [{ title: "出海大数据平台 · 触达 | 出海大数据平台" }] }),
@@ -185,7 +182,6 @@ function ReachPage() {
   const [kw, setKw] = useState("");
   const [page, setPage] = useState(1);
   const pageSize = 10;
-  const [createOpen, setCreateOpen] = useState(false);
   const [view, setView] = useState<"task" | "record">("task");
   const [taskKey, setTaskKey] = useState<string | null>(null);
   const [confirm, setConfirm] = useState<
@@ -363,16 +359,6 @@ function ReachPage() {
           >
             <RefreshCw className="h-3.5 w-3.5" />
             重置演示数据
-          </Button>
-          <Button size="sm" onClick={() => setCreateOpen(true)} className="gap-1.5">
-            <Plus className="h-3.5 w-3.5" />
-            创建触达任务
-          </Button>
-          <Button asChild variant="outline" size="sm" className="gap-1.5">
-            <Link to="/outreach/social/accounts">
-              <UserCircle2 className="h-3.5 w-3.5" />
-              我的账号
-            </Link>
           </Button>
         </div>
       </div>
@@ -865,7 +851,6 @@ function ReachPage() {
           )}
         </DialogContent>
       </Dialog>
-      <CreateReachTaskDialog open={createOpen} onOpenChange={setCreateOpen} />
     </div>
     </TooltipProvider>
   );
