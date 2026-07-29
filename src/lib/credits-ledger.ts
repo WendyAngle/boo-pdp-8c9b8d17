@@ -233,6 +233,8 @@ export interface LedgerEntry {
   aiGenerated?: boolean;
   // demo / override: when set, getReachStatus returns this value directly
   forcedStatus?: ReachStatus;
+  // reach-only: 因当日账号额度不足而顺延执行的时间（ISO），到点前恒为「待触达」
+  scheduledAt?: string;
   // reach-only: populated when status is failed
   failReason?: string;
   // refund-only: id of the related reach entry being refunded
