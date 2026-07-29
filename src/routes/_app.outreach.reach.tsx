@@ -134,6 +134,14 @@ type TaskGroup = {
   lastAt: string;
 };
 
+function groupKeyOf(r: { channel?: ReachChannel; platform?: string; subject?: string; detail?: string; createdAt: string }) {
+  const day = r.createdAt.slice(0, 10);
+  const batchName = r.channel === "social" && r.subject ? r.subject : null;
+  return batchName
+    ? `s:${batchName}:${r.platform ?? ""}`
+    : `c:${r.channel}:${r.platform ?? ""}:${reachAction(r)}:${day}`;
+}
+
 /** 从明细中提取触达动作：社媒区分「加好友 / 私信」，其余按渠道语义 */
 function reachAction(r: { channel?: ReachChannel; detail?: string; platform?: string }) {
   const d = r.detail ?? "";
@@ -179,6 +187,7 @@ function ReachPage() {
   const pageSize = 10;
   const [createOpen, setCreateOpen] = useState(false);
   const [view, setView] = useState<"task" | "record">("task");
+  const [taskKey, setTaskKey] = useState<string | null>(null);
   const [confirm, setConfirm] = useState<
     | null
     | {
@@ -244,7 +253,7 @@ function ReachPage() {
 
   useEffect(() => {
     setPage(1);
-  }, [statusTab, channel, targetKind, kw, view]);
+  }, [statusTab, channel, targetKind, kw, view, taskKey]);
 
   const targetKindCounts = useMemo(() => {
     let ent = 0;
@@ -256,9 +265,14 @@ function ReachPage() {
     return { ent, con };
   }, [reachRows]);
 
+  const recordRows = useMemo(
+    () => (taskKey ? filtered.filter((r) => groupKeyOf(r) === taskKey) : filtered),
+    [filtered, taskKey],
+  );
+
   const pageData = useMemo(
-    () => filtered.slice((page - 1) * pageSize, page * pageSize),
-    [filtered, page],
+    () => recordRows.slice((page - 1) * pageSize, page * pageSize),
+    [recordRows, page],
   );
 
   // 社媒账号池运营指标（替代原积分口径，突出触达任务本身的执行能力）
@@ -287,9 +301,7 @@ function ReachPage() {
       const day = r.createdAt.slice(0, 10);
       // 批量创建的触达任务按任务名聚合；单条触达按「渠道 + 平台 + 动作 + 日期」归入当日任务
       const batchName = r.channel === "social" && r.subject ? r.subject : null;
-      const key = batchName
-        ? `s:${batchName}:${r.platform ?? ""}`
-        : `c:${r.channel}:${r.platform ?? ""}:${action}:${day}`;
+      const key = groupKeyOf(r);
       let g = map.get(key);
       if (!g) {
         g = {
@@ -472,7 +484,10 @@ function ReachPage() {
           <div className="ml-auto mb-2 inline-flex rounded-md border bg-muted/40 p-0.5">
             <button
               type="button"
-              onClick={() => setView("task")}
+              onClick={() => {
+                setView("task");
+                setTaskKey(null);
+              }}
               className={cn(
                 "inline-flex items-center gap-1 rounded px-2.5 py-1 text-xs font-medium transition-colors",
                 view === "task"
@@ -545,7 +560,15 @@ function ReachPage() {
               className="pl-9 h-9 bg-background"
             />
           </div>
-          {(kw || channel !== "all" || statusTab !== "all" || targetKind !== "all") && (
+          {taskKey && view === "record" && (
+            <Badge variant="secondary" className="gap-1 font-normal">
+              任务：{taskGroups.find((g) => g.key === taskKey)?.name ?? "已选任务"}
+              <button type="button" onClick={() => setTaskKey(null)} className="ml-1">
+                <X className="h-3 w-3" />
+              </button>
+            </Badge>
+          )}
+          {(kw || channel !== "all" || statusTab !== "all" || targetKind !== "all" || taskKey) && (
             <Button
               variant="ghost"
               size="sm"
@@ -554,6 +577,7 @@ function ReachPage() {
                 setChannel("all");
                 setStatusTab("all");
                 setTargetKind("all");
+                setTaskKey(null);
               }}
               className="gap-1"
             >
@@ -564,7 +588,7 @@ function ReachPage() {
           <div className="text-sm text-muted-foreground ml-auto">
             共{" "}
             <span className="text-foreground font-semibold">
-              {view === "task" ? taskGroups.length : filtered.length}
+              {view === "task" ? taskGroups.length : recordRows.length}
             </span>{" "}
             {view === "task" ? "个任务" : "条记录"}
           </div>
@@ -606,7 +630,7 @@ function ReachPage() {
                   key={g.key}
                   className="hover:bg-muted/30 cursor-pointer"
                   onClick={() => {
-                    setKw(g.name);
+                    setTaskKey(g.key);
                     setView("record");
                   }}
                   title="点击查看该任务下的触达记录"
@@ -732,7 +756,7 @@ function ReachPage() {
             <ListPagination
               page={page}
               pageSize={pageSize}
-              total={view === "task" ? taskGroups.length : filtered.length}
+              total={view === "task" ? taskGroups.length : recordRows.length}
               onPageChange={setPage}
             />
           </div>
