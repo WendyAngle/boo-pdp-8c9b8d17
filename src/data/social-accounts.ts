@@ -254,7 +254,11 @@ function seed() {
       proxyRegion: "DE",
     },
   ];
-  write(seedData);
+  write(
+    seedData.map((a) =>
+      a.status === "备货中" ? a : { ...a, deliveredAt: now, expiresAt: oneYearLater },
+    ),
+  );
   window.localStorage.setItem(SEED_FLAG, "1");
 }
 seed();
