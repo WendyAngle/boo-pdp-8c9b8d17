@@ -195,12 +195,21 @@ export function BatchSocialPlatformDialog({
     ? renderTemplate(content, previewJob.candidate.ctx)
     : "";
 
-  const canSend = sendableCount > 0 && content.trim().length > 0;
+  const canSend = targetCount > 0 && content.trim().length > 0;
+
+  /** 次日 09:00 起继续执行 */
+  function nextDayStart(): string {
+    const d = new Date();
+    d.setDate(d.getDate() + 1);
+    d.setHours(9, 0, 0, 0);
+    return d.toISOString();
+  }
 
   function handleSend() {
     if (!canSend) return;
+    const scheduled = nextDayStart();
     let n = 0;
-    for (const job of jobs.slice(0, sendableCount)) {
+    jobs.forEach((job, i) => {
       const r = job.candidate;
       createReach({
         targetKind: r.targetKind,
@@ -213,12 +222,18 @@ export function BatchSocialPlatformDialog({
         content: renderTemplate(content, r.ctx),
         aiGenerated: aiUsed,
         cost: unit,
+        userCreated: true,
+        ...(i >= capacity ? { scheduledAt: scheduled } : {}),
       });
       n++;
-    }
+    });
     onOpenChange(false);
     toast.success(`已加入触达队列：${n} 条社媒私信`, {
-      description: `共扣除 ${grandTotal} 积分${
+      description: `${
+        deferredCount > 0
+          ? `今日执行 ${todayCount} 条，剩余 ${deferredCount} 条将于明日 09:00 自动继续执行；`
+          : ""
+      }共扣除 ${grandTotal} 积分${
         aiCost > 0 ? `（含 AI 文案 ${aiCost} 积分）` : ""
       }，可在「触达任务」模块查看进度`,
     });
