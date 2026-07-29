@@ -1320,12 +1320,9 @@ export function seedDemoLedgerIfEmpty() {
       reachContact(26, 0, "phone", 11 * D + 310, "failed", "多次拨打无人接听"),
       // ---- 失败（不可重试）----
       reachContact(32, 0, "social", 12 * D + 360, "failed", "账号已失效或停用"),
-      /* ---- 触达任务 · 社媒（Facebook / TikTok 加好友 · 私信）---- */
-         渠道 = 社媒；明细说明区分：
-           · Facebook平台加好友
-           · Facebook平台私信
-           · TikTok平台私信
-         覆盖待触达 / 触达中 / 触达成功 / 触达失败四种状态，时间分散在近两周。 */
+      // ---- 触达任务 · 社媒（Facebook / TikTok 加好友 · 私信）----
+      // 渠道 = 社媒；明细区分 Facebook平台加好友 / Facebook平台私信 / TikTok平台私信
+      // 覆盖 待触达 / 触达中 / 触达成功 / 触达失败 四种状态，时间分散在近两周
       ...([
         { kind: "friend", platform: "Facebook", entI: 3, conIdx: -1, min: 3 * D + 200, status: "success" },
         { kind: "friend", platform: "Facebook", entI: 6, conIdx: 0, min: 1 * D + 180, status: "in_progress" },
