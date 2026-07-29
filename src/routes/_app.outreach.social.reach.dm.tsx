@@ -131,7 +131,7 @@ function DmPage() {
         {tasks.length === 0 ? (
           <div className="p-10 text-center text-sm text-muted-foreground">
             尚无私信任务。请先在{" "}
-            <Link to="/outreach/social/reach/friends" className="text-primary hover:underline">
+            <Link to="/outreach/conversations" className="text-primary hover:underline">
               社媒好友池
             </Link>{" "}
             中挑选目标，或在{" "}
