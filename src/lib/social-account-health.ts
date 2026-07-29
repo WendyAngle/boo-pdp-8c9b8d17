@@ -64,9 +64,10 @@ export function computeHealth(a: SocialAccount): HealthResult {
 }
 
 export function poolAverageHealth(list: SocialAccount[]): number {
-  if (list.length === 0) return 0;
-  const total = list.reduce((s, a) => s + computeHealth(a).score, 0);
-  return Math.round(total / list.length);
+  const active = list.filter((a) => a.status !== "备货中");
+  if (active.length === 0) return 0;
+  const total = active.reduce((s, a) => s + computeHealth(a).score, 0);
+  return Math.round(total / active.length);
 }
 
 export function healthToneClass(band: HealthResult["band"]): string {
