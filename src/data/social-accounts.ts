@@ -50,6 +50,10 @@ export interface SocialAccount {
   orderedAt?: string;
   /** 预计交付时间（下单 + 7 个工作日） */
   expectedDeliveryAt?: string;
+  /** 实际交付时间 */
+  deliveredAt?: string;
+  /** 到期时间（默认交付后 1 年） */
+  expiresAt?: string;
   /** 账号"人设"归属地（ISO code） */
   ownerRegion?: string;
   /** 出口 IP / 代理所在地（ISO code） */
