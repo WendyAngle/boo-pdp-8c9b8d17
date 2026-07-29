@@ -111,6 +111,7 @@ function SocialAccountsPage() {
   }, [friends]);
 
   const [friendsAccount, setFriendsAccount] = useState<SocialAccount | null>(null);
+  const [allFriendsOpen, setAllFriendsOpen] = useState(false);
 
   const [keyword, setKeyword] = useState("");
   const [platform, setPlatform] = useState<PlatformFilter>("all");
