@@ -307,3 +307,119 @@ function AccountRow({ account, friendCount, onFriendsClick }: { account: SocialA
     </TableRow>
   );
 }
+
+function FriendsDialog({
+  account,
+  friends,
+  onClose,
+}: {
+  account: SocialAccount;
+  friends: SocialFriend[];
+  onClose: () => void;
+}) {
+  const [kw, setKw] = useState("");
+  const [page, setPage] = useState(1);
+  const pageSize = 10;
+
+  const filtered = useMemo(() => {
+    const k = kw.trim().toLowerCase();
+    if (!k) return friends;
+    return friends.filter(
+      (f) =>
+        (f.handle ?? "").toLowerCase().includes(k) ||
+        (f.name ?? "").toLowerCase().includes(k),
+    );
+  }, [friends, kw]);
+
+  const pageData = useMemo(
+    () => filtered.slice((page - 1) * pageSize, page * pageSize),
+    [filtered, page],
+  );
+
+  return (
+    <Dialog open onOpenChange={(o) => !o && onClose()}>
+      <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
+        <DialogHeader>
+          <DialogTitle className="flex items-center gap-2">
+            <UserCheck className="h-5 w-5 text-primary" />
+            好友列表
+            <Badge variant="secondary" className="ml-1 font-normal">
+              {account.platform} · {account.handle}
+            </Badge>
+          </DialogTitle>
+          <DialogDescription className="sr-only">
+            账号 {account.handle} 的好友数据
+          </DialogDescription>
+        </DialogHeader>
+
+        <div className="relative mb-3">
+          <Search className="h-3.5 w-3.5 absolute left-2.5 top-1/2 -translate-y-1/2 text-muted-foreground" />
+          <Input
+            value={kw}
+            onChange={(e) => {
+              setKw(e.target.value);
+              setPage(1);
+            }}
+            placeholder="按账号 / 显示名搜索"
+            className="h-8 pl-8 text-xs"
+          />
+          {kw && (
+            <button
+              type="button"
+              onClick={() => setKw("")}
+              className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+            >
+              <X className="h-3.5 w-3.5" />
+            </button>
+          )}
+        </div>
+
+        {filtered.length === 0 ? (
+          <div className="py-10 text-center text-sm text-muted-foreground">
+            {kw ? "没有匹配的好友" : "该账号暂无好友"}
+          </div>
+        ) : (
+          <>
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead className="w-[100px]">平台</TableHead>
+                  <TableHead>账号</TableHead>
+                  <TableHead>显示名</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {pageData.map((f) => (
+                  <TableRow key={f.id}>
+                    <TableCell>
+                      <span className="inline-flex items-center gap-1.5 text-xs font-medium">
+                        {f.platform === "Facebook" ? (
+                          <Facebook className="h-3.5 w-3.5 text-sky-600" />
+                        ) : f.platform === "TikTok" ? (
+                          <Music2 className="h-3.5 w-3.5 text-rose-600" />
+                        ) : (
+                          <CheckCircle2 className="h-3.5 w-3.5 text-emerald-600" />
+                        )}
+                        {f.platform}
+                      </span>
+                    </TableCell>
+                    <TableCell className="font-mono text-xs">{f.handle || "—"}</TableCell>
+                    <TableCell className="text-sm">{f.name || "—"}</TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+            <div className="pb-1 pt-3">
+              <ListPagination
+                page={page}
+                pageSize={pageSize}
+                total={filtered.length}
+                onPageChange={setPage}
+              />
+            </div>
+          </>
+        )}
+      </DialogContent>
+    </Dialog>
+  );
+}
