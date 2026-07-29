@@ -34,7 +34,6 @@ import {
   regionLabel,
   REGION_OPTIONS,
   useSocialAccounts,
-  workdaysUntil,
   type SocialAccount,
 } from "@/data/social-accounts";
 import { cn } from "@/lib/utils";
