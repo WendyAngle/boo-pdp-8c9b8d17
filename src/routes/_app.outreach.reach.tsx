@@ -622,6 +622,7 @@ function ReachPage() {
           )}
         </DialogContent>
       </Dialog>
+      <CreateReachTaskDialog open={createOpen} onOpenChange={setCreateOpen} />
     </div>
     </TooltipProvider>
   );
