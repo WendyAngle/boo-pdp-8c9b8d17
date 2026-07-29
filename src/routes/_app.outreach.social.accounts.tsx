@@ -7,7 +7,6 @@ import {
   CheckCircle2,
   Wallet,
   UserCheck,
-  Clock,
   Search,
   RotateCcw,
 } from "lucide-react";
@@ -35,7 +34,6 @@ import {
   regionLabel,
   REGION_OPTIONS,
   useSocialAccounts,
-  workdaysUntil,
   type SocialAccount,
 } from "@/data/social-accounts";
 import { cn } from "@/lib/utils";
@@ -53,7 +51,44 @@ export const Route = createFileRoute("/_app/outreach/social/accounts")({
 });
 
 type PlatformFilter = "all" | "Facebook" | "TikTok";
-type StatusFilter = "all" | SocialAccount["status"];
+
+/** 按到期时间返回分档（用于行底色与标签） */
+type ExpiryBucket = "safe" | "quarter" | "month" | "week" | "expired" | "none";
+function getExpiryBucket(expiresAt?: string): ExpiryBucket {
+  if (!expiresAt) return "none";
+  const now = new Date();
+  const exp = new Date(expiresAt);
+  const days = Math.ceil((exp.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
+  if (days < 0) return "expired";
+  if (days < 7) return "week";
+  if (days < 30) return "month";
+  if (days <= 90) return "quarter";
+  return "safe";
+}
+const EXPIRY_ROW_TONE: Record<ExpiryBucket, string> = {
+  safe: "",
+  quarter: "bg-amber-50/40",
+  month: "bg-orange-50/60",
+  week: "bg-rose-50/70",
+  expired: "bg-rose-100/70",
+  none: "",
+};
+const EXPIRY_TEXT_TONE: Record<ExpiryBucket, string> = {
+  safe: "text-muted-foreground",
+  quarter: "text-amber-700",
+  month: "text-orange-700 font-medium",
+  week: "text-rose-700 font-semibold",
+  expired: "text-rose-700 font-semibold",
+  none: "text-muted-foreground",
+};
+const EXPIRY_LABEL: Record<ExpiryBucket, string> = {
+  safe: "充足",
+  quarter: "1-3 个月",
+  month: "剩余 <1 个月",
+  week: "剩余 <1 周",
+  expired: "已过期",
+  none: "",
+};
 
 function SocialAccountsPage() {
   const balance = useCreditBalance();
@@ -67,16 +102,12 @@ function SocialAccountsPage() {
 
   const [keyword, setKeyword] = useState("");
   const [platform, setPlatform] = useState<PlatformFilter>("all");
-  const [status, setStatus] = useState<StatusFilter>("all");
   const [region, setRegion] = useState<string>("all");
-
-  const pendingCount = useMemo(() => accounts.filter((a) => a.status === "备货中").length, [accounts]);
 
   const filtered = useMemo(() => {
     const kw = keyword.trim().toLowerCase();
     return accounts.filter((a) => {
       if (platform !== "all" && a.platform !== platform) return false;
-      if (status !== "all" && a.status !== status) return false;
       if (region !== "all" && a.ownerRegion !== region) return false;
       if (kw) {
         const hay = `${a.handle ?? ""} ${a.displayName ?? ""}`.toLowerCase();
@@ -84,13 +115,12 @@ function SocialAccountsPage() {
       }
       return true;
     });
-  }, [accounts, keyword, platform, status, region]);
+  }, [accounts, keyword, platform, region]);
 
-  const hasFilter = keyword !== "" || platform !== "all" || status !== "all" || region !== "all";
+  const hasFilter = keyword !== "" || platform !== "all" || region !== "all";
   const reset = () => {
     setKeyword("");
     setPlatform("all");
-    setStatus("all");
     setRegion("all");
   };
 
@@ -139,17 +169,6 @@ function SocialAccountsPage() {
               <SelectItem value="TikTok" className="text-xs">TikTok</SelectItem>
             </SelectContent>
           </Select>
-          <Select value={status} onValueChange={(v) => setStatus(v as StatusFilter)}>
-            <SelectTrigger className="h-8 w-[130px] text-xs"><SelectValue placeholder="状态" /></SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all" className="text-xs">全部状态</SelectItem>
-              <SelectItem value="正常" className="text-xs">正常</SelectItem>
-              <SelectItem value="养号中" className="text-xs">养号中</SelectItem>
-              <SelectItem value="异常" className="text-xs">异常</SelectItem>
-              <SelectItem value="备货中" className="text-xs">备货中</SelectItem>
-              <SelectItem value="停用" className="text-xs">停用</SelectItem>
-            </SelectContent>
-          </Select>
           <Select value={region} onValueChange={setRegion}>
             <SelectTrigger className="h-8 w-[150px] text-xs"><SelectValue placeholder="所属地区" /></SelectTrigger>
             <SelectContent className="max-h-72">
@@ -165,11 +184,7 @@ function SocialAccountsPage() {
             </Button>
           )}
           <div className="ml-auto flex items-center gap-3 text-xs text-muted-foreground">
-            {pendingCount > 0 && (
-              <span className="inline-flex items-center gap-1 text-amber-600">
-                <Clock className="h-3 w-3" /> 备货中 {pendingCount}
-              </span>
-            )}
+
             <span>
               共 <b className="text-foreground tabular-nums">{filtered.length}</b>
               {filtered.length !== accounts.length && (
@@ -212,20 +227,9 @@ function SocialAccountsPage() {
 }
 
 function AccountRow({ account, friendCount }: { account: SocialAccount; friendCount: number }) {
-  const statusTone: Record<SocialAccount["status"], string> = {
-    正常: "bg-emerald-50 text-emerald-700 border-emerald-200",
-    养号中: "bg-amber-50 text-amber-700 border-amber-200",
-    停用: "bg-slate-100 text-slate-600 border-slate-200",
-    异常: "bg-rose-50 text-rose-700 border-rose-200",
-    备货中: "bg-sky-50 text-sky-700 border-sky-200",
-  };
-  const isPending = account.status === "备货中";
-  const remainingDays = isPending && account.expectedDeliveryAt
-    ? workdaysUntil(account.expectedDeliveryAt)
-    : 0;
-
+  const bucket = getExpiryBucket(account.expiresAt);
   return (
-    <TableRow className={cn(isPending && "bg-sky-50/30")}>
+    <TableRow className={cn(EXPIRY_ROW_TONE[bucket])}>
       <TableCell>
         <span className="inline-flex items-center gap-1.5 text-xs font-medium">
           {account.platform === "Facebook" ? (
@@ -238,23 +242,16 @@ function AccountRow({ account, friendCount }: { account: SocialAccount; friendCo
           {account.platform}
         </span>
       </TableCell>
-      <TableCell className="font-mono text-xs">
-        {isPending ? <span className="text-muted-foreground">备货中…</span> : account.handle}
-      </TableCell>
-      <TableCell className="text-sm">
-        {isPending ? <span className="text-muted-foreground">—</span> : account.displayName}
-      </TableCell>
+      <TableCell className="font-mono text-xs">{account.handle}</TableCell>
+      <TableCell className="text-sm">{account.displayName}</TableCell>
       <TableCell>
-        <span className={cn("inline-flex items-center gap-1 px-2 py-0.5 rounded-md border text-xs", statusTone[account.status])}>
-          {isPending && <Clock className="h-3 w-3" />}
-          {account.status}
+        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md border text-xs bg-emerald-50 text-emerald-700 border-emerald-200">
+          正常
         </span>
       </TableCell>
       <TableCell className="text-xs text-muted-foreground">{regionLabel(account.ownerRegion)}</TableCell>
       <TableCell className="text-xs tabular-nums">
-        {isPending ? (
-          <span className="text-muted-foreground">—</span>
-        ) : friendCount > 0 ? (
+        {friendCount > 0 ? (
           <Link
             to="/outreach/social/reach/friends"
             search={{ accountId: account.id } as never}
@@ -269,21 +266,19 @@ function AccountRow({ account, friendCount }: { account: SocialAccount; friendCo
         )}
       </TableCell>
       <TableCell className="text-xs text-muted-foreground">
-        {isPending && account.expectedDeliveryAt ? (
-          <span className="inline-flex flex-col leading-tight">
-            <span className="text-amber-700 font-medium">
-              预计 {new Date(account.expectedDeliveryAt).toLocaleDateString()}
-            </span>
-            <span className="text-[11px]">还剩 {remainingDays} 个工作日</span>
-          </span>
-        ) : account.deliveredAt ? (
-          new Date(account.deliveredAt).toLocaleDateString()
-        ) : (
-          "—"
-        )}
+        {account.deliveredAt ? new Date(account.deliveredAt).toLocaleDateString() : "—"}
       </TableCell>
-      <TableCell className="text-xs text-muted-foreground">
-        {account.expiresAt ? new Date(account.expiresAt).toLocaleDateString() : "—"}
+      <TableCell className="text-xs">
+        {account.expiresAt ? (
+          <span className={cn("inline-flex flex-col leading-tight", EXPIRY_TEXT_TONE[bucket])}>
+            <span className="tabular-nums">{new Date(account.expiresAt).toLocaleDateString()}</span>
+            {bucket !== "safe" && bucket !== "none" && (
+              <span className="text-[11px]">{EXPIRY_LABEL[bucket]}</span>
+            )}
+          </span>
+        ) : (
+          <span className="text-muted-foreground">—</span>
+        )}
       </TableCell>
     </TableRow>
   );

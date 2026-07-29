@@ -60,8 +60,8 @@ export interface SocialAccount {
   proxyRegion?: string;
 }
 
-const KEY = "boo:social-accounts:v7";
-const SEED_FLAG = "boo:social-accounts:v7:seeded";
+const KEY = "boo:social-accounts:v8";
+const SEED_FLAG = "boo:social-accounts:v8:seeded";
 
 function read(): SocialAccount[] {
   if (typeof window === "undefined") return [];
@@ -112,153 +112,129 @@ export function workdaysUntil(target: string): number {
 function seed() {
   if (typeof window === "undefined") return;
   if (window.localStorage.getItem(SEED_FLAG)) return;
-  const now = new Date().toISOString();
-  const inFiveDays = addWorkdays(new Date(), 5).toISOString();
-  const oneYearLater = (() => {
-    const d = new Date();
-    d.setFullYear(d.getFullYear() + 1);
+  const now = new Date();
+  const nowIso = now.toISOString();
+  const daysFromNow = (days: number) => {
+    const d = new Date(now);
+    d.setDate(d.getDate() + days);
     return d.toISOString();
-  })();
+  };
+  // 覆盖 4 档到期区间：>3 个月、1-3 个月、<1 个月、<1 周
   const seedData: SocialAccount[] = [
     {
       id: "sa_fb_1",
       platform: "Facebook",
       handle: "@bytetech.export",
       displayName: "ByteTech FB · Global",
-      dailyLimit: 20,
-      sentToday: 3,
-      dailyFriendLimit: 5,
-      friendSentToday: 2,
-      dailyDmLimit: 20,
-      dmSentToday: 3,
+      dailyLimit: 20, sentToday: 3,
+      dailyFriendLimit: 5, friendSentToday: 2,
+      dailyDmLimit: 20, dmSentToday: 3,
       status: "正常",
-      purchasedAt: now,
       ownerRegion: "US",
       proxyRegion: "US",
+      deliveredAt: nowIso,
+      expiresAt: daysFromNow(300), // >3 个月
     },
     {
       id: "sa_fb_2",
       platform: "Facebook",
       handle: "@bytetech.trade",
       displayName: "ByteTech FB · Trade",
-      dailyLimit: 20,
-      sentToday: 0,
-      dailyFriendLimit: 5,
-      friendSentToday: 0,
-      dailyDmLimit: 20,
-      dmSentToday: 0,
-      status: "养号中",
-      purchasedAt: now,
+      dailyLimit: 20, sentToday: 0,
+      dailyFriendLimit: 5, friendSentToday: 0,
+      dailyDmLimit: 20, dmSentToday: 0,
+      status: "正常",
       ownerRegion: "SG",
       proxyRegion: "SG",
+      deliveredAt: nowIso,
+      expiresAt: daysFromNow(60), // 1-3 个月
     },
-    // TikTok 预置 2 个
     {
       id: "sa_tt_1",
       platform: "TikTok",
       handle: "@bytetech_official",
       displayName: "ByteTech TT · Official",
-      dailyLimit: 20,
-      sentToday: 1,
-      dailyFriendLimit: 5,
-      friendSentToday: 1,
-      dailyDmLimit: 20,
-      dmSentToday: 2,
+      dailyLimit: 20, sentToday: 1,
+      dailyFriendLimit: 5, friendSentToday: 1,
+      dailyDmLimit: 20, dmSentToday: 2,
       status: "正常",
-      purchasedAt: now,
       ownerRegion: "JP",
       proxyRegion: "JP",
+      deliveredAt: nowIso,
+      expiresAt: daysFromNow(220), // >3 个月
     },
     {
       id: "sa_tt_2",
       platform: "TikTok",
       handle: "@bytetech_biz",
       displayName: "ByteTech TT · Biz",
-      dailyLimit: 20,
-      sentToday: 0,
-      dailyFriendLimit: 5,
-      friendSentToday: 0,
-      dailyDmLimit: 20,
-      dmSentToday: 0,
+      dailyLimit: 20, sentToday: 0,
+      dailyFriendLimit: 5, friendSentToday: 0,
+      dailyDmLimit: 20, dmSentToday: 0,
       status: "正常",
-      purchasedAt: now,
       ownerRegion: "MY",
       proxyRegion: "SG",
+      deliveredAt: nowIso,
+      expiresAt: daysFromNow(20), // <1 个月
     },
-    // 异常账号 x2
     {
-      id: "sa_fb_x1",
+      id: "sa_fb_3",
       platform: "Facebook",
-      handle: "@bytetech.fb.err01",
-      displayName: "ByteTech FB · Risk01",
-      dailyLimit: 20,
-      sentToday: 12,
-      dailyFriendLimit: 5,
-      friendSentToday: 5,
-      dailyDmLimit: 20,
-      dmSentToday: 12,
-      status: "异常",
-      purchasedAt: now,
-      ownerRegion: "US",
-      proxyRegion: "US",
-    },
-    {
-      id: "sa_tt_x1",
-      platform: "TikTok",
-      handle: "@bytetech_tt_err01",
-      displayName: "ByteTech TT · Risk01",
-      dailyLimit: 20,
-      sentToday: 8,
-      dailyFriendLimit: 5,
-      friendSentToday: 4,
-      dailyDmLimit: 20,
-      dmSentToday: 8,
-      status: "异常",
-      purchasedAt: now,
-      ownerRegion: "VN",
-      proxyRegion: "SG",
-    },
-    // 养号中 x1
-    {
-      id: "sa_tt_warm1",
-      platform: "TikTok",
-      handle: "@bytetech_tt_warm01",
-      displayName: "ByteTech TT · Warmup",
-      dailyLimit: 20,
-      sentToday: 0,
-      dailyFriendLimit: 5,
-      friendSentToday: 1,
-      dailyDmLimit: 20,
-      dmSentToday: 0,
-      status: "养号中",
-      purchasedAt: now,
-      ownerRegion: "TH",
-      proxyRegion: "SG",
-    },
-    // 备货中 x1（演示新流程）
-    {
-      id: "sa_fb_pending1",
-      platform: "Facebook",
-      handle: "",
-      displayName: "",
-      dailyLimit: 0,
-      sentToday: 0,
-      dailyFriendLimit: 0,
-      friendSentToday: 0,
-      dailyDmLimit: 0,
-      dmSentToday: 0,
-      status: "备货中",
-      orderedAt: now,
-      expectedDeliveryAt: inFiveDays,
+      handle: "@bytetech.eu",
+      displayName: "ByteTech FB · EU",
+      dailyLimit: 20, sentToday: 4,
+      dailyFriendLimit: 5, friendSentToday: 1,
+      dailyDmLimit: 20, dmSentToday: 4,
+      status: "正常",
       ownerRegion: "DE",
       proxyRegion: "DE",
+      deliveredAt: nowIso,
+      expiresAt: daysFromNow(5), // <1 周
+    },
+    {
+      id: "sa_tt_3",
+      platform: "TikTok",
+      handle: "@bytetech_th",
+      displayName: "ByteTech TT · Thailand",
+      dailyLimit: 20, sentToday: 2,
+      dailyFriendLimit: 5, friendSentToday: 2,
+      dailyDmLimit: 20, dmSentToday: 2,
+      status: "正常",
+      ownerRegion: "TH",
+      proxyRegion: "SG",
+      deliveredAt: nowIso,
+      expiresAt: daysFromNow(85), // 1-3 个月
+    },
+    {
+      id: "sa_fb_4",
+      platform: "Facebook",
+      handle: "@bytetech.uk",
+      displayName: "ByteTech FB · UK",
+      dailyLimit: 20, sentToday: 1,
+      dailyFriendLimit: 5, friendSentToday: 0,
+      dailyDmLimit: 20, dmSentToday: 1,
+      status: "正常",
+      ownerRegion: "GB",
+      proxyRegion: "GB",
+      deliveredAt: nowIso,
+      expiresAt: daysFromNow(3), // <1 周
+    },
+    {
+      id: "sa_tt_4",
+      platform: "TikTok",
+      handle: "@bytetech_kr",
+      displayName: "ByteTech TT · Korea",
+      dailyLimit: 20, sentToday: 0,
+      dailyFriendLimit: 5, friendSentToday: 0,
+      dailyDmLimit: 20, dmSentToday: 0,
+      status: "正常",
+      ownerRegion: "KR",
+      proxyRegion: "KR",
+      deliveredAt: nowIso,
+      expiresAt: daysFromNow(25), // <1 个月
     },
   ];
-  write(
-    seedData.map((a) =>
-      a.status === "备货中" ? a : { ...a, deliveredAt: now, expiresAt: oneYearLater },
-    ),
-  );
+  write(seedData);
   window.localStorage.setItem(SEED_FLAG, "1");
 }
 seed();
