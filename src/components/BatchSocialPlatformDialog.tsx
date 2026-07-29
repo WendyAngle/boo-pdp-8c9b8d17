@@ -163,12 +163,14 @@ export function BatchSocialPlatformDialog({
   );
 
   const targetCount = jobs.length;
-  const sendableCount = Math.min(targetCount, capacity);
-  const overLimit = targetCount > capacity;
+  /** 今日可执行条数，其余顺延次日 */
+  const todayCount = Math.min(targetCount, capacity);
+  const deferredCount = Math.max(0, targetCount - capacity);
+  const overLimit = deferredCount > 0;
 
-  // 费用
+  // 费用：按目标数量全额扣除（含顺延次日执行的部分）
   const unit = costForSocialPlatform("Facebook");
-  const sendTotal = sendableCount * unit;
+  const sendTotal = targetCount * unit;
   const aiCost = aiCount * COST_AI_SOCIAL;
   const grandTotal = sendTotal + aiCost;
 
