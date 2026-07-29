@@ -164,7 +164,8 @@ function ReachPage() {
   const reachRows = useMemo(() => {
     return ledger
       .filter((e) => e.kind === "reach")
-      .map((e) => ({ ...e, status: getReachStatus(e, now) }));
+      .map((e) => ({ ...e, status: getReachStatus(e, now) }))
+      .sort((a, b) => (a.createdAt < b.createdAt ? 1 : a.createdAt > b.createdAt ? -1 : 0));
   }, [ledger, now]);
 
   const counts = useMemo(() => {

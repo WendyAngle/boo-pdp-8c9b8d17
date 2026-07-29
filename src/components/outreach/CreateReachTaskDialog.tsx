@@ -31,7 +31,6 @@ import {
 } from "@/components/ui/select";
 import { cn } from "@/lib/utils";
 import {
-  addProspectingTask,
   type SocialTaskPlatform,
 } from "@/lib/social-tasks";
 import { useSocialAccounts } from "@/data/social-accounts";
@@ -39,7 +38,9 @@ import { useCreditBalance, spendCredits } from "@/lib/credits-balance";
 import {
   COST_SOCIAL_DM,
   COST_AI_SOCIAL,
+  createSocialReachBatch,
 } from "@/lib/credits-ledger";
+
 import {
   MESSAGE_VARIABLES,
   renderTemplate,
@@ -245,22 +246,23 @@ export function CreateReachTaskDialog({
 
     const kws = keywords.split(/[,，]/).map((s) => s.trim()).filter(Boolean);
     spendCredits(sendCost);
-    addProspectingTask({
-      name: name.trim(),
-      platform: [platform],
-      targetKinds: ["user"],
-      keywords: kws,
+    // 记录落到「触达任务」列表（渠道=社媒，状态=待触达），不再进入社媒触达模块
+    createSocialReachBatch({
+      taskName: name.trim(),
+      platform,
       region,
-      targetCap,
-      accountIds: availableAccounts.map((a) => a.id),
-      greetOnAccept: content.trim(),
-      frozenCredits: sendCost,
+      keywords: kws,
+      count: targetCap,
+      content: content.trim(),
+      aiGenerated: aiUsed,
+      action: "私信",
     });
     toast.success(
-      `已创建触达任务，共扣 ${grandTotal.toLocaleString()} 积分（发送 ${sendCost} + AI ${aiCost}）`,
+      `已创建触达任务，生成 ${targetCap} 条触达记录，共扣 ${grandTotal.toLocaleString()} 积分（发送 ${sendCost} + AI ${aiCost}）`,
     );
     onOpenChange(false);
   }
+
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
