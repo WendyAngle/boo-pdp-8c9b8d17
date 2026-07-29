@@ -53,7 +53,44 @@ export const Route = createFileRoute("/_app/outreach/social/accounts")({
 });
 
 type PlatformFilter = "all" | "Facebook" | "TikTok";
-type StatusFilter = "all" | SocialAccount["status"];
+
+/** 按到期时间返回分档（用于行底色与标签） */
+type ExpiryBucket = "safe" | "quarter" | "month" | "week" | "expired" | "none";
+function getExpiryBucket(expiresAt?: string): ExpiryBucket {
+  if (!expiresAt) return "none";
+  const now = new Date();
+  const exp = new Date(expiresAt);
+  const days = Math.ceil((exp.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
+  if (days < 0) return "expired";
+  if (days < 7) return "week";
+  if (days < 30) return "month";
+  if (days <= 90) return "quarter";
+  return "safe";
+}
+const EXPIRY_ROW_TONE: Record<ExpiryBucket, string> = {
+  safe: "",
+  quarter: "bg-amber-50/40",
+  month: "bg-orange-50/60",
+  week: "bg-rose-50/70",
+  expired: "bg-rose-100/70",
+  none: "",
+};
+const EXPIRY_TEXT_TONE: Record<ExpiryBucket, string> = {
+  safe: "text-muted-foreground",
+  quarter: "text-amber-700",
+  month: "text-orange-700 font-medium",
+  week: "text-rose-700 font-semibold",
+  expired: "text-rose-700 font-semibold",
+  none: "text-muted-foreground",
+};
+const EXPIRY_LABEL: Record<ExpiryBucket, string> = {
+  safe: "充足",
+  quarter: "1-3 个月",
+  month: "剩余 <1 个月",
+  week: "剩余 <1 周",
+  expired: "已过期",
+  none: "",
+};
 
 function SocialAccountsPage() {
   const balance = useCreditBalance();
@@ -67,16 +104,12 @@ function SocialAccountsPage() {
 
   const [keyword, setKeyword] = useState("");
   const [platform, setPlatform] = useState<PlatformFilter>("all");
-  const [status, setStatus] = useState<StatusFilter>("all");
   const [region, setRegion] = useState<string>("all");
-
-  const pendingCount = useMemo(() => accounts.filter((a) => a.status === "备货中").length, [accounts]);
 
   const filtered = useMemo(() => {
     const kw = keyword.trim().toLowerCase();
     return accounts.filter((a) => {
       if (platform !== "all" && a.platform !== platform) return false;
-      if (status !== "all" && a.status !== status) return false;
       if (region !== "all" && a.ownerRegion !== region) return false;
       if (kw) {
         const hay = `${a.handle ?? ""} ${a.displayName ?? ""}`.toLowerCase();
@@ -84,13 +117,12 @@ function SocialAccountsPage() {
       }
       return true;
     });
-  }, [accounts, keyword, platform, status, region]);
+  }, [accounts, keyword, platform, region]);
 
-  const hasFilter = keyword !== "" || platform !== "all" || status !== "all" || region !== "all";
+  const hasFilter = keyword !== "" || platform !== "all" || region !== "all";
   const reset = () => {
     setKeyword("");
     setPlatform("all");
-    setStatus("all");
     setRegion("all");
   };
 
