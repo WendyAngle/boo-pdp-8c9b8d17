@@ -207,6 +207,8 @@ export function performReachAutoUnlocks(input: {
 }
 
 export interface LedgerEntry {
+  /** 用户在应用内实际产生的记录（非演示 seed） */
+  userCreated?: boolean;
   id: string;
   kind: LedgerKind;
   cost: number;
