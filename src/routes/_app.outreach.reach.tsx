@@ -87,7 +87,8 @@ import {
 } from "@/lib/credits-ledger";
 import { ListPagination } from "@/components/ListPagination";
 import { useThreads, threadKeyFor, type Thread } from "@/lib/inbox-store";
-import { Inbox as InboxIcon, MessageCircleReply } from "lucide-react";
+import { Inbox as InboxIcon, MessageCircleReply, Plus, UserCircle2 } from "lucide-react";
+import { CreateReachTaskDialog } from "@/components/outreach/CreateReachTaskDialog";
 
 export const Route = createFileRoute("/_app/outreach/reach")({
   head: () => ({ meta: [{ title: "出海大数据平台 · 触达 | 出海大数据平台" }] }),
