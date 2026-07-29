@@ -270,6 +270,7 @@ function CreateProspectingDialog({
     [platformAccounts],
   );
   const warming = platformAccounts.filter((a) => a.status === "养号中").length;
+  const pending = platformAccounts.filter((a) => a.status === "备货中").length;
   const abnormal = platformAccounts.filter(
     (a) => a.status === "异常" || a.status === "停用",
   ).length;
@@ -314,14 +315,16 @@ function CreateProspectingDialog({
             </Field>
             <Field
               label={`可用账号：${usable.length}${
-                warming || abnormal ? ` （养号中 ${warming} · 异常 ${abnormal}）` : ""
+                warming || pending || abnormal
+                  ? ` （养号中 ${warming} · 备货中 ${pending} · 异常 ${abnormal}）`
+                  : ""
               }`}
             >
               <div className="text-xs text-muted-foreground pt-2">
                 单账号 5 个/天 · 池上限 {usable.length * 5}/天
-                {(warming > 0 || abnormal > 0) && (
+                {(warming > 0 || pending > 0 || abnormal > 0) && (
                   <div className="mt-1 text-[11px] text-amber-600">
-                    养号中 / 异常账号不参与派发，可到「社媒账号」页处理。
+                    养号中 / 备货中 / 异常账号不参与派发，可到「社媒账号」页查看。
                   </div>
                 )}
               </div>
