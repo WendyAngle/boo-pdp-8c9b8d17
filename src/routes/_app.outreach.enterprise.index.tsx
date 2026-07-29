@@ -34,6 +34,8 @@ import { ListPagination } from "@/components/ListPagination";
 import heroBg from "@/assets/enterprise-hero.jpg";
 import { ENTERPRISES } from "@/data/enterprises";
 import { FavoriteToggle } from "@/components/FavoriteToggle";
+import { useUnlockedContacts } from "@/lib/unlocked-contacts";
+
 
 export const Route = createFileRoute("/_app/outreach/enterprise/")({
   head: () => ({ meta: [{ title: "出海大数据平台 · 企业 | 出海大数据平台" }] }),
