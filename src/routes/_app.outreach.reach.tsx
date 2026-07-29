@@ -116,6 +116,34 @@ function relative(iso: string, now: number) {
   return `${Math.floor(diff / 86400)} 天前`;
 }
 
+
+type TaskGroup = {
+  key: string;
+  name: string;
+  channel: ReachChannel;
+  platform?: string;
+  action: string;
+  total: number;
+  pending: number;
+  in_progress: number;
+  success: number;
+  failed: number;
+  replies: number;
+  aiGenerated: boolean;
+  createdAt: string;
+  lastAt: string;
+};
+
+/** 从明细中提取触达动作：社媒区分「加好友 / 私信」，其余按渠道语义 */
+function reachAction(r: { channel?: ReachChannel; detail?: string; platform?: string }) {
+  const d = r.detail ?? "";
+  if (d.includes("加好友")) return "加好友";
+  if (r.channel === "social") return "私信";
+  if (r.channel === "email") return "邮件触达";
+  if (r.channel === "phone") return "短信触达";
+  return "触达";
+}
+
 function ReachPage() {
   useEffect(() => {
     seedDemoLedgerIfEmpty();
@@ -436,6 +464,34 @@ function ReachPage() {
               {REACH_STATUS_LABEL[s]} <span className="ml-1 text-muted-foreground">{counts[s]}</span>
             </StatusTab>
           ))}
+          <div className="ml-auto mb-2 inline-flex rounded-md border bg-muted/40 p-0.5">
+            <button
+              type="button"
+              onClick={() => setView("task")}
+              className={cn(
+                "inline-flex items-center gap-1 rounded px-2.5 py-1 text-xs font-medium transition-colors",
+                view === "task"
+                  ? "bg-background text-foreground shadow-sm"
+                  : "text-muted-foreground hover:text-foreground",
+              )}
+            >
+              <ListChecks className="h-3.5 w-3.5" />
+              任务视图
+            </button>
+            <button
+              type="button"
+              onClick={() => setView("record")}
+              className={cn(
+                "inline-flex items-center gap-1 rounded px-2.5 py-1 text-xs font-medium transition-colors",
+                view === "record"
+                  ? "bg-background text-foreground shadow-sm"
+                  : "text-muted-foreground hover:text-foreground",
+              )}
+            >
+              <Users className="h-3.5 w-3.5" />
+              记录视图
+            </button>
+          </div>
         </div>
         <div className="px-5 py-3 flex items-center gap-3 flex-wrap border-b border-border bg-muted/20">
           <div className="flex items-center gap-2">
@@ -501,7 +557,11 @@ function ReachPage() {
             </Button>
           )}
           <div className="text-sm text-muted-foreground ml-auto">
-            共 <span className="text-foreground font-semibold">{filtered.length}</span> 条
+            共{" "}
+            <span className="text-foreground font-semibold">
+              {view === "task" ? taskGroups.length : filtered.length}
+            </span>{" "}
+            {view === "task" ? "个任务" : "条记录"}
           </div>
         </div>
 
@@ -521,6 +581,81 @@ function ReachPage() {
               </Link>
             </Button>
           </div>
+        ) : view === "task" ? (
+          <Table>
+            <TableHeader>
+              <TableRow className="bg-primary/5 hover:bg-primary/5">
+                <TableHead>任务名</TableHead>
+                <TableHead className="w-[150px]">渠道 / 平台</TableHead>
+                <TableHead className="w-[90px]">动作</TableHead>
+                <TableHead className="w-[80px]">目标数</TableHead>
+                <TableHead className="w-[260px]">执行进度</TableHead>
+                <TableHead className="w-[90px]">成功率</TableHead>
+                <TableHead className="w-[90px]">回复</TableHead>
+                <TableHead className="w-[170px]">最近执行</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {taskPageData.map((g) => (
+                <TableRow
+                  key={g.key}
+                  className="hover:bg-muted/30 cursor-pointer"
+                  onClick={() => {
+                    setKw(g.name);
+                    setView("record");
+                  }}
+                  title="点击查看该任务下的触达记录"
+                >
+                  <TableCell className="max-w-[280px]">
+                    <div className="flex items-center gap-1.5">
+                      <span className="font-medium truncate">{g.name}</span>
+                      {g.aiGenerated && (
+                        <Badge variant="secondary" className="gap-1 font-normal shrink-0">
+                          <Sparkles className="h-3 w-3 text-primary" />
+                          AI
+                        </Badge>
+                      )}
+                    </div>
+                    <div className="text-[11px] text-muted-foreground mt-0.5">
+                      创建于 {fmtTime(g.createdAt)}
+                    </div>
+                  </TableCell>
+                  <TableCell>
+                    <ChannelBadge channel={g.channel} platform={g.platform} />
+                  </TableCell>
+                  <TableCell className="text-xs">
+                    <span className="inline-flex items-center gap-1">
+                      {g.action === "加好友" ? (
+                        <Users className="h-3.5 w-3.5 text-muted-foreground" />
+                      ) : (
+                        <MessageSquare className="h-3.5 w-3.5 text-muted-foreground" />
+                      )}
+                      {g.action}
+                    </span>
+                  </TableCell>
+                  <TableCell className="tabular-nums font-semibold">{g.total}</TableCell>
+                  <TableCell>
+                    <TaskProgress group={g} />
+                  </TableCell>
+                  <TableCell className="tabular-nums text-sm font-semibold">
+                    {g.success + g.failed === 0
+                      ? "—"
+                      : `${Math.round((g.success / (g.success + g.failed)) * 100)}%`}
+                  </TableCell>
+                  <TableCell className="tabular-nums text-sm">
+                    {g.replies > 0 ? (
+                      <span className="text-emerald-600 font-semibold">{g.replies}</span>
+                    ) : (
+                      <span className="text-muted-foreground">—</span>
+                    )}
+                  </TableCell>
+                  <TableCell className="font-mono tabular-nums text-xs text-muted-foreground whitespace-nowrap">
+                    {fmtTime(g.lastAt)}
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
         ) : (
           <Table>
             <TableHeader>
@@ -592,7 +727,7 @@ function ReachPage() {
             <ListPagination
               page={page}
               pageSize={pageSize}
-              total={filtered.length}
+              total={view === "task" ? taskGroups.length : filtered.length}
               onPageChange={setPage}
             />
           </div>
@@ -704,6 +839,37 @@ function ReachPage() {
       <CreateReachTaskDialog open={createOpen} onOpenChange={setCreateOpen} />
     </div>
     </TooltipProvider>
+  );
+}
+
+function TaskProgress({ group }: { group: TaskGroup }) {
+  const segs = [
+    { n: group.success, cls: "bg-emerald-500", label: REACH_STATUS_LABEL.success },
+    { n: group.in_progress, cls: "bg-amber-500", label: REACH_STATUS_LABEL.in_progress },
+    { n: group.pending, cls: "bg-slate-300", label: REACH_STATUS_LABEL.pending },
+    { n: group.failed, cls: "bg-rose-500", label: REACH_STATUS_LABEL.failed },
+  ].filter((x) => x.n > 0);
+  return (
+    <div className="space-y-1">
+      <div className="flex h-1.5 w-full overflow-hidden rounded-full bg-muted">
+        {segs.map((x) => (
+          <div
+            key={x.label}
+            className={x.cls}
+            style={{ width: `${(x.n / group.total) * 100}%` }}
+            title={`${x.label} ${x.n}`}
+          />
+        ))}
+      </div>
+      <div className="flex flex-wrap gap-x-2.5 gap-y-0.5 text-[11px] text-muted-foreground">
+        {segs.map((x) => (
+          <span key={x.label} className="inline-flex items-center gap-1">
+            <span className={cn("h-1.5 w-1.5 rounded-full", x.cls)} />
+            {x.label} <span className="tabular-nums text-foreground">{x.n}</span>
+          </span>
+        ))}
+      </div>
+    </div>
   );
 }
 
