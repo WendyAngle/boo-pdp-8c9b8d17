@@ -376,6 +376,8 @@ export function chargeAiGeneration(input: {
   targetName: string;
   targetKind?: TargetKind;
   targetId?: string;
+  platform?: string;
+  detailSuffix?: string;
 }): LedgerEntry {
   const cost =
     input.channel === "email"
@@ -383,6 +385,12 @@ export function chargeAiGeneration(input: {
       : input.channel === "social"
         ? COST_AI_SOCIAL
         : COST_AI_SMS;
+  const label =
+    input.channel === "email"
+      ? "AI 生成邮件文案"
+      : input.channel === "social"
+        ? `AI 生成${input.platform ? `${input.platform} ` : ""}社媒文案`
+        : "AI 生成短信文案";
   const entry: LedgerEntry = {
     id: makeId("ai"),
     kind: "ai_generate",
@@ -392,13 +400,10 @@ export function chargeAiGeneration(input: {
     targetId: input.targetId ?? "—",
     targetName: input.targetName,
     channel: input.channel,
-    detail:
-      input.channel === "email"
-        ? "AI 生成邮件文案"
-        : input.channel === "social"
-          ? "AI 生成社媒文案"
-          : "AI 生成短信文案",
+    platform: input.platform,
+    detail: input.detailSuffix ? `${label} · ${input.detailSuffix}` : label,
   };
+
   ledger = [entry, ...ledger];
   writeLedger(ledger);
   emitLedger();
