@@ -31,7 +31,6 @@ import {
 } from "@/components/ui/select";
 import { cn } from "@/lib/utils";
 import {
-  addProspectingTask,
   type SocialTaskPlatform,
 } from "@/lib/social-tasks";
 import { useSocialAccounts } from "@/data/social-accounts";
@@ -39,7 +38,9 @@ import { useCreditBalance, spendCredits } from "@/lib/credits-balance";
 import {
   COST_SOCIAL_DM,
   COST_AI_SOCIAL,
+  createSocialReachBatch,
 } from "@/lib/credits-ledger";
+
 import {
   MESSAGE_VARIABLES,
   renderTemplate,
