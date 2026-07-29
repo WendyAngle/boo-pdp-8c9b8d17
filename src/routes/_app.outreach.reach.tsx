@@ -286,17 +286,17 @@ function ReachPage() {
       const action = reachAction(r);
       const day = r.createdAt.slice(0, 10);
       // 批量创建的触达任务按任务名聚合；单条触达按「渠道 + 平台 + 动作 + 日期」归入当日任务
-      const key = r.userCreated && r.subject
-        ? `s:${r.subject}:${r.platform ?? r.channel}`
+      const batchName = r.channel === "social" && r.subject ? r.subject : null;
+      const key = batchName
+        ? `s:${batchName}:${r.platform ?? ""}`
         : `c:${r.channel}:${r.platform ?? ""}:${action}:${day}`;
       let g = map.get(key);
       if (!g) {
         g = {
           key,
           name:
-            r.userCreated && r.subject
-              ? r.subject
-              : `${r.platform ?? REACH_CHANNEL_LABEL[r.channel!]}${action} · ${day}`,
+            batchName ??
+            `${r.platform ?? REACH_CHANNEL_LABEL[r.channel!]}${action} · ${day}`,
           channel: r.channel!,
           platform: r.platform,
           action,
@@ -613,7 +613,7 @@ function ReachPage() {
                 >
                   <TableCell className="max-w-[280px]">
                     <div className="flex items-center gap-1.5">
-                      <span className="font-medium truncate">{g.name}</span>
+                      <span className="font-medium">{g.name}</span>
                       {g.aiGenerated && (
                         <Badge variant="secondary" className="gap-1 font-normal shrink-0">
                           <Sparkles className="h-3 w-3 text-primary" />
