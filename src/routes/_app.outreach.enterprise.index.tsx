@@ -104,6 +104,18 @@ function OutreachEnterprisePage() {
     [filtered, page],
   );
 
+  const unlockedList = useUnlockedContacts();
+  const unlockedEnterpriseIds = useMemo(() => {
+    const s = new Set<string>();
+    for (const u of unlockedList) {
+      if (u.owner_type === "enterprise") s.add(u.owner_id);
+      if (u.parent_ref?.id) s.add(u.parent_ref.id);
+    }
+    return s;
+  }, [unlockedList]);
+
+
+
   const resetFilters = () => {
     setIndustry("all");
     setCountry("all");
