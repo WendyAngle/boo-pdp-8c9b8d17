@@ -89,8 +89,6 @@ import { useThreads, threadKeyFor, type Thread } from "@/lib/inbox-store";
 import {
   Inbox as InboxIcon,
   MessageCircleReply,
-  Plus,
-  UserCircle2,
   Users,
   ListChecks,
   Facebook,
@@ -99,7 +97,6 @@ import {
 } from "lucide-react";
 import { useSocialAccounts, friendRemaining } from "@/data/social-accounts";
 import { poolAverageHealth } from "@/lib/social-account-health";
-import { CreateReachTaskDialog } from "@/components/outreach/CreateReachTaskDialog";
 
 export const Route = createFileRoute("/_app/outreach/reach")({
   head: () => ({ meta: [{ title: "出海大数据平台 · 触达 | 出海大数据平台" }] }),
@@ -185,7 +182,6 @@ function ReachPage() {
   const [kw, setKw] = useState("");
   const [page, setPage] = useState(1);
   const pageSize = 10;
-  const [createOpen, setCreateOpen] = useState(false);
   const [view, setView] = useState<"task" | "record">("task");
   const [taskKey, setTaskKey] = useState<string | null>(null);
   const [confirm, setConfirm] = useState<
@@ -855,7 +851,6 @@ function ReachPage() {
           )}
         </DialogContent>
       </Dialog>
-      <CreateReachTaskDialog open={createOpen} onOpenChange={setCreateOpen} />
     </div>
     </TooltipProvider>
   );
