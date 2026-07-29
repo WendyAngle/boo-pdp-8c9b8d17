@@ -149,6 +149,8 @@ function seed() {
 }
 seed();
 
+const EMPTY_PROS: ProspectingTask[] = [];
+const EMPTY_DM: DmTask[] = [];
 let prosCache: ProspectingTask[] = readArr<ProspectingTask>(PROS_KEY);
 let dmCache: DmTask[] = readArr<DmTask>(DM_KEY);
 let prosV = 0;
@@ -188,7 +190,7 @@ export function useProspectingTasks(): ProspectingTask[] {
       void prosV;
       return prosCache;
     },
-    () => [],
+    () => EMPTY_PROS,
   );
 }
 export function useDmTasks(): DmTask[] {
@@ -201,7 +203,7 @@ export function useDmTasks(): DmTask[] {
       void dmV;
       return dmCache;
     },
-    () => [],
+    () => EMPTY_DM,
   );
 }
 
