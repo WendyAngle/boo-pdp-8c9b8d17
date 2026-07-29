@@ -476,6 +476,53 @@ export function chargeSocialDm(input: {
   return entry;
 }
 
+/**
+ * 「新建触达任务」批量落库：按目标数量上限生成 N 条社媒触达记录（渠道=社媒，状态=待触达），
+ * 展示在「触达任务」列表中。每条 50 积分，与弹窗内的发送费用一致。
+ */
+export function createSocialReachBatch(input: {
+  taskName: string;
+  platform: "Facebook" | "TikTok";
+  region: string;
+  keywords: string[];
+  count: number;
+  content: string;
+  aiGenerated?: boolean;
+  action?: "加好友" | "私信";
+}): LedgerEntry[] {
+  const action = input.action ?? "私信";
+  const slug = (s: string) =>
+    s.toLowerCase().replace(/[^a-z0-9]+/g, "_").replace(/^_|_$/g, "").slice(0, 12) || "lead";
+  const now = Date.now();
+  const entries: LedgerEntry[] = [];
+  for (let i = 0; i < input.count; i++) {
+    const kw = input.keywords[i % Math.max(1, input.keywords.length)] ?? "lead";
+    const handle = `@${input.platform.toLowerCase()}_${slug(kw)}_${String(i + 1).padStart(2, "0")}`;
+    entries.push({
+      id: makeId("r"),
+      kind: "reach",
+      cost: COST_REACH_SOCIAL,
+      createdAt: new Date(now - i * 1000).toISOString(),
+      targetKind: "enterprise",
+      targetId: "—",
+      targetName: `${input.platform}平台${action}`,
+      channel: "social",
+      platform: input.platform,
+      detail: `${input.platform}平台${action} · ${handle}`,
+      subject: input.taskName,
+      content: input.content,
+      aiGenerated: input.aiGenerated ?? false,
+      forcedStatus: "pending",
+    });
+  }
+  ledger = [...entries, ...ledger];
+  writeLedger(ledger);
+  emitLedger();
+  return entries;
+}
+
+
+
 export function recordRecharge(input: {
   orderNo: string;
   packageLabel: string;
