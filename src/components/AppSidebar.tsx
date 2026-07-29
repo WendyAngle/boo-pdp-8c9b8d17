@@ -23,7 +23,7 @@ const menu: Root[] = [
         children: [
           { label: "企业名录", to: "/outreach/enterprise" },
           { label: "商品目录", to: "/outreach/products" },
-          
+          { label: "解锁记录", to: "/outreach/unlocked" },
           { label: "浏览足迹", to: "/outreach/footprints" },
         ],
       },
@@ -34,8 +34,6 @@ const menu: Root[] = [
           { label: "客户触达", to: "/outreach/conversations" },
           { label: "触达任务", to: "/outreach/reach" },
           { label: "我的账号", to: "/outreach/social/accounts" },
-          { label: "解锁记录", to: "/outreach/unlocked" },
-
           { label: "退订名单", to: "/outreach/suppressions" },
         ],
       },
