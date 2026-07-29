@@ -165,15 +165,6 @@ function SocialAccountsPage() {
             </Button>
           )}
           <div className="ml-auto flex items-center gap-3 text-xs text-muted-foreground">
-            {accounts.length > 0 && (
-              <span>
-                池平均健康度：
-                <span className="font-semibold text-foreground tabular-nums">
-                  {poolAverageHealth(accounts)}
-                </span>
-                <span> / 100</span>
-              </span>
-            )}
             {pendingCount > 0 && (
               <span className="inline-flex items-center gap-1 text-amber-600">
                 <Clock className="h-3 w-3" /> 备货中 {pendingCount}
@@ -187,6 +178,7 @@ function SocialAccountsPage() {
               {" "}个
             </span>
           </div>
+        </div>
         </div>
         {accounts.length === 0 ? (
           <div className="p-10 text-center text-sm text-muted-foreground">尚无社媒账号。</div>
