@@ -26,13 +26,13 @@ const menu: Root[] = [
           { label: "企业名录", to: "/outreach/enterprise" },
           { label: "商品目录", to: "/outreach/products" },
           { label: "已解锁客户", to: "/outreach/unlocked" },
-          { label: "浏览足迹", to: "/outreach/footprints" },
         ],
       },
       {
         label: "客户运营",
         children: [
           { label: "我的收藏", to: "/outreach/favorites" },
+          { label: "浏览足迹", to: "/outreach/footprints" },
           { label: "触达会话", to: "/outreach/conversations" },
           { label: "触达任务", to: "/outreach/reach" },
         ],
@@ -46,9 +46,9 @@ const menu: Root[] = [
         ],
       },
       {
-        label: "系统管理",
+        label: "企业设置",
         children: [
-          { label: "企业画像", to: "/outreach/my-profile" },
+          { label: "我的企业信息", to: "/outreach/my-profile" },
           { label: "员工管理", to: "/outreach/users" },
           { label: "社媒账号", to: "/outreach/social/accounts" },
           { label: "发信邮箱", to: "/outreach/mailboxes" },

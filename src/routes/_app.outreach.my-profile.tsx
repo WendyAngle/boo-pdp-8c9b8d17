@@ -6,7 +6,7 @@ import { useLeadProfile, profileCompleteness } from "@/lib/lead-profile";
 export const Route = createFileRoute("/_app/outreach/my-profile")({
   head: () => ({
     meta: [
-      { title: "企业画像 · 系统管理 | 出海大数据平台" },
+      { title: "我的企业信息 · 企业设置 | 出海大数据平台" },
       {
         name: "description",
         content:
@@ -34,7 +34,7 @@ function MyProfilePage() {
               <Target className="h-6 w-6" />
             </div>
             <div>
-              <h1 className="text-xl font-bold">企业画像</h1>
+              <h1 className="text-xl font-bold">我的企业信息</h1>
               <p className="text-white/85 text-sm mt-0.5 max-w-2xl">
                 维护企业基础信息、主营业务、目标市场与竞争情报。画像越完整，AI 智能推荐、触达文案个性化就越精准。
               </p>
