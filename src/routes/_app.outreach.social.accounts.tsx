@@ -238,6 +238,14 @@ function SocialAccountsPage() {
           </Table>
         )}
       </Card>
+
+      {friendsAccount && (
+        <FriendsDialog
+          account={friendsAccount}
+          friends={friends.filter((f) => f.accountId === friendsAccount.id)}
+          onClose={() => setFriendsAccount(null)}
+        />
+      )}
     </div>
   );
 }
