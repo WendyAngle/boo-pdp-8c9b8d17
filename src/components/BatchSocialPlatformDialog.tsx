@@ -472,10 +472,15 @@ export function BatchSocialPlatformDialog({
           <section className="rounded-md border border-rose-200 bg-rose-50 p-3 text-xs space-y-1">
             <div className="flex justify-between">
               <span className="text-muted-foreground">
-                发送费用（{sendableCount} 条 × {unit} 积分）
+                发送费用（{targetCount} 条 × {unit} 积分）
               </span>
               <span className="font-medium">{sendTotal} 积分</span>
             </div>
+            {deferredCount > 0 && (
+              <div className="text-[11px] text-amber-700">
+                其中 {deferredCount} 条顺延至明日 09:00 执行
+              </div>
+            )}
             {aiCost > 0 && (
               <div className="flex justify-between">
                 <span className="text-muted-foreground">
