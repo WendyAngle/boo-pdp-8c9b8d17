@@ -445,3 +445,157 @@ function FriendsDialog({
     </Dialog>
   );
 }
+
+function AllFriendsDialog({
+  friends,
+  accounts,
+  onClose,
+}: {
+  friends: SocialFriend[];
+  accounts: SocialAccount[];
+  onClose: () => void;
+}) {
+  const [kw, setKw] = useState("");
+  const [platform, setPlatform] = useState<PlatformFilter>("all");
+  const [page, setPage] = useState(1);
+  const pageSize = 10;
+
+  const accountById = useMemo(() => {
+    const m = new Map<string, SocialAccount>();
+    accounts.forEach((a) => m.set(a.id, a));
+    return m;
+  }, [accounts]);
+
+  const filtered = useMemo(() => {
+    const k = kw.trim().toLowerCase();
+    return friends.filter((f) => {
+      if (platform !== "all" && f.platform !== platform) return false;
+      if (!k) return true;
+      const owner = accountById.get(f.accountId);
+      const hay = `${f.handle ?? ""} ${f.name ?? ""} ${owner?.handle ?? ""} ${owner?.displayName ?? ""}`.toLowerCase();
+      return hay.includes(k);
+    });
+  }, [friends, kw, platform, accountById]);
+
+  const pageData = useMemo(
+    () => filtered.slice((page - 1) * pageSize, page * pageSize),
+    [filtered, page],
+  );
+
+  return (
+    <Dialog open onOpenChange={(o) => !o && onClose()}>
+      <DialogContent className="max-w-3xl max-h-[80vh] overflow-y-auto">
+        <DialogHeader>
+          <DialogTitle className="flex items-center gap-2">
+            <UserCheck className="h-5 w-5 text-primary" />
+            全部好友
+            <Badge variant="secondary" className="ml-1 font-normal tabular-nums">
+              {friends.length}
+            </Badge>
+          </DialogTitle>
+          <DialogDescription className="sr-only">全部社媒账号名下的好友数据</DialogDescription>
+        </DialogHeader>
+
+        <div className="mb-3 flex flex-wrap items-center gap-2">
+          <div className="relative flex-1 min-w-[220px]">
+            <Search className="h-3.5 w-3.5 absolute left-2.5 top-1/2 -translate-y-1/2 text-muted-foreground" />
+            <Input
+              value={kw}
+              onChange={(e) => {
+                setKw(e.target.value);
+                setPage(1);
+              }}
+              placeholder="按好友账号 / 显示名 / 所属账号搜索"
+              className="h-8 pl-8 text-xs"
+            />
+            {kw && (
+              <button
+                type="button"
+                onClick={() => setKw("")}
+                className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+              >
+                <X className="h-3.5 w-3.5" />
+              </button>
+            )}
+          </div>
+          <Select
+            value={platform}
+            onValueChange={(v) => {
+              setPlatform(v as PlatformFilter);
+              setPage(1);
+            }}
+          >
+            <SelectTrigger className="h-8 w-[130px] text-xs"><SelectValue placeholder="平台" /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all" className="text-xs">全部平台</SelectItem>
+              <SelectItem value="Facebook" className="text-xs">Facebook</SelectItem>
+              <SelectItem value="TikTok" className="text-xs">TikTok</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+
+        {filtered.length === 0 ? (
+          <div className="py-10 text-center text-sm text-muted-foreground">
+            {kw || platform !== "all" ? "没有匹配的好友" : "暂无好友数据"}
+          </div>
+        ) : (
+          <>
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead className="w-[110px]">平台</TableHead>
+                  <TableHead>账号</TableHead>
+                  <TableHead>显示名</TableHead>
+                  <TableHead className="w-[200px]">所属账号</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {pageData.map((f) => {
+                  const owner = accountById.get(f.accountId);
+                  return (
+                    <TableRow key={f.id}>
+                      <TableCell>
+                        <span className="inline-flex items-center gap-1.5 text-xs font-medium">
+                          {f.platform === "Facebook" ? (
+                            <Facebook className="h-3.5 w-3.5 text-sky-600" />
+                          ) : f.platform === "TikTok" ? (
+                            <Music2 className="h-3.5 w-3.5 text-rose-600" />
+                          ) : (
+                            <CheckCircle2 className="h-3.5 w-3.5 text-emerald-600" />
+                          )}
+                          {f.platform}
+                        </span>
+                      </TableCell>
+                      <TableCell className="font-mono text-xs">{f.handle || "—"}</TableCell>
+                      <TableCell className="text-sm">{f.name || "—"}</TableCell>
+                      <TableCell className="text-xs">
+                        {owner ? (
+                          <span className="inline-flex flex-col">
+                            <span className="font-mono">{owner.handle}</span>
+                            {owner.displayName && (
+                              <span className="text-[11px] text-muted-foreground">{owner.displayName}</span>
+                            )}
+                          </span>
+                        ) : (
+                          <span className="text-muted-foreground">—</span>
+                        )}
+                      </TableCell>
+                    </TableRow>
+                  );
+                })}
+              </TableBody>
+            </Table>
+            <div className="pb-1 pt-3">
+              <ListPagination
+                page={page}
+                pageSize={pageSize}
+                total={filtered.length}
+                onPageChange={setPage}
+              />
+            </div>
+          </>
+        )}
+      </DialogContent>
+    </Dialog>
+  );
+}
