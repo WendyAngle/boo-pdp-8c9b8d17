@@ -251,26 +251,6 @@ function AccountRow({ account, friendCount }: { account: SocialAccount; friendCo
         </span>
       </TableCell>
       <TableCell className="text-xs text-muted-foreground">{regionLabel(account.ownerRegion)}</TableCell>
-      <TableCell className="text-xs text-muted-foreground">{regionLabel(account.proxyRegion)}</TableCell>
-      <TableCell className="text-xs">
-        {isPending ? (
-          <span className="text-muted-foreground">—</span>
-        ) : (() => {
-          const h = computeHealth(account);
-          return (
-            <span
-              className={cn(
-                "inline-flex items-center gap-1 px-2 py-0.5 rounded-md border tabular-nums",
-                healthToneClass(h.band),
-              )}
-              title={h.reasons.length ? h.reasons.join(" · ") : "无扣分项"}
-            >
-              {h.score}
-              <span className="opacity-70">· {h.band}</span>
-            </span>
-          );
-        })()}
-      </TableCell>
       <TableCell className="text-xs tabular-nums">
         {isPending ? (
           <span className="text-muted-foreground">—</span>
@@ -288,76 +268,22 @@ function AccountRow({ account, friendCount }: { account: SocialAccount; friendCo
           <span className="text-muted-foreground">0</span>
         )}
       </TableCell>
-      <TableCell className="text-xs tabular-nums text-muted-foreground">
-        {isPending
-          ? "—"
-          : account.dailyFriendLimit != null
-          ? `${account.friendSentToday ?? 0} / ${account.dailyFriendLimit}`
-          : "—"}
-      </TableCell>
-      <TableCell className="text-xs tabular-nums text-muted-foreground">
-        {isPending
-          ? "—"
-          : account.dailyDmLimit != null
-          ? `${account.dmSentToday ?? 0} / ${account.dailyDmLimit}`
-          : `${account.sentToday} / ${account.dailyLimit}`}
-      </TableCell>
       <TableCell className="text-xs text-muted-foreground">
         {isPending && account.expectedDeliveryAt ? (
           <span className="inline-flex flex-col leading-tight">
             <span className="text-amber-700 font-medium">
-              {new Date(account.expectedDeliveryAt).toLocaleDateString()}
+              预计 {new Date(account.expectedDeliveryAt).toLocaleDateString()}
             </span>
             <span className="text-[11px]">还剩 {remainingDays} 个工作日</span>
           </span>
-        ) : account.purchasedAt ? (
-          new Date(account.purchasedAt).toLocaleDateString()
+        ) : account.deliveredAt ? (
+          new Date(account.deliveredAt).toLocaleDateString()
         ) : (
           "—"
         )}
       </TableCell>
-      <TableCell className="text-xs">
-        {isPending ? (
-          <Button
-            size="sm"
-            variant="outline"
-            className="h-7 text-xs gap-1"
-            onClick={() => {
-              simulateDeliver(account.id);
-              toast.success("已模拟交付，账号进入养号中");
-            }}
-            title="演示环境：跳过 7 工作日备货直接交付"
-          >
-            <Zap className="h-3 w-3" />
-            立即交付
-          </Button>
-        ) : account.status === "异常" ? (
-          <Button
-            size="sm"
-            variant="outline"
-            className="h-7 text-xs"
-            onClick={() => {
-              updateAccountStatus(account.id, "养号中");
-              toast.success(`${account.handle} 已转入养号中`);
-            }}
-          >
-            一键恢复
-          </Button>
-        ) : account.status === "养号中" ? (
-          <Button
-            size="sm"
-            variant="outline"
-            className="h-7 text-xs"
-            onClick={() => {
-              updateAccountStatus(account.id, "正常");
-              toast.success(`${account.handle} 已启用`);
-            }}
-          >
-            结束养号
-          </Button>
-        ) : (
-          <span className="text-muted-foreground">—</span>
-        )}
+      <TableCell className="text-xs text-muted-foreground">
+        {account.expiresAt ? new Date(account.expiresAt).toLocaleDateString() : "—"}
       </TableCell>
     </TableRow>
   );
