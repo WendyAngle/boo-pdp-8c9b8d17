@@ -50,14 +50,18 @@ export interface SocialAccount {
   orderedAt?: string;
   /** 预计交付时间（下单 + 7 个工作日） */
   expectedDeliveryAt?: string;
+  /** 实际交付时间 */
+  deliveredAt?: string;
+  /** 到期时间（默认交付后 1 年） */
+  expiresAt?: string;
   /** 账号"人设"归属地（ISO code） */
   ownerRegion?: string;
   /** 出口 IP / 代理所在地（ISO code） */
   proxyRegion?: string;
 }
 
-const KEY = "boo:social-accounts:v6";
-const SEED_FLAG = "boo:social-accounts:v6:seeded";
+const KEY = "boo:social-accounts:v7";
+const SEED_FLAG = "boo:social-accounts:v7:seeded";
 
 function read(): SocialAccount[] {
   if (typeof window === "undefined") return [];
@@ -110,8 +114,12 @@ function seed() {
   if (window.localStorage.getItem(SEED_FLAG)) return;
   const now = new Date().toISOString();
   const inFiveDays = addWorkdays(new Date(), 5).toISOString();
+  const oneYearLater = (() => {
+    const d = new Date();
+    d.setFullYear(d.getFullYear() + 1);
+    return d.toISOString();
+  })();
   const seedData: SocialAccount[] = [
-    // Facebook 预置 2 个
     {
       id: "sa_fb_1",
       platform: "Facebook",
@@ -246,7 +254,11 @@ function seed() {
       proxyRegion: "DE",
     },
   ];
-  write(seedData);
+  write(
+    seedData.map((a) =>
+      a.status === "备货中" ? a : { ...a, deliveredAt: now, expiresAt: oneYearLater },
+    ),
+  );
   window.localStorage.setItem(SEED_FLAG, "1");
 }
 seed();
@@ -389,6 +401,12 @@ export function simulateDeliver(id: string): void {
     target.platform === "Facebook"
       ? `@bytetech.${prefix}${String(seq).padStart(3, "0")}`
       : `@bytetech_${prefix}${String(seq).padStart(3, "0")}`;
+  const deliveredIso = new Date().toISOString();
+  const expiresIso = (() => {
+    const d = new Date();
+    d.setFullYear(d.getFullYear() + 1);
+    return d.toISOString();
+  })();
   const next = cache.map((a) =>
     a.id === id
       ? {
@@ -399,7 +417,9 @@ export function simulateDeliver(id: string): void {
           dailyFriendLimit: 5,
           dailyDmLimit: 20,
           status: "养号中" as const,
-          purchasedAt: new Date().toISOString(),
+          purchasedAt: deliveredIso,
+          deliveredAt: deliveredIso,
+          expiresAt: expiresIso,
         }
       : a,
   );

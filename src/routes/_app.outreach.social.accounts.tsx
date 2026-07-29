@@ -8,11 +8,9 @@ import {
   Wallet,
   UserCheck,
   Clock,
-  Zap,
   Search,
   RotateCcw,
 } from "lucide-react";
-import { toast } from "sonner";
 import { useSocialFriends } from "@/lib/social-friends";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -36,17 +34,10 @@ import { useCreditBalance } from "@/lib/credits-balance";
 import {
   regionLabel,
   REGION_OPTIONS,
-  simulateDeliver,
-  updateAccountStatus,
   useSocialAccounts,
   workdaysUntil,
   type SocialAccount,
 } from "@/data/social-accounts";
-import {
-  computeHealth,
-  poolAverageHealth,
-  healthToneClass,
-} from "@/lib/social-account-health";
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/_app/outreach/social/accounts")({
@@ -174,15 +165,6 @@ function SocialAccountsPage() {
             </Button>
           )}
           <div className="ml-auto flex items-center gap-3 text-xs text-muted-foreground">
-            {accounts.length > 0 && (
-              <span>
-                池平均健康度：
-                <span className="font-semibold text-foreground tabular-nums">
-                  {poolAverageHealth(accounts)}
-                </span>
-                <span> / 100</span>
-              </span>
-            )}
             {pendingCount > 0 && (
               <span className="inline-flex items-center gap-1 text-amber-600">
                 <Clock className="h-3 w-3" /> 备货中 {pendingCount}
@@ -212,13 +194,9 @@ function SocialAccountsPage() {
                 <TableHead>显示名</TableHead>
                 <TableHead className="w-[110px]">状态</TableHead>
                 <TableHead className="w-[110px]">所属地区</TableHead>
-                <TableHead className="w-[110px]">代理地区</TableHead>
-                <TableHead className="w-[130px]">健康度</TableHead>
-                <TableHead className="w-[100px]">名下好友</TableHead>
-                <TableHead className="w-[110px]">今日加友</TableHead>
-                <TableHead className="w-[110px]">今日私信</TableHead>
-                <TableHead className="w-[130px]">交付 / 购买</TableHead>
-                <TableHead className="w-[140px]">操作</TableHead>
+                <TableHead className="w-[100px]">好友数量</TableHead>
+                <TableHead className="w-[130px]">交付时间</TableHead>
+                <TableHead className="w-[130px]">到期时间</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -273,26 +251,6 @@ function AccountRow({ account, friendCount }: { account: SocialAccount; friendCo
         </span>
       </TableCell>
       <TableCell className="text-xs text-muted-foreground">{regionLabel(account.ownerRegion)}</TableCell>
-      <TableCell className="text-xs text-muted-foreground">{regionLabel(account.proxyRegion)}</TableCell>
-      <TableCell className="text-xs">
-        {isPending ? (
-          <span className="text-muted-foreground">—</span>
-        ) : (() => {
-          const h = computeHealth(account);
-          return (
-            <span
-              className={cn(
-                "inline-flex items-center gap-1 px-2 py-0.5 rounded-md border tabular-nums",
-                healthToneClass(h.band),
-              )}
-              title={h.reasons.length ? h.reasons.join(" · ") : "无扣分项"}
-            >
-              {h.score}
-              <span className="opacity-70">· {h.band}</span>
-            </span>
-          );
-        })()}
-      </TableCell>
       <TableCell className="text-xs tabular-nums">
         {isPending ? (
           <span className="text-muted-foreground">—</span>
@@ -310,76 +268,22 @@ function AccountRow({ account, friendCount }: { account: SocialAccount; friendCo
           <span className="text-muted-foreground">0</span>
         )}
       </TableCell>
-      <TableCell className="text-xs tabular-nums text-muted-foreground">
-        {isPending
-          ? "—"
-          : account.dailyFriendLimit != null
-          ? `${account.friendSentToday ?? 0} / ${account.dailyFriendLimit}`
-          : "—"}
-      </TableCell>
-      <TableCell className="text-xs tabular-nums text-muted-foreground">
-        {isPending
-          ? "—"
-          : account.dailyDmLimit != null
-          ? `${account.dmSentToday ?? 0} / ${account.dailyDmLimit}`
-          : `${account.sentToday} / ${account.dailyLimit}`}
-      </TableCell>
       <TableCell className="text-xs text-muted-foreground">
         {isPending && account.expectedDeliveryAt ? (
           <span className="inline-flex flex-col leading-tight">
             <span className="text-amber-700 font-medium">
-              {new Date(account.expectedDeliveryAt).toLocaleDateString()}
+              预计 {new Date(account.expectedDeliveryAt).toLocaleDateString()}
             </span>
             <span className="text-[11px]">还剩 {remainingDays} 个工作日</span>
           </span>
-        ) : account.purchasedAt ? (
-          new Date(account.purchasedAt).toLocaleDateString()
+        ) : account.deliveredAt ? (
+          new Date(account.deliveredAt).toLocaleDateString()
         ) : (
           "—"
         )}
       </TableCell>
-      <TableCell className="text-xs">
-        {isPending ? (
-          <Button
-            size="sm"
-            variant="outline"
-            className="h-7 text-xs gap-1"
-            onClick={() => {
-              simulateDeliver(account.id);
-              toast.success("已模拟交付，账号进入养号中");
-            }}
-            title="演示环境：跳过 7 工作日备货直接交付"
-          >
-            <Zap className="h-3 w-3" />
-            立即交付
-          </Button>
-        ) : account.status === "异常" ? (
-          <Button
-            size="sm"
-            variant="outline"
-            className="h-7 text-xs"
-            onClick={() => {
-              updateAccountStatus(account.id, "养号中");
-              toast.success(`${account.handle} 已转入养号中`);
-            }}
-          >
-            一键恢复
-          </Button>
-        ) : account.status === "养号中" ? (
-          <Button
-            size="sm"
-            variant="outline"
-            className="h-7 text-xs"
-            onClick={() => {
-              updateAccountStatus(account.id, "正常");
-              toast.success(`${account.handle} 已启用`);
-            }}
-          >
-            结束养号
-          </Button>
-        ) : (
-          <span className="text-muted-foreground">—</span>
-        )}
+      <TableCell className="text-xs text-muted-foreground">
+        {account.expiresAt ? new Date(account.expiresAt).toLocaleDateString() : "—"}
       </TableCell>
     </TableRow>
   );
