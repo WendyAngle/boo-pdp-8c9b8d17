@@ -60,8 +60,8 @@ export interface SocialAccount {
   proxyRegion?: string;
 }
 
-const KEY = "boo:social-accounts:v6";
-const SEED_FLAG = "boo:social-accounts:v6:seeded";
+const KEY = "boo:social-accounts:v7";
+const SEED_FLAG = "boo:social-accounts:v7:seeded";
 
 function read(): SocialAccount[] {
   if (typeof window === "undefined") return [];
