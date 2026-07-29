@@ -823,6 +823,48 @@ function buildThreads(entries: LedgerEntry[]): Thread[] {
   return Array.from(map.values()).sort((a, b) => b.lastAt.localeCompare(a.lastAt));
 }
 
+/* -------------------- 社媒好友池 → 客户触达 -------------------- */
+
+/**
+ * 好友池（已通过好友的 Facebook / TikTok 目标）并入「客户触达」会话列表：
+ * 渠道 = facebook / tiktok（可用顶部渠道筛选过滤），展示时打「好友」标记。
+ */
+function buildFriendThreads(tasks: ProspectingTask[]): Thread[] {
+  return deriveFriends(tasks).map((f) => {
+    const id = `friend:${f.id}`;
+    const at = f.acceptedAt ?? new Date().toISOString();
+    const meta = ensureMeta(id, at);
+    const channel: Channel = f.platform === "TikTok" ? "tiktok" : "facebook";
+    const msg: ThreadMessage = {
+      id: `fr_${f.id}`,
+      direction: "outbound",
+      createdAt: at,
+      fromName: "你",
+      fromAddress: f.accountId,
+      content: `好友申请已通过（来源任务：${f.sourceTaskName}），可直接发起私信触达。`,
+    };
+    const messages = [msg, ...meta.inboundMessages, ...meta.extraMessages].sort((a, b) =>
+      a.createdAt.localeCompare(b.createdAt),
+    );
+    const last = messages[messages.length - 1];
+    return {
+      id,
+      targetKind: "contact" as const,
+      targetId: f.targetId,
+      targetName: f.name,
+      channel,
+      counterpartyAddress: f.handle,
+      messages,
+      meta,
+      lastAt: last.createdAt,
+      lastPreview: last.content.slice(0, 120),
+      lastDirection: last.direction,
+      isFriend: true,
+      friendSource: f.sourceTaskName,
+    } satisfies Thread;
+  });
+}
+
 /* -------------------- Hooks -------------------- */
 
 function useMetaVersion() {
@@ -832,11 +874,12 @@ function useMetaVersion() {
 export function useThreads(): Thread[] {
   useMetaVersion();
   const entries = useLedger();
+  const tasks = useProspectingTasks();
   const all = [...buildThreads(entries), ...getDemoSocialThreads()];
   // 询盘与回复模块只呈现"已有客户回复"的会话——即包含至少一条 inbound 消息。
   // 仅发出、尚未收到回复的触达在「触达」模块跟进，不进入询盘视图。
   const withReply = all.filter((t) => t.meta.inboundMessages.length > 0);
-  return sortByUrgency(withReply);
+  return sortByUrgency([...withReply, ...buildFriendThreads(tasks)]);
 }
 
 export function useThread(id: string): Thread | undefined {
@@ -846,8 +889,12 @@ export function useThread(id: string): Thread | undefined {
 
 export function getThreadsSnapshot(): Thread[] {
   const all = [...buildThreads(getAllLedger()), ...getDemoSocialThreads()];
-  return sortByUrgency(all.filter((t) => t.meta.inboundMessages.length > 0));
+  return sortByUrgency([
+    ...all.filter((t) => t.meta.inboundMessages.length > 0),
+    ...buildFriendThreads(getProspectingTasksSnapshot()),
+  ]);
 }
+
 
 /**
  * 默认排序：SLA 紧急度优先 → 最新更新
