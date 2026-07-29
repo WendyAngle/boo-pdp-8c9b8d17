@@ -410,6 +410,7 @@ function ReachPage() {
             可用社媒账号
             <span className="font-semibold tabular-nums">{usableAccounts}</span>
           </span>
+        </div>
         <div className="relative mt-4 flex flex-wrap items-center gap-2">
           <Button
             asChild
