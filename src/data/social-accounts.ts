@@ -114,9 +114,12 @@ function seed() {
   if (window.localStorage.getItem(SEED_FLAG)) return;
   const now = new Date().toISOString();
   const inFiveDays = addWorkdays(new Date(), 5).toISOString();
+  const oneYearLater = (() => {
+    const d = new Date();
+    d.setFullYear(d.getFullYear() + 1);
+    return d.toISOString();
+  })();
   const seedData: SocialAccount[] = [
-    // Facebook 预置 2 个
-    {
       id: "sa_fb_1",
       platform: "Facebook",
       handle: "@bytetech.export",
