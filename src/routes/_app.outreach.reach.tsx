@@ -364,16 +364,6 @@ function ReachPage() {
             <RefreshCw className="h-3.5 w-3.5" />
             重置演示数据
           </Button>
-          <Button size="sm" onClick={() => setCreateOpen(true)} className="gap-1.5">
-            <Plus className="h-3.5 w-3.5" />
-            创建触达任务
-          </Button>
-          <Button asChild variant="outline" size="sm" className="gap-1.5">
-            <Link to="/outreach/social/accounts">
-              <UserCircle2 className="h-3.5 w-3.5" />
-              我的账号
-            </Link>
-          </Button>
         </div>
       </div>
 
