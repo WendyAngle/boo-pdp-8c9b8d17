@@ -601,43 +601,18 @@ function FavoritesPage() {
               <MessageCircle className="h-4 w-4" />
               批量 WhatsApp 触达
             </Button>
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  disabled={selected.size === 0}
-                  className="gap-1.5 border-primary/30 text-primary hover:bg-primary/10 hover:text-primary disabled:opacity-50"
-                  title="批量社媒触达"
-                >
-                  批量社媒触达
-                  <ChevronDown className="h-3 w-3 opacity-70" />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-44">
-                <DropdownMenuItem disabled>
-                  <span className="inline-block h-4 w-4" />
-                  TikTok
-                  <span className="ml-auto text-[10px] text-muted-foreground">
-                    即将上线
-                  </span>
-                </DropdownMenuItem>
-                <DropdownMenuItem disabled>
-                  <span className="inline-block h-4 w-4" />
-                  Facebook
-                  <span className="ml-auto text-[10px] text-muted-foreground">
-                    即将上线
-                  </span>
-                </DropdownMenuItem>
-                <DropdownMenuItem disabled>
-                  <span className="inline-block h-4 w-4" />
-                  LinkedIn
-                  <span className="ml-auto text-[10px] text-muted-foreground">
-                    即将上线
-                  </span>
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
+            <Button
+              variant="outline"
+              size="sm"
+              disabled={selected.size === 0}
+              className="gap-1.5 border-primary/30 text-primary hover:bg-primary/10 hover:text-primary disabled:opacity-50"
+              onClick={() => setBatchPlatformOpen(true)}
+              title="批量社媒触达"
+            >
+              <Users className="h-4 w-4" />
+              批量社媒触达
+            </Button>
+
             <Button
               variant="outline"
               size="sm"
