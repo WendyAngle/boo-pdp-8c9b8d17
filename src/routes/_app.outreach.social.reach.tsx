@@ -31,12 +31,6 @@ const TABS = [
     match: "/outreach/social/reach/prospecting",
   },
   {
-    to: "/outreach/social/reach/friends" as const,
-    label: "好友池",
-    icon: Send,
-    match: "/outreach/social/reach/friends",
-  },
-  {
     to: "/outreach/social/reach/dm" as const,
     label: "私信任务",
     icon: MessageSquare,

@@ -149,6 +149,8 @@ function seed() {
 }
 seed();
 
+const EMPTY_PROS: ProspectingTask[] = [];
+const EMPTY_DM: DmTask[] = [];
 let prosCache: ProspectingTask[] = readArr<ProspectingTask>(PROS_KEY);
 let dmCache: DmTask[] = readArr<DmTask>(DM_KEY);
 let prosV = 0;
@@ -188,7 +190,7 @@ export function useProspectingTasks(): ProspectingTask[] {
       void prosV;
       return prosCache;
     },
-    () => [],
+    () => EMPTY_PROS,
   );
 }
 export function useDmTasks(): DmTask[] {
@@ -201,7 +203,7 @@ export function useDmTasks(): DmTask[] {
       void dmV;
       return dmCache;
     },
-    () => [],
+    () => EMPTY_DM,
   );
 }
 
@@ -232,4 +234,9 @@ export function addDmTask(t: Omit<DmTask, "id" | "createdAt" | "status" | "sends
   writeArr(DM_KEY, dmCache);
   emitDm();
   return task;
+}
+
+/** 非 hook 快照：供 inbox-store 等模块在渲染外读取拓客任务 */
+export function getProspectingTasksSnapshot(): ProspectingTask[] {
+  return prosCache;
 }
