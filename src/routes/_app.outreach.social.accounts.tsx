@@ -8,11 +8,9 @@ import {
   Wallet,
   UserCheck,
   Clock,
-  Zap,
   Search,
   RotateCcw,
 } from "lucide-react";
-import { toast } from "sonner";
 import { useSocialFriends } from "@/lib/social-friends";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -36,17 +34,10 @@ import { useCreditBalance } from "@/lib/credits-balance";
 import {
   regionLabel,
   REGION_OPTIONS,
-  simulateDeliver,
-  updateAccountStatus,
   useSocialAccounts,
   workdaysUntil,
   type SocialAccount,
 } from "@/data/social-accounts";
-import {
-  computeHealth,
-  poolAverageHealth,
-  healthToneClass,
-} from "@/lib/social-account-health";
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/_app/outreach/social/accounts")({
