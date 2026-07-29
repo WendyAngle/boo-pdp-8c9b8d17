@@ -740,6 +740,12 @@ function FavoritesPage() {
         platform="WhatsApp"
         candidates={waCandidates}
       />
+      <BatchSocialPlatformDialog
+        open={batchPlatformOpen}
+        onOpenChange={setBatchPlatformOpen}
+        candidates={platformCandidates}
+      />
+
     </div>
   );
 }
