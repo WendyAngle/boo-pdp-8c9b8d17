@@ -87,7 +87,8 @@ import {
 } from "@/lib/credits-ledger";
 import { ListPagination } from "@/components/ListPagination";
 import { useThreads, threadKeyFor, type Thread } from "@/lib/inbox-store";
-import { Inbox as InboxIcon, MessageCircleReply } from "lucide-react";
+import { Inbox as InboxIcon, MessageCircleReply, Plus, UserCircle2 } from "lucide-react";
+import { CreateReachTaskDialog } from "@/components/outreach/CreateReachTaskDialog";
 
 export const Route = createFileRoute("/_app/outreach/reach")({
   head: () => ({ meta: [{ title: "出海大数据平台 · 触达 | 出海大数据平台" }] }),
@@ -136,6 +137,7 @@ function ReachPage() {
   const [kw, setKw] = useState("");
   const [page, setPage] = useState(1);
   const pageSize = 10;
+  const [createOpen, setCreateOpen] = useState(false);
   const [confirm, setConfirm] = useState<
     | null
     | {
@@ -230,22 +232,35 @@ function ReachPage() {
         <div className="flex items-center gap-1.5 text-sm text-muted-foreground">
           <span>出海大数据平台</span>
           <ChevronRight className="h-3.5 w-3.5" />
-          <span className="text-foreground font-medium">触达</span>
+          <span className="text-foreground font-medium">客户触达</span>
         </div>
-        <Button
-          variant="ghost"
-          size="sm"
-          className="gap-1.5 text-muted-foreground"
-          onClick={() => {
-            if (window.confirm("将清空当前触达记录并重新加载演示数据，确认？")) {
-              resetDemoLedger();
-            }
-          }}
-        >
-          <RefreshCw className="h-3.5 w-3.5" />
-          重置演示数据
-        </Button>
+        <div className="flex items-center gap-2">
+          <Button
+            variant="ghost"
+            size="sm"
+            className="gap-1.5 text-muted-foreground"
+            onClick={() => {
+              if (window.confirm("将清空当前触达记录并重新加载演示数据，确认？")) {
+                resetDemoLedger();
+              }
+            }}
+          >
+            <RefreshCw className="h-3.5 w-3.5" />
+            重置演示数据
+          </Button>
+          <Button size="sm" onClick={() => setCreateOpen(true)} className="gap-1.5">
+            <Plus className="h-3.5 w-3.5" />
+            创建触达任务
+          </Button>
+          <Button asChild variant="outline" size="sm" className="gap-1.5">
+            <Link to="/outreach/social/accounts">
+              <UserCircle2 className="h-3.5 w-3.5" />
+              我的账号
+            </Link>
+          </Button>
+        </div>
       </div>
+
 
       <section
         className="relative overflow-hidden rounded-2xl p-6 text-white"
@@ -607,6 +622,7 @@ function ReachPage() {
           )}
         </DialogContent>
       </Dialog>
+      <CreateReachTaskDialog open={createOpen} onOpenChange={setCreateOpen} />
     </div>
     </TooltipProvider>
   );
