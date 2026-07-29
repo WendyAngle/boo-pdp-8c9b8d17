@@ -29,7 +29,7 @@ import {
   Twitter,
   MessageCircle,
   Users,
-  ChevronDown,
+  
 
 } from "lucide-react";
 import { Card } from "@/components/ui/card";
