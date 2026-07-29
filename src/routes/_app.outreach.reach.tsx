@@ -849,6 +849,10 @@ function DetailCell({
   };
   onViewContent: () => void;
 }) {
+  // 社媒平台（Facebook / TikTok）触达目标为社媒账号，无 CRM 企业 / 人物明细，不提供跳转
+  const isSocialNoLink =
+    row.channel === "social" &&
+    (row.platform === "Facebook" || row.platform === "TikTok");
   const targetLabel =
     row.targetKind === "enterprise"
       ? row.targetName
@@ -885,20 +889,22 @@ function DetailCell({
           </button>
         )}
       </div>
-      <div className="text-[11px] text-muted-foreground truncate mt-0.5 flex items-center gap-1">
-        {row.targetKind === "enterprise" ? (
-          <Building2 className="h-3 w-3" />
-        ) : (
-          <UserRound className="h-3 w-3" />
-        )}
-        <Link
-          to={link.to}
-          params={link.params as never}
-          className="capitalize hover:text-primary truncate"
-        >
-          {targetLabel}
-        </Link>
-      </div>
+      {!isSocialNoLink && (
+        <div className="text-[11px] text-muted-foreground truncate mt-0.5 flex items-center gap-1">
+          {row.targetKind === "enterprise" ? (
+            <Building2 className="h-3 w-3" />
+          ) : (
+            <UserRound className="h-3 w-3" />
+          )}
+          <Link
+            to={link.to}
+            params={link.params as never}
+            className="capitalize hover:text-primary truncate"
+          >
+            {targetLabel}
+          </Link>
+        </div>
+      )}
     </div>
   );
 }
