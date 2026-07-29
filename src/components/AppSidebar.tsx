@@ -21,17 +21,16 @@ const menu: Root[] = [
       {
         label: "客户发现",
         children: [
-          { label: "商机线索", to: "/outreach/leads" },
           { label: "企业名录", to: "/outreach/enterprise" },
           { label: "商品目录", to: "/outreach/products" },
           { label: "提单", to: "/outreach/bills" },
+          { label: "浏览足迹", to: "/outreach/footprints" },
         ],
       },
       {
         label: "客户运营",
         children: [
           { label: "我的收藏", to: "/outreach/favorites" },
-          { label: "浏览足迹", to: "/outreach/footprints" },
           { label: "解锁记录", to: "/outreach/unlocked" },
           { label: "触达任务", to: "/outreach/reach" },
           { label: "询盘与回复", to: "/outreach/conversations" },
