@@ -9,11 +9,20 @@ import {
   UserCheck,
   Search,
   RotateCcw,
+  X,
 } from "lucide-react";
-import { useSocialFriends } from "@/lib/social-friends";
+import { useSocialFriends, type SocialFriend } from "@/lib/social-friends";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+} from "@/components/ui/dialog";
+import { ListPagination } from "@/components/ListPagination";
 import {
   Select,
   SelectContent,
