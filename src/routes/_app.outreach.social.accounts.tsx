@@ -179,7 +179,6 @@ function SocialAccountsPage() {
             </span>
           </div>
         </div>
-        </div>
         {accounts.length === 0 ? (
           <div className="p-10 text-center text-sm text-muted-foreground">尚无社媒账号。</div>
         ) : filtered.length === 0 ? (
@@ -195,13 +194,9 @@ function SocialAccountsPage() {
                 <TableHead>显示名</TableHead>
                 <TableHead className="w-[110px]">状态</TableHead>
                 <TableHead className="w-[110px]">所属地区</TableHead>
-                <TableHead className="w-[110px]">代理地区</TableHead>
-                <TableHead className="w-[130px]">健康度</TableHead>
-                <TableHead className="w-[100px]">名下好友</TableHead>
-                <TableHead className="w-[110px]">今日加友</TableHead>
-                <TableHead className="w-[110px]">今日私信</TableHead>
-                <TableHead className="w-[130px]">交付 / 购买</TableHead>
-                <TableHead className="w-[140px]">操作</TableHead>
+                <TableHead className="w-[100px]">好友数量</TableHead>
+                <TableHead className="w-[130px]">交付时间</TableHead>
+                <TableHead className="w-[130px]">到期时间</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
