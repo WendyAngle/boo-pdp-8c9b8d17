@@ -26,13 +26,13 @@ const menu: Root[] = [
           { label: "企业名录", to: "/outreach/enterprise" },
           { label: "商品目录", to: "/outreach/products" },
           { label: "已解锁客户", to: "/outreach/unlocked" },
-          { label: "浏览足迹", to: "/outreach/footprints" },
         ],
       },
       {
         label: "客户运营",
         children: [
           { label: "我的收藏", to: "/outreach/favorites" },
+          { label: "浏览足迹", to: "/outreach/footprints" },
           { label: "触达会话", to: "/outreach/conversations" },
           { label: "触达任务", to: "/outreach/reach" },
         ],
