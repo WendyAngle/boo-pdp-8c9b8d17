@@ -401,6 +401,12 @@ export function simulateDeliver(id: string): void {
     target.platform === "Facebook"
       ? `@bytetech.${prefix}${String(seq).padStart(3, "0")}`
       : `@bytetech_${prefix}${String(seq).padStart(3, "0")}`;
+  const deliveredIso = new Date().toISOString();
+  const expiresIso = (() => {
+    const d = new Date();
+    d.setFullYear(d.getFullYear() + 1);
+    return d.toISOString();
+  })();
   const next = cache.map((a) =>
     a.id === id
       ? {
@@ -411,7 +417,9 @@ export function simulateDeliver(id: string): void {
           dailyFriendLimit: 5,
           dailyDmLimit: 20,
           status: "养号中" as const,
-          purchasedAt: new Date().toISOString(),
+          purchasedAt: deliveredIso,
+          deliveredAt: deliveredIso,
+          expiresAt: expiresIso,
         }
       : a,
   );
