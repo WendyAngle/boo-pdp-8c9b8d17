@@ -347,15 +347,15 @@ export function BatchSocialPlatformDialog({
               </Label>
               <div
                 className={cn(
-                  "flex h-9 items-center justify-between rounded-md border px-3 text-xs",
-                  usable.length === 0
+                "flex h-9 items-center justify-between rounded-md border px-3 text-xs",
+                  normalAccounts.length === 0
                     ? "border-amber-200 bg-amber-50 text-amber-800"
                     : "bg-muted/40 text-muted-foreground",
                 )}
               >
                 <span>
                   <span className="text-foreground font-semibold mx-0.5">
-                    {usable.length}
+                    {normalAccounts.length}
                   </span>
                   个账号 · 今日可触达
                   <span className="text-foreground font-semibold mx-0.5">
