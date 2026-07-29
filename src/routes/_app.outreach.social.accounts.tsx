@@ -171,17 +171,6 @@ function SocialAccountsPage() {
               <SelectItem value="TikTok" className="text-xs">TikTok</SelectItem>
             </SelectContent>
           </Select>
-          <Select value={status} onValueChange={(v) => setStatus(v as StatusFilter)}>
-            <SelectTrigger className="h-8 w-[130px] text-xs"><SelectValue placeholder="状态" /></SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all" className="text-xs">全部状态</SelectItem>
-              <SelectItem value="正常" className="text-xs">正常</SelectItem>
-              <SelectItem value="养号中" className="text-xs">养号中</SelectItem>
-              <SelectItem value="异常" className="text-xs">异常</SelectItem>
-              <SelectItem value="备货中" className="text-xs">备货中</SelectItem>
-              <SelectItem value="停用" className="text-xs">停用</SelectItem>
-            </SelectContent>
-          </Select>
           <Select value={region} onValueChange={setRegion}>
             <SelectTrigger className="h-8 w-[150px] text-xs"><SelectValue placeholder="所属地区" /></SelectTrigger>
             <SelectContent className="max-h-72">
