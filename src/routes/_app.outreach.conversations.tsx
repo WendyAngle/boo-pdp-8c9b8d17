@@ -505,7 +505,21 @@ function InboxPage() {
             className="pl-7 h-8 text-xs"
           />
         </div>
+        <div className="ml-auto flex items-center gap-2 shrink-0">
+          <Button size="sm" className="h-8 text-xs gap-1" onClick={() => setCreateReachOpen(true)}>
+            <Plus className="h-3.5 w-3.5" />
+            创建触达任务
+          </Button>
+          <Button asChild size="sm" variant="outline" className="h-8 text-xs gap-1">
+            <Link to="/outreach/social/accounts">
+              <UserCircle2 className="h-3.5 w-3.5" />
+              我的账号
+            </Link>
+          </Button>
+        </div>
       </div>
+      <CreateReachTaskDialog open={createReachOpen} onOpenChange={setCreateReachOpen} />
+
       <div className="flex-1 flex min-h-0">
         {/* 中栏：会话列表 */}
         <div className="w-[320px] xl:w-[380px] shrink-0 border-r flex flex-col min-h-0">
