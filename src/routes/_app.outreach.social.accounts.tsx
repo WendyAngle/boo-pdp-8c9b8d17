@@ -242,7 +242,7 @@ function SocialAccountsPage() {
   );
 }
 
-function AccountRow({ account, friendCount }: { account: SocialAccount; friendCount: number }) {
+function AccountRow({ account, friendCount, onFriendsClick }: { account: SocialAccount; friendCount: number; onFriendsClick?: () => void }) {
   const bucket = getExpiryBucket(account.expiresAt);
   return (
     <TableRow className={cn(EXPIRY_ROW_TONE[bucket])}>
