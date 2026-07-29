@@ -1649,7 +1649,10 @@ export function seedDemoLedgerIfEmpty() {
     emitLedger();
     // seed 完成后同步一次永久解锁集,保证 mock view 数据默认呈现明文
     syncUnlocksFromLedger();
+    // 为使用了 AI 文案的触达任务补齐 AI 生成消费明细
+    backfillAiGenerationEntries();
   } catch {}
+
 }
 
 export function resetDemoLedger() {
