@@ -15,13 +15,13 @@ function Home() {
   const groups = [
     {
       title: "客户发现",
-      desc: "线索、企业、商品、提单——找到目标客户",
+      desc: "企业名录与商品目录——找到目标客户",
       to: "/outreach/leads",
       Icon: Compass,
     },
     {
       title: "客户运营",
-      desc: "收藏、足迹、触达——沉淀与跟进客户",
+      desc: "收藏、已解锁客户、足迹与触达——沉淀与跟进客户",
       to: "/outreach/favorites",
       Icon: Sparkles,
     },
@@ -32,8 +32,8 @@ function Home() {
       Icon: Wallet,
     },
     {
-      title: "系统管理",
-      desc: "管理本企业的员工账号与登录状态",
+      title: "企业设置",
+      desc: "企业信息、员工账号、社媒账号与发信邮箱等设置",
       to: "/outreach/users",
       Icon: Settings2,
     },
