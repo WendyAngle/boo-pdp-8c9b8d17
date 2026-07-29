@@ -339,6 +339,9 @@ export function createReach(input: {
   content?: string;
   aiGenerated?: boolean;
   cost?: number;
+  /** 顺延执行时间（ISO）：额度不足时排队到次日 */
+  scheduledAt?: string;
+  userCreated?: boolean;
 }): LedgerEntry {
   const { cost, ...rest } = input;
   const entry: LedgerEntry = {
