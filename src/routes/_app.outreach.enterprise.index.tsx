@@ -367,9 +367,20 @@ function OutreachEnterprisePage() {
                   />
                 </div>
                 <div className="mt-4 space-y-2">
-                  <div className="font-semibold text-foreground truncate group-hover:text-primary transition-colors">
-                    {e.name}
+                  <div className="flex items-start gap-2">
+                    <div className="font-semibold text-foreground truncate group-hover:text-primary transition-colors">
+                      {e.name}
+                    </div>
+                    {unlockedEnterpriseIds.has(e.id) && (
+                      <Badge
+                        variant="secondary"
+                        className="shrink-0 h-5 px-1.5 text-[10px] bg-emerald-500/10 text-emerald-600 border-emerald-500/20"
+                      >
+                        已解锁
+                      </Badge>
+                    )}
                   </div>
+
                   {e.industry && (
                     <div className="flex items-center gap-2 text-sm text-muted-foreground">
                       <Briefcase className="h-4 w-4 shrink-0" />
