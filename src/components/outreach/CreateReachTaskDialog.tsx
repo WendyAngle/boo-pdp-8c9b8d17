@@ -214,6 +214,14 @@ export function CreateReachTaskDialog({
         },
       });
       spendCredits(COST_AI_SOCIAL);
+      // 生成成功即产生一条 AI 生成消费明细
+      chargeAiGeneration({
+        channel: "social",
+        platform,
+        targetName: name.trim() || `${platform}平台私信`,
+        detailSuffix: `${name.trim() || "新建触达任务"} · ${params.scene}`,
+      });
+
       setTargetLang(params.language);
       if (res.content) setContent(res.content);
       setAiUsed(true);
