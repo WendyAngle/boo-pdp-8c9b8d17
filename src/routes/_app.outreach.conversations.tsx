@@ -226,7 +226,7 @@ function viewLabel(v: ViewKey) {
 
 export const Route = createFileRoute("/_app/outreach/conversations")({
   head: () => ({
-    meta: [{ title: "询盘与回复 | 出海大数据平台" }],
+    meta: [{ title: "客户触达 | 出海大数据平台" }],
   }),
   validateSearch: (s) => searchSchema.parse(s),
   component: InboxPage,
@@ -388,7 +388,7 @@ function InboxPage() {
       <div className="h-12 px-4 border-b flex items-center gap-2 shrink-0">
         <InboxIcon className="h-4 w-4 text-primary shrink-0" />
         <div className="font-semibold text-sm shrink-0">
-          询盘与回复
+          客户触达
           <span className="ml-1 text-muted-foreground font-normal">({counts.all})</span>
         </div>
         <div className="flex items-center gap-2 shrink-0 text-[11px] text-muted-foreground">

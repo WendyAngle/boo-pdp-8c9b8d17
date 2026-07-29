@@ -31,9 +31,9 @@ const menu: Root[] = [
         label: "客户运营",
         children: [
           { label: "我的收藏", to: "/outreach/favorites" },
+          { label: "客户触达", to: "/outreach/conversations" },
           { label: "解锁记录", to: "/outreach/unlocked" },
           { label: "触达任务", to: "/outreach/reach" },
-          { label: "询盘与回复", to: "/outreach/conversations" },
           { label: "社媒账号购买", to: "/outreach/social/accounts" },
           { label: "社媒触达", to: "/outreach/social/reach" },
           { label: "退订名单", to: "/outreach/suppressions" },
