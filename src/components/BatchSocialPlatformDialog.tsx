@@ -149,17 +149,28 @@ export function BatchSocialPlatformDialog({
     return out;
   }, [groups, platform]);
 
-  const usable = useMemo(
-    () => usableExecAccounts(accounts, platform),
+  /** 相应平台状态为正常的账号（用于展示数量） */
+  const normalAccounts = useMemo(
+    () =>
+      accounts.filter(
+        (a) =>
+          a.status === "正常" &&
+          (platform === "all" || a.platform === platform),
+      ),
     [accounts, platform],
+  );
+  /** 今日仍有剩余额度的可用执行账号 */
+  const usable = useMemo(
+    () => normalAccounts.filter((a) => accountTouchesToday(a) < DAILY_PER_ACCOUNT),
+    [normalAccounts],
   );
   const capacity = useMemo(
     () =>
-      usable.reduce(
+      normalAccounts.reduce(
         (s, a) => s + Math.max(0, DAILY_PER_ACCOUNT - accountTouchesToday(a)),
         0,
       ),
-    [usable],
+    [normalAccounts],
   );
 
   const targetCount = jobs.length;
