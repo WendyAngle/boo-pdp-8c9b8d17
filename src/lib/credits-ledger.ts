@@ -515,6 +515,7 @@ export function createSocialReachBatch(input: {
       content: input.content,
       aiGenerated: input.aiGenerated ?? false,
       forcedStatus: "pending",
+      userCreated: true,
     });
   }
   ledger = [...entries, ...ledger];
