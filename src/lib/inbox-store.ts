@@ -235,6 +235,11 @@ export interface Thread {
   lastDirection: "outbound" | "inbound";
   /** 社媒渠道专属信号（facebook / tiktok），供真实度评分使用 */
   socialSignals?: SocialSignals;
+  /** 来源为社媒好友池（已通过好友），列表中打「好友」标记 */
+  isFriend?: boolean;
+  /** 好友来源任务名（isFriend 时可用） */
+  friendSource?: string;
+
 }
 
 /* -------------------- Storage -------------------- */
