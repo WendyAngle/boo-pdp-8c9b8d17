@@ -268,15 +268,15 @@ function AccountRow({ account, friendCount, onFriendsClick }: { account: SocialA
       <TableCell className="text-xs text-muted-foreground">{regionLabel(account.ownerRegion)}</TableCell>
       <TableCell className="text-xs tabular-nums">
         {friendCount > 0 ? (
-          <Link
-            to="/outreach/conversations"
-            search={{ accountId: account.id } as never}
+          <button
+            type="button"
+            onClick={onFriendsClick}
             className="inline-flex items-center gap-1 text-primary hover:underline"
             title="查看该账号名下的所有好友"
           >
             <UserCheck className="h-3 w-3" />
             {friendCount}
-          </Link>
+          </button>
         ) : (
           <span className="text-muted-foreground">0</span>
         )}
