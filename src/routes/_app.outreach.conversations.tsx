@@ -756,6 +756,16 @@ function ThreadRow({
               );
             })()}
             <span className="text-[10px]">{CHANNEL_LABEL[thread.channel]}</span>
+            {thread.isFriend && (
+              <Badge
+                variant="outline"
+                className="h-4 py-0 px-1.5 text-[10px] gap-0.5 bg-violet-50 text-violet-700 border-violet-200"
+              >
+                <UserCheck className="h-2.5 w-2.5" />
+                好友
+              </Badge>
+            )}
+
             {(() => {
               const band = scoreIntent(thread).band;
               if (band === "high") {
