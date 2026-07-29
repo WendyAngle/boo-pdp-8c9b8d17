@@ -51,9 +51,9 @@ import { cn } from "@/lib/utils";
 export const Route = createFileRoute("/_app/outreach/social/accounts")({
   head: () => ({
     meta: [
-      { title: "我的账号 · 出海大数据平台" },
+      { title: "社媒账号 · 出海大数据平台" },
       { name: "description", content: "查看与管理已购买的 Facebook / TikTok 触达账号。" },
-      { property: "og:title", content: "我的账号" },
+      { property: "og:title", content: "社媒账号" },
       { property: "og:description", content: "统一管理你的社媒触达账号。" },
     ],
   }),
@@ -151,7 +151,7 @@ function SocialAccountsPage() {
             <Users className="h-5 w-5" />
           </span>
           <div>
-            <h1 className="text-lg font-semibold">我的账号</h1>
+            <h1 className="text-lg font-semibold">社媒账号</h1>
             <p className="text-xs text-muted-foreground mt-0.5">
               统一查看与管理已购买的社媒触达账号，支持按平台、状态、所属地区、关键字筛选。
             </p>

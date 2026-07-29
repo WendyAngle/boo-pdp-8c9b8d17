@@ -70,7 +70,7 @@ import type { DateRange } from "react-day-picker";
 export const Route = createFileRoute("/_app/outreach/unlocked")({
   head: () => ({
     meta: [
-      { title: "解锁记录 | 出海大数据平台" },
+      { title: "已解锁客户 | 出海大数据平台" },
       {
         name: "description",
         content:
@@ -529,7 +529,7 @@ function UnlockedPageInner() {
             <KeyRound className="h-7 w-7" />
           </div>
           <div className="flex-1 min-w-0">
-            <h1 className="text-2xl font-bold tracking-wide">解锁记录</h1>
+            <h1 className="text-2xl font-bold tracking-wide">已解锁客户</h1>
             <p className="text-white/90 text-sm mt-1">
               集中查看您已解锁的企业与人物联系方式，支持按渠道、归属和解锁时间快速检索。
             </p>
@@ -646,7 +646,7 @@ function UnlockedPageInner() {
       {filtered.length === 0 ? (
         <Card className="p-16 text-center text-sm text-muted-foreground">
           <KeyRound className="h-10 w-10 mx-auto mb-3 opacity-40" />
-          <div>还没有匹配的解锁记录。</div>
+          <div>还没有匹配的已解锁客户。</div>
           <div className="mt-1 text-xs">
             前往「客户发现」查看企业联系方式后，将自动出现在此处。
           </div>

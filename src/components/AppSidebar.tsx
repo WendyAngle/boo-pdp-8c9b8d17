@@ -5,7 +5,7 @@ import { AccountMenu } from "@/components/account/AccountMenu";
 import { useSidebarBadge } from "@/lib/inbox-store";
 
 type Leaf = { label: string; to: string; icon?: typeof Users };
-type Group = { label: string; to?: string; children: Leaf[] };
+type Group = { label: string; to?: string; icon?: typeof Users; divider?: boolean; children: Leaf[] };
 type Root = { label: string; icon: typeof ShieldCheck; children: Group[] };
 
 const menu: Root[] = [
@@ -16,6 +16,8 @@ const menu: Root[] = [
       {
         label: "全域检索",
         to: "/outreach/search",
+        icon: Search,
+        divider: true,
         children: [],
       },
       {
@@ -23,7 +25,7 @@ const menu: Root[] = [
         children: [
           { label: "企业名录", to: "/outreach/enterprise" },
           { label: "商品目录", to: "/outreach/products" },
-          { label: "解锁记录", to: "/outreach/unlocked" },
+          { label: "已解锁客户", to: "/outreach/unlocked" },
           { label: "浏览足迹", to: "/outreach/footprints" },
         ],
       },
@@ -31,10 +33,8 @@ const menu: Root[] = [
         label: "客户运营",
         children: [
           { label: "我的收藏", to: "/outreach/favorites" },
-          { label: "客户触达", to: "/outreach/conversations" },
+          { label: "触达会话", to: "/outreach/conversations" },
           { label: "触达任务", to: "/outreach/reach" },
-          { label: "我的账号", to: "/outreach/social/accounts" },
-          { label: "退订名单", to: "/outreach/suppressions" },
         ],
       },
       {
@@ -48,10 +48,12 @@ const menu: Root[] = [
       {
         label: "系统管理",
         children: [
-          { label: "我的画像", to: "/outreach/my-profile" },
+          { label: "企业画像", to: "/outreach/my-profile" },
           { label: "员工管理", to: "/outreach/users" },
           { label: "发信邮箱", to: "/outreach/mailboxes" },
-          { label: "询盘分派", to: "/outreach/inquiry-dispatch" },
+          { label: "社媒账号", to: "/outreach/social/accounts" },
+          { label: "退订名单", to: "/outreach/suppressions" },
+          { label: "询盘分派规则", to: "/outreach/inquiry-dispatch" },
         ],
       },
     ],
@@ -110,19 +112,24 @@ export function AppSidebar() {
                     const hasKids = g.children.length > 0;
                     const gOpen = open[g.label] ?? true;
                     const gActive = g.to ? location.pathname === g.to : false;
+                    const GIcon = g.icon;
                     return (
-                      <div key={g.label}>
+                      <div
+                        key={g.label}
+                        className={g.divider ? "pb-1.5 mb-1.5 border-b border-sidebar-border" : undefined}
+                      >
                         {g.to ? (
                           <div className="flex items-center">
                             <Link
                               to={g.to}
-                              className={`flex-1 block px-3 py-1.5 rounded-md text-sm transition-colors ${
+                              className={`flex-1 flex items-center gap-2 px-3 py-1.5 rounded-md text-sm transition-colors ${
                                 gActive
                                   ? "bg-sidebar-accent text-sidebar-accent-foreground font-medium"
                                   : "text-sidebar-foreground/80 hover:bg-sidebar-accent/60"
                               }`}
                             >
-                              {g.label}
+                              {GIcon && <GIcon className="h-3.5 w-3.5 text-primary" />}
+                              <span>{g.label}</span>
                             </Link>
                             {hasKids && (
                               <button
