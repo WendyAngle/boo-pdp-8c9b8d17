@@ -634,7 +634,9 @@ function hashStr(s: string) {
 export function getReachStatus(r: LedgerEntry, now = Date.now()): ReachStatus {
   if (r.kind !== "reach") return "success";
   if (r.forcedStatus) return r.forcedStatus;
-  const t = new Date(r.createdAt).getTime();
+  // 顺延执行：未到计划时间前恒为「待触达」
+  if (r.scheduledAt && new Date(r.scheduledAt).getTime() > now) return "pending";
+  const t = new Date(r.scheduledAt ?? r.createdAt).getTime();
   const elapsedSec = (now - t) / 1000;
   if (elapsedSec < 30) return "pending";
   if (elapsedSec < 180) return "in_progress";
