@@ -284,6 +284,8 @@ function InboxPage() {
   const view: ViewKey = search.view ?? "all";
   const intent = search.intent ?? "all";
   const [scorePanelOpen, setScorePanelOpen] = useState(true);
+  const [createReachOpen, setCreateReachOpen] = useState(false);
+
   const q = search.q ?? "";
   const ch = search.ch ?? "all";
   const group = search.group ?? "all";
