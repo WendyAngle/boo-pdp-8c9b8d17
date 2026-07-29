@@ -120,6 +120,7 @@ function seed() {
     return d.toISOString();
   })();
   const seedData: SocialAccount[] = [
+    {
       id: "sa_fb_1",
       platform: "Facebook",
       handle: "@bytetech.export",
