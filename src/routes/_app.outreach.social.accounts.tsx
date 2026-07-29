@@ -109,6 +109,8 @@ function SocialAccountsPage() {
     return m;
   }, [friends]);
 
+  const [friendsAccount, setFriendsAccount] = useState<SocialAccount | null>(null);
+
   const [keyword, setKeyword] = useState("");
   const [platform, setPlatform] = useState<PlatformFilter>("all");
   const [region, setRegion] = useState<string>("all");
