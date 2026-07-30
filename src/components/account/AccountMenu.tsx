@@ -79,19 +79,6 @@ export function AccountMenu() {
           </div>
           <div className="p-1">
             <MenuItem
-              icon={<Target className="h-4 w-4" />}
-              label="我的画像"
-              trailing={
-                <span className="text-[11px] text-muted-foreground">
-                  {completeness}%
-                </span>
-              }
-              onClick={() => {
-                setOpen(false);
-                navigate({ to: "/outreach/my-profile" });
-              }}
-            />
-            <MenuItem
               icon={<KeyRound className="h-4 w-4" />}
               label="修改密码"
               onClick={() => {
