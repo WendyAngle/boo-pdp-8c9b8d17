@@ -107,7 +107,7 @@ import {
 import { generateAiContent } from "@/lib/api/ai-compose.functions";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { getApprovedSmsTemplates } from "@/lib/sms-templates-store";
-import { getAllLedger } from "@/lib/credits-ledger";
+import { getAllLedger, getReachStatus } from "@/lib/credits-ledger";
 import { IntelPanel } from "@/components/outreach/IntelPanel";
 import { scoreIntent } from "@/lib/ai-intent-score";
 import { scoreAuthenticity } from "@/lib/ai-authenticity";
