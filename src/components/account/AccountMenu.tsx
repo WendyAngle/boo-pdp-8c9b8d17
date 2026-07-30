@@ -1,7 +1,6 @@
 import { useState } from "react";
-import { KeyRound, LogOut, ChevronUp, Phone, Target, Coins } from "lucide-react";
-import { Link, useNavigate } from "@tanstack/react-router";
-import { useLeadProfile, profileCompleteness } from "@/lib/lead-profile";
+import { KeyRound, LogOut, ChevronUp, Phone, Coins } from "lucide-react";
+import { Link } from "@tanstack/react-router";
 import { useCreditBalance } from "@/lib/credits-balance";
 import {
   Popover,
@@ -16,9 +15,6 @@ export function AccountMenu() {
   const user = useCurrentUser();
   const [open, setOpen] = useState(false);
   const [pwdOpen, setPwdOpen] = useState(false);
-  const navigate = useNavigate();
-  const profile = useLeadProfile();
-  const completeness = profileCompleteness(profile);
   const { balance } = useCreditBalance();
 
   return (
