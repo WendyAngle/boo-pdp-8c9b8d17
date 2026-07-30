@@ -1,7 +1,6 @@
 import { useState } from "react";
-import { KeyRound, LogOut, ChevronUp, Phone, Target, Coins } from "lucide-react";
-import { Link, useNavigate } from "@tanstack/react-router";
-import { useLeadProfile, profileCompleteness } from "@/lib/lead-profile";
+import { KeyRound, LogOut, ChevronUp, Phone, Coins } from "lucide-react";
+import { Link } from "@tanstack/react-router";
 import { useCreditBalance } from "@/lib/credits-balance";
 import {
   Popover,
@@ -16,9 +15,6 @@ export function AccountMenu() {
   const user = useCurrentUser();
   const [open, setOpen] = useState(false);
   const [pwdOpen, setPwdOpen] = useState(false);
-  const navigate = useNavigate();
-  const profile = useLeadProfile();
-  const completeness = profileCompleteness(profile);
   const { balance } = useCreditBalance();
 
   return (
@@ -78,19 +74,6 @@ export function AccountMenu() {
             </div>
           </div>
           <div className="p-1">
-            <MenuItem
-              icon={<Target className="h-4 w-4" />}
-              label="我的画像"
-              trailing={
-                <span className="text-[11px] text-muted-foreground">
-                  {completeness}%
-                </span>
-              }
-              onClick={() => {
-                setOpen(false);
-                navigate({ to: "/outreach/my-profile" });
-              }}
-            />
             <MenuItem
               icon={<KeyRound className="h-4 w-4" />}
               label="修改密码"
