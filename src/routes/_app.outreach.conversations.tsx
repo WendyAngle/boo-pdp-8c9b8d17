@@ -102,6 +102,7 @@ import {
   assignThread,
   previousAssigneeIds,
   slaInfo,
+  threadKeyFor,
 } from "@/lib/inbox-store";
 import { generateAiContent } from "@/lib/api/ai-compose.functions";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
