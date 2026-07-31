@@ -116,7 +116,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { Undo2, LanguagesIcon } from "lucide-react";
+import { Undo2 } from "lucide-react";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { getApprovedSmsTemplates } from "@/lib/sms-templates-store";
 import { getAllLedger, getReachStatus } from "@/lib/credits-ledger";
