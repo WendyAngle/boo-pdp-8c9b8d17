@@ -1281,10 +1281,6 @@ function ThreadDetail({
             <UserIcon className="h-3.5 w-3.5" />
             客户资料
           </TabsTrigger>
-          <TabsTrigger value="history" className="text-xs gap-1">
-            <History className="h-3.5 w-3.5" />
-            触达历史
-          </TabsTrigger>
         </TabsList>
         <TabsContent value="thread" className="flex-1 min-h-0 overflow-y-auto px-6 py-4 space-y-4 mt-0">
         {(thread.meta.assignmentEvents ?? []).map((ev) => (
