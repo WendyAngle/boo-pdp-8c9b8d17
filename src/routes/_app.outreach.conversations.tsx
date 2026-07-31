@@ -1480,6 +1480,21 @@ function ThreadDetail({
             )}
             AI 生成回复（{targetLang.zh}）
           </Button>
+          <Button
+            variant="ghost"
+            size="sm"
+            className="gap-1 h-7"
+            onClick={doTranslate}
+            disabled={translating || !reply.trim() || winInfo?.closed}
+            title={`将输入框内容翻译为${targetLang.zh}`}
+          >
+            {translating ? (
+              <Loader2 className="h-3.5 w-3.5 animate-spin" />
+            ) : (
+              <Languages className="h-3.5 w-3.5" />
+            )}
+            翻译为{targetLang.zh}
+          </Button>
           <QuickTemplateMenu
             channel={thread.channel}
             disabled={!!winInfo?.closed}
