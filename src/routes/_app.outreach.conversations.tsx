@@ -129,6 +129,8 @@ import {
   langByCode,
   LANGUAGES,
 } from "@/lib/lang-detect";
+import { getTargetReason } from "@/lib/target-reason";
+
 
 
 /** 邮件场景的快捷回复模板（Phase 1 hardcoded） */
