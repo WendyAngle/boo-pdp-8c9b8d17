@@ -618,13 +618,13 @@ function ReachPage() {
                 <TableHead className="min-w-[220px]">任务名</TableHead>
                 <TableHead className="w-[150px]">渠道 / 平台</TableHead>
                 <TableHead className="w-[90px]">动作</TableHead>
-                <TableHead className="w-[80px]">目标数</TableHead>
-                <TableHead className="w-[260px]">执行进度</TableHead>
-                <TableHead className="w-[90px]">成功率</TableHead>
+                <TableHead className="w-[110px]">触达成功数</TableHead>
                 <TableHead className="w-[90px]">回复</TableHead>
+                <TableHead className="w-[110px]">回复率</TableHead>
                 <TableHead className="w-[170px]">最近执行</TableHead>
               </TableRow>
             </TableHeader>
+
             <TableBody>
               {taskPageData.map((g) => (
                 <TableRow
