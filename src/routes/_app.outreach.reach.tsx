@@ -534,8 +534,6 @@ function ReachPage() {
                 <TableHead className="w-[150px]">渠道 / 平台</TableHead>
                 <TableHead className="w-[90px]">动作</TableHead>
                 <TableHead className="w-[110px]">目标数</TableHead>
-                <TableHead className="w-[90px]">回复</TableHead>
-                <TableHead className="w-[110px]">回复率</TableHead>
                 <TableHead className="w-[170px]">最近执行</TableHead>
               </TableRow>
             </TableHeader>
@@ -589,16 +587,6 @@ function ReachPage() {
                       {g.total}
                       <Users className="h-3.5 w-3.5" />
                     </Link>
-                  </TableCell>
-                  <TableCell className="tabular-nums text-sm">
-                    {g.replies > 0 ? (
-                      <span className="text-emerald-600 font-semibold">{g.replies}</span>
-                    ) : (
-                      <span className="text-muted-foreground">—</span>
-                    )}
-                  </TableCell>
-                  <TableCell className="tabular-nums text-sm font-semibold">
-                    {g.total === 0 ? "—" : `${Math.round((g.replies / g.total) * 100)}%`}
                   </TableCell>
 
                   <TableCell className="font-mono tabular-nums text-xs text-muted-foreground whitespace-nowrap">
