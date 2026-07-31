@@ -211,28 +211,18 @@ function ReachPage() {
       }
   >(null);
 
+  // 触达任务仅展示「触达成功」的数据，不再区分待触达 / 触达中 / 触达失败
   const reachRows = useMemo(() => {
     return ledger
       .filter((e) => e.kind === "reach")
       .map((e) => ({ ...e, status: getReachStatus(e, now) }))
+      .filter((e) => e.status === "success")
       .sort((a, b) => (a.createdAt < b.createdAt ? 1 : a.createdAt > b.createdAt ? -1 : 0));
   }, [ledger, now]);
-
-  const counts = useMemo(() => {
-    const c: Record<ReachStatus, number> = {
-      pending: 0,
-      in_progress: 0,
-      success: 0,
-      failed: 0,
-    };
-    for (const r of reachRows) c[r.status]++;
-    return c;
-  }, [reachRows]);
 
   const filtered = useMemo(() => {
     const k = kw.trim().toLowerCase();
     return reachRows.filter((r) => {
-      if (statusTab !== "all" && r.status !== statusTab) return false;
       if (targetKind !== "all" && r.targetKind !== targetKind) return false;
       if (channel === "whatsapp") {
         if (r.channel !== "social" || r.platform !== "WhatsApp") return false;
@@ -249,11 +239,11 @@ function ReachPage() {
         (r.platform ?? "").toLowerCase().includes(k)
       );
     });
-  }, [reachRows, statusTab, channel, targetKind, kw]);
+  }, [reachRows, channel, targetKind, kw]);
 
   useEffect(() => {
     setPage(1);
-  }, [statusTab, channel, targetKind, kw, view, taskKey]);
+  }, [channel, targetKind, kw, view, taskKey]);
 
   const targetKindCounts = useMemo(() => {
     let ent = 0;
@@ -282,8 +272,6 @@ function ReachPage() {
   const poolHealth = poolAverageHealth(accounts);
   const usableAccounts = accounts.filter((a) => a.status === "正常").length;
 
-  const doneTotal = counts.success + counts.failed;
-  const successRate = doneTotal === 0 ? 0 : Math.round((counts.success / doneTotal) * 100);
   const replyTotal = useMemo(
     () =>
       reachRows.reduce((n, r) => {
@@ -292,14 +280,15 @@ function ReachPage() {
       }, 0),
     [reachRows, threadByKey],
   );
+  const replyRate =
+    reachRows.length === 0 ? 0 : Math.round((replyTotal / reachRows.length) * 100);
 
-  // 任务视图：把逐条触达记录按「任务」聚合（社媒批量任务按任务名聚合，其余按渠道 + 动作 + 日期聚合）
+  // 任务视图：把逐条触达成功记录按「任务」聚合
   const taskGroups = useMemo(() => {
     const map = new Map<string, TaskGroup>();
     for (const r of filtered) {
       const action = reachAction(r);
       const day = r.createdAt.slice(0, 10);
-      // 批量创建的触达任务按任务名聚合；单条触达按「渠道 + 平台 + 动作 + 日期」归入当日任务
       const batchName = r.channel === "social" && r.subject ? r.subject : null;
       const key = groupKeyOf(r);
       let g = map.get(key);
@@ -313,10 +302,6 @@ function ReachPage() {
           platform: r.platform,
           action,
           total: 0,
-          pending: 0,
-          in_progress: 0,
-          success: 0,
-          failed: 0,
           replies: 0,
           aiGenerated: false,
           createdAt: r.createdAt,
@@ -325,7 +310,6 @@ function ReachPage() {
         map.set(key, g);
       }
       g.total++;
-      g[r.status]++;
       if (r.aiGenerated) g.aiGenerated = true;
       const t = threadByKey.get(threadKeyFor(r) ?? "");
       g.replies += t?.meta.inboundMessages.length ?? 0;
@@ -334,6 +318,7 @@ function ReachPage() {
     }
     return [...map.values()].sort((a, b) => (a.lastAt < b.lastAt ? 1 : -1));
   }, [filtered, threadByKey]);
+
 
   const taskPageData = useMemo(
     () => taskGroups.slice((page - 1) * pageSize, page * pageSize),
