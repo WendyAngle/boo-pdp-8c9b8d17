@@ -569,14 +569,13 @@ function ReachPage() {
               </button>
             </Badge>
           )}
-          {(kw || channel !== "all" || statusTab !== "all" || targetKind !== "all" || taskKey) && (
+          {(kw || channel !== "all" || targetKind !== "all" || taskKey) && (
             <Button
               variant="ghost"
               size="sm"
               onClick={() => {
                 setKw("");
                 setChannel("all");
-                setStatusTab("all");
                 setTargetKind("all");
                 setTaskKey(null);
               }}
@@ -600,10 +599,11 @@ function ReachPage() {
             <div className="h-14 w-14 rounded-full bg-muted flex items-center justify-center">
               <Send className="h-7 w-7 text-muted-foreground" />
             </div>
-            <div className="text-base font-medium">暂无触达记录</div>
+            <div className="text-base font-medium">暂无触达成功记录</div>
             <div className="text-sm text-muted-foreground max-w-md">
-              前往企业 / 人物详情页，针对邮箱、电话或社媒账号发起触达
+              前往企业 / 人物详情页，针对邮箱、电话或社媒账号发起触达，成功送达后将在此展示
             </div>
+
             <Button asChild variant="outline" size="sm" className="mt-2 gap-1.5">
               <Link to="/outreach/enterprise">
                 <Building2 className="h-4 w-4" />
