@@ -105,6 +105,18 @@ import {
   threadKeyFor,
 } from "@/lib/inbox-store";
 import { generateAiContent } from "@/lib/api/ai-compose.functions";
+import { translateMessage } from "@/lib/api/ai-translate.functions";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { Undo2 } from "lucide-react";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { getApprovedSmsTemplates } from "@/lib/sms-templates-store";
 import { getAllLedger, getReachStatus } from "@/lib/credits-ledger";
@@ -879,11 +891,20 @@ function ThreadDetail({
   const [replyLang, setReplyLang] = useState<string>("auto");
   useEffect(() => {
     setReplyLang("auto");
+    setPreTranslate(null);
+    setLangConfirmed(null);
   }, [thread.id]);
   const targetLang =
     langByCode(replyLang === "auto" ? detectedLang.code : replyLang) ??
     langByCode("en")!;
   const [aiLoading, setAiLoading] = useState(false);
+  // 翻译：手动输入内容与目标语言不一致时的辅助能力
+  const [translating, setTranslating] = useState(false);
+  /** 翻译前的原文，用于「撤销翻译」 */
+  const [preTranslate, setPreTranslate] = useState<string | null>(null);
+  /** 已确认「按原文发送」的内容，避免重复弹窗 */
+  const [langConfirmed, setLangConfirmed] = useState<string | null>(null);
+  const [langAlertOpen, setLangAlertOpen] = useState(false);
   const [sending, setSending] = useState(false);
   const [selectedTpl, setSelectedTpl] = useState<string>("");
   const [draftSavedAt, setDraftSavedAt] = useState<string | null>(null);
@@ -980,6 +1001,63 @@ function ThreadDetail({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [autoAi, thread.id]);
 
+  /* ---------- 手动输入内容的语言识别 & 翻译 ---------- */
+  // 识别当前草稿使用的语言（仅在内容足够长时判断，避免误报）
+  const draftLang = useMemo(() => {
+    const t = reply.trim();
+    if (t.length < 12) return null;
+    return detectLanguage(t);
+  }, [reply]);
+  /** 草稿语言与目标语言不一致（且识别有一定把握） */
+  const langMismatch =
+    !!draftLang &&
+    draftLang.code !== targetLang.code &&
+    draftLang.confidence >= 60 &&
+    !winInfo?.closed;
+
+  async function doTranslate() {
+    const text = reply.trim();
+    if (!text) {
+      toast.error("请先输入要翻译的内容");
+      return;
+    }
+    setTranslating(true);
+    try {
+      const res = await translateMessage({
+        data: {
+          text,
+          targetLanguageName: targetLang.en,
+          sourceLanguageName: draftLang?.en,
+          tone: "friendly",
+        },
+      });
+      if (!res.content) throw new Error("译文为空");
+      setPreTranslate(text);
+      setReply(res.content);
+      setLangConfirmed(null);
+      toast.success(`已翻译为${targetLang.zh}，请复核后发送`);
+    } catch (e) {
+      toast.error(`翻译失败：${(e as Error).message}`);
+    } finally {
+      setTranslating(false);
+    }
+  }
+
+  function undoTranslate() {
+    if (preTranslate === null) return;
+    setReply(preTranslate);
+    setPreTranslate(null);
+  }
+
+  /** 发送前的语言一致性校验：不一致时先提示，不直接发出 */
+  function attemptSend() {
+    if (langMismatch && langConfirmed !== reply.trim()) {
+      setLangAlertOpen(true);
+      return;
+    }
+    doSend(false);
+  }
+
   function doSend(aiGen = false) {
     const content = winInfo?.closed && templates.length
       ? templates.find((t) => t.id === selectedTpl)?.body ?? reply
@@ -1001,6 +1079,8 @@ function ThreadDetail({
       });
       setReply("");
       setSelectedTpl("");
+      setPreTranslate(null);
+      setLangConfirmed(null);
       if (typeof window !== "undefined") window.localStorage.removeItem(draftKey);
       setDraftSavedAt(null);
       setSending(false);
@@ -1400,6 +1480,21 @@ function ThreadDetail({
             )}
             AI 生成回复（{targetLang.zh}）
           </Button>
+          <Button
+            variant="ghost"
+            size="sm"
+            className="gap-1 h-7"
+            onClick={doTranslate}
+            disabled={translating || !reply.trim() || winInfo?.closed}
+            title={`将输入框内容翻译为${targetLang.zh}`}
+          >
+            {translating ? (
+              <Loader2 className="h-3.5 w-3.5 animate-spin" />
+            ) : (
+              <Languages className="h-3.5 w-3.5" />
+            )}
+            翻译为{targetLang.zh}
+          </Button>
           <QuickTemplateMenu
             channel={thread.channel}
             disabled={!!winInfo?.closed}
@@ -1434,9 +1529,65 @@ function ThreadDetail({
             disabled={winInfo?.closed}
           />
         )}
+        {/* 手动输入内容的语言提示 */}
+        {!winInfo?.closed && (langMismatch || preTranslate) && (
+          <div
+            className={cn(
+              "mt-2 flex items-center gap-2 flex-wrap rounded-md border px-2.5 py-1.5 text-xs",
+              langMismatch
+                ? "border-amber-300 bg-amber-50 text-amber-800"
+                : "border-emerald-300 bg-emerald-50 text-emerald-700",
+            )}
+          >
+            <Languages className="h-3.5 w-3.5 shrink-0" />
+            {langMismatch ? (
+              <>
+                <span>
+                  AI 识别当前内容为「{draftLang!.zh}」，与目标语言「{targetLang.zh}
+                  」不一致，客户可能看不懂。
+                </span>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="h-6 gap-1 px-2 text-[11px] bg-background"
+                  onClick={doTranslate}
+                  disabled={translating}
+                >
+                  {translating ? (
+                    <Loader2 className="h-3 w-3 animate-spin" />
+                  ) : (
+                    <Sparkles className="h-3 w-3" />
+                  )}
+                  一键翻译为{targetLang.zh}
+                </Button>
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  className="h-6 px-2 text-[11px]"
+                  onClick={() => setReplyLang(draftLang!.code)}
+                >
+                  改用{draftLang!.zh}发送
+                </Button>
+              </>
+            ) : (
+              <>
+                <span>已翻译为「{targetLang.zh}」，发送前请复核译文。</span>
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  className="h-6 gap-1 px-2 text-[11px]"
+                  onClick={undoTranslate}
+                >
+                  <Undo2 className="h-3 w-3" />
+                  撤销翻译
+                </Button>
+              </>
+            )}
+          </div>
+        )}
         <div className="mt-2 flex items-center gap-2">
           <Button
-            onClick={() => doSend(false)}
+            onClick={attemptSend}
             disabled={
               sending ||
               (winInfo?.closed && templates.length > 0 && !selectedTpl) ||
@@ -1456,6 +1607,8 @@ function ThreadDetail({
             onClick={() => {
               setReply("");
               setSelectedTpl("");
+              setPreTranslate(null);
+              setLangConfirmed(null);
               if (typeof window !== "undefined")
                 window.localStorage.removeItem(draftKey);
               setDraftSavedAt(null);
@@ -1475,6 +1628,48 @@ function ThreadDetail({
           </div>
         </div>
       </div>
+
+      {/* 发送前语言一致性提醒 */}
+      <AlertDialog open={langAlertOpen} onOpenChange={setLangAlertOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>发送语言与目标语言不一致</AlertDialogTitle>
+            <AlertDialogDescription asChild>
+              <div className="space-y-2 text-sm">
+                <p>
+                  AI 识别你输入的内容为「{draftLang?.zh}」（置信度{" "}
+                  {draftLang?.confidence}%），而本会话目标语言为「{targetLang.zh}」
+                  {replyLang === "auto" ? "（跟随对方语言）" : "（手动指定）"}。
+                </p>
+                <p className="text-muted-foreground">
+                  建议先翻译为{targetLang.zh}再发送，避免客户理解成本过高影响回复率。
+                </p>
+              </div>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>返回修改</AlertDialogCancel>
+            <Button
+              variant="outline"
+              onClick={() => {
+                setLangConfirmed(reply.trim());
+                setLangAlertOpen(false);
+                doSend(false);
+              }}
+            >
+              仍按原文发送
+            </Button>
+            <AlertDialogAction
+              onClick={async () => {
+                setLangAlertOpen(false);
+                await doTranslate();
+              }}
+            >
+              翻译为{targetLang.zh}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
