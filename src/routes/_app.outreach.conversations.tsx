@@ -130,6 +130,7 @@ import {
   LANGUAGES,
 } from "@/lib/lang-detect";
 import { getTargetReason } from "@/lib/target-reason";
+import { resolveThreadProfile } from "@/lib/thread-profile";
 
 
 
@@ -1837,28 +1838,92 @@ function ProfilePanel({ thread }: { thread: Thread }) {
         );
       })()}
 
-      <div className="rounded-md border bg-card p-4">
-        <div className="text-xs text-muted-foreground mb-2">前往完整档案</div>
-        <Link
-          to={
-            thread.targetKind === "enterprise"
-              ? "/outreach/enterprise/$id"
-              : "/outreach/enterprise/$id/contact/$idx"
-          }
-          params={
-            thread.targetKind === "enterprise"
-              ? { id: thread.targetId }
-              : {
-                  id: thread.targetId.split(":")[0],
-                  idx: thread.targetId.split(":")[1] ?? "0",
-                }
-          }
-          className="text-sm text-primary hover:underline inline-flex items-center gap-1"
-        >
-          打开{thread.targetKind === "enterprise" ? "企业" : "联系人"}详情
-          <ChevronRight className="h-3.5 w-3.5" />
-        </Link>
-      </div>
+      {(() => {
+        const profile = resolveThreadProfile(thread);
+        return (
+          <div className="rounded-md border bg-card p-4 space-y-2">
+            <div className="text-xs text-muted-foreground">客户档案</div>
+
+            {profile.kind === "enterprise" && (
+              <Link
+                to="/outreach/enterprise/$id"
+                params={{ id: profile.id }}
+                className="text-sm text-primary hover:underline inline-flex items-center gap-1"
+              >
+                打开企业详情 · {profile.name}
+                <ChevronRight className="h-3.5 w-3.5" />
+              </Link>
+            )}
+
+            {profile.kind === "contact" && (
+              <div className="space-y-1.5">
+                <Link
+                  to="/outreach/enterprise/$id/contact/$idx"
+                  params={{ id: profile.entId, idx: profile.idx }}
+                  className="text-sm text-primary hover:underline inline-flex items-center gap-1"
+                >
+                  打开联系人详情 · {profile.name}
+                  <ChevronRight className="h-3.5 w-3.5" />
+                </Link>
+                <div>
+                  <Link
+                    to="/outreach/enterprise/$id"
+                    params={{ id: profile.entId }}
+                    className="text-xs text-muted-foreground hover:text-primary hover:underline inline-flex items-center gap-1"
+                  >
+                    所属企业：{profile.entName}
+                    <ChevronRight className="h-3 w-3" />
+                  </Link>
+                </div>
+              </div>
+            )}
+
+            {profile.kind === "social" && (
+              <div className="space-y-2">
+                <div className="text-xs text-muted-foreground leading-relaxed">
+                  该客户来自社媒触达任务，为 {profile.platform} 平台账号，企业名录中暂无对应档案。
+                </div>
+                <div className="text-xs">
+                  <span className="text-muted-foreground">平台账号：</span>
+                  <span className="font-mono">{profile.handle}</span>
+                </div>
+                {thread.socialSignals && (
+                  <div className="text-xs text-muted-foreground">
+                    粉丝 {thread.socialSignals.followers ?? "—"} · 内容{" "}
+                    {thread.socialSignals.postsCount ?? "—"} 条
+                    {thread.socialSignals.accountAgeDays != null
+                      ? ` · 注册 ${thread.socialSignals.accountAgeDays} 天`
+                      : ""}
+                  </div>
+                )}
+                <div className="flex flex-wrap gap-3 pt-0.5">
+                  <Link
+                    to="/outreach/reach"
+                    className="text-sm text-primary hover:underline inline-flex items-center gap-1"
+                  >
+                    查看触达任务
+                    <ChevronRight className="h-3.5 w-3.5" />
+                  </Link>
+                  <Link
+                    to="/outreach/social/accounts"
+                    className="text-sm text-primary hover:underline inline-flex items-center gap-1"
+                  >
+                    查看社媒账号
+                    <ChevronRight className="h-3.5 w-3.5" />
+                  </Link>
+                </div>
+              </div>
+            )}
+
+            {profile.kind === "external" && (
+              <div className="text-xs text-muted-foreground leading-relaxed">
+                {profile.reason}，暂无可跳转的完整档案。可在「企业名录」检索同名客户后收藏，再回到本会话继续跟进。
+              </div>
+            )}
+          </div>
+        );
+      })()}
+
     </div>
   );
 }
