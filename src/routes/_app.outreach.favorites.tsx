@@ -727,6 +727,12 @@ function FavoritesPage() {
             已选 <span className="text-foreground font-medium">{selected.size}</span> /{" "}
             {filtered.length} 条
           </span>
+          {selected.size > 0 && (
+            <span className="text-xs text-muted-foreground hidden lg:inline">
+              可触达：邮件 {emailEligible.length} · 短信 {smsEligible.length} · WhatsApp{" "}
+              {waEligible.length} · 社媒 {socialEligible.length}（已触达对象自动过滤）
+            </span>
+          )}
           <div className="ml-auto flex items-center gap-2">
             <Button
               variant="outline"
@@ -734,6 +740,7 @@ function FavoritesPage() {
               disabled={selected.size === 0}
               className="gap-1.5 border-primary/30 text-primary hover:bg-primary/10 hover:text-primary disabled:opacity-50"
               onClick={() => {
+                if (!guardBatch(emailEligible, "邮件")) return;
                 if (usableMailboxes.length === 0) {
                   setNoMailboxOpen(true);
                   return;
@@ -752,7 +759,10 @@ function FavoritesPage() {
               size="sm"
               disabled={selected.size === 0}
               className="gap-1.5 border-primary/30 text-primary hover:bg-primary/10 hover:text-primary disabled:opacity-50"
-              onClick={() => setBatchSmsOpen(true)}
+              onClick={() => {
+                if (!guardBatch(smsEligible, "短信")) return;
+                setBatchSmsOpen(true);
+              }}
             >
               <MessageSquare className="h-4 w-4" />
               批量发短信
@@ -762,7 +772,10 @@ function FavoritesPage() {
               size="sm"
               disabled={selected.size === 0}
               className="gap-1.5 border-primary/30 text-primary hover:bg-primary/10 hover:text-primary disabled:opacity-50"
-              onClick={() => setBatchSocialOpen(true)}
+              onClick={() => {
+                if (!guardBatch(waEligible, "WhatsApp")) return;
+                setBatchSocialOpen(true);
+              }}
             >
               <MessageCircle className="h-4 w-4" />
               批量 WhatsApp 触达
@@ -772,12 +785,16 @@ function FavoritesPage() {
               size="sm"
               disabled={selected.size === 0}
               className="gap-1.5 border-primary/30 text-primary hover:bg-primary/10 hover:text-primary disabled:opacity-50"
-              onClick={() => setBatchPlatformOpen(true)}
+              onClick={() => {
+                if (!guardBatch(socialEligible, "社媒")) return;
+                setBatchPlatformOpen(true);
+              }}
               title="批量社媒触达"
             >
               <Users className="h-4 w-4" />
               批量社媒触达
             </Button>
+
 
             <Button
               variant="outline"
