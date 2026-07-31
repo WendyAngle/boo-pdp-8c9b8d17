@@ -479,7 +479,7 @@ function ReachPage() {
             <span className="ml-1 text-muted-foreground">{reachRows.length}</span>
           </span>
 
-          <div className="ml-auto mb-2 inline-flex rounded-md border bg-muted/40 p-0.5">
+          <div className="ml-auto inline-flex rounded-md border bg-muted/40 p-0.5">
             <button
               type="button"
               onClick={() => {
