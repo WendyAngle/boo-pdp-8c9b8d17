@@ -47,13 +47,13 @@ function isBrowser() {
 }
 
 function read(): CertRecord {
-  if (!isBrowser()) return VERIFIED;
+  if (!isBrowser()) return EMPTY;
   try {
     const raw = window.localStorage.getItem(KEY);
-    if (!raw) return VERIFIED;
-    return { ...VERIFIED, ...JSON.parse(raw) };
+    if (!raw) return EMPTY;
+    return { ...EMPTY, ...JSON.parse(raw) };
   } catch {
-    return VERIFIED;
+    return EMPTY;
   }
 }
 
@@ -67,8 +67,13 @@ function write(rec: CertRecord) {
   }
 }
 
-/** Reset to demo verified state (used by the page's reset button). */
+/** Reset to the initial unverified state (used by the page's reset button). */
 export function resetCertification() {
+  write(EMPTY);
+}
+
+/** Demo helper: jump straight to the verified state. */
+export function markVerifiedDemo() {
   write(VERIFIED);
 }
 
@@ -92,7 +97,7 @@ export function approveCertification() {
 }
 
 export function useCertification(): CertRecord {
-  const [rec, setRec] = useState<CertRecord>(() => (isBrowser() ? read() : VERIFIED));
+  const [rec, setRec] = useState<CertRecord>(() => (isBrowser() ? read() : EMPTY));
   useEffect(() => {
     setRec(read());
     const handler = () => setRec(read());
