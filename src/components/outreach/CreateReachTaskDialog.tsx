@@ -490,12 +490,23 @@ export function CreateReachTaskDialog({
                 value={content}
                 onChange={(e) => setContent(e.target.value)}
                 rows={6}
-                maxLength={4096}
                 placeholder={`Hi {联系人名}，我是 {我的公司} 的 {我的姓名}……（AI 生成默认为首发开发信）`}
               />
-              <div className="text-[11px] text-muted-foreground">{content.length} / 4096 字</div>
+              <div className="flex items-center justify-between text-[11px]">
+                <span
+                  className={
+                    contentLen > charLimit ? "text-rose-600" : "text-muted-foreground"
+                  }
+                >
+                  {contentLen} / {charLimit} 字符（{platform}）
+                </span>
+                <span className="text-muted-foreground">
+                  中/日/韩字符按 2 计 · AI 生成建议 {AI_SUGGESTED_CHAR_LEN} 字符内
+                </span>
+              </div>
             </div>
           </section>
+
 
           {/* 目标语言译文（实际发送内容） */}
           <section className="space-y-2 rounded-md border border-primary/25 bg-primary/[0.03] p-3">
