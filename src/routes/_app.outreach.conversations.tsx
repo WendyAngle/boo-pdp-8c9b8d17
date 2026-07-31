@@ -1106,7 +1106,6 @@ function ThreadDetail({
                   >
                     <Sparkles className="h-3 w-3" />
                     AI 识别语言
-                    <span className="ml-0.5">{detectedLang.flag}</span>
                     {detectedLang.zh}
                     <span className="tabular-nums opacity-70">
                       {detectedLang.confidence}%
@@ -1121,7 +1120,7 @@ function ThreadDetail({
                   <div className="text-muted-foreground">
                     识别结果：
                     <span className="text-foreground font-medium">
-                      {detectedLang.flag} {detectedLang.zh}（{detectedLang.en}）
+                      {detectedLang.zh}（{detectedLang.en}）
                     </span>
                     ，置信度 {detectedLang.confidence}%
                     {detectedLang.samples > 0 &&
@@ -1266,7 +1265,7 @@ function ThreadDetail({
                         title={`AI 语种识别：${ml.en} · 置信度 ${ml.confidence}%`}
                       >
                         <Sparkles className="h-2.5 w-2.5 mr-0.5" />
-                        {ml.flag} {ml.zh}
+                        {ml.zh}
                       </Badge>
                     );
                   })()}
@@ -1373,14 +1372,14 @@ function ThreadDetail({
                 <SelectGroup>
                   <SelectLabel className="text-[11px]">AI 建议</SelectLabel>
                   <SelectItem value="auto" className="text-xs">
-                    跟随对方语言 · {detectedLang.flag} {detectedLang.zh}
+                    跟随对方语言 · {detectedLang.zh}
                   </SelectItem>
                 </SelectGroup>
                 <SelectGroup>
                   <SelectLabel className="text-[11px]">指定目标语言</SelectLabel>
                   {LANGUAGES.map((l) => (
                     <SelectItem key={l.code} value={l.code} className="text-xs">
-                      {l.flag} {l.zh}（{l.en}）
+                      {l.zh}（{l.en}）
                     </SelectItem>
                   ))}
                 </SelectGroup>
