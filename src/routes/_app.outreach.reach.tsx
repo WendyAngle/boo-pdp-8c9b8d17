@@ -124,15 +124,12 @@ type TaskGroup = {
   platform?: string;
   action: string;
   total: number;
-  pending: number;
-  in_progress: number;
-  success: number;
-  failed: number;
   replies: number;
   aiGenerated: boolean;
   createdAt: string;
   lastAt: string;
 };
+
 
 function groupKeyOf(r: { channel?: ReachChannel; platform?: string; subject?: string; detail?: string; createdAt: string }) {
   const day = r.createdAt.slice(0, 10);
