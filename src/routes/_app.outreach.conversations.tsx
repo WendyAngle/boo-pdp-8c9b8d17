@@ -1399,7 +1399,7 @@ function ThreadDetail({
             ) : (
               <Sparkles className="h-3.5 w-3.5" />
             )}
-            AI 生成回复
+            AI 生成回复（{targetLang.zh}）
           </Button>
           <QuickTemplateMenu
             channel={thread.channel}
