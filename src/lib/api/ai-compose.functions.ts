@@ -7,6 +7,8 @@ const InputSchema = z.object({
   scene: z.string().min(1).max(40),
   tone: z.enum(["formal", "friendly", "concise"]).default("friendly"),
   language: z.enum(["zh", "en"]).default("zh"),
+  /** 目标语言全称（如 Thai / Japanese），优先于 language */
+  languageName: z.string().max(40).optional(),
   extra: z.string().max(500).optional(),
   /** 我方公司 / 个人 信息（供 system prompt 参考） */
   myCompany: z.string().max(120).optional(),
