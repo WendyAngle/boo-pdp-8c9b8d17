@@ -994,8 +994,27 @@ function FavoriteCard({
         </div>
         <div className="font-medium text-sm truncate">{record.title}</div>
         {record.subtitle && <FavoriteSubtitle record={record} />}
+        {reached.length > 0 && (
+          <div className="mt-1.5 flex flex-wrap items-center gap-1">
+            <span className="inline-flex items-center gap-1 text-[10px] text-emerald-700">
+              <CheckCircle2 className="h-3 w-3" />
+              已触达
+            </span>
+            {reached.map((m) => (
+              <Badge
+                key={m}
+                variant="outline"
+                className={cn("text-[10px] h-4 px-1.5", REACH_METHOD_TONE[m])}
+                title={`已通过${REACH_METHOD_LABEL[m]}触达，不可重复批量触达`}
+              >
+                {REACH_METHOD_LABEL[m]}
+              </Badge>
+            ))}
+          </div>
+        )}
         <FavoriteMeta record={record} />
       </div>
+
     </>
   );
 
