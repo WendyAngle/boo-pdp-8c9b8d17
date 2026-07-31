@@ -664,14 +664,6 @@ function ReachPage() {
                     </span>
                   </TableCell>
                   <TableCell className="tabular-nums font-semibold">{g.total}</TableCell>
-                  <TableCell>
-                    <TaskProgress group={g} />
-                  </TableCell>
-                  <TableCell className="tabular-nums text-sm font-semibold">
-                    {g.success + g.failed === 0
-                      ? "—"
-                      : `${Math.round((g.success / (g.success + g.failed)) * 100)}%`}
-                  </TableCell>
                   <TableCell className="tabular-nums text-sm">
                     {g.replies > 0 ? (
                       <span className="text-emerald-600 font-semibold">{g.replies}</span>
@@ -679,6 +671,10 @@ function ReachPage() {
                       <span className="text-muted-foreground">—</span>
                     )}
                   </TableCell>
+                  <TableCell className="tabular-nums text-sm font-semibold">
+                    {g.total === 0 ? "—" : `${Math.round((g.replies / g.total) * 100)}%`}
+                  </TableCell>
+
                   <TableCell className="font-mono tabular-nums text-xs text-muted-foreground whitespace-nowrap">
                     {fmtTime(g.lastAt)}
                   </TableCell>
