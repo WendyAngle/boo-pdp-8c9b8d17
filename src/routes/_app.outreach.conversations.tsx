@@ -1810,30 +1810,6 @@ function ProfilePanel({ thread }: { thread: Thread }) {
   );
 }
 
-  source: "task" | "message" | "reply" | "friend";
-  channelLabel: string;
-  title: string;
-  desc?: string;
-  mono?: string;
-  cost?: number;
-  statusLabel?: string;
-};
-
-const REACH_STATUS_LABEL: Record<string, string> = {
-  pending: "排队中",
-  in_progress: "触达中",
-  success: "已送达",
-  failed: "失败",
-};
-
-/**
- * 触达历史：统一时间线
- * 数据源合并三处，避免仅按 ledger.targetId 匹配导致演示/好友会话「暂无记录」：
- * 1) 触达任务（credits-ledger 中 kind=reach，按 targetId 或 threadKey 归属本会话）
- * 2) 会话内我方发出的消息（人工回复 / AI 回复 / 好友通过后的首触）
- * 3) 对方回复（作为触达结果，帮助判断跟进效果）
- */
-function ReachHistoryPanel({ thread }: { thread: Thread }) {
   const items = useMemo<HistoryItem[]>(() => {
     const out: HistoryItem[] = [];
     const coveredLedgerIds = new Set<string>();
