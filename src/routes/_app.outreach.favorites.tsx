@@ -616,6 +616,22 @@ function FavoritesPage() {
             </PopoverContent>
           </Popover>
           <Select
+            value={reachFilter}
+            onValueChange={(v) =>
+              setReachFilter(v as "all" | "reached" | "unreached")
+            }
+          >
+            <SelectTrigger className="h-9 w-[160px]">
+              <Send className="h-3.5 w-3.5 mr-1" />
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">全部触达状态</SelectItem>
+              <SelectItem value="unreached">未触达</SelectItem>
+              <SelectItem value="reached">已触达</SelectItem>
+            </SelectContent>
+          </Select>
+          <Select
             value={sort}
             onValueChange={(v) => {
               const next = v as SortKey;
@@ -638,7 +654,7 @@ function FavoritesPage() {
               <SelectItem value="kind">按类型分组</SelectItem>
             </SelectContent>
           </Select>
-          {(date || keyword || kind !== "all") && (
+          {(date || keyword || kind !== "all" || reachFilter !== "all") && (
             <Button
               variant="ghost"
               size="sm"
@@ -646,6 +662,7 @@ function FavoritesPage() {
                 setDate(undefined);
                 setKeyword("");
                 setKind("all");
+                setReachFilter("all");
               }}
             >
               <X className="h-4 w-4 mr-1" />
@@ -654,6 +671,46 @@ function FavoritesPage() {
           )}
         </div>
       </Card>
+
+      {/* 操作引导 + 触达规则说明 */}
+      <Card className="p-4 border-primary/20 bg-primary/5">
+        <div className="flex items-start gap-3">
+          <div className="h-8 w-8 rounded-lg bg-primary/10 text-primary flex items-center justify-center shrink-0">
+            <Info className="h-4 w-4" />
+          </div>
+          <div className="text-sm space-y-1.5 flex-1 min-w-0">
+            <div className="font-medium">触达操作指引</div>
+            <ol className="text-xs text-muted-foreground space-y-1 list-decimal pl-4">
+              <li>
+                先在
+                <Link
+                  to="/outreach/enterprise"
+                  className="text-primary mx-1 hover:underline"
+                >
+                  企业名录
+                </Link>
+                收藏目标企业或其关联人物，收藏后才能在本页发起批量触达。
+              </li>
+              <li>
+                勾选收藏对象 → 选择触达方式（邮件 / 短信 / WhatsApp / 社媒）→ 生成触达任务。
+              </li>
+              <li>
+                同一对象在同一触达方式下
+                <span className="text-foreground font-medium mx-1">仅可批量触达一次</span>
+                ，已触达对象会被自动过滤；如需继续跟进请前往
+                <Link
+                  to="/outreach/conversations"
+                  className="text-primary mx-1 hover:underline"
+                >
+                  触达会话
+                </Link>
+                。
+              </li>
+            </ol>
+          </div>
+        </div>
+      </Card>
+
 
       {/* 批量操作栏 */}
       {filtered.length > 0 && (
