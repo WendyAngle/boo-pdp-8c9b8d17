@@ -1529,9 +1529,65 @@ function ThreadDetail({
             disabled={winInfo?.closed}
           />
         )}
+        {/* 手动输入内容的语言提示 */}
+        {!winInfo?.closed && (langMismatch || preTranslate) && (
+          <div
+            className={cn(
+              "mt-2 flex items-center gap-2 flex-wrap rounded-md border px-2.5 py-1.5 text-xs",
+              langMismatch
+                ? "border-amber-300 bg-amber-50 text-amber-800"
+                : "border-emerald-300 bg-emerald-50 text-emerald-700",
+            )}
+          >
+            <Languages className="h-3.5 w-3.5 shrink-0" />
+            {langMismatch ? (
+              <>
+                <span>
+                  AI 识别当前内容为「{draftLang!.zh}」，与目标语言「{targetLang.zh}
+                  」不一致，客户可能看不懂。
+                </span>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="h-6 gap-1 px-2 text-[11px] bg-background"
+                  onClick={doTranslate}
+                  disabled={translating}
+                >
+                  {translating ? (
+                    <Loader2 className="h-3 w-3 animate-spin" />
+                  ) : (
+                    <Sparkles className="h-3 w-3" />
+                  )}
+                  一键翻译为{targetLang.zh}
+                </Button>
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  className="h-6 px-2 text-[11px]"
+                  onClick={() => setReplyLang(draftLang!.code)}
+                >
+                  改用{draftLang!.zh}发送
+                </Button>
+              </>
+            ) : (
+              <>
+                <span>已翻译为「{targetLang.zh}」，发送前请复核译文。</span>
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  className="h-6 gap-1 px-2 text-[11px]"
+                  onClick={undoTranslate}
+                >
+                  <Undo2 className="h-3 w-3" />
+                  撤销翻译
+                </Button>
+              </>
+            )}
+          </div>
+        )}
         <div className="mt-2 flex items-center gap-2">
           <Button
-            onClick={() => doSend(false)}
+            onClick={attemptSend}
             disabled={
               sending ||
               (winInfo?.closed && templates.length > 0 && !selectedTpl) ||
