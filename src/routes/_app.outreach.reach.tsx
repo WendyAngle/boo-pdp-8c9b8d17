@@ -10,17 +10,10 @@ import {
   X,
   Building2,
   UserRound,
-  Clock,
-  Loader2,
   CheckCircle2,
-  XCircle,
   Send,
   RefreshCw,
   EyeOff,
-  Info,
-  RotateCcw,
-  Play,
-  Ban,
   FileText,
   Sparkles,
 } from "lucide-react";
@@ -34,23 +27,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
-import { toast } from "sonner";
+import { TooltipProvider } from "@/components/ui/tooltip";
 import {
   Select,
   SelectContent,
@@ -74,14 +51,7 @@ import {
   backfillAiGenerationEntries,
   resetDemoLedger,
   syncFailedRefunds,
-  triggerReachNow,
-  cancelPendingReach,
-  retryFailedReach,
-  isRetryableFailReason,
-  REACH_STATUS_LABEL,
-  REACH_STATUS_COLOR,
   REACH_CHANNEL_LABEL,
-  type ReachStatus,
   type ReachChannel,
 } from "@/lib/credits-ledger";
 import { ListPagination } from "@/components/ListPagination";
@@ -107,15 +77,6 @@ export const Route = createFileRoute("/_app/outreach/reach")({
 });
 
 import { formatDateTime as fmtTime } from "@/lib/format-date";
-
-function relative(iso: string, now: number) {
-  const diff = (now - new Date(iso).getTime()) / 1000;
-  if (diff < 60) return `${Math.max(1, Math.floor(diff))} 秒前`;
-  if (diff < 3600) return `${Math.floor(diff / 60)} 分钟前`;
-  if (diff < 86400) return `${Math.floor(diff / 3600)} 小时前`;
-  return `${Math.floor(diff / 86400)} 天前`;
-}
-
 
 type TaskGroup = {
   key: string;
@@ -173,7 +134,6 @@ function ReachPage() {
     return () => clearInterval(t);
   }, []);
 
-  const [statusTab, setStatusTab] = useState<"all" | ReachStatus>("all");
   const [channel, setChannel] = useState<"all" | ReachChannel | "whatsapp">(
     "all",
   );
@@ -185,14 +145,6 @@ function ReachPage() {
   const pageSize = 10;
   const [view, setView] = useState<"task" | "record">("task");
   const [taskKey, setTaskKey] = useState<string | null>(null);
-  const [confirm, setConfirm] = useState<
-    | null
-    | {
-        kind: "trigger" | "cancel" | "retry";
-        id: string;
-        target: string;
-      }
-  >(null);
   const [viewing, setViewing] = useState<
     | null
     | {
@@ -792,30 +744,6 @@ function KpiCard({
         <div className="mt-1 text-2xl font-bold tabular-nums">{value}</div>
       </div>
     </div>
-  );
-}
-
-function StatusTab({
-  active,
-  onClick,
-  children,
-}: {
-  active: boolean;
-  onClick: () => void;
-  children: React.ReactNode;
-}) {
-  return (
-    <button
-      onClick={onClick}
-      className={cn(
-        "px-4 py-2 text-sm font-medium border-b-2 -mb-px transition-colors",
-        active
-          ? "border-primary text-primary"
-          : "border-transparent text-muted-foreground hover:text-foreground",
-      )}
-    >
-      {children}
-    </button>
   );
 }
 
