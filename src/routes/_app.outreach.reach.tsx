@@ -10,17 +10,10 @@ import {
   X,
   Building2,
   UserRound,
-  Clock,
-  Loader2,
   CheckCircle2,
-  XCircle,
   Send,
   RefreshCw,
   EyeOff,
-  Info,
-  RotateCcw,
-  Play,
-  Ban,
   FileText,
   Sparkles,
 } from "lucide-react";
@@ -34,23 +27,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
-import { toast } from "sonner";
+import { TooltipProvider } from "@/components/ui/tooltip";
 import {
   Select,
   SelectContent,
@@ -74,14 +51,7 @@ import {
   backfillAiGenerationEntries,
   resetDemoLedger,
   syncFailedRefunds,
-  triggerReachNow,
-  cancelPendingReach,
-  retryFailedReach,
-  isRetryableFailReason,
-  REACH_STATUS_LABEL,
-  REACH_STATUS_COLOR,
   REACH_CHANNEL_LABEL,
-  type ReachStatus,
   type ReachChannel,
 } from "@/lib/credits-ledger";
 import { ListPagination } from "@/components/ListPagination";
@@ -108,15 +78,6 @@ export const Route = createFileRoute("/_app/outreach/reach")({
 
 import { formatDateTime as fmtTime } from "@/lib/format-date";
 
-function relative(iso: string, now: number) {
-  const diff = (now - new Date(iso).getTime()) / 1000;
-  if (diff < 60) return `${Math.max(1, Math.floor(diff))} 秒前`;
-  if (diff < 3600) return `${Math.floor(diff / 60)} 分钟前`;
-  if (diff < 86400) return `${Math.floor(diff / 3600)} 小时前`;
-  return `${Math.floor(diff / 86400)} 天前`;
-}
-
-
 type TaskGroup = {
   key: string;
   name: string;
@@ -124,15 +85,12 @@ type TaskGroup = {
   platform?: string;
   action: string;
   total: number;
-  pending: number;
-  in_progress: number;
-  success: number;
-  failed: number;
   replies: number;
   aiGenerated: boolean;
   createdAt: string;
   lastAt: string;
 };
+
 
 function groupKeyOf(r: { channel?: ReachChannel; platform?: string; subject?: string; detail?: string; createdAt: string }) {
   const day = r.createdAt.slice(0, 10);
@@ -176,7 +134,6 @@ function ReachPage() {
     return () => clearInterval(t);
   }, []);
 
-  const [statusTab, setStatusTab] = useState<"all" | ReachStatus>("all");
   const [channel, setChannel] = useState<"all" | ReachChannel | "whatsapp">(
     "all",
   );
@@ -188,14 +145,6 @@ function ReachPage() {
   const pageSize = 10;
   const [view, setView] = useState<"task" | "record">("task");
   const [taskKey, setTaskKey] = useState<string | null>(null);
-  const [confirm, setConfirm] = useState<
-    | null
-    | {
-        kind: "trigger" | "cancel" | "retry";
-        id: string;
-        target: string;
-      }
-  >(null);
   const [viewing, setViewing] = useState<
     | null
     | {
@@ -211,28 +160,18 @@ function ReachPage() {
       }
   >(null);
 
+  // 触达任务仅展示「触达成功」的数据，不再区分待触达 / 触达中 / 触达失败
   const reachRows = useMemo(() => {
     return ledger
       .filter((e) => e.kind === "reach")
       .map((e) => ({ ...e, status: getReachStatus(e, now) }))
+      .filter((e) => e.status === "success")
       .sort((a, b) => (a.createdAt < b.createdAt ? 1 : a.createdAt > b.createdAt ? -1 : 0));
   }, [ledger, now]);
-
-  const counts = useMemo(() => {
-    const c: Record<ReachStatus, number> = {
-      pending: 0,
-      in_progress: 0,
-      success: 0,
-      failed: 0,
-    };
-    for (const r of reachRows) c[r.status]++;
-    return c;
-  }, [reachRows]);
 
   const filtered = useMemo(() => {
     const k = kw.trim().toLowerCase();
     return reachRows.filter((r) => {
-      if (statusTab !== "all" && r.status !== statusTab) return false;
       if (targetKind !== "all" && r.targetKind !== targetKind) return false;
       if (channel === "whatsapp") {
         if (r.channel !== "social" || r.platform !== "WhatsApp") return false;
@@ -249,11 +188,11 @@ function ReachPage() {
         (r.platform ?? "").toLowerCase().includes(k)
       );
     });
-  }, [reachRows, statusTab, channel, targetKind, kw]);
+  }, [reachRows, channel, targetKind, kw]);
 
   useEffect(() => {
     setPage(1);
-  }, [statusTab, channel, targetKind, kw, view, taskKey]);
+  }, [channel, targetKind, kw, view, taskKey]);
 
   const targetKindCounts = useMemo(() => {
     let ent = 0;
@@ -282,8 +221,6 @@ function ReachPage() {
   const poolHealth = poolAverageHealth(accounts);
   const usableAccounts = accounts.filter((a) => a.status === "正常").length;
 
-  const doneTotal = counts.success + counts.failed;
-  const successRate = doneTotal === 0 ? 0 : Math.round((counts.success / doneTotal) * 100);
   const replyTotal = useMemo(
     () =>
       reachRows.reduce((n, r) => {
@@ -292,14 +229,15 @@ function ReachPage() {
       }, 0),
     [reachRows, threadByKey],
   );
+  const replyRate =
+    reachRows.length === 0 ? 0 : Math.round((replyTotal / reachRows.length) * 100);
 
-  // 任务视图：把逐条触达记录按「任务」聚合（社媒批量任务按任务名聚合，其余按渠道 + 动作 + 日期聚合）
+  // 任务视图：把逐条触达成功记录按「任务」聚合
   const taskGroups = useMemo(() => {
     const map = new Map<string, TaskGroup>();
     for (const r of filtered) {
       const action = reachAction(r);
       const day = r.createdAt.slice(0, 10);
-      // 批量创建的触达任务按任务名聚合；单条触达按「渠道 + 平台 + 动作 + 日期」归入当日任务
       const batchName = r.channel === "social" && r.subject ? r.subject : null;
       const key = groupKeyOf(r);
       let g = map.get(key);
@@ -313,10 +251,6 @@ function ReachPage() {
           platform: r.platform,
           action,
           total: 0,
-          pending: 0,
-          in_progress: 0,
-          success: 0,
-          failed: 0,
           replies: 0,
           aiGenerated: false,
           createdAt: r.createdAt,
@@ -325,7 +259,6 @@ function ReachPage() {
         map.set(key, g);
       }
       g.total++;
-      g[r.status]++;
       if (r.aiGenerated) g.aiGenerated = true;
       const t = threadByKey.get(threadKeyFor(r) ?? "");
       g.replies += t?.meta.inboundMessages.length ?? 0;
@@ -334,6 +267,7 @@ function ReachPage() {
     }
     return [...map.values()].sort((a, b) => (a.lastAt < b.lastAt ? 1 : -1));
   }, [filtered, threadByKey]);
+
 
   const taskPageData = useMemo(
     () => taskGroups.slice((page - 1) * pageSize, page * pageSize),
@@ -395,18 +329,19 @@ function ReachPage() {
           </div>
           <div className="flex items-center gap-5 text-right text-white/90">
             <div>
-              <div className="text-xs opacity-80">触达总数</div>
+              <div className="text-xs opacity-80">触达成功</div>
               <div className="text-2xl font-bold tabular-nums">{reachRows.length}</div>
-            </div>
-            <div>
-              <div className="text-xs opacity-80">触达成功率</div>
-              <div className="text-2xl font-bold tabular-nums">{successRate}%</div>
             </div>
             <div>
               <div className="text-xs opacity-80">客户回复</div>
               <div className="text-2xl font-bold tabular-nums">{replyTotal}</div>
             </div>
+            <div>
+              <div className="text-xs opacity-80">回复率</div>
+              <div className="text-2xl font-bold tabular-nums">{replyRate}%</div>
+            </div>
           </div>
+
         </div>
         <div className="mt-3 flex flex-wrap items-center gap-4 text-xs text-white/85">
           <span className="inline-flex items-center gap-1">
@@ -446,43 +381,40 @@ function ReachPage() {
       {/* KPI */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         <KpiCard
-          icon={<Clock className="h-5 w-5" />}
-          label={REACH_STATUS_LABEL.pending}
-          value={counts.pending}
-          tone="slate"
-        />
-        <KpiCard
-          icon={<Loader2 className="h-5 w-5" />}
-          label={REACH_STATUS_LABEL.in_progress}
-          value={counts.in_progress}
-          tone="amber"
-        />
-        <KpiCard
           icon={<CheckCircle2 className="h-5 w-5" />}
-          label={REACH_STATUS_LABEL.success}
-          value={counts.success}
+          label="触达成功"
+          value={reachRows.length}
           tone="emerald"
         />
         <KpiCard
-          icon={<XCircle className="h-5 w-5" />}
-          label={REACH_STATUS_LABEL.failed}
-          value={counts.failed}
-          tone="rose"
+          icon={<Building2 className="h-5 w-5" />}
+          label="企业目标"
+          value={targetKindCounts.ent}
+          tone="slate"
+        />
+        <KpiCard
+          icon={<UserRound className="h-5 w-5" />}
+          label="人物目标"
+          value={targetKindCounts.con}
+          tone="amber"
+        />
+        <KpiCard
+          icon={<MessageCircleReply className="h-5 w-5" />}
+          label="客户回复"
+          value={replyTotal}
+          tone="emerald"
         />
       </div>
 
       <Card className="p-0 overflow-hidden">
-        {/* Tab + filter */}
-        <div className="flex items-center gap-1 border-b border-border px-5 pt-3">
-          <StatusTab active={statusTab === "all"} onClick={() => setStatusTab("all")}>
-            全部 <span className="ml-1 text-muted-foreground">{reachRows.length}</span>
-          </StatusTab>
-          {(["success", "in_progress", "pending", "failed"] as ReachStatus[]).map((s) => (
-            <StatusTab key={s} active={statusTab === s} onClick={() => setStatusTab(s)}>
-              {REACH_STATUS_LABEL[s]} <span className="ml-1 text-muted-foreground">{counts[s]}</span>
-            </StatusTab>
-          ))}
-          <div className="ml-auto mb-2 inline-flex rounded-md border bg-muted/40 p-0.5">
+        {/* 视图切换 + 筛选 */}
+        <div className="flex items-center gap-1 border-b border-border px-5 pt-3 pb-2">
+          <span className="text-sm font-medium">
+            触达成功记录
+            <span className="ml-1 text-muted-foreground">{reachRows.length}</span>
+          </span>
+
+          <div className="ml-auto inline-flex rounded-md border bg-muted/40 p-0.5">
             <button
               type="button"
               onClick={() => {
@@ -569,14 +501,13 @@ function ReachPage() {
               </button>
             </Badge>
           )}
-          {(kw || channel !== "all" || statusTab !== "all" || targetKind !== "all" || taskKey) && (
+          {(kw || channel !== "all" || targetKind !== "all" || taskKey) && (
             <Button
               variant="ghost"
               size="sm"
               onClick={() => {
                 setKw("");
                 setChannel("all");
-                setStatusTab("all");
                 setTargetKind("all");
                 setTaskKey(null);
               }}
@@ -600,10 +531,11 @@ function ReachPage() {
             <div className="h-14 w-14 rounded-full bg-muted flex items-center justify-center">
               <Send className="h-7 w-7 text-muted-foreground" />
             </div>
-            <div className="text-base font-medium">暂无触达记录</div>
+            <div className="text-base font-medium">暂无触达成功记录</div>
             <div className="text-sm text-muted-foreground max-w-md">
-              前往企业 / 人物详情页，针对邮箱、电话或社媒账号发起触达
+              前往企业 / 人物详情页，针对邮箱、电话或社媒账号发起触达，成功送达后将在此展示
             </div>
+
             <Button asChild variant="outline" size="sm" className="mt-2 gap-1.5">
               <Link to="/outreach/enterprise">
                 <Building2 className="h-4 w-4" />
@@ -618,13 +550,13 @@ function ReachPage() {
                 <TableHead className="min-w-[220px]">任务名</TableHead>
                 <TableHead className="w-[150px]">渠道 / 平台</TableHead>
                 <TableHead className="w-[90px]">动作</TableHead>
-                <TableHead className="w-[80px]">目标数</TableHead>
-                <TableHead className="w-[260px]">执行进度</TableHead>
-                <TableHead className="w-[90px]">成功率</TableHead>
+                <TableHead className="w-[110px]">触达成功数</TableHead>
                 <TableHead className="w-[90px]">回复</TableHead>
+                <TableHead className="w-[110px]">回复率</TableHead>
                 <TableHead className="w-[170px]">最近执行</TableHead>
               </TableRow>
             </TableHeader>
+
             <TableBody>
               {taskPageData.map((g) => (
                 <TableRow
@@ -664,14 +596,6 @@ function ReachPage() {
                     </span>
                   </TableCell>
                   <TableCell className="tabular-nums font-semibold">{g.total}</TableCell>
-                  <TableCell>
-                    <TaskProgress group={g} />
-                  </TableCell>
-                  <TableCell className="tabular-nums text-sm font-semibold">
-                    {g.success + g.failed === 0
-                      ? "—"
-                      : `${Math.round((g.success / (g.success + g.failed)) * 100)}%`}
-                  </TableCell>
                   <TableCell className="tabular-nums text-sm">
                     {g.replies > 0 ? (
                       <span className="text-emerald-600 font-semibold">{g.replies}</span>
@@ -679,6 +603,10 @@ function ReachPage() {
                       <span className="text-muted-foreground">—</span>
                     )}
                   </TableCell>
+                  <TableCell className="tabular-nums text-sm font-semibold">
+                    {g.total === 0 ? "—" : `${Math.round((g.replies / g.total) * 100)}%`}
+                  </TableCell>
+
                   <TableCell className="font-mono tabular-nums text-xs text-muted-foreground whitespace-nowrap">
                     {fmtTime(g.lastAt)}
                   </TableCell>
@@ -690,13 +618,10 @@ function ReachPage() {
           <Table>
             <TableHeader>
               <TableRow className="bg-primary/5 hover:bg-primary/5">
-                <TableHead className="w-[170px]">时间</TableHead>
+                <TableHead className="w-[170px]">触达时间</TableHead>
                 <TableHead className="w-[140px]">渠道</TableHead>
-                <TableHead className="w-[220px]">状态 / 原因</TableHead>
                 <TableHead>明细说明</TableHead>
-                {statusTab !== "pending" && statusTab !== "in_progress" && statusTab !== "failed" && (
-                  <TableHead className="w-[110px]">回复</TableHead>
-                )}
+                <TableHead className="w-[110px]">回复</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -708,50 +633,18 @@ function ReachPage() {
                   <TableCell>
                     <ChannelBadge channel={r.channel!} platform={r.platform} />
                   </TableCell>
-                  <TableCell>
-                    <div className="flex flex-col items-start gap-1">
-                      <StatusBadge status={r.status} />
-                      {r.status === "failed" && r.failReason && (
-                        <Tooltip>
-                          <TooltipTrigger asChild>
-                            <button
-                              type="button"
-                              className="inline-flex items-center gap-1 text-[11px] text-rose-600 hover:text-rose-700"
-                            >
-                              <Info className="h-3 w-3" />
-                              <span className="truncate max-w-[180px]">
-                                {r.failReason}
-                              </span>
-                            </button>
-                          </TooltipTrigger>
-                          <TooltipContent side="top" className="max-w-[260px]">
-                            <div className="text-xs leading-relaxed">
-                              <div className="font-medium">失败原因</div>
-                              <div className="mt-0.5">{r.failReason}</div>
-                              <div className="mt-1 text-muted-foreground">
-                                {!isRetryableFailReason(r.failReason) && (
-                                  <> 该原因不支持重新触达，建议核实联系方式后重新发起。</>
-                                )}
-                              </div>
-                            </div>
-                          </TooltipContent>
-                        </Tooltip>
-                      )}
-                    </div>
-                  </TableCell>
                   <TableCell className="text-xs max-w-[420px]">
                     <DetailCell row={r} onViewContent={() => setViewing(r)} />
                   </TableCell>
-                  {statusTab !== "pending" && statusTab !== "in_progress" && statusTab !== "failed" && (
-                    <TableCell className="text-xs">
-                      <ReplyCell reach={r} thread={threadByKey.get(threadKeyFor(r) ?? "") ?? null} />
-                    </TableCell>
-                  )}
+                  <TableCell className="text-xs">
+                    <ReplyCell reach={r} thread={threadByKey.get(threadKeyFor(r) ?? "") ?? null} />
+                  </TableCell>
                 </TableRow>
               ))}
             </TableBody>
           </Table>
         )}
+
         {filtered.length > 0 && (
           <div className="px-5 pb-4">
             <ListPagination
@@ -764,54 +657,6 @@ function ReachPage() {
         )}
       </Card>
 
-      <AlertDialog open={!!confirm} onOpenChange={(o) => !o && setConfirm(null)}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>
-              {confirm?.kind === "trigger" && "立即触达？"}
-              {confirm?.kind === "cancel" && "取消该触达？"}
-              {confirm?.kind === "retry" && "重新触达？"}
-            </AlertDialogTitle>
-            <AlertDialogDescription>
-              {confirm?.kind === "trigger" && (
-                <>对象：<span className="font-medium text-foreground">{confirm.target}</span>。该条触达将立即进入"触达中"状态。</>
-              )}
-              {confirm?.kind === "cancel" && (
-                <>对象：<span className="font-medium text-foreground">{confirm.target}</span>。取消后该条触达将不再执行。</>
-              )}
-              {confirm?.kind === "retry" && (
-                <>对象：<span className="font-medium text-foreground">{confirm.target}</span>。将基于原渠道与明细重新发起一条触达。</>
-              )}
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>关闭</AlertDialogCancel>
-            <AlertDialogAction
-              className={cn(
-                confirm?.kind === "cancel" &&
-                  "bg-destructive text-destructive-foreground hover:bg-destructive/90",
-              )}
-              onClick={() => {
-                if (!confirm) return;
-                if (confirm.kind === "trigger") {
-                  if (triggerReachNow(confirm.id))
-                    toast.success("已立即触达，状态切换为「触达中」");
-                  else toast.error("当前状态不可执行立即触达");
-                } else if (confirm.kind === "cancel") {
-                  if (cancelPendingReach(confirm.id)) toast.success("已取消触达");
-                  else toast.error("仅「待触达」状态可取消");
-                } else if (confirm.kind === "retry") {
-                  if (retryFailedReach(confirm.id)) toast.success("已重新发起触达");
-                  else toast.error("仅「触达失败」记录可重新触达");
-                }
-                setConfirm(null);
-              }}
-            >
-              确认
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
 
       <Dialog open={!!viewing} onOpenChange={(o) => !o && setViewing(null)}>
         <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto">
@@ -871,36 +716,6 @@ function ReachPage() {
   );
 }
 
-function TaskProgress({ group }: { group: TaskGroup }) {
-  const segs = [
-    { n: group.success, cls: "bg-emerald-500", label: REACH_STATUS_LABEL.success },
-    { n: group.in_progress, cls: "bg-amber-500", label: REACH_STATUS_LABEL.in_progress },
-    { n: group.pending, cls: "bg-slate-300", label: REACH_STATUS_LABEL.pending },
-    { n: group.failed, cls: "bg-rose-500", label: REACH_STATUS_LABEL.failed },
-  ].filter((x) => x.n > 0);
-  return (
-    <div className="space-y-1">
-      <div className="flex h-1.5 w-full overflow-hidden rounded-full bg-muted">
-        {segs.map((x) => (
-          <div
-            key={x.label}
-            className={x.cls}
-            style={{ width: `${(x.n / group.total) * 100}%` }}
-            title={`${x.label} ${x.n}`}
-          />
-        ))}
-      </div>
-      <div className="flex flex-wrap gap-x-2.5 gap-y-0.5 text-[11px] text-muted-foreground">
-        {segs.map((x) => (
-          <span key={x.label} className="inline-flex items-center gap-1">
-            <span className={cn("h-1.5 w-1.5 rounded-full", x.cls)} />
-            {x.label} <span className="tabular-nums text-foreground">{x.n}</span>
-          </span>
-        ))}
-      </div>
-    </div>
-  );
-}
 
 function KpiCard({
   icon,
@@ -932,30 +747,6 @@ function KpiCard({
   );
 }
 
-function StatusTab({
-  active,
-  onClick,
-  children,
-}: {
-  active: boolean;
-  onClick: () => void;
-  children: React.ReactNode;
-}) {
-  return (
-    <button
-      onClick={onClick}
-      className={cn(
-        "px-4 py-2 text-sm font-medium border-b-2 -mb-px transition-colors",
-        active
-          ? "border-primary text-primary"
-          : "border-transparent text-muted-foreground hover:text-foreground",
-      )}
-    >
-      {children}
-    </button>
-  );
-}
-
 function ChannelBadge({ channel, platform }: { channel: ReachChannel; platform?: string }) {
   const isWhatsApp = channel === "social" && platform === "WhatsApp";
   const Icon = channel === "email" ? Mail : channel === "phone" ? Phone : isWhatsApp ? Send : Globe;
@@ -972,27 +763,14 @@ function ReplyCell({
   reach,
   thread,
 }: {
-  reach: { channel?: ReachChannel; status: ReachStatus };
+  reach: { channel?: ReachChannel };
   thread: Thread | null;
 }) {
-  // 仅「触达成功」的邮件/短信任务有意义展示回复；其他状态与社媒渠道显示 —
-  if (reach.status === "in_progress") {
-    return (
-      <span className="inline-flex items-center gap-1 text-[11px] text-muted-foreground" title="触达进行中，暂无回复">
-        <Loader2 className="h-3 w-3 animate-spin" />
-        触达中
-      </span>
-    );
-  }
-  if (reach.status === "failed") {
-    return <span className="text-[11px] text-muted-foreground" title="触达失败">—</span>;
-  }
-  if (reach.status !== "success") {
-    return <span className="text-[11px] text-muted-foreground">—</span>;
-  }
+  // 仅邮件 / 短信渠道有回复语义；社媒渠道显示 —
   if (reach.channel !== "email" && reach.channel !== "phone") {
     return <span className="text-[11px] text-muted-foreground">—</span>;
   }
+
   const replies = thread?.meta.inboundMessages.length ?? 0;
   if (!thread || replies === 0) {
     return (
@@ -1023,88 +801,6 @@ function ReplyCell({
   );
 }
 
-function StatusBadge({ status }: { status: ReachStatus }) {
-  const Icon =
-    status === "pending"
-      ? Clock
-      : status === "in_progress"
-        ? Loader2
-        : status === "success"
-          ? CheckCircle2
-          : XCircle;
-  return (
-    <span
-      className={cn(
-        "inline-flex items-center gap-1 px-2 py-0.5 rounded-md border text-xs font-medium",
-        REACH_STATUS_COLOR[status],
-      )}
-    >
-      <Icon className={cn("h-3 w-3", status === "in_progress" && "animate-spin")} />
-      {REACH_STATUS_LABEL[status]}
-    </span>
-  );
-}
-
-function ActionCell({
-  row,
-  onTrigger,
-  onRetry,
-  retryable = true,
-}: {
-  row: { id: string; status: ReachStatus };
-  onTrigger: () => void;
-  onRetry: () => void;
-  retryable?: boolean;
-}) {
-  if (row.status === "pending") {
-    return (
-      <div className="inline-flex items-center gap-1">
-        <Button
-          size="sm"
-          variant="default"
-          className="h-7 gap-1 px-2 text-xs"
-          onClick={onTrigger}
-        >
-          <Play className="h-3 w-3" />
-          立即触达
-        </Button>
-      </div>
-    );
-  }
-  if (row.status === "failed") {
-    return (
-      <Tooltip>
-        <TooltipTrigger asChild>
-          <span className="inline-flex">
-            <Button
-              size="sm"
-              variant="outline"
-              disabled={!retryable}
-              className={cn(
-                "h-7 gap-1 px-2 text-xs",
-                retryable
-                  ? "text-primary border-primary/40 hover:bg-primary/10"
-                  : "text-muted-foreground",
-              )}
-              onClick={retryable ? onRetry : undefined}
-            >
-              <RotateCcw className="h-3 w-3" />
-              重新触达
-            </Button>
-          </span>
-        </TooltipTrigger>
-        {!retryable && (
-          <TooltipContent side="top" className="max-w-[220px]">
-            <div className="text-xs leading-relaxed">
-              该失败原因不支持重新触达，建议核实联系方式后重新发起。
-            </div>
-          </TooltipContent>
-        )}
-      </Tooltip>
-    );
-  }
-  return <span className="text-xs text-muted-foreground">—</span>;
-}
 
 function DetailCell({
   row,
