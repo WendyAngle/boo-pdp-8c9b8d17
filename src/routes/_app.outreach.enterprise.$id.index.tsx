@@ -172,13 +172,6 @@ function EnterpriseDetailPage() {
                   mono
                 />
               </span>
-              <ReachButton
-                targetKind="enterprise"
-                targetId={e.id}
-                targetName={e.name}
-                channel="email"
-                detail={e.email}
-              />
             </div>
           </Field>
           <Field label="联系电话">
@@ -194,13 +187,6 @@ function EnterpriseDetailPage() {
                   mono
                 />
               </span>
-              <ReachButton
-                targetKind="enterprise"
-                targetId={e.id}
-                targetName={e.name}
-                channel="phone"
-                detail={e.phone}
-              />
               <WhatsAppReachButton
                 targetKind="enterprise"
                 targetId={e.id}
@@ -505,16 +491,6 @@ function EnterpriseContactCard({
               mono
             />
           </div>
-          <div className="shrink-0">
-          <ReachButton
-            targetKind="contact"
-            targetId={`${e.id}:${idx}`}
-            targetName={c.name}
-            parentRef={{ id: e.id, name: e.name }}
-            channel="email"
-            detail={c.email}
-          />
-          </div>
         </div>
         {c.phone && (
           <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-muted-foreground min-w-0">
@@ -529,16 +505,6 @@ function EnterpriseContactCard({
                 value={c.phone}
                 mono
               />
-            </div>
-            <div className="shrink-0">
-            <ReachButton
-              targetKind="contact"
-              targetId={`${e.id}:${idx}`}
-              targetName={c.name}
-              parentRef={{ id: e.id, name: e.name }}
-              channel="phone"
-              detail={c.phone}
-            />
             </div>
             <div className="shrink-0">
             <WhatsAppReachButton

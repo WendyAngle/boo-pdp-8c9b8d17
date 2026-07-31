@@ -373,14 +373,6 @@ function ContactDetailPage() {
                   mono
                 />
               </span>
-              <ReachButton
-                targetKind="contact"
-                targetId={`${e.id}:${d.idx}`}
-                targetName={c.name}
-                parentRef={{ id: e.id, name: e.name }}
-                channel="email"
-                detail={c.email}
-              />
             </div>
           </Field>
           <Field label="电话">
@@ -398,14 +390,6 @@ function ContactDetailPage() {
                     mono
                   />
                 </span>
-                <ReachButton
-                  targetKind="contact"
-                  targetId={`${e.id}:${d.idx}`}
-                  targetName={c.name}
-                  parentRef={{ id: e.id, name: e.name }}
-                  channel="phone"
-                  detail={c.phone}
-                />
                 <WhatsAppReachButton
                   targetKind="contact"
                   targetId={`${e.id}:${d.idx}`}
