@@ -1391,9 +1391,6 @@ function ThreadDetail({
         <TabsContent value="profile" className="flex-1 min-h-0 overflow-y-auto px-6 py-4 mt-0">
           <ProfilePanel thread={thread} />
         </TabsContent>
-        <TabsContent value="history" className="flex-1 min-h-0 overflow-y-auto px-6 py-4 mt-0">
-          <ReachHistoryPanel thread={thread} />
-        </TabsContent>
       </Tabs>
 
       {/* 回复区 */}
