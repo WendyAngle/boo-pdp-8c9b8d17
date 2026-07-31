@@ -1,14 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
-import {
-  Sparkles,
-  Loader2,
-  Eye,
-  Send,
-  Zap,
-  Wand2,
-} from "lucide-react";
+import { Sparkles, Loader2, Eye, Send, Zap, Wand2, Languages } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -29,18 +22,10 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { cn } from "@/lib/utils";
-import {
-  type SocialTaskPlatform,
-} from "@/lib/social-tasks";
+import { type SocialTaskPlatform } from "@/lib/social-tasks";
 import { useSocialAccounts } from "@/data/social-accounts";
 import { useCreditBalance, spendCredits } from "@/lib/credits-balance";
-import {
-  COST_SOCIAL_DM,
-  COST_AI_SOCIAL,
-  createSocialReachBatch,
-  chargeAiGeneration,
-} from "@/lib/credits-ledger";
+import { COST_SOCIAL_DM, createSocialReachBatch } from "@/lib/credits-ledger";
 
 import {
   MESSAGE_VARIABLES,
@@ -48,9 +33,11 @@ import {
   myContext,
   type VarContext,
 } from "@/lib/message-vars";
+import { LANGUAGES, langByCode } from "@/lib/lang-detect";
 import { useLeadProfile } from "@/lib/lead-profile";
 import { useCurrentUser } from "@/lib/current-user";
 import { generateAiContent } from "@/lib/api/ai-compose.functions";
+import { translateMessage } from "@/lib/api/ai-translate.functions";
 
 const REGIONS = [
   "美国",
@@ -74,6 +61,30 @@ const REGIONS = [
   "其他",
 ] as const;
 
+/** 目标语言（发送语言）候选：排除中文，中文为原文 */
+const TARGET_LANGS = LANGUAGES.filter((l) => l.code !== "zh");
+
+/** 地区 → 默认目标语言 */
+const REGION_LANG: Record<string, string> = {
+  美国: "en",
+  英国: "en",
+  加拿大: "en",
+  澳大利亚: "en",
+  新加坡: "en",
+  印度: "en",
+  日本: "ja",
+  韩国: "ko",
+  泰国: "th",
+  越南: "vi",
+  印度尼西亚: "id",
+  马来西亚: "ms",
+  菲律宾: "en",
+  德国: "de",
+  法国: "fr",
+  巴西: "pt",
+  墨西哥: "es",
+};
+
 const SENSITIVE_WORDS = ["赌博", "色情", "毒品", "洗钱", "枪支", "porn", "casino"];
 const DAILY_PER_ACCOUNT = 5;
 
@@ -89,21 +100,26 @@ export function CreateReachTaskDialog({
   const accounts = useSocialAccounts();
   const balance = useCreditBalance();
   const callGenerate = useServerFn(generateAiContent);
+  const callTranslate = useServerFn(translateMessage);
 
   const [name, setName] = useState("");
   const [platform, setPlatform] = useState<SocialTaskPlatform>("Facebook");
   const [region, setRegion] = useState<string>("美国");
   const [keywords, setKeywords] = useState("");
   const [targetCap, setTargetCap] = useState<number>(30);
+  /** 中文原文 */
   const [content, setContent] = useState("");
+  /** 目标语言译文（实际发送内容） */
+  const [translated, setTranslated] = useState("");
+  const [targetLang, setTargetLang] = useState<string>("en");
   const [previewIdx, setPreviewIdx] = useState(0);
 
   const [aiUsed, setAiUsed] = useState(false);
-  const [aiCount, setAiCount] = useState(0);
-  const [aiOpen, setAiOpen] = useState(false);
   const [aiLoading, setAiLoading] = useState(false);
+  const [trLoading, setTrLoading] = useState(false);
   const [kwLoading, setKwLoading] = useState(false);
-  const [targetLang, setTargetLang] = useState<"zh" | "en">("zh");
+  /** 译文对应的原文快照，用于提示「原文已修改，需重新翻译」 */
+  const [trSource, setTrSource] = useState("");
 
   useEffect(() => {
     if (!open) return;
@@ -113,11 +129,20 @@ export function CreateReachTaskDialog({
     setKeywords("");
     setTargetCap(30);
     setContent("");
+    setTranslated("");
+    setTrSource("");
+    setTargetLang("en");
     setPreviewIdx(0);
     setAiUsed(false);
-    setAiCount(0);
-    setTargetLang("zh");
   }, [open]);
+
+  // 地区变化时同步推荐目标语言（仅在尚未翻译时）
+  useEffect(() => {
+    if (!open) return;
+    const l = REGION_LANG[region];
+    if (l && !translated) setTargetLang(l);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [region, open]);
 
   const availableAccounts = useMemo(
     () => accounts.filter((a) => a.platform === platform && a.status === "正常"),
@@ -126,6 +151,7 @@ export function CreateReachTaskDialog({
   const dailyCap = availableAccounts.length * DAILY_PER_ACCOUNT;
 
   const my = useMemo<VarContext>(() => myContext(profile, user), [profile, user]);
+  const targetLangOpt = langByCode(targetLang);
 
   // 预览：模拟 3 个虚拟目标（关键词/地区尚未真实抓取）
   const previewTargets = useMemo(() => {
@@ -144,8 +170,10 @@ export function CreateReachTaskDialog({
 
   const previewTarget =
     previewTargets[Math.min(previewIdx, previewTargets.length - 1)];
+  /** 实际发送内容：有译文则发译文 */
+  const sendContent = (translated.trim() || content).trim();
   const previewContent = previewTarget
-    ? renderTemplate(content, {
+    ? renderTemplate(sendContent, {
         企业名: previewTarget.name,
         联系人名: previewTarget.name,
         行业: profile.industries[0],
@@ -155,9 +183,11 @@ export function CreateReachTaskDialog({
     : "";
 
   const sendCost = targetCap * COST_SOCIAL_DM;
-  const aiCost = aiCount * COST_AI_SOCIAL;
-  const grandTotal = sendCost + aiCost;
-  const hit = SENSITIVE_WORDS.find((w) => content.toLowerCase().includes(w.toLowerCase()));
+  const hit = SENSITIVE_WORDS.find((w) =>
+    `${content} ${translated}`.toLowerCase().includes(w.toLowerCase()),
+  );
+  const staleTranslation =
+    !!translated.trim() && trSource.trim() !== content.trim();
 
   const contentRef = useRef<HTMLTextAreaElement | null>(null);
   function insertVarAt(v: string) {
@@ -191,48 +221,58 @@ export function CreateReachTaskDialog({
     }
   }
 
-  async function handleAiGenerate(params: {
-    scene: string;
-    tone: "formal" | "friendly" | "concise";
-    language: "zh" | "en";
-    extra?: string;
-  }) {
-    if (balance.balance < COST_AI_SOCIAL) {
-      toast.error(`积分不足，AI 生成需 ${COST_AI_SOCIAL} 积分`);
-      return;
-    }
+  /** 单一按钮：AI 生成中文首发私信文案（免费） */
+  async function handleAiGenerate() {
     setAiLoading(true);
     try {
       const res = await callGenerate({
         data: {
           channel: "social",
           platform,
-          ...params,
+          scene: "开发信",
+          tone: "friendly",
+          language: "zh",
+          languageName: "中文",
           myCompany: profile.companyName,
           myName: user.name,
           sampleEnterprise: previewTargets[0]?.name,
         },
       });
-      spendCredits(COST_AI_SOCIAL);
-      // 生成成功即产生一条 AI 生成消费明细
-      chargeAiGeneration({
-        channel: "social",
-        platform,
-        targetName: name.trim() || `${platform}平台私信`,
-        detailSuffix: `${name.trim() || "新建触达任务"} · ${params.scene}`,
-      });
-
-      setTargetLang(params.language);
       if (res.content) setContent(res.content);
       setAiUsed(true);
-      setAiCount((c) => c + 1);
-      setAiOpen(false);
-      toast.success(`AI 已生成 ${platform} 文案，扣除 ${COST_AI_SOCIAL} 积分`);
+      toast.success("AI 已生成中文私信文案（免费），可直接修改");
     } catch (e) {
       const msg = e instanceof Error ? e.message : String(e);
       toast.error("AI 生成失败", { description: msg });
     } finally {
       setAiLoading(false);
+    }
+  }
+
+  /** 翻译为目标语言（免费） */
+  async function handleTranslate(code = targetLang) {
+    const src = content.trim();
+    if (!src) return toast.error("请先生成或输入中文私信内容");
+    const opt = langByCode(code);
+    if (!opt) return;
+    setTrLoading(true);
+    try {
+      const res = await callTranslate({
+        data: {
+          text: src,
+          targetLanguageName: opt.en,
+          sourceLanguageName: "Chinese (Simplified)",
+          tone: "friendly",
+        },
+      });
+      setTranslated(res.content ?? "");
+      setTrSource(src);
+      toast.success(`已翻译为${opt.zh}（免费）`);
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : String(e);
+      toast.error("翻译失败", { description: msg });
+    } finally {
+      setTrLoading(false);
     }
   }
 
@@ -250,28 +290,28 @@ export function CreateReachTaskDialog({
     if (!keywords.trim()) return toast.error("请填写目标关键词");
     if (targetCap <= 0) return toast.error("目标数量上限需大于 0");
     if (!content.trim()) return toast.error("请填写私信内容");
-    if (availableAccounts.length === 0) return toast.error("暂无可用账号，请先在「我的账号」中申请");
+    if (availableAccounts.length === 0)
+      return toast.error("暂无可用账号，请先在「我的账号」中申请");
     if (balance.balance < sendCost) return toast.error("积分不足");
 
     const kws = keywords.split(/[,，]/).map((s) => s.trim()).filter(Boolean);
     spendCredits(sendCost);
-    // 记录落到「触达任务」列表（渠道=社媒，状态=待触达），不再进入社媒触达模块
+    // 记录落到「触达任务」列表（渠道=社媒），实际发送内容为译文（无译文则中文原文）
     createSocialReachBatch({
       taskName: name.trim(),
       platform,
       region,
       keywords: kws,
       count: targetCap,
-      content: content.trim(),
+      content: sendContent,
       aiGenerated: aiUsed,
       action: "私信",
     });
     toast.success(
-      `已创建触达任务，生成 ${targetCap} 条触达记录，共扣 ${grandTotal.toLocaleString()} 积分（发送 ${sendCost} + AI ${aiCost}）`,
+      `已创建触达任务，生成 ${targetCap} 条触达记录，共扣 ${sendCost.toLocaleString()} 积分（AI 生成与翻译免费）`,
     );
     onOpenChange(false);
   }
-
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -381,11 +421,11 @@ export function CreateReachTaskDialog({
             )}
           </div>
 
-          {/* 撰写内容 */}
+          {/* 撰写内容：中文原文 */}
           <section className="space-y-3">
             <div className="flex items-center justify-between">
               <Label className="text-sm font-medium flex items-center gap-2">
-                撰写内容
+                私信内容（中文原文）
                 {aiUsed && (
                   <Badge variant="secondary" className="gap-1 bg-amber-100 text-amber-800">
                     <Sparkles className="h-3 w-3" />
@@ -397,12 +437,17 @@ export function CreateReachTaskDialog({
                 type="button"
                 size="sm"
                 variant="outline"
-                onClick={() => setAiOpen(true)}
+                onClick={handleAiGenerate}
+                disabled={aiLoading}
                 className="h-7 gap-1"
               >
-                <Sparkles className="h-3.5 w-3.5 text-primary" />
-                {aiUsed ? "AI 重新生成" : "AI 生成"}
-                <span className="text-xs text-muted-foreground">-{COST_AI_SOCIAL} 积分/次</span>
+                {aiLoading ? (
+                  <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                ) : (
+                  <Sparkles className="h-3.5 w-3.5 text-primary" />
+                )}
+                {aiLoading ? "生成中…" : aiUsed ? "AI 重新生成" : "AI 生成私信内容"}
+                <span className="text-[11px] text-emerald-600">免费</span>
               </Button>
             </div>
 
@@ -421,31 +466,100 @@ export function CreateReachTaskDialog({
             </div>
 
             <div className="space-y-1">
-              <Label className="text-xs text-muted-foreground">私信内容 *</Label>
               <Textarea
                 ref={contentRef}
                 value={content}
                 onChange={(e) => setContent(e.target.value)}
                 rows={6}
                 maxLength={4096}
-                placeholder={`Hi {联系人名}，我是 {我的公司} 的 {我的姓名}……`}
+                placeholder={`Hi {联系人名}，我是 {我的公司} 的 {我的姓名}……（AI 生成默认为首发开发信）`}
               />
               <div className="text-[11px] text-muted-foreground">{content.length} / 4096 字</div>
-              {hit && (
-                <div className="text-xs text-rose-600">
-                  命中敏感词 "{hit}"，请修改后再提交（否则将被拦截且不扣分）。
-                </div>
+            </div>
+          </section>
+
+          {/* 目标语言译文（实际发送内容） */}
+          <section className="space-y-2 rounded-md border border-primary/25 bg-primary/[0.03] p-3">
+            <div className="flex items-center justify-between gap-2">
+              <Label className="text-sm font-medium flex items-center gap-2">
+                <Languages className="h-4 w-4 text-primary" />
+                目标语言文案
+                <Badge variant="outline" className="font-normal text-[10px]">
+                  实际发送内容
+                </Badge>
+              </Label>
+              <div className="flex items-center gap-2">
+                <Select
+                  value={targetLang}
+                  onValueChange={(v) => {
+                    setTargetLang(v);
+                    if (content.trim()) void handleTranslate(v);
+                  }}
+                >
+                  <SelectTrigger className="h-8 w-[150px] text-xs">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent className="max-h-[280px]">
+                    {TARGET_LANGS.map((l) => (
+                      <SelectItem key={l.code} value={l.code}>
+                        {l.flag} {l.zh}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="outline"
+                  className="h-8 gap-1"
+                  disabled={trLoading || !content.trim()}
+                  onClick={() => void handleTranslate()}
+                >
+                  {trLoading ? (
+                    <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                  ) : (
+                    <Languages className="h-3.5 w-3.5 text-primary" />
+                  )}
+                  {translated ? "重新翻译" : "翻译"}
+                  <span className="text-[11px] text-emerald-600">免费</span>
+                </Button>
+              </div>
+            </div>
+
+            <Textarea
+              value={translated}
+              onChange={(e) => setTranslated(e.target.value)}
+              rows={6}
+              maxLength={4096}
+              placeholder={`选择目标语言后点击「翻译」，此处展示 ${
+                targetLangOpt?.zh ?? "目标语言"
+              }文案，可手动修改`}
+            />
+            <div className="flex items-center justify-between text-[11px]">
+              <span className="text-muted-foreground">
+                {translated
+                  ? `将以${targetLangOpt?.zh ?? ""}发送 · ${translated.length} / 4096 字`
+                  : "未翻译时，将直接发送中文原文"}
+              </span>
+              {staleTranslation && (
+                <span className="text-amber-600">中文原文已修改，建议重新翻译</span>
               )}
             </div>
           </section>
 
+          {hit && (
+            <div className="text-xs text-rose-600">
+              命中敏感词 "{hit}"，请修改后再提交（否则将被拦截且不扣分）。
+            </div>
+          )}
+
           {/* 预览 */}
-          {previewTargets.length > 0 && content && (
+          {previewTargets.length > 0 && sendContent && (
             <section className="space-y-2 rounded-md border bg-muted/30 p-3">
               <div className="flex items-center justify-between">
                 <Label className="text-xs font-medium flex items-center gap-1">
                   <Eye className="h-3.5 w-3.5" />
-                  预览（变量已替换，示例目标）
+                  发送预览（变量已替换，示例目标）
                 </Label>
                 {previewTargets.length > 1 && (
                   <Select value={String(previewIdx)} onValueChange={(v) => setPreviewIdx(Number(v))}>
@@ -476,17 +590,13 @@ export function CreateReachTaskDialog({
               </span>
               <span className="font-medium">{sendCost.toLocaleString()} 积分</span>
             </div>
-            {aiCost > 0 && (
-              <div className="flex justify-between">
-                <span className="text-muted-foreground">
-                  AI 生成（{aiCount} 次 × {COST_AI_SOCIAL} 积分）
-                </span>
-                <span className="font-medium">{aiCost.toLocaleString()} 积分</span>
-              </div>
-            )}
+            <div className="flex justify-between">
+              <span className="text-muted-foreground">AI 生成 / 翻译</span>
+              <span className="font-medium text-emerald-600">免费</span>
+            </div>
             <div className="flex justify-between border-t border-rose-200/70 pt-1">
               <span className="font-semibold text-rose-700">合计</span>
-              <span className="font-semibold text-rose-700">-{grandTotal.toLocaleString()}</span>
+              <span className="font-semibold text-rose-700">-{sendCost.toLocaleString()}</span>
             </div>
             {balance.balance < sendCost && (
               <div className="text-[11px] text-rose-700/90 pt-0.5">
@@ -501,119 +611,7 @@ export function CreateReachTaskDialog({
           <Button variant="outline" onClick={() => onOpenChange(false)}>取消</Button>
           <Button disabled={!canSubmit} onClick={handleConfirm}>
             <Send className="h-4 w-4" />
-            确认（-{grandTotal.toLocaleString()}）
-          </Button>
-        </DialogFooter>
-      </DialogContent>
-
-      <AiComposeMiniDialog
-        open={aiOpen}
-        onOpenChange={setAiOpen}
-        loading={aiLoading}
-        platform={platform}
-        defaultLanguage={targetLang}
-        onGenerate={handleAiGenerate}
-      />
-    </Dialog>
-  );
-}
-
-function AiComposeMiniDialog({
-  open,
-  onOpenChange,
-  loading,
-  platform,
-  defaultLanguage = "zh",
-  onGenerate,
-}: {
-  open: boolean;
-  onOpenChange: (v: boolean) => void;
-  loading: boolean;
-  platform: SocialTaskPlatform;
-  defaultLanguage?: "zh" | "en";
-  onGenerate: (p: {
-    scene: string;
-    tone: "formal" | "friendly" | "concise";
-    language: "zh" | "en";
-    extra?: string;
-  }) => void;
-}) {
-  const [scene, setScene] = useState("开发信");
-  const [tone, setTone] = useState<"formal" | "friendly" | "concise">("friendly");
-  const [language, setLanguage] = useState<"zh" | "en">(defaultLanguage);
-  const [extra, setExtra] = useState("");
-  useEffect(() => {
-    if (open) setLanguage(defaultLanguage);
-  }, [open, defaultLanguage]);
-
-  return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-md">
-        <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
-            <Sparkles className="h-5 w-5 text-primary" />
-            AI 生成 {platform} 文案
-          </DialogTitle>
-          <DialogDescription className="text-xs">
-            生成成功即扣 {COST_AI_SOCIAL} 积分；失败不扣费。
-          </DialogDescription>
-        </DialogHeader>
-        <div className="space-y-3">
-          <div className="space-y-1">
-            <Label className="text-xs">场景</Label>
-            <Select value={scene} onValueChange={setScene}>
-              <SelectTrigger className="h-9"><SelectValue /></SelectTrigger>
-              <SelectContent>
-                <SelectItem value="开发信">开发信（首次接触）</SelectItem>
-                <SelectItem value="跟进">跟进未回复客户</SelectItem>
-                <SelectItem value="报价">报价 / 商品推荐</SelectItem>
-                <SelectItem value="展会邀请">展会邀请</SelectItem>
-                <SelectItem value="节日问候">节日问候</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-          <div className="grid grid-cols-2 gap-3">
-            <div className="space-y-1">
-              <Label className="text-xs">语气</Label>
-              <Select value={tone} onValueChange={(v) => setTone(v as typeof tone)}>
-                <SelectTrigger className="h-9"><SelectValue /></SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="formal">正式商务</SelectItem>
-                  <SelectItem value="friendly">友好诚恳</SelectItem>
-                  <SelectItem value="concise">简洁直接</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="space-y-1">
-              <Label className="text-xs">目标语言</Label>
-              <Select value={language} onValueChange={(v) => setLanguage(v as typeof language)}>
-                <SelectTrigger className="h-9"><SelectValue /></SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="zh">中文</SelectItem>
-                  <SelectItem value="en">英文</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
-          <div className="space-y-1">
-            <Label className="text-xs">补充要求（可选）</Label>
-            <Input
-              value={extra}
-              onChange={(e) => setExtra(e.target.value)}
-              placeholder="如：突出报价、请求预约会议等"
-              maxLength={200}
-            />
-          </div>
-        </div>
-        <DialogFooter>
-          <Button variant="outline" onClick={() => onOpenChange(false)} disabled={loading}>取消</Button>
-          <Button
-            disabled={loading}
-            onClick={() => onGenerate({ scene, tone, language, extra: extra.trim() || undefined })}
-            className={cn("bg-primary", loading && "opacity-80")}
-          >
-            {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />}
-            {loading ? "生成中…" : "生成"}
+            确认（-{sendCost.toLocaleString()}）
           </Button>
         </DialogFooter>
       </DialogContent>
