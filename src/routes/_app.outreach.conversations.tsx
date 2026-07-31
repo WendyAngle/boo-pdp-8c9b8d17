@@ -38,7 +38,6 @@ import {
   AlarmClock,
   ChevronDown as ChevronDownIcon,
   FileText,
-  History,
   User as UserIcon,
 } from "lucide-react";
 import { Card } from "@/components/ui/card";
