@@ -764,54 +764,6 @@ function ReachPage() {
         )}
       </Card>
 
-      <AlertDialog open={!!confirm} onOpenChange={(o) => !o && setConfirm(null)}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>
-              {confirm?.kind === "trigger" && "立即触达？"}
-              {confirm?.kind === "cancel" && "取消该触达？"}
-              {confirm?.kind === "retry" && "重新触达？"}
-            </AlertDialogTitle>
-            <AlertDialogDescription>
-              {confirm?.kind === "trigger" && (
-                <>对象：<span className="font-medium text-foreground">{confirm.target}</span>。该条触达将立即进入"触达中"状态。</>
-              )}
-              {confirm?.kind === "cancel" && (
-                <>对象：<span className="font-medium text-foreground">{confirm.target}</span>。取消后该条触达将不再执行。</>
-              )}
-              {confirm?.kind === "retry" && (
-                <>对象：<span className="font-medium text-foreground">{confirm.target}</span>。将基于原渠道与明细重新发起一条触达。</>
-              )}
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>关闭</AlertDialogCancel>
-            <AlertDialogAction
-              className={cn(
-                confirm?.kind === "cancel" &&
-                  "bg-destructive text-destructive-foreground hover:bg-destructive/90",
-              )}
-              onClick={() => {
-                if (!confirm) return;
-                if (confirm.kind === "trigger") {
-                  if (triggerReachNow(confirm.id))
-                    toast.success("已立即触达，状态切换为「触达中」");
-                  else toast.error("当前状态不可执行立即触达");
-                } else if (confirm.kind === "cancel") {
-                  if (cancelPendingReach(confirm.id)) toast.success("已取消触达");
-                  else toast.error("仅「待触达」状态可取消");
-                } else if (confirm.kind === "retry") {
-                  if (retryFailedReach(confirm.id)) toast.success("已重新发起触达");
-                  else toast.error("仅「触达失败」记录可重新触达");
-                }
-                setConfirm(null);
-              }}
-            >
-              确认
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
 
       <Dialog open={!!viewing} onOpenChange={(o) => !o && setViewing(null)}>
         <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto">
