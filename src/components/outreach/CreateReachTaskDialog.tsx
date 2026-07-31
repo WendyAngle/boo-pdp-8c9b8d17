@@ -38,6 +38,11 @@ import { useLeadProfile } from "@/lib/lead-profile";
 import { useCurrentUser } from "@/lib/current-user";
 import { generateAiContent } from "@/lib/api/ai-compose.functions";
 import { translateMessage } from "@/lib/api/ai-translate.functions";
+import {
+  AI_SUGGESTED_CHAR_LEN,
+  charLength,
+  platformCharLimit,
+} from "@/lib/text-length";
 
 const REGIONS = [
   "美国",
