@@ -118,9 +118,9 @@ const AI_RULES: Rule[] = [
   {
     tone: "emerald",
     icon: <Sparkles className="h-4 w-4" />,
-    title: "AI 生成社媒文案",
+    title: "AI 生成社媒文案 / 翻译",
     cost: COST_AI_SOCIAL,
-    desc: "调用 AI 一键生成社媒私信文案，每次生成按调用计费。",
+    desc: "调用 AI 生成社媒私信中文文案及目标语言翻译，免费使用，不消耗积分、不产生消费明细。",
   },
 ];
 const SOCIAL_ACCOUNT_RULES: Rule[] = [
