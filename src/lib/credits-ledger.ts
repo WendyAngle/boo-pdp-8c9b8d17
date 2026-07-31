@@ -576,7 +576,8 @@ export function backfillAiGenerationEntries(): number {
       detail: `${label} · ${r.detail ?? r.targetName}`,
       relatedReachId: r.id,
     };
-  });
+  }).filter((e) => e.cost > 0);
+
   ledger = [...added, ...ledger];
   writeLedger(ledger);
   emitLedger();
