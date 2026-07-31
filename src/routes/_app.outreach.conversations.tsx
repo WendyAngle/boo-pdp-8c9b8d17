@@ -1077,6 +1077,8 @@ function ThreadDetail({
       });
       setReply("");
       setSelectedTpl("");
+      setPreTranslate(null);
+      setLangConfirmed(null);
       if (typeof window !== "undefined") window.localStorage.removeItem(draftKey);
       setDraftSavedAt(null);
       setSending(false);
