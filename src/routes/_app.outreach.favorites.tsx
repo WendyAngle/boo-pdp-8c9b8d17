@@ -242,10 +242,10 @@ function FavoritesPage() {
   );
 
 
-  // WhatsApp 候选人：从选中的收藏（企业/联系人）里取 whatsapp 号码
-  const waCandidates = useMemo<SocialCandidate[]>(() => {
+  // 社媒候选人（企业/联系人）构造
+  const buildCandidates = (records: FavoriteRecord[]): SocialCandidate[] => {
     const out: SocialCandidate[] = [];
-    for (const r of selectedRecords) {
+    for (const r of records) {
       if (r.kind === "enterprise") {
         const e = findEnterprise(r.refId);
         if (!e) continue;
@@ -290,9 +290,16 @@ function FavoritesPage() {
       }
     }
     return out;
-  }, [selectedRecords, myVars]);
+  };
 
-  // 社媒（Facebook / TikTok）候选人：由 WhatsApp 候选人复用上下文，按企业社媒资料判定各平台是否有联系方式
+  // WhatsApp 候选人（已过滤掉已 WhatsApp 触达的对象）
+  const waCandidates = useMemo<SocialCandidate[]>(
+    () => buildCandidates(waEligible),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [waEligible, myVars],
+  );
+
+  // 社媒（Facebook / TikTok）候选人：按企业社媒资料判定各平台是否有联系方式
   const platformCandidates = useMemo<PlatformCandidate[]>(() => {
     const slug = (s: string) =>
       s
@@ -303,7 +310,7 @@ function FavoritesPage() {
     const hash = (s: string) =>
       Array.from(s).reduce((a, ch) => (a * 31 + ch.charCodeAt(0)) % 997, 7);
 
-    return waCandidates.map((c) => {
+    return buildCandidates(socialEligible).map((c) => {
       const entId = c.enterpriseId ?? c.targetId;
       const ent = entId ? findEnterprise(entId.split(":")[0]) : undefined;
       const handles: Partial<Record<ReachPlatform, string>> = {};
@@ -312,7 +319,9 @@ function FavoritesPage() {
       if (hash(`${entId}:${c.name}`) % 3 !== 0) handles.TikTok = `@${base}.tt`;
       return { ...c, handles };
     });
-  }, [waCandidates]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [socialEligible, myVars]);
+
 
 
 
