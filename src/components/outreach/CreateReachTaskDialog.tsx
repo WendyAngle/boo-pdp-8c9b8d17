@@ -292,6 +292,7 @@ export function CreateReachTaskDialog({
 
   const canSubmit =
     !hit &&
+    !overLimit &&
     !!name.trim() &&
     content.trim().length > 0 &&
     keywords.trim().length > 0 &&
@@ -304,6 +305,10 @@ export function CreateReachTaskDialog({
     if (!keywords.trim()) return toast.error("请填写目标关键词");
     if (targetCap <= 0) return toast.error("目标数量上限需大于 0");
     if (!content.trim()) return toast.error("请填写私信内容");
+    if (overLimit)
+      return toast.error(
+        `发送内容 ${sendLen} 字符，超出 ${platform} 上限 ${charLimit} 字符`,
+      );
     if (availableAccounts.length === 0)
       return toast.error("暂无可用账号，请先在「我的账号」中申请");
     if (balance.balance < sendCost) return toast.error("积分不足");
