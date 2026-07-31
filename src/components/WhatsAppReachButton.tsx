@@ -1,19 +1,15 @@
-import { useMemo, useState } from "react";
-import { MessageCircle, ChevronDown, ExternalLink, ServerCog } from "lucide-react";
+import { useState } from "react";
 import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { cn } from "@/lib/utils";
-import { toast } from "sonner";
-import { BatchSocialDialog, type SocialCandidate } from "@/components/BatchSocialDialog";
-import { normalizePhone } from "@/lib/wa-verify";
-import { findEnterprise } from "@/data/enterprises";
-import { useLeadProfile } from "@/lib/lead-profile";
-import { useCurrentUser } from "@/lib/current-user";
-import { myContext } from "@/lib/message-vars";
 import type { TargetKind } from "@/lib/credits-ledger";
 
 interface Props {
@@ -26,116 +22,59 @@ interface Props {
   className?: string;
 }
 
-export function WhatsAppReachButton({
-  targetKind,
-  targetId,
-  targetName,
-  parentRef,
-  phone,
-  disabled,
-  className,
-}: Props) {
-  const profile = useLeadProfile();
-  const user = useCurrentUser();
-  const [menuOpen, setMenuOpen] = useState(false);
-  const [autoOpen, setAutoOpen] = useState(false);
+/** WhatsApp 官方风格图标 */
+function WhatsAppIcon({ className }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 32 32" className={className} aria-hidden="true" fill="currentColor">
+      <path d="M16.04 4C9.96 4 5.02 8.94 5.02 15.02c0 2.12.6 4.1 1.63 5.79L5 28l7.36-1.6a11 11 0 0 0 3.68.63h.01c6.08 0 11.02-4.94 11.02-11.02C27.07 8.94 22.12 4 16.04 4Zm0 20.03c-1.14 0-2.26-.2-3.32-.6l-.24-.09-4.37.95.93-4.26-.15-.25a9.02 9.02 0 1 1 7.15 4.25Zm5.06-6.73c-.28-.14-1.63-.8-1.88-.9-.25-.09-.44-.14-.62.14-.19.28-.71.9-.87 1.08-.16.19-.32.21-.6.07-.28-.14-1.17-.43-2.22-1.37a8.3 8.3 0 0 1-1.54-1.91c-.16-.28-.02-.43.12-.57.13-.13.28-.32.42-.49.14-.16.19-.28.28-.46.09-.19.05-.35-.02-.49-.07-.14-.62-1.5-.86-2.05-.22-.53-.45-.46-.62-.47l-.53-.01a1.02 1.02 0 0 0-.74.35c-.25.28-.97.95-.97 2.31s1 2.68 1.13 2.87c.14.19 1.96 2.99 4.75 4.19.66.29 1.18.46 1.59.59.67.21 1.27.18 1.75.11.53-.08 1.63-.67 1.86-1.31.23-.65.23-1.2.16-1.31-.07-.12-.25-.19-.53-.33Z" />
+    </svg>
+  );
+}
 
-  const candidates = useMemo<SocialCandidate[]>(() => {
-    const my = myContext(profile, user);
-    const entId =
-      targetKind === "enterprise" ? targetId : (parentRef?.id ?? targetId.split(":")[0]);
-    const ent = entId ? findEnterprise(entId) : undefined;
-    return [
-      {
-        key: targetId,
-        address: phone,
-        name: targetName,
-        targetKind,
-        targetId,
-        parentRef,
-        enterpriseId: entId,
-        ctx: {
-          企业名: targetKind === "enterprise" ? targetName : parentRef?.name ?? ent?.name,
-          联系人名: targetKind === "contact" ? targetName : ent?.contacts?.[0]?.name,
-          行业: ent?.industry,
-          城市: ent?.city,
-          ...my,
-        },
-      },
-    ];
-  }, [targetKind, targetId, targetName, parentRef, phone, profile, user]);
-
-  function openManual() {
-    const n = normalizePhone(phone).replace(/^\+/, "");
-    if (!n) {
-      toast.error("无有效手机号");
-      return;
-    }
-    window.open(`https://wa.me/${n}`, "_blank", "noopener,noreferrer");
-  }
+export function WhatsAppReachButton({ phone, disabled, className }: Props) {
+  const [open, setOpen] = useState(false);
 
   return (
-    <>
-      <span
-        onClick={(e) => e.stopPropagation()}
-        onPointerDown={(e) => e.stopPropagation()}
-        onMouseDown={(e) => e.stopPropagation()}
+    <span
+      onClick={(e) => e.stopPropagation()}
+      onPointerDown={(e) => e.stopPropagation()}
+      onMouseDown={(e) => e.stopPropagation()}
+    >
+      <button
+        type="button"
+        disabled={disabled || !phone}
+        onClick={(e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          setOpen(true);
+        }}
+        title="WhatsApp"
+        aria-label="WhatsApp"
+        className={cn(
+          "inline-flex h-6 w-6 items-center justify-center rounded-full bg-[#25D366] text-white transition-opacity hover:opacity-85",
+          "disabled:opacity-50 disabled:cursor-not-allowed",
+          className,
+        )}
       >
-      <DropdownMenu open={menuOpen} onOpenChange={setMenuOpen}>
-        <DropdownMenuTrigger asChild>
-          <button
-            type="button"
-            disabled={disabled}
-            onClick={(e) => {
-              e.preventDefault();
-              e.stopPropagation();
-            }}
-            className={cn(
-              "inline-flex items-center gap-1 rounded-md border px-2 py-0.5 text-xs font-medium h-6 transition-colors",
-              "border-emerald-200 text-emerald-700 bg-emerald-50 hover:bg-emerald-100",
-              "disabled:opacity-60 disabled:cursor-not-allowed",
-              className,
-            )}
-            title="WhatsApp 触达"
-          >
-            <MessageCircle className="h-3 w-3" />
-            WhatsApp 触达
-            <ChevronDown className="h-3 w-3 opacity-70" />
-          </button>
-        </DropdownMenuTrigger>
-        <DropdownMenuContent align="end" className="w-44">
-          <DropdownMenuItem
-            onClick={(e) => e.stopPropagation()}
-            onSelect={(e) => {
-              setMenuOpen(false);
-              openManual();
-            }}
-          >
-            <ExternalLink className="h-4 w-4" />
-            手动触达
-            <span className="ml-auto text-[10px] text-muted-foreground">打开 WhatsApp</span>
-          </DropdownMenuItem>
-          <DropdownMenuItem
-            onClick={(e) => e.stopPropagation()}
-            onSelect={() => {
-              setMenuOpen(false);
-              window.setTimeout(() => setAutoOpen(true), 0);
-            }}
-          >
-            <ServerCog className="h-4 w-4" />
-            系统自动触达
-            <span className="ml-auto text-[10px] text-muted-foreground">扣积分</span>
-          </DropdownMenuItem>
-        </DropdownMenuContent>
-      </DropdownMenu>
-      </span>
+        <WhatsAppIcon className="h-4 w-4" />
+      </button>
 
-      <BatchSocialDialog
-        open={autoOpen}
-        onOpenChange={setAutoOpen}
-        platform="WhatsApp"
-        candidates={candidates}
-      />
-    </>
+      <AlertDialog open={open} onOpenChange={setOpen}>
+        <AlertDialogContent className="max-w-md">
+          <AlertDialogHeader>
+            <AlertDialogTitle>WhatsApp 使用提醒</AlertDialogTitle>
+            <AlertDialogDescription>
+              每天最多向 5 名陌生人发送信息，否则可能导致 WhatsApp 封号。请合理控制联系频率。
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>取消</AlertDialogCancel>
+            <AlertDialogAction onClick={() => setOpen(false)}>
+              继续打开 WhatsApp
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </span>
   );
 }
