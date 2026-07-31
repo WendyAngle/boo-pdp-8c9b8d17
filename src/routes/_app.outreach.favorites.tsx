@@ -170,18 +170,68 @@ function FavoritesPage() {
   const user = useCurrentUser();
   const myVars = myContext(profile, user);
 
+  const reachedMap = useReachedMap();
+  const reachedOf = (r: FavoriteRecord) => methodsOfFavorite(reachedMap, r);
+
   const selectedRecords = useMemo(
     () => all.filter((r) => selected.has(r.id)),
     [all, selected],
   );
+
+  /** 按触达方式过滤掉「已操作过触达」的收藏 */
+  const eligibleFor = (methods: ReachMethod[]) =>
+    selectedRecords.filter((r) => {
+      const done = methodsOfFavorite(reachedMap, r);
+      return !methods.some((m) => done.includes(m));
+    });
+
+  const emailEligible = useMemo(
+    () => eligibleFor(["email"]),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [selectedRecords, reachedMap],
+  );
+  const smsEligible = useMemo(
+    () => eligibleFor(["sms"]),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [selectedRecords, reachedMap],
+  );
+  const waEligible = useMemo(
+    () => eligibleFor(["whatsapp"]),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [selectedRecords, reachedMap],
+  );
+  const socialEligible = useMemo(
+    () => eligibleFor(SOCIAL_PLATFORM_METHODS),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [selectedRecords, reachedMap],
+  );
+
+  /** 点击批量触达前的统一校验：无可触达对象时提示并中断 */
+  const guardBatch = (eligible: FavoriteRecord[], label: string) => {
+    const skipped = selectedRecords.length - eligible.length;
+    if (eligible.length === 0) {
+      toast.warning(`所选对象均已完成${label}触达`, {
+        description: "同一对象不可重复批量触达，如需继续跟进请前往「触达会话」。",
+      });
+      return false;
+    }
+    if (skipped > 0) {
+      toast.info(`已自动过滤 ${skipped} 个已${label}触达的对象`, {
+        description: `本次将对 ${eligible.length} 个对象发起${label}触达。`,
+      });
+    }
+    return true;
+  };
+
   const emailRecipients = useMemo(
-    () => recipientsFromFavorites(selectedRecords, "email", myVars),
-    [selectedRecords, myVars],
+    () => recipientsFromFavorites(emailEligible, "email", myVars),
+    [emailEligible, myVars],
   );
   const smsRecipients = useMemo(
-    () => recipientsFromFavorites(selectedRecords, "phone", myVars),
-    [selectedRecords, myVars],
+    () => recipientsFromFavorites(smsEligible, "phone", myVars),
+    [smsEligible, myVars],
   );
+
 
   // WhatsApp 候选人：从选中的收藏（企业/联系人）里取 whatsapp 号码
   const waCandidates = useMemo<SocialCandidate[]>(() => {
