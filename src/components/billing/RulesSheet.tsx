@@ -118,9 +118,9 @@ const AI_RULES: Rule[] = [
   {
     tone: "emerald",
     icon: <Sparkles className="h-4 w-4" />,
-    title: "AI 生成社媒文案",
+    title: "AI 生成社媒文案 / 翻译",
     cost: COST_AI_SOCIAL,
-    desc: "调用 AI 一键生成社媒私信文案，每次生成按调用计费。",
+    desc: "调用 AI 生成社媒私信中文文案及目标语言翻译，免费使用，不消耗积分、不产生消费明细。",
   },
 ];
 const SOCIAL_ACCOUNT_RULES: Rule[] = [
@@ -249,11 +249,17 @@ function RuleCard({
           {icon}
         </span>
         <div className="font-medium text-sm">{title}</div>
-        <span className="ml-auto inline-flex items-baseline gap-0.5 rounded-md bg-rose-50 text-rose-600 ring-1 ring-rose-200 px-2 py-0.5">
-          <span className="text-[11px]">−</span>
-          <span className="text-sm font-semibold tabular-nums">{cost}</span>
-          <span className="text-[11px] ml-0.5">积分</span>
-        </span>
+        {cost <= 0 ? (
+          <span className="ml-auto inline-flex items-baseline rounded-md bg-emerald-50 text-emerald-700 ring-1 ring-emerald-200 px-2 py-0.5">
+            <span className="text-sm font-semibold">免费</span>
+          </span>
+        ) : (
+          <span className="ml-auto inline-flex items-baseline gap-0.5 rounded-md bg-rose-50 text-rose-600 ring-1 ring-rose-200 px-2 py-0.5">
+            <span className="text-[11px]">−</span>
+            <span className="text-sm font-semibold tabular-nums">{cost}</span>
+            <span className="text-[11px] ml-0.5">积分</span>
+          </span>
+        )}
       </div>
       <p className="mt-2 pl-[42px] text-xs text-muted-foreground leading-relaxed">{desc}</p>
     </div>

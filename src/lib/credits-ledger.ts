@@ -53,7 +53,8 @@ export const COST_REACH_SOCIAL_WHATSAPP = 100;
 /** AI 文案生成积分单价 */
 export const COST_AI_EMAIL = 3;
 export const COST_AI_SMS = 2;
-export const COST_AI_SOCIAL = 3;
+/** 社媒 AI 文案生成与翻译免费（不扣积分、不产生消费明细） */
+export const COST_AI_SOCIAL = 0;
 
 /** 社媒账号购买 & 触达单价（P0） */
 export const COST_SOCIAL_ACCOUNT_PURCHASE = 1000; // 1 个账号
@@ -409,6 +410,8 @@ export function chargeAiGeneration(input: {
     detail: input.detailSuffix ? `${label} · ${input.detailSuffix}` : label,
   };
 
+  // 免费项（如社媒 AI 生成/翻译）不写入消费明细
+  if (cost <= 0) return entry;
   ledger = [entry, ...ledger];
   writeLedger(ledger);
   emitLedger();
@@ -549,7 +552,7 @@ export function backfillAiGenerationEntries(): number {
     (e) => e.kind === "reach" && e.aiGenerated && !e.userCreated && !charged.has(e.id),
   );
   if (missing.length === 0) return 0;
-  const added: LedgerEntry[] = missing.map((r) => {
+  const added: LedgerEntry[] = missing.map((r): LedgerEntry => {
     const channel: ReachChannel = r.channel ?? "email";
     const cost =
       channel === "email" ? COST_AI_EMAIL : channel === "social" ? COST_AI_SOCIAL : COST_AI_SMS;
@@ -573,7 +576,8 @@ export function backfillAiGenerationEntries(): number {
       detail: `${label} · ${r.detail ?? r.targetName}`,
       relatedReachId: r.id,
     };
-  });
+  }).filter((e) => e.cost > 0);
+
   ledger = [...added, ...ledger];
   writeLedger(ledger);
   emitLedger();
