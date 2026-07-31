@@ -1810,9 +1810,6 @@ function ProfilePanel({ thread }: { thread: Thread }) {
   );
 }
 
-type HistoryItem = {
-  id: string;
-  at: string;
   source: "task" | "message" | "reply" | "friend";
   channelLabel: string;
   title: string;
