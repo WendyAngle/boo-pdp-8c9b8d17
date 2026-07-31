@@ -38,7 +38,6 @@ import {
   AlarmClock,
   ChevronDown as ChevronDownIcon,
   FileText,
-  History,
   User as UserIcon,
 } from "lucide-react";
 import { Card } from "@/components/ui/card";
@@ -102,7 +101,6 @@ import {
   assignThread,
   previousAssigneeIds,
   slaInfo,
-  threadKeyFor,
 } from "@/lib/inbox-store";
 import { generateAiContent } from "@/lib/api/ai-compose.functions";
 import { translateMessage } from "@/lib/api/ai-translate.functions";
@@ -119,7 +117,7 @@ import {
 import { Undo2 } from "lucide-react";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { getApprovedSmsTemplates } from "@/lib/sms-templates-store";
-import { getAllLedger, getReachStatus } from "@/lib/credits-ledger";
+
 import { IntelPanel } from "@/components/outreach/IntelPanel";
 import { scoreIntent } from "@/lib/ai-intent-score";
 import { scoreAuthenticity } from "@/lib/ai-authenticity";
@@ -1281,10 +1279,6 @@ function ThreadDetail({
             <UserIcon className="h-3.5 w-3.5" />
             客户资料
           </TabsTrigger>
-          <TabsTrigger value="history" className="text-xs gap-1">
-            <History className="h-3.5 w-3.5" />
-            触达历史
-          </TabsTrigger>
         </TabsList>
         <TabsContent value="thread" className="flex-1 min-h-0 overflow-y-auto px-6 py-4 space-y-4 mt-0">
         {(thread.meta.assignmentEvents ?? []).map((ev) => (
@@ -1394,9 +1388,6 @@ function ThreadDetail({
         </TabsContent>
         <TabsContent value="profile" className="flex-1 min-h-0 overflow-y-auto px-6 py-4 mt-0">
           <ProfilePanel thread={thread} />
-        </TabsContent>
-        <TabsContent value="history" className="flex-1 min-h-0 overflow-y-auto px-6 py-4 mt-0">
-          <ReachHistoryPanel thread={thread} />
         </TabsContent>
       </Tabs>
 
@@ -1811,198 +1802,6 @@ function ProfilePanel({ thread }: { thread: Thread }) {
         >
           打开{thread.targetKind === "enterprise" ? "企业" : "联系人"}详情
           <ChevronRight className="h-3.5 w-3.5" />
-        </Link>
-      </div>
-    </div>
-  );
-}
-
-type HistoryItem = {
-  id: string;
-  at: string;
-  source: "task" | "message" | "reply" | "friend";
-  channelLabel: string;
-  title: string;
-  desc?: string;
-  mono?: string;
-  cost?: number;
-  statusLabel?: string;
-};
-
-const REACH_STATUS_LABEL: Record<string, string> = {
-  pending: "排队中",
-  in_progress: "触达中",
-  success: "已送达",
-  failed: "失败",
-};
-
-/**
- * 触达历史：统一时间线
- * 数据源合并三处，避免仅按 ledger.targetId 匹配导致演示/好友会话「暂无记录」：
- * 1) 触达任务（credits-ledger 中 kind=reach，按 targetId 或 threadKey 归属本会话）
- * 2) 会话内我方发出的消息（人工回复 / AI 回复 / 好友通过后的首触）
- * 3) 对方回复（作为触达结果，帮助判断跟进效果）
- */
-function ReachHistoryPanel({ thread }: { thread: Thread }) {
-  const items = useMemo<HistoryItem[]>(() => {
-    const out: HistoryItem[] = [];
-    const coveredLedgerIds = new Set<string>();
-
-    for (const e of getAllLedger()) {
-      if (e.kind !== "reach") continue;
-      const belongs =
-        (e.targetKind === thread.targetKind && e.targetId === thread.targetId) ||
-        threadKeyFor(e) === thread.id;
-      if (!belongs) continue;
-      coveredLedgerIds.add(e.id);
-      out.push({
-        id: `led_${e.id}`,
-        at: e.createdAt,
-        source: "task",
-        channelLabel:
-          (e.channel === "email" ? "邮件" : e.channel === "phone" ? "短信" : "社媒") +
-          (e.platform ? ` · ${e.platform}` : ""),
-        title: e.subject?.trim() || e.content?.slice(0, 60) || "触达任务",
-        mono: e.detail && e.detail !== "—" ? e.detail : undefined,
-        cost: e.cost,
-        statusLabel: REACH_STATUS_LABEL[getReachStatus(e)],
-      });
-    }
-
-    for (const m of thread.messages) {
-      if (m.ledgerId && coveredLedgerIds.has(m.ledgerId)) continue;
-      const isOut = m.direction === "outbound";
-      out.push({
-        id: `msg_${m.id}`,
-        at: m.createdAt,
-        source: isOut ? "message" : "reply",
-        channelLabel: CHANNEL_LABEL[thread.channel],
-        title:
-          m.subject?.trim() ||
-          (isOut
-            ? m.aiGenerated
-              ? "AI 生成消息已发出"
-              : "人工消息已发出"
-            : "对方回复"),
-        desc: (m.content || "").slice(0, 120),
-        statusLabel: isOut
-          ? m.events?.some((ev) => ev.type === "opened")
-            ? "已打开"
-            : m.events?.some((ev) => ev.type === "delivered")
-              ? "已送达"
-              : undefined
-          : undefined,
-      });
-    }
-
-    if (thread.isFriend) {
-      out.push({
-        id: `friend_${thread.id}`,
-        at: thread.messages[0]?.createdAt ?? thread.lastAt,
-        source: "friend",
-        channelLabel: CHANNEL_LABEL[thread.channel],
-        title: "好友申请已通过",
-        desc: thread.friendSource ? `来源任务：${thread.friendSource}` : undefined,
-        mono: thread.counterpartyAddress,
-      });
-    }
-
-    return out.sort((a, b) => b.at.localeCompare(a.at));
-  }, [thread]);
-
-  const taskCount = items.filter((i) => i.source === "task").length;
-  const outCount = items.filter(
-    (i) => i.source === "task" || i.source === "message" || i.source === "friend",
-  ).length;
-  const replyCount = items.filter((i) => i.source === "reply").length;
-
-  if (items.length === 0) {
-    return (
-      <div className="text-sm text-muted-foreground text-center py-10 space-y-2">
-        <div>该会话暂无触达动作</div>
-        <div className="text-xs">
-          在下方输入框直接回复，或从
-          <Link to="/outreach/reach" className="text-primary hover:underline mx-1">
-            触达任务
-          </Link>
-          发起一次新的触达
-        </div>
-      </div>
-    );
-  }
-
-  return (
-    <div className="space-y-2">
-      <div className="rounded-md border bg-muted/30 px-3 py-2 text-xs text-muted-foreground flex flex-wrap gap-x-4 gap-y-1">
-        <span>
-          触达任务 <span className="text-foreground font-medium tabular-nums">{taskCount}</span> 次
-        </span>
-        <span>
-          我方动作 <span className="text-foreground font-medium tabular-nums">{outCount}</span> 次
-        </span>
-        <span>
-          对方回复 <span className="text-foreground font-medium tabular-nums">{replyCount}</span> 次
-        </span>
-      </div>
-      {items.map((it) => (
-        <div
-          key={it.id}
-          className="rounded-md border bg-card p-3 text-xs flex items-start gap-3"
-        >
-          <div className="shrink-0 pt-0.5">
-            {it.source === "task" ? (
-              <Zap className="h-3.5 w-3.5 text-primary" />
-            ) : it.source === "reply" ? (
-              <MessageCircleReply className="h-3.5 w-3.5 text-emerald-600" />
-            ) : it.source === "friend" ? (
-              <UserCheck className="h-3.5 w-3.5 text-violet-600" />
-            ) : (
-              <SendIcon className="h-3.5 w-3.5 text-sky-600" />
-            )}
-          </div>
-          <div className="flex-1 min-w-0">
-            <div className="flex items-center gap-2 flex-wrap">
-              <span className="font-medium">{it.channelLabel}</span>
-              <Badge variant="outline" className="h-4 py-0 px-1.5 text-[10px]">
-                {it.source === "task"
-                  ? "触达任务"
-                  : it.source === "reply"
-                    ? "对方回复"
-                    : it.source === "friend"
-                      ? "好友通过"
-                      : "会话发出"}
-              </Badge>
-              {it.statusLabel && (
-                <Badge variant="outline" className="h-4 py-0 px-1.5 text-[10px]">
-                  {it.statusLabel}
-                </Badge>
-              )}
-              <span className="text-muted-foreground">{formatDateTime(it.at)}</span>
-              {typeof it.cost === "number" && it.cost > 0 && (
-                <span className="ml-auto text-rose-600 font-semibold tabular-nums">
-                  -{it.cost}
-                </span>
-              )}
-            </div>
-            <div className="mt-1 text-foreground/85 truncate">{it.title}</div>
-            {it.desc && (
-              <div className="mt-0.5 text-muted-foreground line-clamp-2">{it.desc}</div>
-            )}
-            {it.mono && (
-              <div className="mt-0.5 text-muted-foreground font-mono truncate">
-                {it.mono}
-              </div>
-            )}
-          </div>
-        </div>
-      ))}
-      <div className="pt-2">
-        <Link
-          to="/outreach/reach"
-          className="text-xs text-primary hover:underline inline-flex items-center gap-1"
-        >
-          打开触达任务列表
-          <ChevronRight className="h-3 w-3" />
         </Link>
       </div>
     </div>
