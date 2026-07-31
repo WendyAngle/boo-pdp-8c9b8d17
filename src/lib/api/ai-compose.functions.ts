@@ -7,6 +7,8 @@ const InputSchema = z.object({
   scene: z.string().min(1).max(40),
   tone: z.enum(["formal", "friendly", "concise"]).default("friendly"),
   language: z.enum(["zh", "en"]).default("zh"),
+  /** 目标语言全称（如 Thai / Japanese），优先于 language */
+  languageName: z.string().max(40).optional(),
   extra: z.string().max(500).optional(),
   /** 我方公司 / 个人 信息（供 system prompt 参考） */
   myCompany: z.string().max(120).optional(),
@@ -24,14 +26,15 @@ export const generateAiContent = createServerFn({ method: "POST" })
     const isEmail = data.channel === "email";
     const isSocial = data.channel === "social";
     const platform = data.platform || "WhatsApp";
-    const langName = data.language === "zh" ? "中文" : "English";
+    const langName =
+      data.languageName?.trim() || (data.language === "zh" ? "中文" : "English");
     const toneMap = { formal: "正式商务", friendly: "友好诚恳", concise: "简洁直接" } as const;
 
     const systemPrompt = [
       `你是一名资深 B2B 外贸出海销售文案专家，正在为「${data.myCompany ?? "我方公司"}」撰写${
         isEmail ? "开发/跟进邮件" : isSocial ? `${platform} 私信` : "营销短信"
       }。`,
-      `语言: ${langName}；语气: ${toneMap[data.tone]}。`,
+      `语言: ${langName}；语气: ${toneMap[data.tone]}。全文必须完整使用「${langName}」撰写（专有名词与型号可保留原文），不要输出其他语言的译文。`,
       `在文案中合理使用以下占位符（保留花括号原样，发送时会被替换）：`,
       `{企业名} {联系人名} {行业} {城市} {我的公司} {我的姓名}`,
       isEmail

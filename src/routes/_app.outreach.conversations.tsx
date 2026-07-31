@@ -111,8 +111,14 @@ import { getAllLedger, getReachStatus } from "@/lib/credits-ledger";
 import { IntelPanel } from "@/components/outreach/IntelPanel";
 import { scoreIntent } from "@/lib/ai-intent-score";
 import { scoreAuthenticity } from "@/lib/ai-authenticity";
-import { Target as TargetIcon, PanelRightClose, PanelRightOpen, Plus, UserCircle2 } from "lucide-react";
+import { Target as TargetIcon, PanelRightClose, PanelRightOpen, Plus, UserCircle2, Languages } from "lucide-react";
 import { CreateReachTaskDialog } from "@/components/outreach/CreateReachTaskDialog";
+import {
+  detectThreadLanguage,
+  detectLanguage,
+  langByCode,
+  LANGUAGES,
+} from "@/lib/lang-detect";
 
 
 /** 邮件场景的快捷回复模板（Phase 1 hardcoded） */
@@ -867,6 +873,16 @@ function ThreadDetail({
   onToggleScorePanel?: () => void;
 }) {
   const [reply, setReply] = useState("");
+  // AI 识别的对方语言
+  const detectedLang = useMemo(() => detectThreadLanguage(thread), [thread]);
+  // 回复目标语言：auto = 跟随对方语言
+  const [replyLang, setReplyLang] = useState<string>("auto");
+  useEffect(() => {
+    setReplyLang("auto");
+  }, [thread.id]);
+  const targetLang =
+    langByCode(replyLang === "auto" ? detectedLang.code : replyLang) ??
+    langByCode("en")!;
   const [aiLoading, setAiLoading] = useState(false);
   const [sending, setSending] = useState(false);
   const [selectedTpl, setSelectedTpl] = useState<string>("");
@@ -937,14 +953,17 @@ function ThreadDetail({
           extra: [
             `对方姓名：${thread.parentRef?.name ?? thread.targetName}`,
             `对方最新原话：${(lastInbound?.content ?? "(尚无对方回复)").slice(0, 400)}`,
+            `AI 识别对方语言：${detectedLang.zh}（${detectedLang.en}，置信度 ${detectedLang.confidence}%）`,
+            `请使用 ${targetLang.en}（${targetLang.zh}）撰写整封回复。`,
           ].join("\n"),
           tone: "friendly",
-          language: "en",
+          language: targetLang.code === "zh" ? "zh" : "en",
+          languageName: targetLang.en,
           sampleEnterprise: thread.targetName,
         },
       });
       setReply(res.content || "");
-      toast.success("AI 已生成回复草稿，可继续编辑后发送");
+      toast.success(`AI 已生成${targetLang.zh}回复草稿，可继续编辑后发送`);
     } catch (e) {
       toast.error(`AI 生成失败：${(e as Error).message}`);
     } finally {
@@ -1078,6 +1097,50 @@ function ThreadDetail({
                   {INTENT_LABEL[thread.meta.aiIntent]}
                 </Badge>
               )}
+              {/* AI 识别的对方语言 */}
+              <Popover>
+                <PopoverTrigger asChild>
+                  <button
+                    className="inline-flex items-center gap-1 rounded-md border border-violet-200 bg-violet-50 px-1.5 py-0.5 text-[11px] font-medium text-violet-700 hover:bg-violet-100 transition-colors"
+                    title="AI 语种识别依据"
+                  >
+                    <Sparkles className="h-3 w-3" />
+                    AI 识别语言
+                    {detectedLang.zh}
+                    <span className="tabular-nums opacity-70">
+                      {detectedLang.confidence}%
+                    </span>
+                  </button>
+                </PopoverTrigger>
+                <PopoverContent align="start" className="w-72 text-xs space-y-2">
+                  <div className="flex items-center gap-1.5 font-medium">
+                    <Languages className="h-3.5 w-3.5 text-violet-600" />
+                    AI 语种识别
+                  </div>
+                  <div className="text-muted-foreground">
+                    识别结果：
+                    <span className="text-foreground font-medium">
+                      {detectedLang.zh}（{detectedLang.en}）
+                    </span>
+                    ，置信度 {detectedLang.confidence}%
+                    {detectedLang.samples > 0 &&
+                      ` · 样本 ${detectedLang.samples} 条对方消息`}
+                  </div>
+                  <ul className="list-disc pl-4 space-y-0.5 text-muted-foreground">
+                    {detectedLang.evidence.map((e, i) => (
+                      <li key={i}>{e}</li>
+                    ))}
+                  </ul>
+                  {detectedLang.mixed && (
+                    <div className="rounded-md bg-amber-50 border border-amber-200 text-amber-800 px-2 py-1">
+                      检测到多语种混用，建议在回复区手动指定目标语言。
+                    </div>
+                  )}
+                  <div className="text-[10px] text-muted-foreground">
+                    识别结果仅供参考，可在下方回复区覆盖选择目标语言。
+                  </div>
+                </PopoverContent>
+              </Popover>
               {thread.meta.cadenceEnrolled && (
                 <Badge variant="outline" className="text-[11px]">
                   <Repeat className="h-3 w-3 mr-1" /> 已加入跟进序列
@@ -1192,6 +1255,20 @@ function ThreadDetail({
                     AI
                   </Badge>
                 )}
+                {m.direction === "inbound" &&
+                  (() => {
+                    const ml = detectLanguage(m.content ?? "");
+                    return (
+                      <Badge
+                        variant="outline"
+                        className="text-[10px] py-0 h-4 bg-violet-50 text-violet-700 border-violet-200"
+                        title={`AI 语种识别：${ml.en} · 置信度 ${ml.confidence}%`}
+                      >
+                        <Sparkles className="h-2.5 w-2.5 mr-0.5" />
+                        {ml.zh}
+                      </Badge>
+                    );
+                  })()}
               </div>
               {m.direction === "outbound" && m.events && m.events.length > 0 && (
                 <div className="mt-1 flex items-center gap-2 text-[11px] text-muted-foreground">
@@ -1274,7 +1351,7 @@ function ThreadDetail({
             )}
           </div>
         )}
-        <div className="flex items-center gap-2 mb-2">
+        <div className="flex items-center gap-2 mb-2 flex-wrap">
           <MessageCircleReply className="h-4 w-4 text-muted-foreground" />
           <span className="text-sm font-medium">回复</span>
           <span className="text-xs text-muted-foreground">
@@ -1285,10 +1362,34 @@ function ThreadDetail({
                 : `将以 ${CHANNEL_LABEL[thread.channel]} 渠道发出`}
             ，保持在同一会话内
           </span>
+          <div className="ml-auto flex items-center gap-1.5">
+            <Languages className="h-3.5 w-3.5 text-muted-foreground" />
+            <Select value={replyLang} onValueChange={setReplyLang}>
+              <SelectTrigger className="h-7 w-[190px] text-xs">
+                <SelectValue placeholder="目标语言" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectGroup>
+                  <SelectLabel className="text-[11px]">AI 建议</SelectLabel>
+                  <SelectItem value="auto" className="text-xs">
+                    跟随对方语言 · {detectedLang.zh}
+                  </SelectItem>
+                </SelectGroup>
+                <SelectGroup>
+                  <SelectLabel className="text-[11px]">指定目标语言</SelectLabel>
+                  {LANGUAGES.map((l) => (
+                    <SelectItem key={l.code} value={l.code} className="text-xs">
+                      {l.zh}（{l.en}）
+                    </SelectItem>
+                  ))}
+                </SelectGroup>
+              </SelectContent>
+            </Select>
+          </div>
           <Button
             variant="ghost"
             size="sm"
-            className="ml-auto gap-1 h-7"
+            className="gap-1 h-7"
             onClick={aiGenerate}
             disabled={aiLoading || winInfo?.closed}
           >
@@ -1297,7 +1398,7 @@ function ThreadDetail({
             ) : (
               <Sparkles className="h-3.5 w-3.5" />
             )}
-            AI 生成回复
+            AI 生成回复（{targetLang.zh}）
           </Button>
           <QuickTemplateMenu
             channel={thread.channel}
