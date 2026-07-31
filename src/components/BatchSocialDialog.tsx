@@ -341,7 +341,7 @@ export function BatchSocialDialog({
       setAiUsed(true);
       setAiCount((c) => c + 1);
       setAiOpen(false);
-      toast.success(`AI 已生成 ${platform} 文案，扣除 ${COST_AI_SOCIAL} 积分`);
+      toast.success(`AI 已生成 ${platform} 文案`);
     } catch (e) {
       const msg = e instanceof Error ? e.message : String(e);
       toast.error("AI 生成失败", { description: msg });
@@ -565,7 +565,7 @@ export function BatchSocialDialog({
                 <Sparkles className="h-3.5 w-3.5 text-primary" />
                 {aiUsed ? "AI 重新生成" : "AI 生成"}
                 <span className="text-xs text-muted-foreground">
-                  -{COST_AI_SOCIAL} 积分/次
+                  免费
                 </span>
                 </Button>
               </div>
@@ -779,7 +779,7 @@ function AiComposeMiniDialog({
             AI 生成 {platform} 文案
           </DialogTitle>
           <DialogDescription className="text-xs">
-            生成成功即扣 {COST_AI_SOCIAL} 积分；失败不扣费。
+            AI 生成社媒文案免费，不消耗积分。
           </DialogDescription>
         </DialogHeader>
         <div className="space-y-3">
