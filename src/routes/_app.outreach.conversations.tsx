@@ -88,6 +88,7 @@ import {
   INTENT_COLOR,
   STATUS_LABEL,
   type Thread,
+
   type AiIntent,
   type Channel,
   type GroupKind,
