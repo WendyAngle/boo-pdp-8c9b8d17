@@ -835,6 +835,8 @@ function FavoritesPage() {
               record={r}
               selected={selected.has(r.id)}
               onToggleSelect={() => toggleOne(r.id)}
+              reached={reachedOf(r)}
+
             />
           ))}
         </div>
