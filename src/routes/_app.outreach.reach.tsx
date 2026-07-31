@@ -446,42 +446,39 @@ function ReachPage() {
       {/* KPI */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         <KpiCard
-          icon={<Clock className="h-5 w-5" />}
-          label={REACH_STATUS_LABEL.pending}
-          value={counts.pending}
-          tone="slate"
-        />
-        <KpiCard
-          icon={<Loader2 className="h-5 w-5" />}
-          label={REACH_STATUS_LABEL.in_progress}
-          value={counts.in_progress}
-          tone="amber"
-        />
-        <KpiCard
           icon={<CheckCircle2 className="h-5 w-5" />}
-          label={REACH_STATUS_LABEL.success}
-          value={counts.success}
+          label="触达成功"
+          value={reachRows.length}
           tone="emerald"
         />
         <KpiCard
-          icon={<XCircle className="h-5 w-5" />}
-          label={REACH_STATUS_LABEL.failed}
-          value={counts.failed}
-          tone="rose"
+          icon={<Building2 className="h-5 w-5" />}
+          label="企业目标"
+          value={targetKindCounts.ent}
+          tone="slate"
+        />
+        <KpiCard
+          icon={<UserRound className="h-5 w-5" />}
+          label="人物目标"
+          value={targetKindCounts.con}
+          tone="amber"
+        />
+        <KpiCard
+          icon={<MessageCircleReply className="h-5 w-5" />}
+          label="客户回复"
+          value={replyTotal}
+          tone="emerald"
         />
       </div>
 
       <Card className="p-0 overflow-hidden">
-        {/* Tab + filter */}
-        <div className="flex items-center gap-1 border-b border-border px-5 pt-3">
-          <StatusTab active={statusTab === "all"} onClick={() => setStatusTab("all")}>
-            全部 <span className="ml-1 text-muted-foreground">{reachRows.length}</span>
-          </StatusTab>
-          {(["success", "in_progress", "pending", "failed"] as ReachStatus[]).map((s) => (
-            <StatusTab key={s} active={statusTab === s} onClick={() => setStatusTab(s)}>
-              {REACH_STATUS_LABEL[s]} <span className="ml-1 text-muted-foreground">{counts[s]}</span>
-            </StatusTab>
-          ))}
+        {/* 视图切换 + 筛选 */}
+        <div className="flex items-center gap-1 border-b border-border px-5 pt-3 pb-2">
+          <span className="text-sm font-medium">
+            触达成功记录
+            <span className="ml-1 text-muted-foreground">{reachRows.length}</span>
+          </span>
+
           <div className="ml-auto mb-2 inline-flex rounded-md border bg-muted/40 p-0.5">
             <button
               type="button"
