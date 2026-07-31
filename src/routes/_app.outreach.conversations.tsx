@@ -999,6 +999,63 @@ function ThreadDetail({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [autoAi, thread.id]);
 
+  /* ---------- 手动输入内容的语言识别 & 翻译 ---------- */
+  // 识别当前草稿使用的语言（仅在内容足够长时判断，避免误报）
+  const draftLang = useMemo(() => {
+    const t = reply.trim();
+    if (t.length < 12) return null;
+    return detectLanguage(t);
+  }, [reply]);
+  /** 草稿语言与目标语言不一致（且识别有一定把握） */
+  const langMismatch =
+    !!draftLang &&
+    draftLang.code !== targetLang.code &&
+    draftLang.confidence >= 60 &&
+    !winInfo?.closed;
+
+  async function doTranslate() {
+    const text = reply.trim();
+    if (!text) {
+      toast.error("请先输入要翻译的内容");
+      return;
+    }
+    setTranslating(true);
+    try {
+      const res = await translateMessage({
+        data: {
+          text,
+          targetLanguageName: targetLang.en,
+          sourceLanguageName: draftLang?.en,
+          tone: "friendly",
+        },
+      });
+      if (!res.content) throw new Error("译文为空");
+      setPreTranslate(text);
+      setReply(res.content);
+      setLangConfirmed(null);
+      toast.success(`已翻译为${targetLang.zh}，请复核后发送`);
+    } catch (e) {
+      toast.error(`翻译失败：${(e as Error).message}`);
+    } finally {
+      setTranslating(false);
+    }
+  }
+
+  function undoTranslate() {
+    if (preTranslate === null) return;
+    setReply(preTranslate);
+    setPreTranslate(null);
+  }
+
+  /** 发送前的语言一致性校验：不一致时先提示，不直接发出 */
+  function attemptSend() {
+    if (langMismatch && langConfirmed !== reply.trim()) {
+      setLangAlertOpen(true);
+      return;
+    }
+    doSend(false);
+  }
+
   function doSend(aiGen = false) {
     const content = winInfo?.closed && templates.length
       ? templates.find((t) => t.id === selectedTpl)?.body ?? reply
