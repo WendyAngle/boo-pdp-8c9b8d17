@@ -60,8 +60,15 @@ export interface SocialAccount {
   proxyRegion?: string;
 }
 
-const KEY = "boo:social-accounts:v8";
-const SEED_FLAG = "boo:social-accounts:v8:seeded";
+const KEY = "boo:social-accounts:v9";
+const SEED_FLAG = "boo:social-accounts:v9:seeded";
+
+/** 已交付账号必须有 handle / 显示名 / 交付与到期时间，缺一即为脏数据 */
+function isValidAccount(a: SocialAccount): boolean {
+  if (!a || !a.id || !a.platform) return false;
+  if (a.status === "备货中") return Boolean(a.orderedAt);
+  return Boolean(a.handle && a.displayName && a.deliveredAt && a.expiresAt);
+}
 
 function read(): SocialAccount[] {
   if (typeof window === "undefined") return [];
@@ -69,7 +76,7 @@ function read(): SocialAccount[] {
     const raw = window.localStorage.getItem(KEY);
     if (!raw) return [];
     const arr = JSON.parse(raw);
-    if (Array.isArray(arr)) return arr;
+    if (Array.isArray(arr)) return (arr as SocialAccount[]).filter(isValidAccount);
   } catch {}
   return [];
 }
