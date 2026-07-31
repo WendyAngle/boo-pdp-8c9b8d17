@@ -452,7 +452,7 @@ function FavoritesPage() {
         break;
     }
     return list;
-  }, [all, kind, trimmed, date, sort]);
+  }, [all, kind, trimmed, date, sort, reachFilter, reachedMap]);
 
   const allSelected =
     filtered.length > 0 && filtered.every((r) => selected.has(r.id));
