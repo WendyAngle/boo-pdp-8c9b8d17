@@ -560,15 +560,18 @@ export function CreateReachTaskDialog({
               value={translated}
               onChange={(e) => setTranslated(e.target.value)}
               rows={6}
-              maxLength={4096}
               placeholder={`选择目标语言后点击「翻译」，此处展示 ${
                 targetLangOpt?.zh ?? "目标语言"
               }文案，可手动修改`}
             />
             <div className="flex items-center justify-between text-[11px]">
-              <span className="text-muted-foreground">
+              <span
+                className={
+                  translatedLen > charLimit ? "text-rose-600" : "text-muted-foreground"
+                }
+              >
                 {translated
-                  ? `将以${targetLangOpt?.zh ?? ""}发送 · ${translated.length} / 4096 字`
+                  ? `将以${targetLangOpt?.zh ?? ""}发送 · ${translatedLen} / ${charLimit} 字符`
                   : "未翻译时，将直接发送中文原文"}
               </span>
               {staleTranslation && (
@@ -577,11 +580,19 @@ export function CreateReachTaskDialog({
             </div>
           </section>
 
+          {overLimit && (
+            <div className="text-xs text-rose-600">
+              实际发送内容 {sendLen} 字符，超出 {platform} 平台上限 {charLimit} 字符
+              （中/日/韩字符按 2 计），请精简后再提交。
+            </div>
+          )}
+
           {hit && (
             <div className="text-xs text-rose-600">
               命中敏感词 "{hit}"，请修改后再提交（否则将被拦截且不扣分）。
             </div>
           )}
+
 
           {/* 预览 */}
           {previewTargets.length > 0 && sendContent && (
