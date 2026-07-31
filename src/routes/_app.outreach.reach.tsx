@@ -55,6 +55,7 @@ import {
   type ReachChannel,
 } from "@/lib/credits-ledger";
 import { ListPagination } from "@/components/ListPagination";
+import { groupKeyOf, reachAction } from "@/lib/reach-tasks";
 import { useThreads, threadKeyFor, type Thread } from "@/lib/inbox-store";
 import {
   Inbox as InboxIcon,
@@ -91,24 +92,6 @@ type TaskGroup = {
   lastAt: string;
 };
 
-
-function groupKeyOf(r: { channel?: ReachChannel; platform?: string; subject?: string; detail?: string; createdAt: string }) {
-  const day = r.createdAt.slice(0, 10);
-  const batchName = r.channel === "social" && r.subject ? r.subject : null;
-  return batchName
-    ? `s:${batchName}:${r.platform ?? ""}`
-    : `c:${r.channel}:${r.platform ?? ""}:${reachAction(r)}:${day}`;
-}
-
-/** 从明细中提取触达动作：社媒区分「加好友 / 私信」，其余按渠道语义 */
-function reachAction(r: { channel?: ReachChannel; detail?: string; platform?: string }) {
-  const d = r.detail ?? "";
-  if (d.includes("加好友")) return "加好友";
-  if (r.channel === "social") return "私信";
-  if (r.channel === "email") return "邮件触达";
-  if (r.channel === "phone") return "短信触达";
-  return "触达";
-}
 
 function ReachPage() {
   useEffect(() => {
@@ -550,7 +533,7 @@ function ReachPage() {
                 <TableHead className="min-w-[220px]">任务名</TableHead>
                 <TableHead className="w-[150px]">渠道 / 平台</TableHead>
                 <TableHead className="w-[90px]">动作</TableHead>
-                <TableHead className="w-[110px]">触达成功数</TableHead>
+                <TableHead className="w-[110px]">目标数</TableHead>
                 <TableHead className="w-[90px]">回复</TableHead>
                 <TableHead className="w-[110px]">回复率</TableHead>
                 <TableHead className="w-[170px]">最近执行</TableHead>
@@ -595,7 +578,18 @@ function ReachPage() {
                       {g.action}
                     </span>
                   </TableCell>
-                  <TableCell className="tabular-nums font-semibold">{g.total}</TableCell>
+                  <TableCell className="tabular-nums font-semibold">
+                    <Link
+                      to="/outreach/reach-targets"
+                      search={{ task: g.key }}
+                      onClick={(e) => e.stopPropagation()}
+                      className="text-primary hover:underline inline-flex items-center gap-1"
+                      title="查看该任务的目标资料"
+                    >
+                      {g.total}
+                      <Users className="h-3.5 w-3.5" />
+                    </Link>
+                  </TableCell>
                   <TableCell className="tabular-nums text-sm">
                     {g.replies > 0 ? (
                       <span className="text-emerald-600 font-semibold">{g.replies}</span>
