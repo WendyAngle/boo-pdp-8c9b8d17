@@ -29,6 +29,9 @@ import {
   Twitter,
   MessageCircle,
   Users,
+  Info,
+  CheckCircle2,
+
   
 
 } from "lucide-react";
@@ -92,6 +95,15 @@ import {
   type PlatformCandidate,
   type ReachPlatform,
 } from "@/components/BatchSocialPlatformDialog";
+import {
+  useReachedMap,
+  methodsOfFavorite,
+  REACH_METHOD_LABEL,
+  REACH_METHOD_TONE,
+  SOCIAL_PLATFORM_METHODS,
+  type ReachMethod,
+} from "@/lib/favorite-reached";
+
 
 
 export const Route = createFileRoute("/_app/outreach/favorites")({
@@ -144,6 +156,10 @@ function FavoritesPage() {
     seedDemoFavoritesIfEmpty();
   }, []);
   const [kind, setKind] = useState<KindFilter>("all");
+  const [reachFilter, setReachFilter] = useState<"all" | "reached" | "unreached">(
+    "all",
+  );
+
   const [keyword, setKeyword] = useState("");
   const [date, setDate] = useState<Date | undefined>(undefined);
   type SortKey =
@@ -170,23 +186,73 @@ function FavoritesPage() {
   const user = useCurrentUser();
   const myVars = myContext(profile, user);
 
+  const reachedMap = useReachedMap();
+  const reachedOf = (r: FavoriteRecord) => methodsOfFavorite(reachedMap, r);
+
   const selectedRecords = useMemo(
     () => all.filter((r) => selected.has(r.id)),
     [all, selected],
   );
-  const emailRecipients = useMemo(
-    () => recipientsFromFavorites(selectedRecords, "email", myVars),
-    [selectedRecords, myVars],
+
+  /** 按触达方式过滤掉「已操作过触达」的收藏 */
+  const eligibleFor = (methods: ReachMethod[]) =>
+    selectedRecords.filter((r) => {
+      const done = methodsOfFavorite(reachedMap, r);
+      return !methods.some((m) => done.includes(m));
+    });
+
+  const emailEligible = useMemo(
+    () => eligibleFor(["email"]),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [selectedRecords, reachedMap],
   );
-  const smsRecipients = useMemo(
-    () => recipientsFromFavorites(selectedRecords, "phone", myVars),
-    [selectedRecords, myVars],
+  const smsEligible = useMemo(
+    () => eligibleFor(["sms"]),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [selectedRecords, reachedMap],
+  );
+  const waEligible = useMemo(
+    () => eligibleFor(["whatsapp"]),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [selectedRecords, reachedMap],
+  );
+  const socialEligible = useMemo(
+    () => eligibleFor(SOCIAL_PLATFORM_METHODS),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [selectedRecords, reachedMap],
   );
 
-  // WhatsApp 候选人：从选中的收藏（企业/联系人）里取 whatsapp 号码
-  const waCandidates = useMemo<SocialCandidate[]>(() => {
+  /** 点击批量触达前的统一校验：无可触达对象时提示并中断 */
+  const guardBatch = (eligible: FavoriteRecord[], label: string) => {
+    const skipped = selectedRecords.length - eligible.length;
+    if (eligible.length === 0) {
+      toast.warning(`所选对象均已完成${label}触达`, {
+        description: "同一对象不可重复批量触达，如需继续跟进请前往「触达会话」。",
+      });
+      return false;
+    }
+    if (skipped > 0) {
+      toast.info(`已自动过滤 ${skipped} 个已${label}触达的对象`, {
+        description: `本次将对 ${eligible.length} 个对象发起${label}触达。`,
+      });
+    }
+    return true;
+  };
+
+  const emailRecipients = useMemo(
+    () => recipientsFromFavorites(emailEligible, "email", myVars),
+    [emailEligible, myVars],
+  );
+  const smsRecipients = useMemo(
+    () => recipientsFromFavorites(smsEligible, "phone", myVars),
+    [smsEligible, myVars],
+  );
+
+
+  // 社媒候选人（企业/联系人）构造
+  const buildCandidates = (records: FavoriteRecord[]): SocialCandidate[] => {
     const out: SocialCandidate[] = [];
-    for (const r of selectedRecords) {
+    for (const r of records) {
       if (r.kind === "enterprise") {
         const e = findEnterprise(r.refId);
         if (!e) continue;
@@ -231,9 +297,16 @@ function FavoritesPage() {
       }
     }
     return out;
-  }, [selectedRecords, myVars]);
+  };
 
-  // 社媒（Facebook / TikTok）候选人：由 WhatsApp 候选人复用上下文，按企业社媒资料判定各平台是否有联系方式
+  // WhatsApp 候选人（已过滤掉已 WhatsApp 触达的对象）
+  const waCandidates = useMemo<SocialCandidate[]>(
+    () => buildCandidates(waEligible),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [waEligible, myVars],
+  );
+
+  // 社媒（Facebook / TikTok）候选人：按企业社媒资料判定各平台是否有联系方式
   const platformCandidates = useMemo<PlatformCandidate[]>(() => {
     const slug = (s: string) =>
       s
@@ -244,7 +317,7 @@ function FavoritesPage() {
     const hash = (s: string) =>
       Array.from(s).reduce((a, ch) => (a * 31 + ch.charCodeAt(0)) % 997, 7);
 
-    return waCandidates.map((c) => {
+    return buildCandidates(socialEligible).map((c) => {
       const entId = c.enterpriseId ?? c.targetId;
       const ent = entId ? findEnterprise(entId.split(":")[0]) : undefined;
       const handles: Partial<Record<ReachPlatform, string>> = {};
@@ -253,7 +326,9 @@ function FavoritesPage() {
       if (hash(`${entId}:${c.name}`) % 3 !== 0) handles.TikTok = `@${base}.tt`;
       return { ...c, handles };
     });
-  }, [waCandidates]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [socialEligible, myVars]);
+
 
 
 
@@ -325,7 +400,13 @@ function FavoritesPage() {
     const dKey = date ? fmtDateKey(date) : null;
     const list = all.filter((r) => {
       if (kind !== "all" && r.kind !== kind) return false;
+      if (reachFilter !== "all") {
+        const done = methodsOfFavorite(reachedMap, r).length > 0;
+        if (reachFilter === "reached" && !done) return false;
+        if (reachFilter === "unreached" && done) return false;
+      }
       if (dKey && !r.createdAt.startsWith(dKey)) return false;
+
       if (trimmed) {
         const hay = [
           r.title,
@@ -374,7 +455,7 @@ function FavoritesPage() {
         break;
     }
     return list;
-  }, [all, kind, trimmed, date, sort]);
+  }, [all, kind, trimmed, date, sort, reachFilter, reachedMap]);
 
   const allSelected =
     filtered.length > 0 && filtered.every((r) => selected.has(r.id));
@@ -538,6 +619,22 @@ function FavoritesPage() {
             </PopoverContent>
           </Popover>
           <Select
+            value={reachFilter}
+            onValueChange={(v) =>
+              setReachFilter(v as "all" | "reached" | "unreached")
+            }
+          >
+            <SelectTrigger className="h-9 w-[160px]">
+              <Send className="h-3.5 w-3.5 mr-1" />
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">全部触达状态</SelectItem>
+              <SelectItem value="unreached">未触达</SelectItem>
+              <SelectItem value="reached">已触达</SelectItem>
+            </SelectContent>
+          </Select>
+          <Select
             value={sort}
             onValueChange={(v) => {
               const next = v as SortKey;
@@ -560,7 +657,7 @@ function FavoritesPage() {
               <SelectItem value="kind">按类型分组</SelectItem>
             </SelectContent>
           </Select>
-          {(date || keyword || kind !== "all") && (
+          {(date || keyword || kind !== "all" || reachFilter !== "all") && (
             <Button
               variant="ghost"
               size="sm"
@@ -568,6 +665,7 @@ function FavoritesPage() {
                 setDate(undefined);
                 setKeyword("");
                 setKind("all");
+                setReachFilter("all");
               }}
             >
               <X className="h-4 w-4 mr-1" />
@@ -576,6 +674,46 @@ function FavoritesPage() {
           )}
         </div>
       </Card>
+
+      {/* 操作引导 + 触达规则说明 */}
+      <Card className="p-4 border-primary/20 bg-primary/5">
+        <div className="flex items-start gap-3">
+          <div className="h-8 w-8 rounded-lg bg-primary/10 text-primary flex items-center justify-center shrink-0">
+            <Info className="h-4 w-4" />
+          </div>
+          <div className="text-sm space-y-1.5 flex-1 min-w-0">
+            <div className="font-medium">触达操作指引</div>
+            <ol className="text-xs text-muted-foreground space-y-1 list-decimal pl-4">
+              <li>
+                先在
+                <Link
+                  to="/outreach/enterprise"
+                  className="text-primary mx-1 hover:underline"
+                >
+                  企业名录
+                </Link>
+                收藏目标企业或其关联人物，收藏后才能在本页发起批量触达。
+              </li>
+              <li>
+                勾选收藏对象 → 选择触达方式（邮件 / 短信 / WhatsApp / 社媒）→ 生成触达任务。
+              </li>
+              <li>
+                同一对象在同一触达方式下
+                <span className="text-foreground font-medium mx-1">仅可批量触达一次</span>
+                ，已触达对象会被自动过滤；如需继续跟进请前往
+                <Link
+                  to="/outreach/conversations"
+                  className="text-primary mx-1 hover:underline"
+                >
+                  触达会话
+                </Link>
+                。
+              </li>
+            </ol>
+          </div>
+        </div>
+      </Card>
+
 
       {/* 批量操作栏 */}
       {filtered.length > 0 && (
@@ -589,6 +727,12 @@ function FavoritesPage() {
             已选 <span className="text-foreground font-medium">{selected.size}</span> /{" "}
             {filtered.length} 条
           </span>
+          {selected.size > 0 && (
+            <span className="text-xs text-muted-foreground hidden lg:inline">
+              可触达：邮件 {emailEligible.length} · 短信 {smsEligible.length} · WhatsApp{" "}
+              {waEligible.length} · 社媒 {socialEligible.length}（已触达对象自动过滤）
+            </span>
+          )}
           <div className="ml-auto flex items-center gap-2">
             <Button
               variant="outline"
@@ -596,6 +740,7 @@ function FavoritesPage() {
               disabled={selected.size === 0}
               className="gap-1.5 border-primary/30 text-primary hover:bg-primary/10 hover:text-primary disabled:opacity-50"
               onClick={() => {
+                if (!guardBatch(emailEligible, "邮件")) return;
                 if (usableMailboxes.length === 0) {
                   setNoMailboxOpen(true);
                   return;
@@ -614,7 +759,10 @@ function FavoritesPage() {
               size="sm"
               disabled={selected.size === 0}
               className="gap-1.5 border-primary/30 text-primary hover:bg-primary/10 hover:text-primary disabled:opacity-50"
-              onClick={() => setBatchSmsOpen(true)}
+              onClick={() => {
+                if (!guardBatch(smsEligible, "短信")) return;
+                setBatchSmsOpen(true);
+              }}
             >
               <MessageSquare className="h-4 w-4" />
               批量发短信
@@ -624,7 +772,10 @@ function FavoritesPage() {
               size="sm"
               disabled={selected.size === 0}
               className="gap-1.5 border-primary/30 text-primary hover:bg-primary/10 hover:text-primary disabled:opacity-50"
-              onClick={() => setBatchSocialOpen(true)}
+              onClick={() => {
+                if (!guardBatch(waEligible, "WhatsApp")) return;
+                setBatchSocialOpen(true);
+              }}
             >
               <MessageCircle className="h-4 w-4" />
               批量 WhatsApp 触达
@@ -634,12 +785,16 @@ function FavoritesPage() {
               size="sm"
               disabled={selected.size === 0}
               className="gap-1.5 border-primary/30 text-primary hover:bg-primary/10 hover:text-primary disabled:opacity-50"
-              onClick={() => setBatchPlatformOpen(true)}
+              onClick={() => {
+                if (!guardBatch(socialEligible, "社媒")) return;
+                setBatchPlatformOpen(true);
+              }}
               title="批量社媒触达"
             >
               <Users className="h-4 w-4" />
               批量社媒触达
             </Button>
+
 
             <Button
               variant="outline"
@@ -680,6 +835,8 @@ function FavoritesPage() {
               record={r}
               selected={selected.has(r.id)}
               onToggleSelect={() => toggleOne(r.id)}
+              reached={reachedOf(r)}
+
             />
           ))}
         </div>
@@ -754,11 +911,14 @@ function FavoriteCard({
   record,
   selected,
   onToggleSelect,
+  reached,
 }: {
   record: FavoriteRecord;
   selected: boolean;
   onToggleSelect: () => void;
+  reached: ReachMethod[];
 }) {
+
   const meta = KIND_META[record.kind];
   const Icon = meta.icon;
   const navigate = useNavigate();
@@ -839,8 +999,27 @@ function FavoriteCard({
         </div>
         <div className="font-medium text-sm truncate">{record.title}</div>
         {record.subtitle && <FavoriteSubtitle record={record} />}
+        {reached.length > 0 && (
+          <div className="mt-1.5 flex flex-wrap items-center gap-1">
+            <span className="inline-flex items-center gap-1 text-[10px] text-emerald-700">
+              <CheckCircle2 className="h-3 w-3" />
+              已触达
+            </span>
+            {reached.map((m) => (
+              <Badge
+                key={m}
+                variant="outline"
+                className={cn("text-[10px] h-4 px-1.5", REACH_METHOD_TONE[m])}
+                title={`已通过${REACH_METHOD_LABEL[m]}触达，不可重复批量触达`}
+              >
+                {REACH_METHOD_LABEL[m]}
+              </Badge>
+            ))}
+          </div>
+        )}
         <FavoriteMeta record={record} />
       </div>
+
     </>
   );
 
