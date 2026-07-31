@@ -105,6 +105,18 @@ import {
   threadKeyFor,
 } from "@/lib/inbox-store";
 import { generateAiContent } from "@/lib/api/ai-compose.functions";
+import { translateMessage } from "@/lib/api/ai-translate.functions";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { Undo2, LanguagesIcon } from "lucide-react";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { getApprovedSmsTemplates } from "@/lib/sms-templates-store";
 import { getAllLedger, getReachStatus } from "@/lib/credits-ledger";
