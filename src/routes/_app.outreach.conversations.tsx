@@ -1668,7 +1668,7 @@ function ThreadDetail({
               翻译为{targetLang.zh}
             </AlertDialogAction>
           </AlertDialogFooter>
-        </AlertDialogFooter>
+        </AlertDialogContent>
       </AlertDialog>
     </div>
   );
