@@ -121,8 +121,7 @@ import { getApprovedSmsTemplates } from "@/lib/sms-templates-store";
 import { IntelPanel } from "@/components/outreach/IntelPanel";
 import { scoreIntent } from "@/lib/ai-intent-score";
 import { scoreAuthenticity } from "@/lib/ai-authenticity";
-import { Target as TargetIcon, PanelRightClose, PanelRightOpen, Plus, UserCircle2, Languages } from "lucide-react";
-import { CreateReachTaskDialog } from "@/components/outreach/CreateReachTaskDialog";
+import { Target as TargetIcon, PanelRightClose, PanelRightOpen, Languages } from "lucide-react";
 import {
   detectThreadLanguage,
   detectLanguage,
@@ -301,7 +300,6 @@ function InboxPage() {
   const view: ViewKey = search.view ?? "all";
   const intent = search.intent ?? "all";
   const [scorePanelOpen, setScorePanelOpen] = useState(true);
-  const [createReachOpen, setCreateReachOpen] = useState(false);
 
   const q = search.q ?? "";
   const ch = search.ch ?? "all";
@@ -526,20 +524,8 @@ function InboxPage() {
             className="pl-7 h-8 text-xs"
           />
         </div>
-        <div className="ml-auto flex items-center gap-2 shrink-0">
-          <Button size="sm" className="h-8 text-xs gap-1" onClick={() => setCreateReachOpen(true)}>
-            <Plus className="h-3.5 w-3.5" />
-            社媒触达任务
-          </Button>
-          <Button asChild size="sm" variant="outline" className="h-8 text-xs gap-1">
-            <Link to="/outreach/social/accounts">
-              <UserCircle2 className="h-3.5 w-3.5" />
-              社媒账号
-            </Link>
-          </Button>
-        </div>
+        <div className="ml-auto flex items-center gap-2 shrink-0" />
       </div>
-      <CreateReachTaskDialog open={createReachOpen} onOpenChange={setCreateReachOpen} />
 
       <div className="flex-1 flex min-h-0">
         {/* 中栏：会话列表 */}

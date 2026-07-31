@@ -97,6 +97,9 @@ import {
 } from "lucide-react";
 import { useSocialAccounts, friendRemaining } from "@/data/social-accounts";
 import { poolAverageHealth } from "@/lib/social-account-health";
+import { CreateReachTaskDialog } from "@/components/outreach/CreateReachTaskDialog";
+import { UserCircle2, Plus } from "lucide-react";
+
 
 export const Route = createFileRoute("/_app/outreach/reach")({
   head: () => ({ meta: [{ title: "出海大数据平台 · 触达 | 出海大数据平台" }] }),
@@ -164,6 +167,7 @@ function ReachPage() {
     return m;
   }, [threads]);
   const [now, setNow] = useState(() => Date.now());
+  const [createReachOpen, setCreateReachOpen] = useState(false);
   useEffect(() => {
     const t = setInterval(() => {
       setNow(Date.now());
@@ -347,6 +351,16 @@ function ReachPage() {
           <span className="text-foreground font-medium">客户触达</span>
         </div>
         <div className="flex items-center gap-2">
+          <Button size="sm" className="h-8 text-xs gap-1" onClick={() => setCreateReachOpen(true)}>
+            <Plus className="h-3.5 w-3.5" />
+            社媒触达任务
+          </Button>
+          <Button asChild size="sm" variant="outline" className="h-8 text-xs gap-1">
+            <Link to="/outreach/social/accounts">
+              <UserCircle2 className="h-3.5 w-3.5" />
+              社媒账号
+            </Link>
+          </Button>
           <Button
             variant="ghost"
             size="sm"
@@ -362,6 +376,7 @@ function ReachPage() {
           </Button>
         </div>
       </div>
+      <CreateReachTaskDialog open={createReachOpen} onOpenChange={setCreateReachOpen} />
 
 
       <section
