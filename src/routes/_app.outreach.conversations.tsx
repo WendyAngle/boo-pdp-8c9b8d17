@@ -88,6 +88,7 @@ import {
   INTENT_COLOR,
   STATUS_LABEL,
   type Thread,
+
   type AiIntent,
   type Channel,
   type GroupKind,
@@ -128,6 +129,8 @@ import {
   langByCode,
   LANGUAGES,
 } from "@/lib/lang-detect";
+import { getTargetReason } from "@/lib/target-reason";
+
 
 
 /** 邮件场景的快捷回复模板（Phase 1 hardcoded） */
@@ -1768,6 +1771,72 @@ function ProfilePanel({ thread }: { thread: Thread }) {
           </div>
         )}
       </div>
+
+      {/* 目标客户来源与原因 */}
+      {(() => {
+        const reason = getTargetReason(thread);
+        const recommended = reason.mode === "recommended";
+        return (
+          <div className="rounded-md border bg-card p-4 space-y-3">
+            <div className="flex items-center gap-2">
+              <span className="text-xs text-muted-foreground">作为目标客户的原因</span>
+              <Badge
+                variant="outline"
+                className={cn(
+                  "h-5 text-[10px] gap-1",
+                  recommended
+                    ? "bg-violet-50 text-violet-700 border-violet-200"
+                    : "bg-sky-50 text-sky-700 border-sky-200",
+                )}
+              >
+                {recommended ? (
+                  <Sparkles className="h-2.5 w-2.5" />
+                ) : (
+                  <UserCheck className="h-2.5 w-2.5" />
+                )}
+                {recommended ? "系统推荐" : "自主选择"}
+              </Badge>
+              {recommended && reason.matchScore != null && (
+                <span className="ml-auto text-xs font-medium tabular-nums text-violet-700">
+                  匹配度 {reason.matchScore}%
+                </span>
+              )}
+            </div>
+            <div className="text-xs text-muted-foreground leading-relaxed">
+              {reason.summary}
+            </div>
+            {reason.origin && (
+              <div className="text-xs text-muted-foreground">
+                来源：{reason.origin}
+              </div>
+            )}
+            {reason.factors.length > 0 && (
+              <div className="space-y-2">
+                {reason.factors.map((f) => (
+                  <div key={f.label} className="space-y-1">
+                    <div className="flex items-center gap-2 text-xs">
+                      <span className="font-medium">{f.label}</span>
+                      <span className="ml-auto tabular-nums text-muted-foreground">
+                        {f.score}%
+                      </span>
+                    </div>
+                    <div className="h-1.5 rounded-full bg-muted overflow-hidden">
+                      <div
+                        className="h-full rounded-full bg-violet-500"
+                        style={{ width: `${Math.min(100, f.score)}%` }}
+                      />
+                    </div>
+                    <div className="text-[11px] text-muted-foreground leading-relaxed">
+                      {f.detail}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        );
+      })()}
+
       <div className="rounded-md border bg-card p-4">
         <div className="text-xs text-muted-foreground mb-2">前往完整档案</div>
         <Link
