@@ -167,6 +167,7 @@ function ReachPage() {
     return m;
   }, [threads]);
   const [now, setNow] = useState(() => Date.now());
+  const [createReachOpen, setCreateReachOpen] = useState(false);
   useEffect(() => {
     const t = setInterval(() => {
       setNow(Date.now());
