@@ -1352,7 +1352,7 @@ function ThreadDetail({
             )}
           </div>
         )}
-        <div className="flex items-center gap-2 mb-2">
+        <div className="flex items-center gap-2 mb-2 flex-wrap">
           <MessageCircleReply className="h-4 w-4 text-muted-foreground" />
           <span className="text-sm font-medium">回复</span>
           <span className="text-xs text-muted-foreground">
@@ -1363,10 +1363,34 @@ function ThreadDetail({
                 : `将以 ${CHANNEL_LABEL[thread.channel]} 渠道发出`}
             ，保持在同一会话内
           </span>
+          <div className="ml-auto flex items-center gap-1.5">
+            <Languages className="h-3.5 w-3.5 text-muted-foreground" />
+            <Select value={replyLang} onValueChange={setReplyLang}>
+              <SelectTrigger className="h-7 w-[190px] text-xs">
+                <SelectValue placeholder="目标语言" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectGroup>
+                  <SelectLabel className="text-[11px]">AI 建议</SelectLabel>
+                  <SelectItem value="auto" className="text-xs">
+                    跟随对方语言 · {detectedLang.flag} {detectedLang.zh}
+                  </SelectItem>
+                </SelectGroup>
+                <SelectGroup>
+                  <SelectLabel className="text-[11px]">指定目标语言</SelectLabel>
+                  {LANGUAGES.map((l) => (
+                    <SelectItem key={l.code} value={l.code} className="text-xs">
+                      {l.flag} {l.zh}（{l.en}）
+                    </SelectItem>
+                  ))}
+                </SelectGroup>
+              </SelectContent>
+            </Select>
+          </div>
           <Button
             variant="ghost"
             size="sm"
-            className="ml-auto gap-1 h-7"
+            className="gap-1 h-7"
             onClick={aiGenerate}
             disabled={aiLoading || winInfo?.closed}
           >
