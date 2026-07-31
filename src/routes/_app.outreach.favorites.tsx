@@ -29,6 +29,9 @@ import {
   Twitter,
   MessageCircle,
   Users,
+  Info,
+  CheckCircle2,
+
   
 
 } from "lucide-react";
