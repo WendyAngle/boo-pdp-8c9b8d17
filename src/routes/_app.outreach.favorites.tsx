@@ -92,6 +92,15 @@ import {
   type PlatformCandidate,
   type ReachPlatform,
 } from "@/components/BatchSocialPlatformDialog";
+import {
+  useReachedMap,
+  methodsOfFavorite,
+  REACH_METHOD_LABEL,
+  REACH_METHOD_TONE,
+  SOCIAL_PLATFORM_METHODS,
+  type ReachMethod,
+} from "@/lib/favorite-reached";
+
 
 
 export const Route = createFileRoute("/_app/outreach/favorites")({
