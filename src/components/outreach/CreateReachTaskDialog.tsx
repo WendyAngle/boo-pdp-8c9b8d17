@@ -38,6 +38,11 @@ import { useLeadProfile } from "@/lib/lead-profile";
 import { useCurrentUser } from "@/lib/current-user";
 import { generateAiContent } from "@/lib/api/ai-compose.functions";
 import { translateMessage } from "@/lib/api/ai-translate.functions";
+import {
+  AI_SUGGESTED_CHAR_LEN,
+  charLength,
+  platformCharLimit,
+} from "@/lib/text-length";
 
 const REGIONS = [
   "美国",
@@ -189,6 +194,14 @@ export function CreateReachTaskDialog({
   const staleTranslation =
     !!translated.trim() && trSource.trim() !== content.trim();
 
+  /** 平台字数限制：中/日/韩字符按 2 计 */
+  const charLimit = platformCharLimit(platform);
+  const contentLen = charLength(content);
+  const translatedLen = charLength(translated);
+  const sendLen = charLength(sendContent);
+  const overLimit = sendLen > charLimit;
+
+
   const contentRef = useRef<HTMLTextAreaElement | null>(null);
   function insertVarAt(v: string) {
     const token = `{${v}}`;
@@ -236,6 +249,7 @@ export function CreateReachTaskDialog({
           myCompany: profile.companyName,
           myName: user.name,
           sampleEnterprise: previewTargets[0]?.name,
+          extra: `严格控制篇幅：建议 ${AI_SUGGESTED_CHAR_LEN} 字符长度以内（中文/日文/韩文每字按 2 字符计），绝对不得超过 ${platform} 平台上限 ${charLimit} 字符。`,
         },
       });
       if (res.content) setContent(res.content);
@@ -278,6 +292,7 @@ export function CreateReachTaskDialog({
 
   const canSubmit =
     !hit &&
+    !overLimit &&
     !!name.trim() &&
     content.trim().length > 0 &&
     keywords.trim().length > 0 &&
@@ -290,6 +305,10 @@ export function CreateReachTaskDialog({
     if (!keywords.trim()) return toast.error("请填写目标关键词");
     if (targetCap <= 0) return toast.error("目标数量上限需大于 0");
     if (!content.trim()) return toast.error("请填写私信内容");
+    if (overLimit)
+      return toast.error(
+        `发送内容 ${sendLen} 字符，超出 ${platform} 上限 ${charLimit} 字符`,
+      );
     if (availableAccounts.length === 0)
       return toast.error("暂无可用账号，请先在「我的账号」中申请");
     if (balance.balance < sendCost) return toast.error("积分不足");
@@ -471,12 +490,23 @@ export function CreateReachTaskDialog({
                 value={content}
                 onChange={(e) => setContent(e.target.value)}
                 rows={6}
-                maxLength={4096}
                 placeholder={`Hi {联系人名}，我是 {我的公司} 的 {我的姓名}……（AI 生成默认为首发开发信）`}
               />
-              <div className="text-[11px] text-muted-foreground">{content.length} / 4096 字</div>
+              <div className="flex items-center justify-between text-[11px]">
+                <span
+                  className={
+                    contentLen > charLimit ? "text-rose-600" : "text-muted-foreground"
+                  }
+                >
+                  {contentLen} / {charLimit} 字符（{platform}）
+                </span>
+                <span className="text-muted-foreground">
+                  中/日/韩字符按 2 计 · AI 生成建议 {AI_SUGGESTED_CHAR_LEN} 字符内
+                </span>
+              </div>
             </div>
           </section>
+
 
           {/* 目标语言译文（实际发送内容） */}
           <section className="space-y-2 rounded-md border border-primary/25 bg-primary/[0.03] p-3">
@@ -530,15 +560,18 @@ export function CreateReachTaskDialog({
               value={translated}
               onChange={(e) => setTranslated(e.target.value)}
               rows={6}
-              maxLength={4096}
               placeholder={`选择目标语言后点击「翻译」，此处展示 ${
                 targetLangOpt?.zh ?? "目标语言"
               }文案，可手动修改`}
             />
             <div className="flex items-center justify-between text-[11px]">
-              <span className="text-muted-foreground">
+              <span
+                className={
+                  translatedLen > charLimit ? "text-rose-600" : "text-muted-foreground"
+                }
+              >
                 {translated
-                  ? `将以${targetLangOpt?.zh ?? ""}发送 · ${translated.length} / 4096 字`
+                  ? `将以${targetLangOpt?.zh ?? ""}发送 · ${translatedLen} / ${charLimit} 字符`
                   : "未翻译时，将直接发送中文原文"}
               </span>
               {staleTranslation && (
@@ -547,11 +580,19 @@ export function CreateReachTaskDialog({
             </div>
           </section>
 
+          {overLimit && (
+            <div className="text-xs text-rose-600">
+              实际发送内容 {sendLen} 字符，超出 {platform} 平台上限 {charLimit} 字符
+              （中/日/韩字符按 2 计），请精简后再提交。
+            </div>
+          )}
+
           {hit && (
             <div className="text-xs text-rose-600">
               命中敏感词 "{hit}"，请修改后再提交（否则将被拦截且不扣分）。
             </div>
           )}
+
 
           {/* 预览 */}
           {previewTargets.length > 0 && sendContent && (
