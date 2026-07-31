@@ -891,6 +891,8 @@ function ThreadDetail({
   const [replyLang, setReplyLang] = useState<string>("auto");
   useEffect(() => {
     setReplyLang("auto");
+    setPreTranslate(null);
+    setLangConfirmed(null);
   }, [thread.id]);
   const targetLang =
     langByCode(replyLang === "auto" ? detectedLang.code : replyLang) ??
