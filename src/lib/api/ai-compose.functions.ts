@@ -26,7 +26,8 @@ export const generateAiContent = createServerFn({ method: "POST" })
     const isEmail = data.channel === "email";
     const isSocial = data.channel === "social";
     const platform = data.platform || "WhatsApp";
-    const langName = data.language === "zh" ? "中文" : "English";
+    const langName =
+      data.languageName?.trim() || (data.language === "zh" ? "中文" : "English");
     const toneMap = { formal: "正式商务", friendly: "友好诚恳", concise: "简洁直接" } as const;
 
     const systemPrompt = [
