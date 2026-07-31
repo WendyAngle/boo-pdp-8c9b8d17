@@ -588,16 +588,6 @@ function ReachPage() {
                       <Users className="h-3.5 w-3.5" />
                     </Link>
                   </TableCell>
-                  <TableCell className="tabular-nums text-sm">
-                    {g.replies > 0 ? (
-                      <span className="text-emerald-600 font-semibold">{g.replies}</span>
-                    ) : (
-                      <span className="text-muted-foreground">—</span>
-                    )}
-                  </TableCell>
-                  <TableCell className="tabular-nums text-sm font-semibold">
-                    {g.total === 0 ? "—" : `${Math.round((g.replies / g.total) * 100)}%`}
-                  </TableCell>
 
                   <TableCell className="font-mono tabular-nums text-xs text-muted-foreground whitespace-nowrap">
                     {fmtTime(g.lastAt)}
