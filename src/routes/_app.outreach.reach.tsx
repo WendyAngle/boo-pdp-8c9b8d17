@@ -395,18 +395,19 @@ function ReachPage() {
           </div>
           <div className="flex items-center gap-5 text-right text-white/90">
             <div>
-              <div className="text-xs opacity-80">触达总数</div>
+              <div className="text-xs opacity-80">触达成功</div>
               <div className="text-2xl font-bold tabular-nums">{reachRows.length}</div>
-            </div>
-            <div>
-              <div className="text-xs opacity-80">触达成功率</div>
-              <div className="text-2xl font-bold tabular-nums">{successRate}%</div>
             </div>
             <div>
               <div className="text-xs opacity-80">客户回复</div>
               <div className="text-2xl font-bold tabular-nums">{replyTotal}</div>
             </div>
+            <div>
+              <div className="text-xs opacity-80">回复率</div>
+              <div className="text-2xl font-bold tabular-nums">{replyRate}%</div>
+            </div>
           </div>
+
         </div>
         <div className="mt-3 flex flex-wrap items-center gap-4 text-xs text-white/85">
           <span className="inline-flex items-center gap-1">
