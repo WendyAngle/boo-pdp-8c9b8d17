@@ -690,13 +690,10 @@ function ReachPage() {
           <Table>
             <TableHeader>
               <TableRow className="bg-primary/5 hover:bg-primary/5">
-                <TableHead className="w-[170px]">时间</TableHead>
+                <TableHead className="w-[170px]">触达时间</TableHead>
                 <TableHead className="w-[140px]">渠道</TableHead>
-                <TableHead className="w-[220px]">状态 / 原因</TableHead>
                 <TableHead>明细说明</TableHead>
-                {statusTab !== "pending" && statusTab !== "in_progress" && statusTab !== "failed" && (
-                  <TableHead className="w-[110px]">回复</TableHead>
-                )}
+                <TableHead className="w-[110px]">回复</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -708,50 +705,18 @@ function ReachPage() {
                   <TableCell>
                     <ChannelBadge channel={r.channel!} platform={r.platform} />
                   </TableCell>
-                  <TableCell>
-                    <div className="flex flex-col items-start gap-1">
-                      <StatusBadge status={r.status} />
-                      {r.status === "failed" && r.failReason && (
-                        <Tooltip>
-                          <TooltipTrigger asChild>
-                            <button
-                              type="button"
-                              className="inline-flex items-center gap-1 text-[11px] text-rose-600 hover:text-rose-700"
-                            >
-                              <Info className="h-3 w-3" />
-                              <span className="truncate max-w-[180px]">
-                                {r.failReason}
-                              </span>
-                            </button>
-                          </TooltipTrigger>
-                          <TooltipContent side="top" className="max-w-[260px]">
-                            <div className="text-xs leading-relaxed">
-                              <div className="font-medium">失败原因</div>
-                              <div className="mt-0.5">{r.failReason}</div>
-                              <div className="mt-1 text-muted-foreground">
-                                {!isRetryableFailReason(r.failReason) && (
-                                  <> 该原因不支持重新触达，建议核实联系方式后重新发起。</>
-                                )}
-                              </div>
-                            </div>
-                          </TooltipContent>
-                        </Tooltip>
-                      )}
-                    </div>
-                  </TableCell>
                   <TableCell className="text-xs max-w-[420px]">
                     <DetailCell row={r} onViewContent={() => setViewing(r)} />
                   </TableCell>
-                  {statusTab !== "pending" && statusTab !== "in_progress" && statusTab !== "failed" && (
-                    <TableCell className="text-xs">
-                      <ReplyCell reach={r} thread={threadByKey.get(threadKeyFor(r) ?? "") ?? null} />
-                    </TableCell>
-                  )}
+                  <TableCell className="text-xs">
+                    <ReplyCell reach={r} thread={threadByKey.get(threadKeyFor(r) ?? "") ?? null} />
+                  </TableCell>
                 </TableRow>
               ))}
             </TableBody>
           </Table>
         )}
+
         {filtered.length > 0 && (
           <div className="px-5 pb-4">
             <ListPagination
