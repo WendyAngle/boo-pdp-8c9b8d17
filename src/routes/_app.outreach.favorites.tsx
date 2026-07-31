@@ -909,11 +909,14 @@ function FavoriteCard({
   record,
   selected,
   onToggleSelect,
+  reached,
 }: {
   record: FavoriteRecord;
   selected: boolean;
   onToggleSelect: () => void;
+  reached: ReachMethod[];
 }) {
+
   const meta = KIND_META[record.kind];
   const Icon = meta.icon;
   const navigate = useNavigate();
