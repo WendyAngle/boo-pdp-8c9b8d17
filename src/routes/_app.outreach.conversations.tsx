@@ -130,6 +130,7 @@ import {
   LANGUAGES,
 } from "@/lib/lang-detect";
 import { getTargetReason } from "@/lib/target-reason";
+import { resolveThreadProfile } from "@/lib/thread-profile";
 
 
 
