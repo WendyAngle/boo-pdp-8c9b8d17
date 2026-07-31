@@ -953,14 +953,17 @@ function ThreadDetail({
           extra: [
             `对方姓名：${thread.parentRef?.name ?? thread.targetName}`,
             `对方最新原话：${(lastInbound?.content ?? "(尚无对方回复)").slice(0, 400)}`,
+            `AI 识别对方语言：${detectedLang.zh}（${detectedLang.en}，置信度 ${detectedLang.confidence}%）`,
+            `请使用 ${targetLang.en}（${targetLang.zh}）撰写整封回复。`,
           ].join("\n"),
           tone: "friendly",
-          language: "en",
+          language: targetLang.code === "zh" ? "zh" : "en",
+          languageName: targetLang.en,
           sampleEnterprise: thread.targetName,
         },
       });
       setReply(res.content || "");
-      toast.success("AI 已生成回复草稿，可继续编辑后发送");
+      toast.success(`AI 已生成${targetLang.zh}回复草稿，可继续编辑后发送`);
     } catch (e) {
       toast.error(`AI 生成失败：${(e as Error).message}`);
     } finally {
