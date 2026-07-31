@@ -393,7 +393,13 @@ function FavoritesPage() {
     const dKey = date ? fmtDateKey(date) : null;
     const list = all.filter((r) => {
       if (kind !== "all" && r.kind !== kind) return false;
+      if (reachFilter !== "all") {
+        const done = methodsOfFavorite(reachedMap, r).length > 0;
+        if (reachFilter === "reached" && !done) return false;
+        if (reachFilter === "unreached" && done) return false;
+      }
       if (dKey && !r.createdAt.startsWith(dKey)) return false;
+
       if (trimmed) {
         const hay = [
           r.title,
