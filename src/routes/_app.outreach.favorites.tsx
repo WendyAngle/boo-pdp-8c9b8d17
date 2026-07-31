@@ -153,6 +153,10 @@ function FavoritesPage() {
     seedDemoFavoritesIfEmpty();
   }, []);
   const [kind, setKind] = useState<KindFilter>("all");
+  const [reachFilter, setReachFilter] = useState<"all" | "reached" | "unreached">(
+    "all",
+  );
+
   const [keyword, setKeyword] = useState("");
   const [date, setDate] = useState<Date | undefined>(undefined);
   type SortKey =
