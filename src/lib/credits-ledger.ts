@@ -552,7 +552,7 @@ export function backfillAiGenerationEntries(): number {
     (e) => e.kind === "reach" && e.aiGenerated && !e.userCreated && !charged.has(e.id),
   );
   if (missing.length === 0) return 0;
-  const added: LedgerEntry[] = missing.map((r) => {
+  const added: LedgerEntry[] = missing.map((r): LedgerEntry => {
     const channel: ReachChannel = r.channel ?? "email";
     const cost =
       channel === "email" ? COST_AI_EMAIL : channel === "social" ? COST_AI_SOCIAL : COST_AI_SMS;
