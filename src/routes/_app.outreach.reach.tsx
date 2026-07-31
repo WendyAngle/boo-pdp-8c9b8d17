@@ -972,27 +972,14 @@ function ReplyCell({
   reach,
   thread,
 }: {
-  reach: { channel?: ReachChannel; status: ReachStatus };
+  reach: { channel?: ReachChannel };
   thread: Thread | null;
 }) {
-  // 仅「触达成功」的邮件/短信任务有意义展示回复；其他状态与社媒渠道显示 —
-  if (reach.status === "in_progress") {
-    return (
-      <span className="inline-flex items-center gap-1 text-[11px] text-muted-foreground" title="触达进行中，暂无回复">
-        <Loader2 className="h-3 w-3 animate-spin" />
-        触达中
-      </span>
-    );
-  }
-  if (reach.status === "failed") {
-    return <span className="text-[11px] text-muted-foreground" title="触达失败">—</span>;
-  }
-  if (reach.status !== "success") {
-    return <span className="text-[11px] text-muted-foreground">—</span>;
-  }
+  // 仅邮件 / 短信渠道有回复语义；社媒渠道显示 —
   if (reach.channel !== "email" && reach.channel !== "phone") {
     return <span className="text-[11px] text-muted-foreground">—</span>;
   }
+
   const replies = thread?.meta.inboundMessages.length ?? 0;
   if (!thread || replies === 0) {
     return (
