@@ -194,6 +194,14 @@ export function CreateReachTaskDialog({
   const staleTranslation =
     !!translated.trim() && trSource.trim() !== content.trim();
 
+  /** 平台字数限制：中/日/韩字符按 2 计 */
+  const charLimit = platformCharLimit(platform);
+  const contentLen = charLength(content);
+  const translatedLen = charLength(translated);
+  const sendLen = charLength(sendContent);
+  const overLimit = sendLen > charLimit;
+
+
   const contentRef = useRef<HTMLTextAreaElement | null>(null);
   function insertVarAt(v: string) {
     const token = `{${v}}`;
