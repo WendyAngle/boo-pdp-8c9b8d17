@@ -121,8 +121,7 @@ import { getApprovedSmsTemplates } from "@/lib/sms-templates-store";
 import { IntelPanel } from "@/components/outreach/IntelPanel";
 import { scoreIntent } from "@/lib/ai-intent-score";
 import { scoreAuthenticity } from "@/lib/ai-authenticity";
-import { Target as TargetIcon, PanelRightClose, PanelRightOpen, Plus, UserCircle2, Languages } from "lucide-react";
-import { CreateReachTaskDialog } from "@/components/outreach/CreateReachTaskDialog";
+import { Target as TargetIcon, PanelRightClose, PanelRightOpen, Languages } from "lucide-react";
 import {
   detectThreadLanguage,
   detectLanguage,
