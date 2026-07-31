@@ -1097,6 +1097,51 @@ function ThreadDetail({
                   {INTENT_LABEL[thread.meta.aiIntent]}
                 </Badge>
               )}
+              {/* AI 识别的对方语言 */}
+              <Popover>
+                <PopoverTrigger asChild>
+                  <button
+                    className="inline-flex items-center gap-1 rounded-md border border-violet-200 bg-violet-50 px-1.5 py-0.5 text-[11px] font-medium text-violet-700 hover:bg-violet-100 transition-colors"
+                    title="AI 语种识别依据"
+                  >
+                    <Sparkles className="h-3 w-3" />
+                    AI 识别语言
+                    <span className="ml-0.5">{detectedLang.flag}</span>
+                    {detectedLang.zh}
+                    <span className="tabular-nums opacity-70">
+                      {detectedLang.confidence}%
+                    </span>
+                  </button>
+                </PopoverTrigger>
+                <PopoverContent align="start" className="w-72 text-xs space-y-2">
+                  <div className="flex items-center gap-1.5 font-medium">
+                    <Languages className="h-3.5 w-3.5 text-violet-600" />
+                    AI 语种识别
+                  </div>
+                  <div className="text-muted-foreground">
+                    识别结果：
+                    <span className="text-foreground font-medium">
+                      {detectedLang.flag} {detectedLang.zh}（{detectedLang.en}）
+                    </span>
+                    ，置信度 {detectedLang.confidence}%
+                    {detectedLang.samples > 0 &&
+                      ` · 样本 ${detectedLang.samples} 条对方消息`}
+                  </div>
+                  <ul className="list-disc pl-4 space-y-0.5 text-muted-foreground">
+                    {detectedLang.evidence.map((e, i) => (
+                      <li key={i}>{e}</li>
+                    ))}
+                  </ul>
+                  {detectedLang.mixed && (
+                    <div className="rounded-md bg-amber-50 border border-amber-200 text-amber-800 px-2 py-1">
+                      检测到多语种混用，建议在回复区手动指定目标语言。
+                    </div>
+                  )}
+                  <div className="text-[10px] text-muted-foreground">
+                    识别结果仅供参考，可在下方回复区覆盖选择目标语言。
+                  </div>
+                </PopoverContent>
+              </Popover>
               {thread.meta.cadenceEnrolled && (
                 <Badge variant="outline" className="text-[11px]">
                   <Repeat className="h-3 w-3 mr-1" /> 已加入跟进序列
