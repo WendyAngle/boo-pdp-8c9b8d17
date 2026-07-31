@@ -873,6 +873,16 @@ function ThreadDetail({
   onToggleScorePanel?: () => void;
 }) {
   const [reply, setReply] = useState("");
+  // AI 识别的对方语言
+  const detectedLang = useMemo(() => detectThreadLanguage(thread), [thread]);
+  // 回复目标语言：auto = 跟随对方语言
+  const [replyLang, setReplyLang] = useState<string>("auto");
+  useEffect(() => {
+    setReplyLang("auto");
+  }, [thread.id]);
+  const targetLang =
+    langByCode(replyLang === "auto" ? detectedLang.code : replyLang) ??
+    langByCode("en")!;
   const [aiLoading, setAiLoading] = useState(false);
   const [sending, setSending] = useState(false);
   const [selectedTpl, setSelectedTpl] = useState<string>("");
