@@ -1256,6 +1256,20 @@ function ThreadDetail({
                     AI
                   </Badge>
                 )}
+                {m.direction === "inbound" &&
+                  (() => {
+                    const ml = detectLanguage(m.content ?? "");
+                    return (
+                      <Badge
+                        variant="outline"
+                        className="text-[10px] py-0 h-4 bg-violet-50 text-violet-700 border-violet-200"
+                        title={`AI 语种识别：${ml.en} · 置信度 ${ml.confidence}%`}
+                      >
+                        <Sparkles className="h-2.5 w-2.5 mr-0.5" />
+                        {ml.flag} {ml.zh}
+                      </Badge>
+                    );
+                  })()}
               </div>
               {m.direction === "outbound" && m.events && m.events.length > 0 && (
                 <div className="mt-1 flex items-center gap-2 text-[11px] text-muted-foreground">
