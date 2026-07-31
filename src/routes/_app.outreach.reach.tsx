@@ -871,36 +871,6 @@ function ReachPage() {
   );
 }
 
-function TaskProgress({ group }: { group: TaskGroup }) {
-  const segs = [
-    { n: group.success, cls: "bg-emerald-500", label: REACH_STATUS_LABEL.success },
-    { n: group.in_progress, cls: "bg-amber-500", label: REACH_STATUS_LABEL.in_progress },
-    { n: group.pending, cls: "bg-slate-300", label: REACH_STATUS_LABEL.pending },
-    { n: group.failed, cls: "bg-rose-500", label: REACH_STATUS_LABEL.failed },
-  ].filter((x) => x.n > 0);
-  return (
-    <div className="space-y-1">
-      <div className="flex h-1.5 w-full overflow-hidden rounded-full bg-muted">
-        {segs.map((x) => (
-          <div
-            key={x.label}
-            className={x.cls}
-            style={{ width: `${(x.n / group.total) * 100}%` }}
-            title={`${x.label} ${x.n}`}
-          />
-        ))}
-      </div>
-      <div className="flex flex-wrap gap-x-2.5 gap-y-0.5 text-[11px] text-muted-foreground">
-        {segs.map((x) => (
-          <span key={x.label} className="inline-flex items-center gap-1">
-            <span className={cn("h-1.5 w-1.5 rounded-full", x.cls)} />
-            {x.label} <span className="tabular-nums text-foreground">{x.n}</span>
-          </span>
-        ))}
-      </div>
-    </div>
-  );
-}
 
 function KpiCard({
   icon,
