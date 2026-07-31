@@ -1607,6 +1607,8 @@ function ThreadDetail({
             onClick={() => {
               setReply("");
               setSelectedTpl("");
+              setPreTranslate(null);
+              setLangConfirmed(null);
               if (typeof window !== "undefined")
                 window.localStorage.removeItem(draftKey);
               setDraftSavedAt(null);
@@ -1626,6 +1628,48 @@ function ThreadDetail({
           </div>
         </div>
       </div>
+
+      {/* 发送前语言一致性提醒 */}
+      <AlertDialog open={langAlertOpen} onOpenChange={setLangAlertOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>发送语言与目标语言不一致</AlertDialogTitle>
+            <AlertDialogDescription asChild>
+              <div className="space-y-2 text-sm">
+                <p>
+                  AI 识别你输入的内容为「{draftLang?.zh}」（置信度{" "}
+                  {draftLang?.confidence}%），而本会话目标语言为「{targetLang.zh}」
+                  {replyLang === "auto" ? "（跟随对方语言）" : "（手动指定）"}。
+                </p>
+                <p className="text-muted-foreground">
+                  建议先翻译为{targetLang.zh}再发送，避免客户理解成本过高影响回复率。
+                </p>
+              </div>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>返回修改</AlertDialogCancel>
+            <Button
+              variant="outline"
+              onClick={() => {
+                setLangConfirmed(reply.trim());
+                setLangAlertOpen(false);
+                doSend(false);
+              }}
+            >
+              仍按原文发送
+            </Button>
+            <AlertDialogAction
+              onClick={async () => {
+                setLangAlertOpen(false);
+                await doTranslate();
+              }}
+            >
+              翻译为{targetLang.zh}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogFooter>
+      </AlertDialog>
     </div>
   );
 }
