@@ -534,8 +534,6 @@ function ReachPage() {
                 <TableHead className="w-[150px]">渠道 / 平台</TableHead>
                 <TableHead className="w-[90px]">动作</TableHead>
                 <TableHead className="w-[110px]">目标数</TableHead>
-                <TableHead className="w-[90px]">回复</TableHead>
-                <TableHead className="w-[110px]">回复率</TableHead>
                 <TableHead className="w-[170px]">最近执行</TableHead>
               </TableRow>
             </TableHeader>
