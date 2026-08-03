@@ -358,7 +358,7 @@ function ReachPage() {
       <div className="flex items-center justify-end gap-2">
         <Button size="sm" className="h-9 gap-1.5" onClick={() => setCreateReachOpen(true)}>
           <Plus className="h-4 w-4" />
-          新建社媒触达任务
+          社媒拓客触达
         </Button>
         <Button asChild size="sm" variant="outline" className="h-9 gap-1.5">
           <Link to="/outreach/social/accounts">
