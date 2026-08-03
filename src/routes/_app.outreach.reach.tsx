@@ -541,7 +541,7 @@ function ReachPage() {
               ))}
             </TableBody>
           </Table>
-        ) : null}
+        )}
 
         {filtered.length > 0 && (
           <div className="px-5 pb-4">
