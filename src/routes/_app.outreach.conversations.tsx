@@ -158,6 +158,13 @@ const EMAIL_QUICK_REPLIES: { id: string; name: string; body: string }[] = [
   },
 ];
 
+import {
+  useThreadSenderResolver,
+  useSenderOptions,
+  senderText,
+  type ThreadSender,
+} from "@/lib/thread-sender";
+
 const searchSchema = z.object({
   view: z
     .enum([
@@ -183,6 +190,8 @@ const searchSchema = z.object({
     .enum(["all", "email", "sms", "whatsapp", "telegram", "facebook", "tiktok"])
     .optional(),
   group: z.enum(["all", "enterprise", "contact"]).optional(),
+  /** 发信账号（我方身份）过滤，值为 ThreadSender.key */
+  sender: z.string().optional(),
   tid: z.string().optional(),
   q: z.string().optional(),
   /** 意向档位过滤：高/中/低/全部（左侧列表顶部 Tab） */
@@ -308,10 +317,15 @@ function InboxPage() {
   const q = search.q ?? "";
   const ch = search.ch ?? "all";
   const group = search.group ?? "all";
+  const senderKey = search.sender ?? "all";
+  const resolveSender = useThreadSenderResolver();
+  const senderOptions = useSenderOptions(threads);
 
   const filtered = useMemo(() => {
     let list = threads;
     if (ch !== "all") list = list.filter((t) => t.channel === ch);
+    if (senderKey !== "all")
+      list = list.filter((t) => resolveSender(t).key === senderKey);
     if (group !== "all") list = list.filter((t) => threadGroup(t) === group);
     if (intent !== "all")
       list = list.filter((t) => scoreIntent(t).band === intent);
@@ -376,7 +390,7 @@ function InboxPage() {
       );
     }
     return list;
-  }, [threads, view, q, ch, intent]);
+  }, [threads, view, q, ch, intent, senderKey, resolveSender]);
   // eslint-disable-next-line react-hooks/exhaustive-deps
   void group;
 
@@ -461,6 +475,25 @@ function InboxPage() {
               <SelectItem value="telegram">Telegram</SelectItem>
               <SelectItem value="facebook">Facebook</SelectItem>
               <SelectItem value="tiktok">TikTok</SelectItem>
+            </SelectContent>
+          </Select>
+          <Select
+            value={senderKey}
+            onValueChange={(v) => goto({ sender: v, tid: undefined })}
+          >
+            <SelectTrigger className="h-8 text-xs w-[150px]">
+              <SelectValue placeholder="发信账号" />
+            </SelectTrigger>
+            <SelectContent className="max-h-72">
+              <SelectItem value="all">发信账号：全部</SelectItem>
+              {senderOptions.map(({ sender, count }) => (
+                <SelectItem key={sender.key} value={sender.key}>
+                  <span className="truncate">
+                    {sender.address}
+                    <span className="text-muted-foreground"> · {count}</span>
+                  </span>
+                </SelectItem>
+              ))}
             </SelectContent>
           </Select>
           <Select
@@ -578,10 +611,10 @@ function InboxPage() {
               </span>
               条会话
             </span>
-            {(view !== "all" || ch !== "all" || group !== "all" || q || intent !== "all") && (
+            {(view !== "all" || ch !== "all" || group !== "all" || senderKey !== "all" || q || intent !== "all") && (
               <button
                 onClick={() =>
-                  goto({ view: "all", ch: "all", group: "all", q: "", intent: undefined, tid: undefined })
+                  goto({ view: "all", ch: "all", group: "all", sender: "all", q: "", intent: undefined, tid: undefined })
                 }
                 className="text-primary hover:underline"
               >
