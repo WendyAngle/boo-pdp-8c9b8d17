@@ -117,19 +117,14 @@ function MailboxesPage() {
   const [statusFilter, setStatusFilter] = useState("all");
   const [providerFilter, setProviderFilter] = useState("all");
   const [formOpen, setFormOpen] = useState(false);
-  const [formInitScope, setFormInitScope] = useState<MailboxScope>("personal");
   const [editing, setEditing] = useState<Mailbox | null>(null);
   const [delTarget, setDelTarget] = useState<Mailbox | null>(null);
   const [testingId, setTestingId] = useState<string | null>(null);
 
   const filtered = useMemo(() => {
     return data.filter((m) => {
-      // 成员视角：team 只看到启用中；personal 仅看自己的
-      if (!isAdmin) {
-        if (m.scope === "team" && m.status !== "正常") return false;
-        if (m.scope === "personal" && m.ownerId !== CURRENT_TENANT_USER.id)
-          return false;
-      }
+      // 成员视角：仅展示启用中的企业邮箱（只读）
+      if (!isAdmin && m.status !== "正常") return false;
       if (
         keyword &&
         !`${m.email} ${m.displayName} ${m.username}`
@@ -143,11 +138,6 @@ function MailboxesPage() {
     });
   }, [data, keyword, statusFilter, providerFilter, isAdmin]);
 
-  const teamList = useMemo(() => filtered.filter((m) => m.scope === "team"), [filtered]);
-  const personalList = useMemo(
-    () => filtered.filter((m) => m.scope === "personal"),
-    [filtered],
-  );
 
   const stats = useMemo(() => {
     const c = (s: MailboxStatus) => data.filter((m) => m.status === s).length;
