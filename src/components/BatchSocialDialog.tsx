@@ -712,5 +712,3 @@ function StatCell({
     </div>
   );
 }
-
-}
