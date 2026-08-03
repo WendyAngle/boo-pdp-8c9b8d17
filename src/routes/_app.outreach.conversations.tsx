@@ -1612,8 +1612,9 @@ function ThreadDetail({
           >
             <Languages className="h-3.5 w-3.5 shrink-0" />
             {translationStale ? (
-              <span>中文原文已修改，译文可能已过期，建议重新翻译后再发送。</span>
+              <span>中文原文已修改，右侧译文对应的是旧内容，请点击「重新翻译」后再发送。</span>
             ) : translated ? (
+
               <span>
                 已生成「{targetLang.zh}」译文，发送时以右侧译文为准，中文原文仅内部留存。
               </span>
