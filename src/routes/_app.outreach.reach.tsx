@@ -14,18 +14,12 @@ import {
   Send,
   RefreshCw,
   EyeOff,
-  FileText,
+  
   Sparkles,
 } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import {
@@ -61,7 +55,7 @@ import {
   Inbox as InboxIcon,
   MessageCircleReply,
   Users,
-  ListChecks,
+  
   Facebook,
   Music2,
   MessageSquare,
@@ -126,20 +120,6 @@ function ReachPage() {
   const [kw, setKw] = useState("");
   const [page, setPage] = useState(1);
   const pageSize = 10;
-  const [viewing, setViewing] = useState<
-    | null
-    | {
-        id: string;
-        targetName: string;
-        channel?: ReachChannel;
-        subject?: string;
-        content?: string;
-        senderEmail?: string;
-        detail?: string;
-        aiGenerated?: boolean;
-        createdAt: string;
-      }
-  >(null);
 
   // 触达任务仅展示「触达成功」的数据，不再区分待触达 / 触达中 / 触达失败
   const reachRows = useMemo(() => {
