@@ -706,7 +706,6 @@ function MailboxFormDialog({
   /** 是否已手动改过显示名（改过后不再自动覆盖） */
   const [nameTouched, setNameTouched] = useState(false);
   const [detect, setDetect] = useState<DetectResult | null>(null);
-  const [showGuide, setShowGuide] = useState(false);
 
   // 同步 editing → form（依赖 open + editing.id）
   const editingKey = editing?.id ?? "new";
