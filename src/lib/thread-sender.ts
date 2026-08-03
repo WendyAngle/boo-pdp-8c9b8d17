@@ -128,10 +128,10 @@ export function resolveThreadSender(
         origin: "email",
         health: "ok",
       };
-    const fallback = pick(
-      ctx.emails.filter((e) => e.status === "available"),
-      thread.id,
+    const mailboxes = ctx.emails.filter(
+      (e) => e.status === "available" && isMailbox(e),
     );
+    const fallback = pick(mailboxes, thread.id);
     return fallback ? fromEmailAccount(fallback) : UNKNOWN;
   }
 
@@ -151,8 +151,16 @@ export function resolveThreadSender(
   if (ch === "whatsapp") {
     const list = ctx.social.filter((a) => a.platform === "WhatsApp");
     const usable = list.filter((a) => a.status === "正常");
-    const fallback = pick(usable.length ? usable : list, thread.id);
-    return fallback ? fromSocialAccount(fallback) : UNKNOWN;
+    const matched = pick(usable.length ? usable : list, thread.id);
+    if (matched) return fromSocialAccount(matched);
+    const wa = pick(WHATSAPP_SENDERS, thread.id)!;
+    return {
+      key: `whatsapp:${wa.address}`,
+      address: wa.address,
+      displayName: wa.displayName,
+      origin: "whatsapp",
+      health: "ok",
+    };
   }
 
   if (ch === "sms") {
@@ -167,9 +175,16 @@ export function resolveThreadSender(
   }
 
   const raw = firstOutboundFrom(thread);
-  return raw
-    ? { key: `other:${raw}`, address: raw, origin: "unknown", health: "ok" }
-    : UNKNOWN;
+  if (raw)
+    return { key: `other:${raw}`, address: raw, origin: "unknown", health: "ok" };
+  const tg = pick(TELEGRAM_SENDERS, thread.id)!;
+  return {
+    key: `social:${tg.address}`,
+    address: tg.address,
+    displayName: tg.displayName,
+    origin: "social",
+    health: "ok",
+  };
 }
 
 const EMPTY_EMAILS: EmailAccount[] = [];
