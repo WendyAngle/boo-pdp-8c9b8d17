@@ -48,6 +48,7 @@ import { useLeadProfile } from "@/lib/lead-profile";
 import { useCurrentUser } from "@/lib/current-user";
 import { ComposeFormatHint } from "@/components/outreach/ComposeFormatHint";
 import { generateAiContent } from "@/lib/api/ai-compose.functions";
+import { TargetLangSection } from "@/components/outreach/TargetLangSection";
 
 export type ReachPlatform = "Facebook" | "TikTok";
 export const REACH_PLATFORMS: ReachPlatform[] = ["Facebook", "TikTok"];
@@ -101,7 +102,10 @@ export function BatchSocialPlatformDialog({
   const [aiUsed, setAiUsed] = useState(false);
   const [previewIdx, setPreviewIdx] = useState(0);
   const [aiLoading, setAiLoading] = useState(false);
-  const [targetLang, setTargetLang] = useState<"zh" | "en">("zh");
+  /** 目标语言（发送语言）代码 */
+  const [targetLang, setTargetLang] = useState<string>("en");
+  /** 目标语言译文（实际发送内容） */
+  const [translated, setTranslated] = useState("");
 
   useEffect(() => {
     if (!open) return;
@@ -109,7 +113,8 @@ export function BatchSocialPlatformDialog({
     setContent("");
     setAiUsed(false);
     setPreviewIdx(0);
-    setTargetLang("zh");
+    setTargetLang("en");
+    setTranslated("");
   }, [open]);
 
   /** 按平台联系方式分组数量 */
@@ -197,9 +202,11 @@ export function BatchSocialPlatformDialog({
     });
   }
 
+  /** 实际发送内容：有译文则发译文 */
+  const sendContent = (translated.trim() || content).trim();
   const previewJob = jobs[Math.min(previewIdx, Math.max(0, jobs.length - 1))];
   const previewContent = previewJob
-    ? renderTemplate(content, previewJob.candidate.ctx)
+    ? renderTemplate(sendContent, previewJob.candidate.ctx)
     : "";
 
   const canSend = targetCount > 0 && content.trim().length > 0;
@@ -226,7 +233,7 @@ export function BatchSocialPlatformDialog({
         channel: "social",
         platform: job.platform,
         detail: job.handle,
-        content: renderTemplate(content, r.ctx),
+        content: renderTemplate(sendContent, r.ctx),
         aiGenerated: aiUsed,
         cost: unit,
         userCreated: true,
@@ -255,7 +262,8 @@ export function BatchSocialPlatformDialog({
           platform: platform === "all" ? "Facebook" : platform,
           scene: "开发信",
           tone: "friendly",
-          language: targetLang,
+          language: "zh",
+          languageName: "中文",
           myCompany: profile.companyName,
           myName: user.name,
           sampleEnterprise: sample?.ctx.企业名,
@@ -433,7 +441,18 @@ export function BatchSocialPlatformDialog({
             </div>
           </section>
 
+          {/* 目标语言文案（实际发送内容） */}
+          <TargetLangSection
+            source={content}
+            lang={targetLang}
+            onLangChange={setTargetLang}
+            value={translated}
+            onChange={setTranslated}
+            kindLabel="私信"
+          />
+
           {/* 预览 */}
+
           {jobs.length > 0 && (
             <section className="space-y-2 rounded-md border bg-muted/30 p-3">
               <div className="flex items-center justify-between">
