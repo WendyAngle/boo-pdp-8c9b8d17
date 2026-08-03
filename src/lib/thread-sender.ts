@@ -52,6 +52,22 @@ const SMS_GATEWAYS = [
   { address: "国际通道 B", displayName: "SMS Gateway · EU" },
 ];
 
+/** 演示环境的 WhatsApp Business 发信号码（社媒账号池中暂无 WhatsApp 资源时使用） */
+const WHATSAPP_SENDERS = [
+  { address: "+86 138****6621", displayName: "WhatsApp Business · 外贸一部" },
+  { address: "+86 139****8032", displayName: "WhatsApp Business · 外贸二部" },
+];
+
+/** 演示环境的 Telegram 官方账号 */
+const TELEGRAM_SENDERS = [
+  { address: "@bytetech_sales", displayName: "ByteTech Sales Bot" },
+];
+
+/** 只有「真实邮箱地址」才可作为发信身份（域名 / Subuser 仅为资源，不直接展示） */
+function isMailbox(a: EmailAccount): boolean {
+  return a.identity.includes("@");
+}
+
 function firstOutboundFrom(thread: Thread): string | undefined {
   for (const m of thread.messages) {
     if (m.direction === "outbound" && m.fromAddress) return m.fromAddress;
