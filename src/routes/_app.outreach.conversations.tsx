@@ -163,7 +163,6 @@ import {
   useThreadSenderResolver,
   useSenderOptions,
   senderText,
-  type ThreadSender,
 } from "@/lib/thread-sender";
 
 const searchSchema = z.object({
