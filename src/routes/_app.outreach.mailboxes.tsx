@@ -95,6 +95,14 @@ const PROVIDERS: MailboxProvider[] = [
   "网易企业邮",
   "自定义SMTP",
 ];
+/** 新增邮箱弹窗中可选的服务商（不含「自定义SMTP」） */
+const FORM_PROVIDERS: MailboxProvider[] = [
+  "Gmail",
+  "Outlook",
+  "腾讯企业邮",
+  "阿里企业邮",
+  "网易企业邮",
+];
 const STATUSES: MailboxStatus[] = ["正常", "停用", "异常"];
 const ENCRYPTIONS: MailboxEncryption[] = ["SSL", "TLS", "STARTTLS", "NONE"];
 
