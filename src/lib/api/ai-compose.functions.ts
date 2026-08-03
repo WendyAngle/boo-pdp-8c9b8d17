@@ -48,6 +48,17 @@ export const generateAiContent = createServerFn({ method: "POST" })
         : `只输出${spec.label}正文本身。不要 JSON，不要 Markdown，不要解释，不要引号包裹，不要输出任何前后缀说明。`,
     ].join("\n");
 
+    const userPrompt = [
+      `场景: ${data.scene}`,
+      data.extra ? `补充要求: ${data.extra}` : "",
+      data.sampleEnterprise ? `示例目标客户: ${data.sampleEnterprise}` : "",
+      data.myName ? `落款署名: ${data.myName}` : "",
+    ]
+      .filter(Boolean)
+      .join("\n");
+
+
+
     const resp = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
       headers: {
