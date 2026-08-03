@@ -44,7 +44,7 @@ export const PROVIDER_PRESETS: Record<
 };
 
 const KEY = "boo:mailboxes:v1";
-const SEED_FLAG = "boo:mailboxes:v2:seeded";
+const SEED_FLAG = "boo:mailboxes:v3:seeded";
 
 function read(): Mailbox[] {
   if (typeof window === "undefined") return [];
@@ -53,11 +53,11 @@ function read(): Mailbox[] {
     if (!raw) return [];
     const arr = JSON.parse(raw);
     if (Array.isArray(arr)) {
-      // v1 → v2 迁移：无 scope 视为团队邮箱
-      return arr.map((m: Mailbox) => ({
-        ...m,
-        scope: m.scope ?? "team",
-      }));
+      // 历史数据迁移：不再区分团队 / 个人，统一为企业邮箱
+      return arr.map((m: Record<string, unknown>) => {
+        const { scope: _s, ownerId: _o, ...rest } = m;
+        return rest as unknown as Mailbox;
+      });
     }
   } catch {}
   return [];
