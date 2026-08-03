@@ -166,6 +166,34 @@ export function CreateReachTaskDialog({
   );
   const dailyCap = availableAccounts.length * DAILY_PER_ACCOUNT;
 
+  /** 推广产品候选：企业信息主营产品 + 手动添加项 */
+  const productOptions = useMemo(() => {
+    const base = profile.mainProducts ?? [];
+    return Array.from(new Set([...base, ...promoProducts]));
+  }, [profile.mainProducts, promoProducts]);
+
+  const MAX_PROMO = 3;
+  function toggleProduct(p: string) {
+    setPromoProducts((prev) => {
+      if (prev.includes(p)) return prev.filter((x) => x !== p);
+      if (prev.length >= MAX_PROMO) {
+        toast.error(`最多可选择 ${MAX_PROMO} 个推广产品`);
+        return prev;
+      }
+      return [...prev, p];
+    });
+  }
+  function addCustomProduct() {
+    const v = customProduct.trim();
+    if (!v) return;
+    if (promoProducts.includes(v)) return setCustomProduct("");
+    if (promoProducts.length >= MAX_PROMO)
+      return toast.error(`最多可选择 ${MAX_PROMO} 个推广产品`);
+    setPromoProducts((prev) => [...prev, v]);
+    setCustomProduct("");
+  }
+
+
   const my = useMemo<VarContext>(() => myContext(profile, user), [profile, user]);
   const targetLangOpt = langByCode(targetLang);
 
