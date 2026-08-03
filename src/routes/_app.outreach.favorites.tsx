@@ -789,10 +789,11 @@ function FavoritesPage() {
                 if (!guardBatch(socialEligible, "社媒")) return;
                 setBatchPlatformOpen(true);
               }}
-              title="批量社媒触达"
+              title="批量社媒私信"
             >
               <Users className="h-4 w-4" />
-              批量社媒触达
+              批量社媒私信
+
             </Button>
 
 
