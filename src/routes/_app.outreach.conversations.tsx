@@ -946,13 +946,11 @@ function ThreadDetail({
     langByCode(replyLang === "auto" ? detectedLang.code : replyLang) ??
     langByCode("en")!;
   const [aiLoading, setAiLoading] = useState(false);
-  // 翻译：手动输入内容与目标语言不一致时的辅助能力
+  /** 目标语言译文（实际发送内容） */
+  const [translated, setTranslated] = useState("");
+  /** 生成译文时对应的中文原文，用于判断译文是否过期 */
+  const [translatedFrom, setTranslatedFrom] = useState("");
   const [translating, setTranslating] = useState(false);
-  /** 翻译前的原文，用于「撤销翻译」 */
-  const [preTranslate, setPreTranslate] = useState<string | null>(null);
-  /** 已确认「按原文发送」的内容，避免重复弹窗 */
-  const [langConfirmed, setLangConfirmed] = useState<string | null>(null);
-  const [langAlertOpen, setLangAlertOpen] = useState(false);
   const [sending, setSending] = useState(false);
   const [selectedTpl, setSelectedTpl] = useState<string>("");
   const [draftSavedAt, setDraftSavedAt] = useState<string | null>(null);
