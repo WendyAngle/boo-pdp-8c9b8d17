@@ -1451,9 +1451,9 @@ function ThreadDetail({
           </span>
           <Button
             variant="ghost"
-
             size="sm"
-            className="gap-1 h-7"
+            className="ml-auto gap-1 h-7"
+
             onClick={aiGenerate}
             disabled={aiLoading || winInfo?.closed}
           >
