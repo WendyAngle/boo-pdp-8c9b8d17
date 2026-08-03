@@ -31,6 +31,7 @@ import {
   Music2,
   Send as SendIcon,
   ShieldAlert,
+  AlertTriangle,
   UserCheck,
   Hand,
   Zap,
@@ -158,6 +159,12 @@ const EMAIL_QUICK_REPLIES: { id: string; name: string; body: string }[] = [
   },
 ];
 
+import {
+  useThreadSenderResolver,
+  useSenderOptions,
+  senderText,
+} from "@/lib/thread-sender";
+
 const searchSchema = z.object({
   view: z
     .enum([
@@ -183,6 +190,8 @@ const searchSchema = z.object({
     .enum(["all", "email", "sms", "whatsapp", "telegram", "facebook", "tiktok"])
     .optional(),
   group: z.enum(["all", "enterprise", "contact"]).optional(),
+  /** 发信账号（我方身份）过滤，值为 ThreadSender.key */
+  sender: z.string().optional(),
   tid: z.string().optional(),
   q: z.string().optional(),
   /** 意向档位过滤：高/中/低/全部（左侧列表顶部 Tab） */
@@ -308,10 +317,15 @@ function InboxPage() {
   const q = search.q ?? "";
   const ch = search.ch ?? "all";
   const group = search.group ?? "all";
+  const senderKey = search.sender ?? "all";
+  const resolveSender = useThreadSenderResolver();
+  const senderOptions = useSenderOptions(threads);
 
   const filtered = useMemo(() => {
     let list = threads;
     if (ch !== "all") list = list.filter((t) => t.channel === ch);
+    if (senderKey !== "all")
+      list = list.filter((t) => resolveSender(t).key === senderKey);
     if (group !== "all") list = list.filter((t) => threadGroup(t) === group);
     if (intent !== "all")
       list = list.filter((t) => scoreIntent(t).band === intent);
@@ -376,7 +390,7 @@ function InboxPage() {
       );
     }
     return list;
-  }, [threads, view, q, ch, intent]);
+  }, [threads, view, q, ch, intent, senderKey, resolveSender]);
   // eslint-disable-next-line react-hooks/exhaustive-deps
   void group;
 
@@ -461,6 +475,25 @@ function InboxPage() {
               <SelectItem value="telegram">Telegram</SelectItem>
               <SelectItem value="facebook">Facebook</SelectItem>
               <SelectItem value="tiktok">TikTok</SelectItem>
+            </SelectContent>
+          </Select>
+          <Select
+            value={senderKey}
+            onValueChange={(v) => goto({ sender: v, tid: undefined })}
+          >
+            <SelectTrigger className="h-8 text-xs w-[150px]">
+              <SelectValue placeholder="发信账号" />
+            </SelectTrigger>
+            <SelectContent className="max-h-72">
+              <SelectItem value="all">发信账号：全部</SelectItem>
+              {senderOptions.map(({ sender, count }) => (
+                <SelectItem key={sender.key} value={sender.key}>
+                  <span className="truncate">
+                    {sender.address}
+                    <span className="text-muted-foreground"> · {count}</span>
+                  </span>
+                </SelectItem>
+              ))}
             </SelectContent>
           </Select>
           <Select
@@ -578,10 +611,10 @@ function InboxPage() {
               </span>
               条会话
             </span>
-            {(view !== "all" || ch !== "all" || group !== "all" || q || intent !== "all") && (
+            {(view !== "all" || ch !== "all" || group !== "all" || senderKey !== "all" || q || intent !== "all") && (
               <button
                 onClick={() =>
-                  goto({ view: "all", ch: "all", group: "all", q: "", intent: undefined, tid: undefined })
+                  goto({ view: "all", ch: "all", group: "all", sender: "all", q: "", intent: undefined, tid: undefined })
                 }
                 className="text-primary hover:underline"
               >
@@ -668,6 +701,7 @@ function ThreadRow({
   const last = thread.messages[thread.messages.length - 1];
   const sla = slaInfo(thread);
   const authenticity = scoreAuthenticity(thread);
+  const sender = useThreadSenderResolver()(thread);
   const woken =
     thread.meta.wokenAt &&
     Date.now() - new Date(thread.meta.wokenAt).getTime() < 24 * 3600_000;
@@ -763,6 +797,20 @@ function ThreadRow({
               );
             })()}
             <span className="text-[10px]">{CHANNEL_LABEL[thread.channel]}</span>
+            <span
+              className={cn(
+                "text-[10px] truncate max-w-[170px] inline-flex items-center gap-0.5",
+                sender.health === "warning" && "text-rose-600",
+              )}
+              title={`发自 ${senderText(sender)}${
+                sender.healthNote ? ` · ${sender.healthNote}` : ""
+              }`}
+            >
+              {sender.health === "warning" && (
+                <AlertTriangle className="h-2.5 w-2.5 shrink-0" />
+              )}
+              · 发自 {sender.address}
+            </span>
             {thread.isFriend && (
               <Badge
                 variant="outline"
@@ -873,6 +921,7 @@ function ThreadDetail({
   onToggleScorePanel?: () => void;
 }) {
   const [reply, setReply] = useState("");
+  const detailSender = useThreadSenderResolver()(thread);
   // AI 识别的对方语言
   const detectedLang = useMemo(() => detectThreadLanguage(thread), [thread]);
   // 回复目标语言：auto = 跟随对方语言
@@ -1416,11 +1465,9 @@ function ThreadDetail({
           <MessageCircleReply className="h-4 w-4 text-muted-foreground" />
           <span className="text-sm font-medium">回复</span>
           <span className="text-xs text-muted-foreground">
-            {thread.channel === "email"
-              ? `将以 ${thread.senderEmail || "outreach@bytetech.cn"} 发出`
-              : thread.channel === "whatsapp"
-                ? "由公司共享 WhatsApp 商号发出（对客户显示同一号码）"
-                : `将以 ${CHANNEL_LABEL[thread.channel]} 渠道发出`}
+            {thread.channel === "whatsapp"
+              ? "由公司共享 WhatsApp 商号发出（对客户显示同一号码）"
+              : `将以 ${detailSender.address} 发出`}
             ，保持在同一会话内
           </span>
           <div className="ml-auto flex items-center gap-1.5">
@@ -1730,8 +1777,68 @@ function _ActionBar({ thread }: { thread: Thread }) {
 }
 
 function ProfilePanel({ thread }: { thread: Thread }) {
+  const resolveSenderForPanel = useThreadSenderResolver();
   return (
     <div className="space-y-3 text-sm">
+      {(() => {
+        const sender = resolveSenderForPanel(thread);
+        const link =
+          sender.origin === "email"
+            ? { to: "/outreach/mailboxes" as const, label: "查看发信邮箱" }
+            : sender.origin === "social" || sender.origin === "whatsapp"
+              ? { to: "/outreach/social/accounts" as const, label: "查看社媒账号" }
+              : null;
+        return (
+          <div className="rounded-md border bg-card p-4 space-y-2">
+            <div className="text-xs text-muted-foreground">沟通通道</div>
+            <div className="flex items-center gap-2 text-sm min-w-0">
+              <span className="text-xs text-muted-foreground shrink-0">我方</span>
+              <span className="font-mono truncate">{sender.address}</span>
+              {sender.displayName && (
+                <span className="text-xs text-muted-foreground truncate">
+                  {sender.displayName}
+                </span>
+              )}
+              {sender.health === "warning" && (
+                <Badge
+                  variant="outline"
+                  className="h-4 py-0 px-1.5 text-[10px] gap-0.5 bg-rose-50 text-rose-700 border-rose-200 shrink-0"
+                >
+                  <AlertTriangle className="h-2.5 w-2.5" />
+                  异常
+                </Badge>
+              )}
+            </div>
+            <div className="flex items-center gap-2 text-sm min-w-0">
+              <span className="text-xs text-muted-foreground shrink-0">对方</span>
+              <span className="font-mono truncate">
+                {thread.counterpartyAddress}
+              </span>
+              <Badge
+                variant="outline"
+                className="h-4 py-0 px-1.5 text-[10px] shrink-0"
+              >
+                {CHANNEL_LABEL[thread.channel]}
+              </Badge>
+            </div>
+            <div className="text-[11px] text-muted-foreground">
+              {sender.health === "warning"
+                ? `${sender.healthNote ?? "该发信账号当前异常"}，回复可能失败`
+                : "回复将使用同一账号发出"}
+            </div>
+            {link && (
+              <Link
+                to={link.to}
+                className="text-xs text-primary hover:underline inline-flex items-center gap-1"
+              >
+                {link.label}
+                <ChevronRight className="h-3 w-3" />
+              </Link>
+            )}
+          </div>
+        );
+      })()}
+
       <div className="rounded-md border bg-card p-4 space-y-2">
         <div className="flex items-center gap-2 text-xs text-muted-foreground">
           {thread.targetKind === "enterprise" ? (
