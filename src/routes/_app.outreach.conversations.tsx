@@ -1659,7 +1659,9 @@ function ThreadDetail({
             onClick={() => {
               setReply("");
               setTranslated("");
+              setTranslatedFrom("");
               setSelectedTpl("");
+
               if (typeof window !== "undefined")
                 window.localStorage.removeItem(draftKey);
               setDraftSavedAt(null);
