@@ -377,6 +377,20 @@ function ReachPage() {
         />
       </div>
 
+      {/* 操作按钮：统计卡片下方 / 列表上方 */}
+      <div className="flex items-center gap-2">
+        <Button size="sm" className="h-9 gap-1.5" onClick={() => setCreateReachOpen(true)}>
+          <Plus className="h-4 w-4" />
+          新建社媒触达任务
+        </Button>
+        <Button asChild size="sm" variant="outline" className="h-9 gap-1.5">
+          <Link to="/outreach/social/accounts">
+            <UserCircle2 className="h-4 w-4" />
+            社媒账号
+          </Link>
+        </Button>
+      </div>
+
       <Card className="p-0 overflow-hidden">
         {/* 视图切换 + 筛选 */}
         <div className="flex items-center gap-1 border-b border-border px-5 pt-3 pb-2">
