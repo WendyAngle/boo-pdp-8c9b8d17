@@ -250,18 +250,6 @@ function MailboxesPage() {
                 </>
               )}
             </Button>
-            {isAdmin && (
-              <Button
-                size="sm"
-                className="h-9 bg-white text-primary hover:bg-white/90 shadow-sm"
-                onClick={() => {
-                  setEditing(null);
-                  setFormOpen(true);
-                }}
-              >
-                <Plus className="h-4 w-4" /> 新增邮箱
-              </Button>
-            )}
           </div>
         </div>
       </section>
@@ -317,16 +305,6 @@ function MailboxesPage() {
           <Button variant="outline" onClick={reset}>
             <RotateCcw className="h-4 w-4" /> 重置
           </Button>
-          {isAdmin && (
-            <Button
-              onClick={() => {
-                setEditing(null);
-                setFormOpen(true);
-              }}
-            >
-              <Plus className="h-4 w-4" /> 新增邮箱
-            </Button>
-          )}
         </div>
       </Card>
 
@@ -645,7 +623,7 @@ function ScopeSection({
         </div>
         {canAdd && (
           <Button size="sm" variant="outline" className="ml-auto h-8" onClick={onAdd}>
-            <Plus className="h-3.5 w-3.5" /> 新增
+            <Plus className="h-3.5 w-3.5" /> 新增邮箱
           </Button>
         )}
       </div>
