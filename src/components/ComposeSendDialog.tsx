@@ -71,6 +71,8 @@ import { useLeadProfile } from "@/lib/lead-profile";
 import { useCurrentUser } from "@/lib/current-user";
 import { ComposeFormatHint } from "@/components/outreach/ComposeFormatHint";
 import { generateAiContent } from "@/lib/api/ai-compose.functions";
+import { TargetLangSection } from "@/components/outreach/TargetLangSection";
+
 
 export type ComposeChannel = "email" | "phone";
 
@@ -141,7 +143,12 @@ export function ComposeSendDialog({
   const [senderId, setSenderId] = useState<string>("");
   const [previewIdx, setPreviewIdx] = useState(0);
   const [aiLoading, setAiLoading] = useState(false);
-  const [targetLang, setTargetLang] = useState<"zh" | "en">("zh");
+  /** 目标语言（发送语言）代码 */
+  const [targetLang, setTargetLang] = useState<string>("en");
+  /** 目标语言译文（实际发送内容） */
+  const [translated, setTranslated] = useState("");
+  const [translatedSubject, setTranslatedSubject] = useState("");
+
   // 短信合规追踪：内容是否来自已报备模板
   const [smsTemplateId, setSmsTemplateId] = useState<string | null>(null);
   const [smsTemplateName, setSmsTemplateName] = useState<string | null>(null);
@@ -157,7 +164,10 @@ export function ComposeSendDialog({
     setContent("");
     setAiUsed(false);
     
-    setTargetLang("zh");
+    setTargetLang("en");
+    setTranslated("");
+    setTranslatedSubject("");
+
     setSmsTemplateId(null);
     setSmsTemplateName(null);
     if (isEmail) {
