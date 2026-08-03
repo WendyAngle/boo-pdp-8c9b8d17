@@ -1962,6 +1962,8 @@ function MultiPick({
               onClick={() => toggle(o)}
               title={tip ? `${o}（${tip}）` : o}
               className={`px-2.5 h-7 rounded-full text-xs font-medium border transition-colors ${
+                mono ? "font-mono tracking-tight" : ""
+              } ${
                 on
                   ? "bg-primary text-primary-foreground border-primary"
                   : "bg-background text-muted-foreground border-border hover:text-foreground"
