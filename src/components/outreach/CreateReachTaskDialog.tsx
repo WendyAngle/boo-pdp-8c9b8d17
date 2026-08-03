@@ -42,6 +42,10 @@ import { ComposeFormatHint } from "@/components/outreach/ComposeFormatHint";
 import { generateAiContent } from "@/lib/api/ai-compose.functions";
 import { translateMessage } from "@/lib/api/ai-translate.functions";
 import {
+  recommendProductKeywords,
+  type KeywordGroup,
+} from "@/lib/api/ai-keywords.functions";
+import {
   AI_SUGGESTED_CHAR_LEN,
   charLength,
   platformCharLimit,
@@ -109,6 +113,7 @@ export function CreateReachTaskDialog({
   const balance = useCreditBalance();
   const callGenerate = useServerFn(generateAiContent);
   const callTranslate = useServerFn(translateMessage);
+  const callKeywords = useServerFn(recommendProductKeywords);
 
   const [name, setName] = useState("");
   const [platform, setPlatform] = useState<SocialTaskPlatform>("Facebook");
@@ -131,6 +136,8 @@ export function CreateReachTaskDialog({
   const [aiLoading, setAiLoading] = useState(false);
   const [trLoading, setTrLoading] = useState(false);
   const [kwLoading, setKwLoading] = useState(false);
+  /** AI 按产品推荐的关键词分组 */
+  const [kwGroups, setKwGroups] = useState<KeywordGroup[]>([]);
   /** 译文对应的原文快照，用于提示「原文已修改，需重新翻译」 */
   const [trSource, setTrSource] = useState("");
 
@@ -140,6 +147,7 @@ export function CreateReachTaskDialog({
     setPlatform("Facebook");
     setRegion("美国");
     setKeywords("");
+    setKwGroups([]);
     setTargetCap(30);
     setPromoProducts([]);
     setCustomProduct("");
@@ -264,19 +272,36 @@ export function CreateReachTaskDialog({
     });
   }
 
+  /** 按推广产品维度 AI 推荐关键词（每个产品 3-5 个，免费） */
   async function recommendKeywords() {
+    if (promoProducts.length === 0) {
+      toast.error("请先选择推广产品", {
+        description: "关键词将按每个推广产品分别推荐 3-5 个",
+      });
+      return;
+    }
     setKwLoading(true);
     try {
-      // 基于企业信息行业 / 产品做本地推荐（免费）
-      await new Promise((r) => setTimeout(r, 400));
-      const products =
-        promoProducts.length > 0 ? promoProducts : profile.mainProducts.slice(0, 4);
-
-      const industries = profile.industries.slice(0, 2);
-      const en = ["steel supplier", "building materials", "construction procurement"];
-      const merged = Array.from(new Set([...products, ...industries, ...en]));
+      const res = await callKeywords({
+        data: {
+          products: promoProducts,
+          platform,
+          industries: profile.industries.slice(0, 3),
+          region,
+        },
+      });
+      const groups = res.groups.filter((g) => g.keywords.length > 0);
+      if (groups.length === 0) throw new Error("AI 未返回可用关键词，请重试");
+      setKwGroups(groups);
+      const merged = Array.from(new Set(groups.flatMap((g) => g.keywords)));
       setKeywords(merged.join(", "));
-      toast.success("已根据企业信息推荐关键词，可手动编辑");
+      toast.success(
+        `已按 ${groups.length} 个推广产品推荐 ${merged.length} 个关键词`,
+        { description: "可手动编辑，或点击分组内关键词移除" },
+      );
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : String(e);
+      toast.error("关键词推荐失败", { description: msg });
     } finally {
       setKwLoading(false);
     }
