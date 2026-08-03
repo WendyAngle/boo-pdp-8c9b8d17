@@ -1449,34 +1449,11 @@ function ThreadDetail({
               : `将以 ${detailSender.address} 发出`}
             ，保持在同一会话内
           </span>
-          <div className="ml-auto flex items-center gap-1.5">
-            <Languages className="h-3.5 w-3.5 text-muted-foreground" />
-            <Select value={replyLang} onValueChange={setReplyLang}>
-              <SelectTrigger className="h-7 w-[190px] text-xs">
-                <SelectValue placeholder="目标语言" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectGroup>
-                  <SelectLabel className="text-[11px]">AI 建议</SelectLabel>
-                  <SelectItem value="auto" className="text-xs">
-                    跟随对方语言 · {detectedLang.zh}
-                  </SelectItem>
-                </SelectGroup>
-                <SelectGroup>
-                  <SelectLabel className="text-[11px]">指定目标语言</SelectLabel>
-                  {LANGUAGES.map((l) => (
-                    <SelectItem key={l.code} value={l.code} className="text-xs">
-                      {l.zh}（{l.en}）
-                    </SelectItem>
-                  ))}
-                </SelectGroup>
-              </SelectContent>
-            </Select>
-          </div>
           <Button
             variant="ghost"
             size="sm"
-            className="gap-1 h-7"
+            className="ml-auto gap-1 h-7"
+
             onClick={aiGenerate}
             disabled={aiLoading || winInfo?.closed}
           >
@@ -1533,11 +1510,30 @@ function ThreadDetail({
             </div>
             {/* 右：目标语言译文（实际发送） */}
             <div className="space-y-1">
-              <div className="flex items-center gap-2 text-[11px] text-muted-foreground">
-                <span className="font-medium text-foreground">
-                  {targetLang.zh}译文
-                </span>
-                <span>（实际发送内容）</span>
+              <div className="flex items-center gap-1.5 text-[11px] text-muted-foreground">
+                <Languages className="h-3.5 w-3.5 shrink-0" />
+                <Select value={replyLang} onValueChange={setReplyLang}>
+                  <SelectTrigger className="h-6 w-[168px] text-[11px] bg-background">
+                    <SelectValue placeholder="目标语言" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectGroup>
+                      <SelectLabel className="text-[11px]">AI 建议</SelectLabel>
+                      <SelectItem value="auto" className="text-xs">
+                        跟随对方语言 · {detectedLang.zh}
+                      </SelectItem>
+                    </SelectGroup>
+                    <SelectGroup>
+                      <SelectLabel className="text-[11px]">指定目标语言</SelectLabel>
+                      {LANGUAGES.map((l) => (
+                        <SelectItem key={l.code} value={l.code} className="text-xs">
+                          {l.zh}（{l.en}）
+                        </SelectItem>
+                      ))}
+                    </SelectGroup>
+                  </SelectContent>
+                </Select>
+                <span>译文（实际发送内容）</span>
                 <Button
                   size="sm"
                   variant="outline"
@@ -1553,6 +1549,7 @@ function ThreadDetail({
                   {translated ? "重新翻译" : `翻译为${targetLang.zh}`}
                 </Button>
               </div>
+
               <Textarea
                 value={translated}
                 onChange={(e) => setTranslated(e.target.value)}
@@ -1564,15 +1561,43 @@ function ThreadDetail({
             </div>
           </div>
         ) : (
-          <Textarea
-            value={reply}
-            onChange={(e) => setReply(e.target.value)}
-            placeholder='写点什么，或点击"AI 生成回复（中文）"由 AI 起草…'
-            rows={5}
-            className="resize-none bg-background"
-            disabled={winInfo?.closed}
-          />
+          <div className="space-y-1">
+            <div className="flex items-center gap-1.5 text-[11px] text-muted-foreground">
+              <Languages className="h-3.5 w-3.5 shrink-0" />
+              <Select value={replyLang} onValueChange={setReplyLang}>
+                <SelectTrigger className="h-6 w-[168px] text-[11px] bg-background">
+                  <SelectValue placeholder="目标语言" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectGroup>
+                    <SelectLabel className="text-[11px]">AI 建议</SelectLabel>
+                    <SelectItem value="auto" className="text-xs">
+                      跟随对方语言 · {detectedLang.zh}
+                    </SelectItem>
+                  </SelectGroup>
+                  <SelectGroup>
+                    <SelectLabel className="text-[11px]">指定目标语言</SelectLabel>
+                    {LANGUAGES.map((l) => (
+                      <SelectItem key={l.code} value={l.code} className="text-xs">
+                        {l.zh}（{l.en}）
+                      </SelectItem>
+                    ))}
+                  </SelectGroup>
+                </SelectContent>
+              </Select>
+              <span>目标语言为中文，无需翻译，直接发送原文</span>
+            </div>
+            <Textarea
+              value={reply}
+              onChange={(e) => setReply(e.target.value)}
+              placeholder='写点什么，或点击"AI 生成回复（中文）"由 AI 起草…'
+              rows={5}
+              className="resize-none bg-background"
+              disabled={winInfo?.closed}
+            />
+          </div>
         )}
+
         {/* 译文状态提示 */}
         {!winInfo?.closed && needsTranslation && (
           <div
