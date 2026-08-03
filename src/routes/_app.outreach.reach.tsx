@@ -362,6 +362,41 @@ function ReachPage() {
         </Button>
       </div>
 
+      {/* 任务来源说明 */}
+      <Card className="p-4 border-primary/20 bg-primary/5">
+        <div className="flex items-start gap-3">
+          <div className="h-8 w-8 rounded-lg bg-primary/10 text-primary flex items-center justify-center shrink-0">
+            <Info className="h-4 w-4" />
+          </div>
+          <div className="text-sm space-y-1.5 flex-1 min-w-0">
+            <div className="font-medium">任务来源说明</div>
+            <ol className="text-xs text-muted-foreground space-y-1 list-decimal pl-4">
+              <li>
+                「我的收藏」勾选目标后发起的
+                <span className="text-foreground font-medium mx-1">批量社媒私信</span>
+                ／邮件／短信／WhatsApp 触达（存量名单群发）。
+              </li>
+              <li>
+                本页
+                <Link to="/outreach/reach" className="text-primary mx-1 hover:underline" onClick={(e) => e.preventDefault()}>
+                  社媒拓客触达
+                </Link>
+                由系统按推广产品与关键词自动寻找新目标账号（增量拓客）。
+              </li>
+              <li>
+                列表仅展示
+                <span className="text-foreground font-medium mx-1">触达成功</span>
+                的数据；点击任务行的目标数可查看目标明细，点击客户回复可进入
+                <Link to="/outreach/conversations" className="text-primary mx-1 hover:underline">
+                  触达会话
+                </Link>
+                跟进。
+              </li>
+            </ol>
+          </div>
+        </div>
+      </Card>
+
       <Card className="p-0 overflow-hidden">
         {/* 筛选 */}
         <div className="px-5 py-3 flex items-center gap-3 flex-wrap border-b border-border bg-muted/20">
