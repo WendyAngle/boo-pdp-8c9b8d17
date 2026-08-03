@@ -74,6 +74,7 @@ import {
 } from "@/lib/wa-verify";
 import { useLeadProfile } from "@/lib/lead-profile";
 import { useCurrentUser } from "@/lib/current-user";
+import { ComposeFormatHint } from "@/components/outreach/ComposeFormatHint";
 import { generateAiContent } from "@/lib/api/ai-compose.functions";
 
 /** 目标候选人（收藏 → 社媒收件人） */
@@ -783,6 +784,7 @@ function AiComposeMiniDialog({
           </DialogDescription>
         </DialogHeader>
         <div className="space-y-3">
+          <ComposeFormatHint channel="social" platform={platform} />
           <div className="space-y-1">
             <Label className="text-xs">场景</Label>
             <Select value={scene} onValueChange={setScene}>

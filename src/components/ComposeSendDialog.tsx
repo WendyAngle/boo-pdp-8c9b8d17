@@ -72,6 +72,7 @@ import {
 } from "@/lib/credits-ledger";
 import { useLeadProfile } from "@/lib/lead-profile";
 import { useCurrentUser } from "@/lib/current-user";
+import { ComposeFormatHint } from "@/components/outreach/ComposeFormatHint";
 import { generateAiContent } from "@/lib/api/ai-compose.functions";
 
 export type ComposeChannel = "email" | "phone";
@@ -916,6 +917,7 @@ function AiComposeDialog({
           </DialogDescription>
         </DialogHeader>
         <div className="space-y-3">
+          <ComposeFormatHint channel={isEmail ? "email" : "sms"} />
           <div className="space-y-1">
             <Label className="text-xs">场景</Label>
             <Select value={scene} onValueChange={setScene}>

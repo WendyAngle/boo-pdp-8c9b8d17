@@ -1,5 +1,6 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
+import { getComposeSpec } from "@/lib/ai-compose-spec";
 
 const InputSchema = z.object({
   channel: z.enum(["email", "sms", "social"]),
@@ -23,25 +24,28 @@ export const generateAiContent = createServerFn({ method: "POST" })
     const key = process.env.LOVABLE_API_KEY;
     if (!key) throw new Error("LOVABLE_API_KEY is not configured");
 
-    const isEmail = data.channel === "email";
-    const isSocial = data.channel === "social";
-    const platform = data.platform || "WhatsApp";
+    const spec = getComposeSpec(data.channel, data.platform);
+    const isEmail = spec.hasSubject;
     const langName =
       data.languageName?.trim() || (data.language === "zh" ? "中文" : "English");
     const toneMap = { formal: "正式商务", friendly: "友好诚恳", concise: "简洁直接" } as const;
+    const cjk = /中文|日本語|Japanese|한국어|Korean|Chinese/i.test(langName) || data.language === "zh";
+    const limitHint = `建议长度 ${cjk ? Math.round(spec.recommendChars / 2) + " 字" : spec.recommendChars + " 字符"}${
+      spec.maxChars ? `，绝对不超过 ${cjk ? Math.round(spec.maxChars / 2) + " 字" : spec.maxChars + " 字符"}` : ""
+    }。`;
 
     const systemPrompt = [
-      `你是一名资深 B2B 外贸出海销售文案专家，正在为「${data.myCompany ?? "我方公司"}」撰写${
-        isEmail ? "开发/跟进邮件" : isSocial ? `${platform} 私信` : "营销短信"
-      }。`,
+      `你是一名资深 B2B 外贸出海销售文案专家，正在为「${data.myCompany ?? "我方公司"}」撰写「${spec.label}」。`,
       `语言: ${langName}；语气: ${toneMap[data.tone]}。全文必须完整使用「${langName}」撰写（专有名词与型号可保留原文），不要输出其他语言的译文。`,
+      `【${spec.label} 格式规范】`,
+      ...spec.rules.map((r, i) => `${i + 1}. ${r}`),
+      `【禁止】${spec.bans.join("；")}。`,
+      limitHint,
       `在文案中合理使用以下占位符（保留花括号原样，发送时会被替换）：`,
       `{企业名} {联系人名} {行业} {城市} {我的公司} {我的姓名}`,
       isEmail
         ? `严格输出 JSON：{"subject": "邮件主题（≤60字）","content": "邮件正文（纯文本，含换行）"}。不要解释，不要 Markdown。`
-        : isSocial
-          ? `只输出 ${platform} 私信正文本身，${data.language === "zh" ? "≤500 字" : "≤1200 chars"}，语气自然口语化，可含 1-2 个 emoji，不含签名和链接。不要 JSON，不要 Markdown，不要解释，不要引号包裹。`
-          : `只输出短信正文本身，${data.language === "zh" ? "≤140 字" : "≤300 chars"}，不含署名和退订。不要 JSON，不要 Markdown，不要解释，不要引号包裹。`,
+        : `只输出${spec.label}正文本身。不要 JSON，不要 Markdown，不要解释，不要引号包裹，不要输出任何前后缀说明。`,
     ].join("\n");
 
     const userPrompt = [
@@ -52,6 +56,8 @@ export const generateAiContent = createServerFn({ method: "POST" })
     ]
       .filter(Boolean)
       .join("\n");
+
+
 
     const resp = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",

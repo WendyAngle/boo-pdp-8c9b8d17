@@ -48,6 +48,7 @@ import {
 import { useSocialAccounts, type SocialAccount } from "@/data/social-accounts";
 import { useLeadProfile } from "@/lib/lead-profile";
 import { useCurrentUser } from "@/lib/current-user";
+import { ComposeFormatHint } from "@/components/outreach/ComposeFormatHint";
 import { generateAiContent } from "@/lib/api/ai-compose.functions";
 
 export type ReachPlatform = "Facebook" | "TikTok";
@@ -519,6 +520,7 @@ export function BatchSocialPlatformDialog({
       </DialogContent>
 
       <AiComposeMiniDialog
+        platform={platform === "all" ? "Facebook" : platform}
         open={aiOpen}
         onOpenChange={setAiOpen}
         loading={aiLoading}
@@ -561,12 +563,14 @@ function AiComposeMiniDialog({
   open,
   onOpenChange,
   loading,
+  platform,
   defaultLanguage = "zh",
   onGenerate,
 }: {
   open: boolean;
   onOpenChange: (v: boolean) => void;
   loading: boolean;
+  platform: string;
   defaultLanguage?: "zh" | "en";
   onGenerate: (p: {
     scene: string;
@@ -596,6 +600,7 @@ function AiComposeMiniDialog({
           </DialogDescription>
         </DialogHeader>
         <div className="space-y-3">
+          <ComposeFormatHint channel="social" platform={platform} />
           <div className="space-y-1">
             <Label className="text-xs">场景</Label>
             <Select value={scene} onValueChange={setScene}>
