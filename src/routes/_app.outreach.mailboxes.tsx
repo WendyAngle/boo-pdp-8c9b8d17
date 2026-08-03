@@ -706,7 +706,6 @@ function MailboxFormDialog({
   /** 是否已手动改过显示名（改过后不再自动覆盖） */
   const [nameTouched, setNameTouched] = useState(false);
   const [detect, setDetect] = useState<DetectResult | null>(null);
-  const [showGuide, setShowGuide] = useState(false);
 
   // 同步 editing → form（依赖 open + editing.id）
   const editingKey = editing?.id ?? "new";
@@ -716,7 +715,7 @@ function MailboxFormDialog({
     setManualServer(!!editing);
     setNameTouched(!!editing);
     setDetect(editing ? null : null);
-    setShowGuide(false);
+    
     setForm(
       editing
         ? {
@@ -843,7 +842,7 @@ function MailboxFormDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className={showGuide ? "max-w-4xl" : "max-w-2xl"}>
+      <DialogContent className="max-w-4xl">
         <DialogHeader>
           <DialogTitle>{editing ? "编辑邮箱" : "新增企业邮箱"}</DialogTitle>
           <DialogDescription>
@@ -851,23 +850,13 @@ function MailboxFormDialog({
           </DialogDescription>
         </DialogHeader>
 
-        <div className={`grid gap-5 ${showGuide ? "md:grid-cols-[1fr_320px]" : "grid-cols-1"}`}>
-          <div className="space-y-5 max-h-[62vh] overflow-y-auto pr-1">
+        <div className="grid gap-5 md:grid-cols-[1fr_320px] items-start">
+          <div className="space-y-5 md:max-h-[62vh] overflow-y-auto pr-1">
             {/* 第 1 步：必填项 */}
             <StepBlock
               index={1}
               title="填写邮箱与授权凭证"
-              desc="这两项无法自动获取，需要你从邮箱服务商后台取得。"
-              action={
-                <Button
-                  size="sm"
-                  variant={showGuide ? "secondary" : "outline"}
-                  className="h-7 px-2 text-xs"
-                  onClick={() => setShowGuide((v) => !v)}
-                >
-                  <BookOpen className="h-3.5 w-3.5" /> 配置指导
-                </Button>
-              }
+              desc="这两项无法自动获取，需按右侧配置指导从服务商后台取得。"
             >
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <Field label="邮箱地址" required>
@@ -877,6 +866,26 @@ function MailboxFormDialog({
                     placeholder="name@company.com"
                   />
                 </Field>
+                <Field label="邮箱服务商" required>
+                  <Select
+                    value={form.provider}
+                    onValueChange={(v) => onProviderChange(v as MailboxProvider)}
+                  >
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {PROVIDERS.map((p) => (
+                        <SelectItem key={p} value={p}>
+                          {p}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <div className="text-[11px] text-muted-foreground">
+                    系统按邮箱域名自动识别，如识别有误可手动切换。
+                  </div>
+                </Field>
                 <Field label={`${guide.credentialName}`} required>
                   <Input
                     type="password"
@@ -885,7 +894,7 @@ function MailboxFormDialog({
                     placeholder="非邮箱登录密码，见右侧配置指导"
                   />
                 </Field>
-                <Field label="显示名称" required className="md:col-span-2">
+                <Field label="显示名称" required>
                   <Input
                     value={form.displayName}
                     onChange={(e) => {
@@ -900,6 +909,7 @@ function MailboxFormDialog({
                 </Field>
               </div>
             </StepBlock>
+
 
             {/* 第 2 步：自动识别 */}
             <StepBlock
@@ -934,23 +944,6 @@ function MailboxFormDialog({
 
               {manualServer ? (
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-3">
-                  <Field label="服务商">
-                    <Select
-                      value={form.provider}
-                      onValueChange={(v) => onProviderChange(v as MailboxProvider)}
-                    >
-                      <SelectTrigger>
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {PROVIDERS.map((p) => (
-                          <SelectItem key={p} value={p}>
-                            {p}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </Field>
                   <Field label="登录用户名" required>
                     <Input
                       value={form.username}
@@ -1079,39 +1072,38 @@ function MailboxFormDialog({
             </StepBlock>
           </div>
 
-          {showGuide && (
-            <aside className="rounded-lg border bg-muted/30 p-4 space-y-3 max-h-[62vh] overflow-y-auto">
-              <div className="flex items-center gap-2">
-                <BookOpen className="h-4 w-4 text-primary" />
-                <div className="text-sm font-semibold">{form.provider} 配置指导</div>
-              </div>
-              <div className="text-[11px] text-muted-foreground">
-                需要获取：<span className="font-medium text-foreground">{guide.credentialName}</span>
-              </div>
-              <ol className="space-y-2">
-                {guide.steps.map((s, i) => (
-                  <li key={i} className="flex gap-2 text-[12px] leading-relaxed">
-                    <span className="h-4 w-4 shrink-0 rounded-full bg-primary/10 text-primary text-[10px] flex items-center justify-center mt-0.5">
-                      {i + 1}
-                    </span>
-                    <span>{s}</span>
-                  </li>
-                ))}
-              </ol>
-              <div className="rounded-md border bg-background p-2.5 text-[11px] text-muted-foreground">
-                入口位置：{guide.docHint}
-              </div>
-              <div className="space-y-1.5">
-                <div className="text-xs font-medium">注意事项</div>
-                {guide.notes.map((n, i) => (
-                  <div key={i} className="flex gap-1.5 text-[11px] text-muted-foreground">
-                    <AlertCircle className="h-3 w-3 mt-0.5 shrink-0 text-amber-500" />
-                    <span>{n}</span>
-                  </div>
-                ))}
-              </div>
-            </aside>
-          )}
+          <aside className="rounded-lg border bg-muted/30 p-4 space-y-3 md:max-h-[62vh] overflow-y-auto md:sticky md:top-0">
+            <div className="flex items-center gap-2">
+              <BookOpen className="h-4 w-4 text-primary" />
+              <div className="text-sm font-semibold">配置指导 · {form.provider}</div>
+            </div>
+            <div className="text-[11px] text-muted-foreground">
+              指导内容随左侧「服务商」选择自动切换。需要获取：
+              <span className="font-medium text-foreground">{guide.credentialName}</span>
+            </div>
+            <ol className="space-y-2">
+              {guide.steps.map((s, i) => (
+                <li key={i} className="flex gap-2 text-[12px] leading-relaxed">
+                  <span className="h-4 w-4 shrink-0 rounded-full bg-primary/10 text-primary text-[10px] flex items-center justify-center mt-0.5">
+                    {i + 1}
+                  </span>
+                  <span>{s}</span>
+                </li>
+              ))}
+            </ol>
+            <div className="rounded-md border bg-background p-2.5 text-[11px] text-muted-foreground">
+              入口位置：{guide.docHint}
+            </div>
+            <div className="space-y-1.5">
+              <div className="text-xs font-medium">注意事项</div>
+              {guide.notes.map((n, i) => (
+                <div key={i} className="flex gap-1.5 text-[11px] text-muted-foreground">
+                  <AlertCircle className="h-3 w-3 mt-0.5 shrink-0 text-amber-500" />
+                  <span>{n}</span>
+                </div>
+              ))}
+            </div>
+          </aside>
         </div>
 
         <DialogFooter className="gap-2">
