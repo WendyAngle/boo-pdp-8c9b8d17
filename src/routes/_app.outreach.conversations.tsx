@@ -481,19 +481,30 @@ function InboxPage() {
             value={senderKey}
             onValueChange={(v) => goto({ sender: v, tid: undefined })}
           >
-            <SelectTrigger className="h-8 text-xs w-[150px]">
+            <SelectTrigger className="h-8 text-xs w-[186px]">
               <SelectValue placeholder="发信账号" />
             </SelectTrigger>
             <SelectContent className="max-h-72">
               <SelectItem value="all">发信账号：全部</SelectItem>
-              {senderOptions.map(({ sender, count }) => (
+              {senderOptions.map(({ sender, count, channels }) => (
                 <SelectItem key={sender.key} value={sender.key}>
-                  <span className="truncate">
-                    {sender.address}
-                    <span className="text-muted-foreground"> · {count}</span>
+                  <span className="flex items-center gap-1.5 truncate">
+                    {channels.map((c) => (
+                      <span
+                        key={c}
+                        className={`shrink-0 rounded border px-1 py-px text-[10px] leading-none ${CHANNEL_COLOR[c]}`}
+                      >
+                        {CHANNEL_LABEL[c]}
+                      </span>
+                    ))}
+                    <span className="truncate">{sender.address}</span>
+                    <span className="text-muted-foreground shrink-0">
+                      · {count}
+                    </span>
                   </span>
                 </SelectItem>
               ))}
+
             </SelectContent>
           </Select>
           <Select
