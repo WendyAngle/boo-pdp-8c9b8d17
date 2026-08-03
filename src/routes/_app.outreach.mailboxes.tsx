@@ -622,7 +622,7 @@ function ScopeSection({
           <div className="text-xs text-muted-foreground">{subtitle}</div>
         </div>
         {canAdd && (
-          <Button size="sm" variant="outline" className="ml-auto h-8" onClick={onAdd}>
+          <Button size="sm" className="ml-auto h-8" onClick={onAdd}>
             <Plus className="h-3.5 w-3.5" /> 新增邮箱
           </Button>
         )}
