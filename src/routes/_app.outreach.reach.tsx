@@ -14,18 +14,12 @@ import {
   Send,
   RefreshCw,
   EyeOff,
-  FileText,
+  
   Sparkles,
 } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import {
@@ -61,7 +55,7 @@ import {
   Inbox as InboxIcon,
   MessageCircleReply,
   Users,
-  ListChecks,
+  
   Facebook,
   Music2,
   MessageSquare,
@@ -126,22 +120,6 @@ function ReachPage() {
   const [kw, setKw] = useState("");
   const [page, setPage] = useState(1);
   const pageSize = 10;
-  const [view, setView] = useState<"task" | "record">("task");
-  const [taskKey, setTaskKey] = useState<string | null>(null);
-  const [viewing, setViewing] = useState<
-    | null
-    | {
-        id: string;
-        targetName: string;
-        channel?: ReachChannel;
-        subject?: string;
-        content?: string;
-        senderEmail?: string;
-        detail?: string;
-        aiGenerated?: boolean;
-        createdAt: string;
-      }
-  >(null);
 
   // 触达任务仅展示「触达成功」的数据，不再区分待触达 / 触达中 / 触达失败
   const reachRows = useMemo(() => {
@@ -175,7 +153,7 @@ function ReachPage() {
 
   useEffect(() => {
     setPage(1);
-  }, [channel, targetKind, kw, view, taskKey]);
+  }, [channel, targetKind, kw]);
 
   const targetKindCounts = useMemo(() => {
     let ent = 0;
@@ -187,15 +165,6 @@ function ReachPage() {
     return { ent, con };
   }, [reachRows]);
 
-  const recordRows = useMemo(
-    () => (taskKey ? filtered.filter((r) => groupKeyOf(r) === taskKey) : filtered),
-    [filtered, taskKey],
-  );
-
-  const pageData = useMemo(
-    () => recordRows.slice((page - 1) * pageSize, page * pageSize),
-    [recordRows, page],
-  );
 
   // 社媒账号池运营指标（替代原积分口径，突出触达任务本身的执行能力）
   const accounts = useSocialAccounts();
@@ -392,45 +361,14 @@ function ReachPage() {
       </div>
 
       <Card className="p-0 overflow-hidden">
-        {/* 视图切换 + 筛选 */}
+        {/* 标题 + 筛选 */}
         <div className="flex items-center gap-1 border-b border-border px-5 pt-3 pb-2">
           <span className="text-sm font-medium">
             触达成功记录
             <span className="ml-1 text-muted-foreground">{reachRows.length}</span>
           </span>
-
-          <div className="ml-auto inline-flex rounded-md border bg-muted/40 p-0.5">
-            <button
-              type="button"
-              onClick={() => {
-                setView("task");
-                setTaskKey(null);
-              }}
-              className={cn(
-                "inline-flex items-center gap-1 rounded px-2.5 py-1 text-xs font-medium transition-colors",
-                view === "task"
-                  ? "bg-background text-foreground shadow-sm"
-                  : "text-muted-foreground hover:text-foreground",
-              )}
-            >
-              <ListChecks className="h-3.5 w-3.5" />
-              任务视图
-            </button>
-            <button
-              type="button"
-              onClick={() => setView("record")}
-              className={cn(
-                "inline-flex items-center gap-1 rounded px-2.5 py-1 text-xs font-medium transition-colors",
-                view === "record"
-                  ? "bg-background text-foreground shadow-sm"
-                  : "text-muted-foreground hover:text-foreground",
-              )}
-            >
-              <Users className="h-3.5 w-3.5" />
-              记录视图
-            </button>
-          </div>
         </div>
+
         <div className="px-5 py-3 flex items-center gap-3 flex-wrap border-b border-border bg-muted/20">
           <div className="flex items-center gap-2">
             <span className="text-sm text-muted-foreground whitespace-nowrap">触达渠道</span>
@@ -478,15 +416,7 @@ function ReachPage() {
               className="pl-9 h-9 bg-background"
             />
           </div>
-          {taskKey && view === "record" && (
-            <Badge variant="secondary" className="gap-1 font-normal">
-              任务：{taskGroups.find((g) => g.key === taskKey)?.name ?? "已选任务"}
-              <button type="button" onClick={() => setTaskKey(null)} className="ml-1">
-                <X className="h-3 w-3" />
-              </button>
-            </Badge>
-          )}
-          {(kw || channel !== "all" || targetKind !== "all" || taskKey) && (
+          {(kw || channel !== "all" || targetKind !== "all") && (
             <Button
               variant="ghost"
               size="sm"
@@ -494,7 +424,6 @@ function ReachPage() {
                 setKw("");
                 setChannel("all");
                 setTargetKind("all");
-                setTaskKey(null);
               }}
               className="gap-1"
             >
@@ -505,10 +434,11 @@ function ReachPage() {
           <div className="text-sm text-muted-foreground ml-auto">
             共{" "}
             <span className="text-foreground font-semibold">
-              {view === "task" ? taskGroups.length : recordRows.length}
+              {taskGroups.length}
             </span>{" "}
-            {view === "task" ? "个任务" : "条记录"}
+            个任务
           </div>
+
         </div>
 
         {filtered.length === 0 ? (
@@ -528,7 +458,7 @@ function ReachPage() {
               </Link>
             </Button>
           </div>
-        ) : view === "task" ? (
+        ) : (
           <Table>
             <TableHeader>
               <TableRow className="bg-primary/5 hover:bg-primary/5">
@@ -542,15 +472,8 @@ function ReachPage() {
 
             <TableBody>
               {taskPageData.map((g) => (
-                <TableRow
-                  key={g.key}
-                  className="hover:bg-muted/30 cursor-pointer"
-                  onClick={() => {
-                    setTaskKey(g.key);
-                    setView("record");
-                  }}
-                  title="点击查看该任务下的触达记录"
-                >
+                <TableRow key={g.key} className="hover:bg-muted/30">
+
                   <TableCell className="max-w-[280px]">
                     <div className="flex items-center gap-1.5">
                       <span className="font-medium">{g.name}</span>
@@ -598,35 +521,6 @@ function ReachPage() {
               ))}
             </TableBody>
           </Table>
-        ) : (
-          <Table>
-            <TableHeader>
-              <TableRow className="bg-primary/5 hover:bg-primary/5">
-                <TableHead className="w-[170px]">触达时间</TableHead>
-                <TableHead className="w-[140px]">渠道</TableHead>
-                <TableHead>明细说明</TableHead>
-                <TableHead className="w-[110px]">回复</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {pageData.map((r) => (
-                <TableRow key={r.id} className="hover:bg-muted/30">
-                  <TableCell className="font-mono tabular-nums text-xs text-muted-foreground whitespace-nowrap">
-                    {fmtTime(r.createdAt)}
-                  </TableCell>
-                  <TableCell>
-                    <ChannelBadge channel={r.channel!} platform={r.platform} />
-                  </TableCell>
-                  <TableCell className="text-xs max-w-[420px]">
-                    <DetailCell row={r} onViewContent={() => setViewing(r)} />
-                  </TableCell>
-                  <TableCell className="text-xs">
-                    <ReplyCell reach={r} thread={threadByKey.get(threadKeyFor(r) ?? "") ?? null} />
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
         )}
 
         {filtered.length > 0 && (
@@ -634,67 +528,13 @@ function ReachPage() {
             <ListPagination
               page={page}
               pageSize={pageSize}
-              total={view === "task" ? taskGroups.length : recordRows.length}
+              total={taskGroups.length}
               onPageChange={setPage}
             />
           </div>
         )}
       </Card>
 
-
-      <Dialog open={!!viewing} onOpenChange={(o) => !o && setViewing(null)}>
-        <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
-              <FileText className="h-5 w-5 text-primary" />
-              发送内容
-              {viewing?.aiGenerated && (
-                <Badge variant="secondary" className="gap-1 font-normal">
-                  <Sparkles className="h-3 w-3 text-primary" /> AI 生成
-                </Badge>
-              )}
-            </DialogTitle>
-          </DialogHeader>
-          {viewing && (
-            <div className="space-y-3 text-sm">
-              <div className="grid grid-cols-[80px_1fr] gap-y-1.5 text-xs">
-                <span className="text-muted-foreground">对象</span>
-                <span className="font-medium">{viewing.targetName}</span>
-                <span className="text-muted-foreground">渠道</span>
-                <span>{viewing.channel === "email" ? "邮件" : viewing.channel === "phone" ? "短信" : "社媒"}</span>
-                {viewing.senderEmail && (
-                  <>
-                    <span className="text-muted-foreground">发件箱</span>
-                    <span className="font-mono">{viewing.senderEmail}</span>
-                  </>
-                )}
-                {viewing.detail && (
-                  <>
-                    <span className="text-muted-foreground">收件方</span>
-                    <span className="font-mono">{viewing.detail}</span>
-                  </>
-                )}
-                <span className="text-muted-foreground">时间</span>
-                <span className="font-mono">{fmtTime(viewing.createdAt)}</span>
-              </div>
-              {viewing.subject && (
-                <div className="rounded-md border bg-muted/40 p-3">
-                  <div className="text-[11px] text-muted-foreground mb-1">主题</div>
-                  <div className="font-medium">{viewing.subject}</div>
-                </div>
-              )}
-              <div className="rounded-md border bg-muted/40 p-3">
-                <div className="text-[11px] text-muted-foreground mb-1">
-                  {viewing.channel === "email" ? "正文" : "内容"}
-                </div>
-                <div className="whitespace-pre-wrap text-foreground/90">
-                  {viewing.content || "—"}
-                </div>
-              </div>
-            </div>
-          )}
-        </DialogContent>
-      </Dialog>
     </div>
     </TooltipProvider>
   );
@@ -740,125 +580,5 @@ function ChannelBadge({ channel, platform }: { channel: ReachChannel; platform?:
       <Icon className="h-3.5 w-3.5 text-muted-foreground" />
       <span className="font-medium text-foreground">{label}</span>
     </span>
-  );
-}
-
-function ReplyCell({
-  reach,
-  thread,
-}: {
-  reach: { channel?: ReachChannel };
-  thread: Thread | null;
-}) {
-  // 仅邮件 / 短信渠道有回复语义；社媒渠道显示 —
-  if (reach.channel !== "email" && reach.channel !== "phone") {
-    return <span className="text-[11px] text-muted-foreground">—</span>;
-  }
-
-  const replies = thread?.meta.inboundMessages.length ?? 0;
-  if (!thread || replies === 0) {
-    return (
-      <Link
-        to="/outreach/conversations"
-        search={thread ? { tid: thread.id, view: "all" } : { view: "all" }}
-        className="inline-flex items-center gap-1 rounded-md border border-slate-200 bg-slate-50 px-1.5 py-0.5 text-[11px] font-medium text-slate-600 hover:bg-slate-100"
-        title="尚未收到回复，去收件箱主动跟进"
-        onClick={(e) => e.stopPropagation()}
-      >
-        <MessageCircleReply className="h-3 w-3" />
-        主动跟进
-      </Link>
-    );
-  }
-  return (
-    <Link
-      to="/outreach/conversations"
-      search={{ tid: thread.id, view: "all" }}
-      className="inline-flex items-center gap-1 rounded-md border border-emerald-200 bg-emerald-50 px-1.5 py-0.5 text-[11px] font-medium text-emerald-700 hover:bg-emerald-100"
-      title={`客户已回复 ${replies} 条，点击进入会话`}
-      onClick={(e) => e.stopPropagation()}
-    >
-      <MessageCircleReply className="h-3 w-3" />
-      {replies > 1 ? `客户已回复 ${replies}` : "客户已回复"}
-      <InboxIcon className="h-3 w-3 opacity-60" />
-    </Link>
-  );
-}
-
-
-function DetailCell({
-  row,
-  onViewContent,
-}: {
-  row: {
-    targetKind: "enterprise" | "contact";
-    targetId: string;
-    targetName: string;
-    parentRef?: { id: string; name: string };
-    channel?: "email" | "phone" | "social";
-    platform?: string;
-    detail?: string;
-    subject?: string;
-    content?: string;
-  };
-  onViewContent: () => void;
-}) {
-  // 社媒平台（Facebook / TikTok）触达目标为社媒账号，无 CRM 企业 / 人物明细，不提供跳转
-  const isSocialNoLink =
-    row.channel === "social" &&
-    (row.platform === "Facebook" || row.platform === "TikTok");
-  const targetLabel =
-    row.targetKind === "enterprise"
-      ? row.targetName
-      : `${row.parentRef?.name ?? "—"} · ${row.targetName}`;
-  const link =
-    row.targetKind === "enterprise"
-      ? { to: "/outreach/enterprise/$id" as const, params: { id: row.targetId } }
-      : (() => {
-          const [entId, idx] = row.targetId.split(":");
-          return {
-            to: "/outreach/enterprise/$id/contact/$idx" as const,
-            params: { id: entId, idx },
-          };
-        })();
-  return (
-    <div className="min-w-0">
-      <div className="flex items-center gap-1.5 min-w-0">
-        {row.channel === "social" && row.platform && row.platform !== "WhatsApp" && (
-          <span className="shrink-0 inline-flex items-center rounded border border-border/60 bg-muted/40 px-1.5 py-0.5 text-[11px] text-foreground">
-            {row.platform}
-          </span>
-        )}
-        <span className="font-mono text-xs text-foreground truncate">
-          {row.detail ?? "—"}
-        </span>
-        {(row.subject || row.content) && (
-          <button
-            type="button"
-            title="查看发送内容"
-            onClick={onViewContent}
-            className="shrink-0 inline-flex h-5 w-5 items-center justify-center rounded text-primary hover:bg-primary/10"
-          >
-            <FileText className="h-3.5 w-3.5" />
-          </button>
-        )}
-      </div>
-      {!isSocialNoLink && (
-        <div className="text-[11px] text-muted-foreground truncate mt-0.5 flex items-center gap-1">
-          {row.targetKind === "enterprise" ? (
-            <Building2 className="h-3 w-3" />
-          ) : (
-            <UserRound className="h-3 w-3" />
-          )}
-          <Link
-            to={link.to}
-            params={link.params as never}
-            className="capitalize hover:text-primary truncate"
-          >
-            {targetLabel}
-          </Link>
-        </div>
-      )}
-    </div>
   );
 }
