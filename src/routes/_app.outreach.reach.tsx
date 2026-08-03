@@ -304,7 +304,14 @@ function ReachPage() {
             <span className="font-semibold tabular-nums">{usableAccounts}</span>
           </span>
         </div>
-        <div className="relative mt-4 flex flex-wrap items-center gap-2">
+        <div className="relative mt-4 rounded-lg bg-white/10 border border-white/15 px-3 py-2 text-xs text-white/90 leading-relaxed">
+          <span className="font-semibold">任务从哪来：</span>
+          「我的收藏」勾选目标后发起的<span className="font-semibold">批量社媒私信</span>／邮件／短信／WhatsApp 触达（存量名单群发）；
+          本页<span className="font-semibold">社媒拓客触达</span>由系统按推广产品与关键词自动寻找新目标账号（增量拓客）。
+          点击任务行的目标数可查看目标明细，点击客户回复可进入触达会话跟进。
+        </div>
+        <div className="relative mt-3 flex flex-wrap items-center gap-2">
+
           <Button
             asChild
             size="sm"
