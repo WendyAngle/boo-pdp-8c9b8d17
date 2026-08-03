@@ -14,7 +14,7 @@ import {
   Send,
   RefreshCw,
   EyeOff,
-  
+  Info,
   Sparkles,
 } from "lucide-react";
 import { Card } from "@/components/ui/card";
