@@ -415,15 +415,18 @@ export function CreateReachTaskDialog({
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Zap className="h-5 w-5 text-primary" />
-            新建触达任务
+            新建社媒拓客任务
             <Badge variant="secondary" className="ml-1 font-normal">
               目标 {targetCap} · {platform}
             </Badge>
           </DialogTitle>
           <DialogDescription className="text-xs">
-            关键词加友 → 好友沉淀 → 私信触达，一键批量启动。
+            由系统按推广产品与关键词自动寻找目标账号，加好友并发送私信。
+            <br />
+            目标来源：系统按关键词自动搜索 · 已有名单？前往「我的收藏」批量社媒私信。
           </DialogDescription>
         </DialogHeader>
+
 
         <div className="space-y-4">
           <div className="grid grid-cols-2 gap-3">
