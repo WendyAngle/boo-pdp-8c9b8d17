@@ -310,14 +310,16 @@ function MailboxesPage() {
           <Button variant="outline" onClick={reset}>
             <RotateCcw className="h-4 w-4" /> 重置
           </Button>
-          <Button
-            onClick={() => {
-              setEditing(null);
-              setFormOpen(true);
-            }}
-          >
-            <Plus className="h-4 w-4" /> 新增邮箱
-          </Button>
+          {isAdmin && (
+            <Button
+              onClick={() => {
+                setEditing(null);
+                setFormOpen(true);
+              }}
+            >
+              <Plus className="h-4 w-4" /> 新增邮箱
+            </Button>
+          )}
         </div>
       </Card>
 
@@ -464,9 +466,7 @@ function MailboxCard({
             <Badge variant="outline" className={statusBadgeCls(m.status)}>
               {m.status}
             </Badge>
-            {m.scope === "personal" && (
-              <Badge variant="outline" className="text-[10px]">个人</Badge>
-            )}
+            <Badge variant="outline" className="text-[10px]">企业邮箱</Badge>
           </div>
           <div className="text-xs text-muted-foreground mt-0.5 truncate">{m.displayName}</div>
         </div>
@@ -666,10 +666,9 @@ interface FormState {
   dailyLimit: number;
   isDefault: boolean;
   status: MailboxStatus;
-  scope: MailboxScope;
 }
 
-function emptyForm(scope: MailboxScope = "personal"): FormState {
+function emptyForm(): FormState {
   return {
     email: "",
     displayName: "",
@@ -681,7 +680,6 @@ function emptyForm(scope: MailboxScope = "personal"): FormState {
     dailyLimit: 100,
     isDefault: false,
     status: "正常",
-    scope,
   };
 }
 
@@ -689,14 +687,10 @@ function MailboxFormDialog({
   open,
   onOpenChange,
   editing,
-  initScope,
-  isAdmin,
 }: {
   open: boolean;
   onOpenChange: (v: boolean) => void;
   editing: Mailbox | null;
-  initScope: MailboxScope;
-  isAdmin: boolean;
 }) {
   const [form, setForm] = useState<FormState>(emptyForm(initScope));
   const [testing, setTesting] = useState(false);
