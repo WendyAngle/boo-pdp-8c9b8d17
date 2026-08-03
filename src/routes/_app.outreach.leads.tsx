@@ -1809,6 +1809,22 @@ export function ProfileTab() {
             </div>
           </Field>
 
+          <Field
+            label="企业知识库"
+            hint="上传产品手册、报价与规格说明、常见问题解答、案例与售后政策等资料（支持 PNG / JPG / PDF）。知识库将作为后续 AI 智能外呼 / 智能回复时解答目标客户与潜在客户提问的参考依据；资料越完善，AI 回答越准确专业，客户体验越好，也越容易促成合作。"
+          >
+            <FilesUploader
+              idPrefix="knowledge-base"
+              label="上传知识库资料（支持 PNG / JPG / PDF）"
+              files={draft.knowledgeFiles ?? []}
+              onChange={(v) => set("knowledgeFiles", v)}
+              max={12}
+            />
+            <p className="pt-2 text-[11px] leading-relaxed text-muted-foreground/80">
+              建议优先上传：产品目录 / 参数规格、价格与起订量、交期与物流方案、资质与检测报告、常见问题（FAQ）、合作案例。
+            </p>
+          </Field>
+
           <Field label="企业资质">
             <QualificationsEditor
               items={draft.qualifications}
