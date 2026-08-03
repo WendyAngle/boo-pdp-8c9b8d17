@@ -191,7 +191,13 @@ export function CreateReachTaskDialog({
       return toast.error(`最多可选择 ${MAX_PROMO} 个推广产品`);
     setPromoProducts((prev) => [...prev, v]);
     setCustomProduct("");
+    // 同步写回「企业信息 - 主营产品」，避免重复维护
+    if (!(profile.mainProducts ?? []).includes(v)) {
+      saveProfile({ ...profile, mainProducts: [...(profile.mainProducts ?? []), v] });
+      toast.success(`已添加「${v}」，并同步到企业信息的主营产品`);
+    }
   }
+
 
 
   const my = useMemo<VarContext>(() => myContext(profile, user), [profile, user]);
