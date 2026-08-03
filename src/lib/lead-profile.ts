@@ -16,6 +16,8 @@ export interface LeadProfile {
   website: string;
   brandStory: string;
   brandFiles: QualificationFile[];
+  /** 企业知识库：AI 智能外呼/触达回答客户问题的参考资料 */
+  knowledgeFiles: QualificationFile[];
   qualifications: QualificationItem[];
   businessLicense?: QualificationFile;
 }
@@ -59,6 +61,7 @@ export const EMPTY_PROFILE: LeadProfile = {
   website: "",
   brandStory: "",
   brandFiles: [],
+  knowledgeFiles: [],
   qualifications: [],
 };
 
@@ -68,7 +71,12 @@ function readProfile(): LeadProfile {
     const raw = window.localStorage.getItem(KEY);
     if (!raw) return EMPTY_PROFILE;
     const obj = JSON.parse(raw);
-    return { ...EMPTY_PROFILE, ...obj, brandFiles: obj.brandFiles ?? [] };
+    return {
+      ...EMPTY_PROFILE,
+      ...obj,
+      brandFiles: obj.brandFiles ?? [],
+      knowledgeFiles: obj.knowledgeFiles ?? [],
+    };
   } catch {
     return EMPTY_PROFILE;
   }
