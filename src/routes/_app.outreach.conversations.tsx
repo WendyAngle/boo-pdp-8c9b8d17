@@ -1779,6 +1779,7 @@ function _ActionBar({ thread }: { thread: Thread }) {
 }
 
 function ProfilePanel({ thread }: { thread: Thread }) {
+  const resolveSenderForPanel = useThreadSenderResolver();
   return (
     <div className="space-y-3 text-sm">
       {(() => {
