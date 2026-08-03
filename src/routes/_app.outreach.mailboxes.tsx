@@ -243,17 +243,18 @@ function MailboxesPage() {
                 </>
               )}
             </Button>
-            <Button
-              size="sm"
-              className="h-9 bg-white text-primary hover:bg-white/90 shadow-sm"
-              onClick={() => {
-                setEditing(null);
-                setFormInitScope(isAdmin ? "team" : "personal");
-                setFormOpen(true);
-              }}
-            >
-              <Plus className="h-4 w-4" /> 新增邮箱
-            </Button>
+            {isAdmin && (
+              <Button
+                size="sm"
+                className="h-9 bg-white text-primary hover:bg-white/90 shadow-sm"
+                onClick={() => {
+                  setEditing(null);
+                  setFormOpen(true);
+                }}
+              >
+                <Plus className="h-4 w-4" /> 新增邮箱
+              </Button>
+            )}
           </div>
         </div>
       </section>
