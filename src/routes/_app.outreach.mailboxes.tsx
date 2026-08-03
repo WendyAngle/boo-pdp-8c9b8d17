@@ -95,6 +95,14 @@ const PROVIDERS: MailboxProvider[] = [
   "网易企业邮",
   "自定义SMTP",
 ];
+/** 新增邮箱弹窗中可选的服务商（不含「自定义SMTP」） */
+const FORM_PROVIDERS: MailboxProvider[] = [
+  "Gmail",
+  "Outlook",
+  "腾讯企业邮",
+  "阿里企业邮",
+  "网易企业邮",
+];
 const STATUSES: MailboxStatus[] = ["正常", "停用", "异常"];
 const ENCRYPTIONS: MailboxEncryption[] = ["SSL", "TLS", "STARTTLS", "NONE"];
 
@@ -742,7 +750,13 @@ function MailboxFormDialog({
     }));
     const d = detectProvider(email);
     setDetect(d);
-    if (d) applyProvider(d.provider, email);
+    if (d && d.matched) {
+      applyProvider(d.provider, email);
+    } else if (d && !d.matched) {
+      // 未能识别服务商：保持已选服务商，自动开启手动配置以便用户自行填写 SMTP 参数
+      setManualServer(true);
+      setForm((s) => ({ ...s, username: email }));
+    }
   };
 
   const onProviderChange = (p: MailboxProvider) => {
@@ -853,7 +867,10 @@ function MailboxFormDialog({
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                      {PROVIDERS.map((p) => (
+                      {(editing?.provider === "自定义SMTP"
+                        ? [...FORM_PROVIDERS, "自定义SMTP"]
+                        : FORM_PROVIDERS
+                      ).map((p) => (
                         <SelectItem key={p} value={p}>
                           {p}
                         </SelectItem>
