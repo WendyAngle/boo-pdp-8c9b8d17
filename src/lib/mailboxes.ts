@@ -2,7 +2,7 @@ import { useSyncExternalStore } from "react";
 
 export type MailboxStatus = "正常" | "停用" | "异常";
 export type MailboxEncryption = "SSL" | "TLS" | "STARTTLS" | "NONE";
-export type MailboxScope = "team" | "personal";
+
 export type MailboxProvider =
   | "Gmail"
   | "Outlook"
@@ -28,10 +28,7 @@ export interface Mailbox {
   isDefault: boolean;
   createdAt: string;
   lastTestedAt?: string;
-  /** team = 企业共享（管理员维护）；personal = 个人邮箱（本人自助） */
-  scope: MailboxScope;
-  /** personal 必填：邮箱所属员工 id */
-  ownerId?: string;
+
 }
 
 export const PROVIDER_PRESETS: Record<
@@ -47,7 +44,7 @@ export const PROVIDER_PRESETS: Record<
 };
 
 const KEY = "boo:mailboxes:v1";
-const SEED_FLAG = "boo:mailboxes:v2:seeded";
+const SEED_FLAG = "boo:mailboxes:v3:seeded";
 
 function read(): Mailbox[] {
   if (typeof window === "undefined") return [];
@@ -56,11 +53,11 @@ function read(): Mailbox[] {
     if (!raw) return [];
     const arr = JSON.parse(raw);
     if (Array.isArray(arr)) {
-      // v1 → v2 迁移：无 scope 视为团队邮箱
-      return arr.map((m: Mailbox) => ({
-        ...m,
-        scope: m.scope ?? "team",
-      }));
+      // 历史数据迁移：不再区分团队 / 个人，统一为企业邮箱
+      return arr.map((m: Record<string, unknown>) => {
+        const { scope: _s, ownerId: _o, ...rest } = m;
+        return rest as unknown as Mailbox;
+      });
     }
   } catch {}
   return [];
@@ -93,7 +90,6 @@ function seed() {
       isDefault: true,
       createdAt: now,
       lastTestedAt: now,
-      scope: "team",
     },
     {
       id: makeId(),
@@ -109,25 +105,22 @@ function seed() {
       status: "停用",
       isDefault: false,
       createdAt: now,
-      scope: "team",
     },
     {
       id: makeId(),
-      email: "zhang.san@gmail.com",
-      displayName: "张三（个人号）",
-      provider: "Gmail",
-      ...PROVIDER_PRESETS.Gmail,
-      username: "zhang.san@gmail.com",
+      email: "sales01@bytetech.cn",
+      displayName: "ByteTech 销售一部",
+      provider: "腾讯企业邮",
+      ...PROVIDER_PRESETS["腾讯企业邮"],
+      username: "sales01@bytetech.cn",
       password: "********",
       signature: "",
-      dailyLimit: 50,
+      dailyLimit: 80,
       sentToday: 8,
       status: "正常",
       isDefault: false,
       createdAt: now,
       lastTestedAt: now,
-      scope: "personal",
-      ownerId: "u_zhang",
     },
   ];
   write(seedData);
