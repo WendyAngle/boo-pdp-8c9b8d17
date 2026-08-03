@@ -61,7 +61,7 @@ export const EMPTY_PROFILE: LeadProfile = {
   website: "",
   brandStory: "",
   brandFiles: [],
-  qualifications: [],
+  knowledgeFiles: [],
 };
 
 function readProfile(): LeadProfile {
