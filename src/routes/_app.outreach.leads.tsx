@@ -1541,46 +1541,82 @@ function ShortcutCard({
 /* ============================ 企业画像 ============================ */
 
 const INDUSTRY_OPTIONS = [
-  "manufacturing",
-  "retail",
-  "logistics",
-  "marketing and advertising",
-  "information technology",
-  "financial services",
-  "healthcare",
-  "higher education",
+  "制造业",
+  "零售",
+  "物流",
+  "营销与广告",
+  "信息技术",
+  "金融服务",
+  "医疗健康",
+  "高等教育",
+  "建筑材料",
+  "钢材加工",
+  "金属制品",
+  "建筑施工",
+  "基础设施工程",
+  "房地产开发",
+  "电子商务",
+  "新能源",
+  "汽车制造",
+  "农业",
 ];
 const COUNTRY_OPTIONS = [
-  "united states",
-  "china",
-  "japan",
-  "germany",
-  "united kingdom",
-  "mexico",
-  "singapore",
-  "france",
+  "美国",
+  "中国",
+  "日本",
+  "德国",
+  "英国",
+  "墨西哥",
+  "新加坡",
+  "法国",
+  "越南",
+  "沙特阿拉伯",
+  "韩国",
+  "印度",
+  "俄罗斯",
+  "巴西",
+  "加拿大",
+  "澳大利亚",
+  "阿联酋",
+  "泰国",
+  "马来西亚",
+  "印度尼西亚",
 ];
-/* 英文 → 中文 别名字典：用于 hover 提示，保持选项标准化为英文 */
-const INDUSTRY_CN: Record<string, string> = {
-  manufacturing: "制造业",
-  retail: "零售",
-  logistics: "物流",
-  "marketing and advertising": "营销与广告",
-  "information technology": "信息技术",
-  "financial services": "金融服务",
-  healthcare: "医疗健康",
-  "higher education": "高等教育",
-};
-const COUNTRY_CN: Record<string, string> = {
-  "united states": "美国",
-  china: "中国",
-  japan: "日本",
-  germany: "德国",
-  "united kingdom": "英国",
-  mexico: "墨西哥",
-  singapore: "新加坡",
-  france: "法国",
-};
+const PRODUCT_OPTIONS = [
+  "热轧钢板",
+  "冷轧钢板",
+  "建筑螺纹钢",
+  "镀锌钢管",
+  "焊接钢管",
+  "无缝钢管",
+  "不锈钢板材",
+  "彩涂钢板",
+  "花岗岩石材",
+  "大理石板材",
+  "石膏板",
+  "水泥",
+  "预制混凝土构件",
+  "铝型材",
+  "铜管",
+  "钢结构",
+  "彩钢瓦",
+  "防火板",
+  "保温材料",
+];
+const HS_CODE_OPTIONS = [
+  "721049",
+  "721020",
+  "721310",
+  "721320",
+  "730630",
+  "730690",
+  "680100",
+  "680210",
+  "680221",
+  "680223",
+  "680911",
+  "681011",
+];
 const SCALE_OPTIONS = ["1-50", "51-200", "201-1000", "1000+"];
 const REVENUE_OPTIONS = ["<500 万", "500 万 - 5000 万", "5000 万 - 5 亿", ">5 亿"];
 
@@ -1626,23 +1662,25 @@ export function ProfileTab() {
               value={draft.industries}
               onChange={(v) => set("industries", v)}
               allowCustom
-              addPlaceholder="推荐输入英文，例如 manufacturing"
-              labelMap={INDUSTRY_CN}
-              hint="为提升 AI 匹配精度，建议使用英文名称"
+              addPlaceholder="输入行业名称后回车，可添加多个"
             />
           </Field>
           <Field label="主营产品">
-            <ChipInput
-              placeholder="输入产品名后回车，可添加多个"
+            <MultiPick
+              options={PRODUCT_OPTIONS}
               value={draft.mainProducts}
               onChange={(v) => set("mainProducts", v)}
+              allowCustom
+              addPlaceholder="输入产品名后回车，可添加多个"
             />
           </Field>
           <Field label="主要 HS 编码">
-            <ChipInput
-              placeholder="输入 HS 编码后回车"
+            <MultiPick
+              options={HS_CODE_OPTIONS}
               value={draft.hsCodes}
               onChange={(v) => set("hsCodes", v)}
+              allowCustom
+              addPlaceholder="输入 HS 编码后回车，可添加多个"
               mono
             />
           </Field>
@@ -1677,9 +1715,7 @@ export function ProfileTab() {
               value={draft.targetCountries}
               onChange={(v) => set("targetCountries", v)}
               allowCustom
-              addPlaceholder="推荐输入英文，例如 united states"
-              labelMap={COUNTRY_CN}
-              hint="为提升 AI 匹配精度，建议使用英文名称"
+              addPlaceholder="输入国家或地区后回车，可添加多个"
             />
           </Field>
           <Field label="目标客户行业（多选）">
@@ -1688,9 +1724,7 @@ export function ProfileTab() {
               value={draft.targetIndustries}
               onChange={(v) => set("targetIndustries", v)}
               allowCustom
-              addPlaceholder="推荐输入英文，例如 retail"
-              labelMap={INDUSTRY_CN}
-              hint="为提升 AI 匹配精度，建议使用英文名称"
+              addPlaceholder="输入行业名称后回车，可添加多个"
             />
           </Field>
           <Field label="目标客户规模">
@@ -1869,6 +1903,7 @@ function MultiPick({
   addPlaceholder,
   labelMap,
   hint,
+  mono,
 }: {
   options: string[];
   value: string[];
@@ -1877,6 +1912,7 @@ function MultiPick({
   addPlaceholder?: string;
   labelMap?: Record<string, string>;
   hint?: string;
+  mono?: boolean;
 }) {
   const [adding, setAdding] = useState(false);
   const [draftInput, setDraftInput] = useState("");
@@ -1924,6 +1960,8 @@ function MultiPick({
               onClick={() => toggle(o)}
               title={tip ? `${o}（${tip}）` : o}
               className={`px-2.5 h-7 rounded-full text-xs font-medium border transition-colors ${
+                mono ? "font-mono tracking-tight" : ""
+              } ${
                 on
                   ? "bg-primary text-primary-foreground border-primary"
                   : "bg-background text-muted-foreground border-border hover:text-foreground"
