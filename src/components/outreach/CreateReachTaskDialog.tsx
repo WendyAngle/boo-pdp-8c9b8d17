@@ -290,7 +290,11 @@ export function CreateReachTaskDialog({
           myCompany: profile.companyName,
           myName: user.name,
           sampleEnterprise: previewTargets[0]?.name,
-          extra: `严格控制篇幅：建议 ${AI_SUGGESTED_CHAR_LEN} 字符长度以内（中文/日文/韩文每字按 2 字符计），绝对不得超过 ${platform} 平台上限 ${charLimit} 字符。`,
+          extra: `${
+            promoProducts.length > 0
+              ? `本次重点推广产品（必须自然融入文案）：${promoProducts.join("、")}。`
+              : ""
+          }严格控制篇幅：建议 ${AI_SUGGESTED_CHAR_LEN} 字符长度以内（中文/日文/韩文每字按 2 字符计），绝对不得超过 ${platform} 平台上限 ${charLimit} 字符。`,
         },
       });
       if (res.content) setContent(res.content);
