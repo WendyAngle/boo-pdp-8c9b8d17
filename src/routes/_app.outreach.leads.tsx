@@ -1625,13 +1625,14 @@ const COMPETITOR_OPTIONS = [
   "沙钢集团",
   "鞍钢集团",
   "首钢集团",
-  "ArcelorMittal",
-  "Nippon Steel",
-  "POSCO",
-  "Tata Steel",
-  "JSW Steel",
-  "Hyundai Steel",
-  "Nucor",
+  "中信泰富特钢",
+  "安赛乐米塔尔",
+  "日本制铁",
+  "浦项制铁",
+  "塔塔钢铁",
+  "京德勒西南钢铁",
+  "现代制铁",
+  "纽柯钢铁",
 ];
 
 export function ProfileTab() {
