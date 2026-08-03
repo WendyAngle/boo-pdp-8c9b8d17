@@ -378,9 +378,7 @@ function ReachPage() {
               </li>
               <li>
                 本页
-                <Link to="/outreach/reach" className="text-primary mx-1 hover:underline" onClick={(e) => e.preventDefault()}>
-                  社媒拓客触达
-                </Link>
+                <span className="text-foreground font-medium mx-1">社媒拓客触达</span>
                 由系统按推广产品与关键词自动寻找新目标账号（增量拓客）。
               </li>
               <li>
