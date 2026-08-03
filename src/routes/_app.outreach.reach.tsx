@@ -267,31 +267,19 @@ function ReachPage() {
           <ChevronRight className="h-3.5 w-3.5" />
           <span className="text-foreground font-medium">客户触达</span>
         </div>
-        <div className="flex items-center gap-2">
-          <Button size="sm" className="h-8 text-xs gap-1" onClick={() => setCreateReachOpen(true)}>
-            <Plus className="h-3.5 w-3.5" />
-            社媒触达任务
-          </Button>
-          <Button asChild size="sm" variant="outline" className="h-8 text-xs gap-1">
-            <Link to="/outreach/social/accounts">
-              <UserCircle2 className="h-3.5 w-3.5" />
-              社媒账号
-            </Link>
-          </Button>
-          <Button
-            variant="ghost"
-            size="sm"
-            className="gap-1.5 text-muted-foreground"
-            onClick={() => {
-              if (window.confirm("将清空当前触达记录并重新加载演示数据，确认？")) {
-                resetDemoLedger();
-              }
-            }}
-          >
-            <RefreshCw className="h-3.5 w-3.5" />
-            重置演示数据
-          </Button>
-        </div>
+        <Button
+          variant="ghost"
+          size="sm"
+          className="gap-1.5 text-muted-foreground"
+          onClick={() => {
+            if (window.confirm("将清空当前触达记录并重新加载演示数据，确认？")) {
+              resetDemoLedger();
+            }
+          }}
+        >
+          <RefreshCw className="h-3.5 w-3.5" />
+          重置演示数据
+        </Button>
       </div>
       <CreateReachTaskDialog open={createReachOpen} onOpenChange={setCreateReachOpen} />
 
@@ -387,6 +375,20 @@ function ReachPage() {
           value={replyTotal}
           tone="emerald"
         />
+      </div>
+
+      {/* 操作按钮：统计卡片下方 / 列表上方 */}
+      <div className="flex items-center gap-2">
+        <Button size="sm" className="h-9 gap-1.5" onClick={() => setCreateReachOpen(true)}>
+          <Plus className="h-4 w-4" />
+          新建社媒触达任务
+        </Button>
+        <Button asChild size="sm" variant="outline" className="h-9 gap-1.5">
+          <Link to="/outreach/social/accounts">
+            <UserCircle2 className="h-4 w-4" />
+            社媒账号
+          </Link>
+        </Button>
       </div>
 
       <Card className="p-0 overflow-hidden">
