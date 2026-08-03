@@ -206,21 +206,29 @@ export function useThreadSenderResolver() {
   );
 }
 
-/** 列表顶部「发信账号」下拉的可选项（按当前会话集合聚合） */
+/** 列表顶部「发信账号」下拉的可选项（按当前会话集合聚合，含渠道标识） */
 export function useSenderOptions(threads: Thread[]) {
   const resolve = useThreadSenderResolver();
   return useMemo(() => {
-    const map = new Map<string, { sender: ThreadSender; count: number }>();
+    const map = new Map<
+      string,
+      { sender: ThreadSender; count: number; channels: Channel[] }
+    >();
     for (const t of threads) {
       const s = resolve(t);
       if (s.key === "unknown") continue;
       const cur = map.get(s.key);
-      if (cur) cur.count++;
-      else map.set(s.key, { sender: s, count: 1 });
+      if (cur) {
+        cur.count++;
+        if (!cur.channels.includes(t.channel)) cur.channels.push(t.channel);
+      } else {
+        map.set(s.key, { sender: s, count: 1, channels: [t.channel] });
+      }
     }
     return Array.from(map.values()).sort((a, b) => b.count - a.count);
   }, [threads, resolve]);
 }
+
 
 export function senderText(s: ThreadSender): string {
   return s.displayName ? `${s.address}（${s.displayName}）` : s.address;
