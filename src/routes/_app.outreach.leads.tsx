@@ -1619,6 +1619,20 @@ const HS_CODE_OPTIONS = [
 ];
 const SCALE_OPTIONS = ["1-50", "51-200", "201-1000", "1000+"];
 const REVENUE_OPTIONS = ["<500 万", "500 万 - 5000 万", "5000 万 - 5 亿", ">5 亿"];
+const COMPETITOR_OPTIONS = [
+  "宝钢股份",
+  "河钢集团",
+  "沙钢集团",
+  "鞍钢集团",
+  "首钢集团",
+  "ArcelorMittal",
+  "Nippon Steel",
+  "POSCO",
+  "Tata Steel",
+  "JSW Steel",
+  "Hyundai Steel",
+  "Nucor",
+];
 
 export function ProfileTab() {
   const current = useLeadProfile();
@@ -1743,11 +1757,13 @@ export function ProfileTab() {
         </Section>
 
         <Section title="竞争情报" icon={<TrendingUp className="h-4 w-4" />}>
-          <Field label="主要竞品企业">
-            <ChipInput
-              placeholder="输入竞品企业名后回车"
+          <Field label="主要竞品企业（多选）">
+            <MultiPick
+              options={COMPETITOR_OPTIONS}
               value={draft.competitors}
               onChange={(v) => set("competitors", v)}
+              allowCustom
+              addPlaceholder="输入竞品企业名后回车，可添加多个"
             />
           </Field>
           <Field
