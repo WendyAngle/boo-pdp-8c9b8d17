@@ -738,7 +738,7 @@ export function ComposeSendDialog({
               <span className="text-muted-foreground">
                 发送费用（{recipients.length} {isEmail ? "封" : "条"} ×{" "}
                 {sendCostPerRecipient} 积分{
-                  !isEmail && content ? `，按 ${smsSegments(content)} 条拆分` : ""
+                  !isEmail && sendContent ? `，按 ${smsSegments(sendContent)} 条拆分` : ""
                 }）
               </span>
               <span className="font-medium">{sendTotal} 积分</span>

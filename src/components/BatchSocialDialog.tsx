@@ -88,34 +88,8 @@ export interface BatchSocialDialogProps {
   candidates: SocialCandidate[];
 }
 
-function LangToggle({
-  value,
-  onChange,
-}: {
-  value: "zh" | "en";
-  onChange: (v: "zh" | "en") => void;
-}) {
-  return (
-    <div className="inline-flex items-center rounded-md border bg-background p-0.5 text-xs">
-      <span className="px-1.5 text-[10px] text-muted-foreground">目标语言</span>
-      {(["zh", "en"] as const).map((v) => (
-        <button
-          key={v}
-          type="button"
-          onClick={() => onChange(v)}
-          className={cn(
-            "rounded px-2 py-0.5 transition-colors",
-            value === v
-              ? "bg-primary/10 text-primary font-medium"
-              : "text-muted-foreground hover:text-foreground",
-          )}
-        >
-          {v === "zh" ? "中文" : "英文"}
-        </button>
-      ))}
-    </div>
-  );
-}
+
+
 
 export function BatchSocialDialog({
   open,
