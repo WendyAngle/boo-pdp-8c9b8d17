@@ -63,7 +63,9 @@ export const translateMessage = createServerFn({ method: "POST" })
     const content = raw
       .replace(/^\s*```(?:\w+)?\s*/i, "")
       .replace(/\s*```\s*$/i, "")
+      .replace(/<\/?SOURCE>/gi, "")
       .trim()
       .replace(/^["'`]|["'`]$/g, "");
+
     return { content };
   });
