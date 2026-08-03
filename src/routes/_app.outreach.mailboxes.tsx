@@ -694,12 +694,22 @@ function MailboxFormDialog({
 }) {
   const [form, setForm] = useState<FormState>(emptyForm());
   const [testing, setTesting] = useState(false);
+  /** 是否手动覆盖服务器参数 */
+  const [manualServer, setManualServer] = useState(false);
+  /** 是否已手动改过显示名（改过后不再自动覆盖） */
+  const [nameTouched, setNameTouched] = useState(false);
+  const [detect, setDetect] = useState<DetectResult | null>(null);
+  const [showGuide, setShowGuide] = useState(false);
 
   // 同步 editing → form（依赖 open + editing.id）
   const editingKey = editing?.id ?? "new";
   const [lastKey, setLastKey] = useState<string>("");
   if (open && lastKey !== editingKey) {
     setLastKey(editingKey);
+    setManualServer(!!editing);
+    setNameTouched(!!editing);
+    setDetect(editing ? null : null);
+    setShowGuide(false);
     setForm(
       editing
         ? {
@@ -724,24 +734,51 @@ function MailboxFormDialog({
   const update = <K extends keyof FormState>(k: K, v: FormState[K]) =>
     setForm((s) => ({ ...s, [k]: v }));
 
-  const onProviderChange = (p: MailboxProvider) => {
+  const applyProvider = (p: MailboxProvider, email: string) => {
     const preset = PROVIDER_PRESETS[p];
     setForm((s) => ({
       ...s,
       provider: p,
-      smtpHost: preset.smtpHost || s.smtpHost,
-      smtpPort: preset.smtpPort,
-      encryption: preset.encryption,
+      smtpHost: manualServer ? s.smtpHost : preset.smtpHost || s.smtpHost,
+      smtpPort: manualServer ? s.smtpPort : preset.smtpPort,
+      encryption: manualServer ? s.encryption : preset.encryption,
+      username: manualServer ? s.username : email || s.username,
+      dailyLimit: editing ? s.dailyLimit : PROVIDER_DAILY_LIMIT[p],
     }));
   };
+
+  const onEmailChange = (email: string) => {
+    setForm((s) => ({
+      ...s,
+      email,
+      username: manualServer ? s.username : email,
+      displayName: nameTouched
+        ? s.displayName
+        : suggestDisplayName(email, CURRENT_TENANT.name),
+    }));
+    const d = detectProvider(email);
+    setDetect(d);
+    if (d) applyProvider(d.provider, email);
+  };
+
+  const onProviderChange = (p: MailboxProvider) => {
+    applyProvider(p, form.email);
+    setDetect({
+      provider: p,
+      basis: `已手动指定服务商「${p}」，服务器参数按该服务商默认值填充`,
+      matched: p !== "自定义SMTP",
+    });
+  };
+
+  const guide = PROVIDER_GUIDES[form.provider];
 
   const validate = (): string | null => {
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email)) return "请输入有效的邮箱地址";
     if (!form.displayName.trim()) return "请输入显示名称";
-    if (!form.smtpHost.trim()) return "请输入 SMTP 主机";
+    if (!form.smtpHost.trim()) return "请填写 SMTP 服务器地址";
     if (!(form.smtpPort > 0 && form.smtpPort < 65536)) return "SMTP 端口无效";
-    if (!form.username.trim()) return "请输入用户名";
-    if (!form.password.trim()) return "请输入授权密码";
+    if (!form.username.trim()) return "请输入登录用户名";
+    if (!form.password.trim()) return `请输入${guide.credentialName}`;
     if (form.dailyLimit < 1) return "日发上限至少为 1";
     return null;
   };
@@ -799,165 +836,277 @@ function MailboxFormDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-2xl">
+      <DialogContent className={showGuide ? "max-w-4xl" : "max-w-2xl"}>
         <DialogHeader>
-          <DialogTitle>{editing ? "编辑邮箱" : "新增邮箱"}</DialogTitle>
+          <DialogTitle>{editing ? "编辑邮箱" : "新增企业邮箱"}</DialogTitle>
           <DialogDescription>
-            配置用于邮件触达的 SMTP 发件账号，建议保存后立即测试连接。
+            只需填写「邮箱地址 + {guide.credentialName}」，服务器参数由系统按域名自动识别；完成后建议「保存并测试」验证连通性。
           </DialogDescription>
         </DialogHeader>
-        <div className="rounded-md border bg-muted/30 p-3 flex items-start gap-3">
-          <div className="pt-0.5">
-            <Users className="h-4 w-4 text-primary" />
-          </div>
-          <div className="flex-1 space-y-1">
-            <div className="text-sm font-medium">归属：企业邮箱</div>
-            <div className="text-[11px] text-muted-foreground">
-              企业内部全员均可使用该邮箱发信；仅管理员可新增、编辑、启用/停用与删除。
-            </div>
-          </div>
-        </div>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <Field label="邮箱地址" required>
-            <Input
-              value={form.email}
-              onChange={(e) => update("email", e.target.value)}
-              placeholder="name@company.com"
-            />
-          </Field>
-          <Field label="显示名称" required>
-            <Input
-              value={form.displayName}
-              onChange={(e) => update("displayName", e.target.value)}
-              placeholder="例如：业务部 / John"
-            />
-          </Field>
-          <Field label="服务商">
-            <Select value={form.provider} onValueChange={(v) => onProviderChange(v as MailboxProvider)}>
-              <SelectTrigger>
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {PROVIDERS.map((p) => (
-                  <SelectItem key={p} value={p}>
-                    {p}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </Field>
-          <Field label="状态">
-            <Select value={form.status} onValueChange={(v) => update("status", v as MailboxStatus)}>
-              <SelectTrigger>
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {STATUSES.map((s) => (
-                  <SelectItem key={s} value={s}>
-                    {s}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </Field>
-          <Field label="SMTP 主机" required>
-            <Input
-              value={form.smtpHost}
-              onChange={(e) => update("smtpHost", e.target.value)}
-              placeholder="smtp.example.com"
-              className="font-mono"
-            />
-          </Field>
-          <div className="grid grid-cols-2 gap-3">
-            <Field label="端口">
-              <Input
-                type="number"
-                value={form.smtpPort}
-                onChange={(e) => update("smtpPort", Number(e.target.value))}
-              />
-            </Field>
-            <Field label="加密方式">
-              <Select
-                value={form.encryption}
-                onValueChange={(v) => update("encryption", v as MailboxEncryption)}
+
+        <div className={`grid gap-5 ${showGuide ? "md:grid-cols-[1fr_320px]" : "grid-cols-1"}`}>
+          <div className="space-y-5 max-h-[62vh] overflow-y-auto pr-1">
+            {/* 第 1 步：必填项 */}
+            <StepBlock
+              index={1}
+              title="填写邮箱与授权凭证"
+              desc="这两项无法自动获取，需要你从邮箱服务商后台取得。"
+              action={
+                <Button
+                  size="sm"
+                  variant={showGuide ? "secondary" : "outline"}
+                  className="h-7 px-2 text-xs"
+                  onClick={() => setShowGuide((v) => !v)}
+                >
+                  <BookOpen className="h-3.5 w-3.5" /> 配置指导
+                </Button>
+              }
+            >
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <Field label="邮箱地址" required>
+                  <Input
+                    value={form.email}
+                    onChange={(e) => onEmailChange(e.target.value)}
+                    placeholder="name@company.com"
+                  />
+                </Field>
+                <Field label={`${guide.credentialName}`} required>
+                  <Input
+                    type="password"
+                    value={form.password}
+                    onChange={(e) => update("password", e.target.value)}
+                    placeholder="非邮箱登录密码，见右侧配置指导"
+                  />
+                </Field>
+                <Field label="显示名称" required className="md:col-span-2">
+                  <Input
+                    value={form.displayName}
+                    onChange={(e) => {
+                      setNameTouched(true);
+                      update("displayName", e.target.value);
+                    }}
+                    placeholder="收件人看到的发件人名称"
+                  />
+                  <div className="text-[11px] text-muted-foreground">
+                    系统已按企业名 + 邮箱前缀自动生成，可修改。
+                  </div>
+                </Field>
+              </div>
+            </StepBlock>
+
+            {/* 第 2 步：自动识别 */}
+            <StepBlock
+              index={2}
+              title="服务器配置"
+              desc="系统根据邮箱域名自动识别，通常无需修改。"
+              action={
+                <div className="flex items-center gap-2">
+                  <Label className="text-[11px] text-muted-foreground">手动调整</Label>
+                  <Switch checked={manualServer} onCheckedChange={(v) => setManualServer(!!v)} />
+                </div>
+              }
+            >
+              <div
+                className={`rounded-md border p-3 flex items-start gap-2 ${
+                  detect?.matched
+                    ? "border-emerald-200 bg-emerald-50/60"
+                    : "border-amber-200 bg-amber-50/60"
+                }`}
               >
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {ENCRYPTIONS.map((e) => (
-                    <SelectItem key={e} value={e}>
-                      {e}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </Field>
+                {detect?.matched ? (
+                  <Sparkles className="h-4 w-4 text-emerald-600 mt-0.5 shrink-0" />
+                ) : (
+                  <AlertCircle className="h-4 w-4 text-amber-600 mt-0.5 shrink-0" />
+                )}
+                <div className="text-[11px] leading-relaxed text-foreground/80">
+                  {detect
+                    ? detect.basis
+                    : "填写邮箱地址后，系统将自动识别服务商并填充 SMTP 服务器、端口、加密方式与登录用户名。"}
+                </div>
+              </div>
+
+              {manualServer ? (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-3">
+                  <Field label="服务商">
+                    <Select
+                      value={form.provider}
+                      onValueChange={(v) => onProviderChange(v as MailboxProvider)}
+                    >
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {PROVIDERS.map((p) => (
+                          <SelectItem key={p} value={p}>
+                            {p}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </Field>
+                  <Field label="登录用户名" required>
+                    <Input
+                      value={form.username}
+                      onChange={(e) => update("username", e.target.value)}
+                      placeholder="多数情况与邮箱地址一致"
+                    />
+                  </Field>
+                  <Field label="SMTP 服务器" required>
+                    <Input
+                      value={form.smtpHost}
+                      onChange={(e) => update("smtpHost", e.target.value)}
+                      placeholder="smtp.example.com"
+                      className="font-mono"
+                    />
+                  </Field>
+                  <div className="grid grid-cols-2 gap-3">
+                    <Field label="端口" required>
+                      <Input
+                        type="number"
+                        value={form.smtpPort}
+                        onChange={(e) => update("smtpPort", Number(e.target.value))}
+                      />
+                    </Field>
+                    <Field label="加密方式">
+                      <Select
+                        value={form.encryption}
+                        onValueChange={(v) => update("encryption", v as MailboxEncryption)}
+                      >
+                        <SelectTrigger>
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {ENCRYPTIONS.map((e) => (
+                            <SelectItem key={e} value={e}>
+                              {e}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </Field>
+                  </div>
+                </div>
+              ) : (
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mt-3">
+                  <AutoField label="服务商" value={form.provider} />
+                  <AutoField label="SMTP 服务器" value={form.smtpHost || "—"} mono />
+                  <AutoField label="端口 / 加密" value={`${form.smtpPort} · ${form.encryption}`} mono />
+                  <AutoField label="登录用户名" value={form.username || "—"} mono />
+                </div>
+              )}
+            </StepBlock>
+
+            {/* 第 3 步：发信策略 */}
+            <StepBlock
+              index={3}
+              title="发信策略"
+              desc="系统已按服务商给出推荐值，可按需调整。"
+            >
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 items-start">
+                <div className="space-y-1.5">
+                  <Label className="text-xs text-muted-foreground flex items-center gap-1">
+                    日发上限
+                    <TooltipProvider delayDuration={150}>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <button
+                            type="button"
+                            className="inline-flex items-center justify-center text-muted-foreground hover:text-foreground focus:outline-none"
+                            aria-label="日发上限说明"
+                          >
+                            <HelpCircle className="h-3.5 w-3.5" />
+                          </button>
+                        </TooltipTrigger>
+                        <TooltipContent side="top" className="max-w-xs text-xs leading-relaxed">
+                          该值决定此邮箱每日可触达的邮件上限。设置过高易触发服务商风控，导致邮箱被限流或封禁。建议新邮箱从
+                          <span className="font-medium"> 30–50 封/日 </span>起步，稳定养号 2–4 周后逐步提升；成熟邮箱推荐
+                          <span className="font-medium"> 100–200 封/日</span>，一般不超过 300 封/日。
+                        </TooltipContent>
+                      </Tooltip>
+                    </TooltipProvider>
+                  </Label>
+                  <Input
+                    type="number"
+                    value={form.dailyLimit}
+                    onChange={(e) => update("dailyLimit", Number(e.target.value))}
+                  />
+                </div>
+                {editing ? (
+                  <Field label="状态">
+                    <Select
+                      value={form.status}
+                      onValueChange={(v) => update("status", v as MailboxStatus)}
+                    >
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {STATUSES.map((s) => (
+                          <SelectItem key={s} value={s}>
+                            {s}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </Field>
+                ) : (
+                  <AutoField label="状态" value="正常（新增后默认启用）" />
+                )}
+                <div className="flex items-center gap-3 md:col-span-2">
+                  <Switch
+                    checked={form.isDefault}
+                    onCheckedChange={(v) => update("isDefault", !!v)}
+                    disabled={form.status !== "正常"}
+                  />
+                  <Label className="text-sm">设为默认发件邮箱</Label>
+                </div>
+                <Field label="邮件签名（选填）" className="md:col-span-2">
+                  <Textarea
+                    rows={3}
+                    value={form.signature}
+                    onChange={(e) => update("signature", e.target.value)}
+                    placeholder="将自动附加到邮件末尾，建议包含公司名、联系方式与官网"
+                  />
+                </Field>
+              </div>
+            </StepBlock>
           </div>
-          <Field label="用户名" required>
-            <Input
-              value={form.username}
-              onChange={(e) => update("username", e.target.value)}
-              placeholder="多数情况与邮箱地址一致"
-            />
-          </Field>
-          <Field label="授权密码 / Token" required>
-            <Input
-              type="password"
-              value={form.password}
-              onChange={(e) => update("password", e.target.value)}
-              placeholder="SMTP 授权密码或应用密码"
-            />
-          </Field>
-          <div className="md:col-span-2 space-y-2">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 items-start">
+
+          {showGuide && (
+            <aside className="rounded-lg border bg-muted/30 p-4 space-y-3 max-h-[62vh] overflow-y-auto">
+              <div className="flex items-center gap-2">
+                <BookOpen className="h-4 w-4 text-primary" />
+                <div className="text-sm font-semibold">{form.provider} 配置指导</div>
+              </div>
+              <div className="text-[11px] text-muted-foreground">
+                需要获取：<span className="font-medium text-foreground">{guide.credentialName}</span>
+              </div>
+              <ol className="space-y-2">
+                {guide.steps.map((s, i) => (
+                  <li key={i} className="flex gap-2 text-[12px] leading-relaxed">
+                    <span className="h-4 w-4 shrink-0 rounded-full bg-primary/10 text-primary text-[10px] flex items-center justify-center mt-0.5">
+                      {i + 1}
+                    </span>
+                    <span>{s}</span>
+                  </li>
+                ))}
+              </ol>
+              <div className="rounded-md border bg-background p-2.5 text-[11px] text-muted-foreground">
+                入口位置：{guide.docHint}
+              </div>
               <div className="space-y-1.5">
-                <Label className="text-xs text-muted-foreground flex items-center gap-1">
-                  日发上限
-                  <TooltipProvider delayDuration={150}>
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <button
-                          type="button"
-                          className="inline-flex items-center justify-center text-muted-foreground hover:text-foreground focus:outline-none"
-                          aria-label="日发上限说明"
-                        >
-                          <HelpCircle className="h-3.5 w-3.5" />
-                        </button>
-                      </TooltipTrigger>
-                      <TooltipContent side="top" className="max-w-xs text-xs leading-relaxed">
-                        该值决定此邮箱每日可触达的邮件上限。设置过高易触发服务商风控，导致邮箱被限流或封禁。建议新邮箱从
-                        <span className="font-medium"> 30–50 封/日 </span>起步，稳定养号 2–4 周后逐步提升；成熟邮箱推荐
-                        <span className="font-medium"> 100–200 封/日</span>，一般不超过 300 封/日。
-                      </TooltipContent>
-                    </Tooltip>
-                  </TooltipProvider>
-                </Label>
-                <Input
-                  type="number"
-                  value={form.dailyLimit}
-                  onChange={(e) => update("dailyLimit", Number(e.target.value))}
-                />
+                <div className="text-xs font-medium">注意事项</div>
+                {guide.notes.map((n, i) => (
+                  <div key={i} className="flex gap-1.5 text-[11px] text-muted-foreground">
+                    <AlertCircle className="h-3 w-3 mt-0.5 shrink-0 text-amber-500" />
+                    <span>{n}</span>
+                  </div>
+                ))}
               </div>
-              <div className="flex items-center gap-3 h-9 md:mt-[26px]">
-                <Switch
-                  checked={form.isDefault}
-                  onCheckedChange={(v) => update("isDefault", !!v)}
-                  disabled={form.status !== "正常"}
-                />
-                <Label className="text-sm">设为默认发件邮箱</Label>
-              </div>
-            </div>
-          </div>
-          <Field label="邮件签名" className="md:col-span-2">
-            <Textarea
-              rows={3}
-              value={form.signature}
-              onChange={(e) => update("signature", e.target.value)}
-              placeholder="可选，将自动附加到邮件末尾"
-            />
-          </Field>
+            </aside>
+          )}
         </div>
+
         <DialogFooter className="gap-2">
           <Button variant="ghost" onClick={() => onOpenChange(false)}>
             取消
@@ -972,6 +1121,48 @@ function MailboxFormDialog({
     </Dialog>
   );
 }
+
+function StepBlock({
+  index,
+  title,
+  desc,
+  action,
+  children,
+}: {
+  index: number;
+  title: string;
+  desc: string;
+  action?: React.ReactNode;
+  children: React.ReactNode;
+}) {
+  return (
+    <section className="space-y-3">
+      <div className="flex items-start gap-2">
+        <span className="h-5 w-5 shrink-0 rounded-full bg-primary text-primary-foreground text-[11px] flex items-center justify-center mt-0.5">
+          {index}
+        </span>
+        <div className="flex-1">
+          <div className="text-sm font-semibold">{title}</div>
+          <div className="text-[11px] text-muted-foreground">{desc}</div>
+        </div>
+        {action}
+      </div>
+      <div className="pl-7">{children}</div>
+    </section>
+  );
+}
+
+function AutoField({ label, value, mono }: { label: string; value: string; mono?: boolean }) {
+  return (
+    <div className="rounded-md border bg-muted/40 px-2.5 py-2">
+      <div className="text-[10px] text-muted-foreground flex items-center gap-1">
+        <Sparkles className="h-3 w-3" /> {label}
+      </div>
+      <div className={`text-xs mt-0.5 truncate ${mono ? "font-mono" : ""}`}>{value}</div>
+    </div>
+  );
+}
+
 
 function Field({
   label,
