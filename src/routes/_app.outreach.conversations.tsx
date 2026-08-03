@@ -31,6 +31,7 @@ import {
   Music2,
   Send as SendIcon,
   ShieldAlert,
+  AlertTriangle,
   UserCheck,
   Hand,
   Zap,
@@ -701,6 +702,7 @@ function ThreadRow({
   const last = thread.messages[thread.messages.length - 1];
   const sla = slaInfo(thread);
   const authenticity = scoreAuthenticity(thread);
+  const sender = useThreadSenderResolver()(thread);
   const woken =
     thread.meta.wokenAt &&
     Date.now() - new Date(thread.meta.wokenAt).getTime() < 24 * 3600_000;
@@ -796,6 +798,20 @@ function ThreadRow({
               );
             })()}
             <span className="text-[10px]">{CHANNEL_LABEL[thread.channel]}</span>
+            <span
+              className={cn(
+                "text-[10px] truncate max-w-[170px] inline-flex items-center gap-0.5",
+                sender.health === "warning" && "text-rose-600",
+              )}
+              title={`发自 ${senderText(sender)}${
+                sender.healthNote ? ` · ${sender.healthNote}` : ""
+              }`}
+            >
+              {sender.health === "warning" && (
+                <AlertTriangle className="h-2.5 w-2.5 shrink-0" />
+              )}
+              · 发自 {sender.address}
+            </span>
             {thread.isFriend && (
               <Badge
                 variant="outline"
