@@ -1781,6 +1781,65 @@ function _ActionBar({ thread }: { thread: Thread }) {
 function ProfilePanel({ thread }: { thread: Thread }) {
   return (
     <div className="space-y-3 text-sm">
+      {(() => {
+        const sender = resolveSenderForPanel(thread);
+        const link =
+          sender.origin === "email"
+            ? { to: "/outreach/mailboxes" as const, label: "查看发信邮箱" }
+            : sender.origin === "social" || sender.origin === "whatsapp"
+              ? { to: "/outreach/social/accounts" as const, label: "查看社媒账号" }
+              : null;
+        return (
+          <div className="rounded-md border bg-card p-4 space-y-2">
+            <div className="text-xs text-muted-foreground">沟通通道</div>
+            <div className="flex items-center gap-2 text-sm min-w-0">
+              <span className="text-xs text-muted-foreground shrink-0">我方</span>
+              <span className="font-mono truncate">{sender.address}</span>
+              {sender.displayName && (
+                <span className="text-xs text-muted-foreground truncate">
+                  {sender.displayName}
+                </span>
+              )}
+              {sender.health === "warning" && (
+                <Badge
+                  variant="outline"
+                  className="h-4 py-0 px-1.5 text-[10px] gap-0.5 bg-rose-50 text-rose-700 border-rose-200 shrink-0"
+                >
+                  <AlertTriangle className="h-2.5 w-2.5" />
+                  异常
+                </Badge>
+              )}
+            </div>
+            <div className="flex items-center gap-2 text-sm min-w-0">
+              <span className="text-xs text-muted-foreground shrink-0">对方</span>
+              <span className="font-mono truncate">
+                {thread.counterpartyAddress}
+              </span>
+              <Badge
+                variant="outline"
+                className="h-4 py-0 px-1.5 text-[10px] shrink-0"
+              >
+                {CHANNEL_LABEL[thread.channel]}
+              </Badge>
+            </div>
+            <div className="text-[11px] text-muted-foreground">
+              {sender.health === "warning"
+                ? `${sender.healthNote ?? "该发信账号当前异常"}，回复可能失败`
+                : "回复将使用同一账号发出"}
+            </div>
+            {link && (
+              <Link
+                to={link.to}
+                className="text-xs text-primary hover:underline inline-flex items-center gap-1"
+              >
+                {link.label}
+                <ChevronRight className="h-3 w-3" />
+              </Link>
+            )}
+          </div>
+        );
+      })()}
+
       <div className="rounded-md border bg-card p-4 space-y-2">
         <div className="flex items-center gap-2 text-xs text-muted-foreground">
           {thread.targetKind === "enterprise" ? (
