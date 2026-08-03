@@ -156,11 +156,12 @@ export function resolveThreadSender(
     : UNKNOWN;
 }
 
+const EMPTY_EMAILS: EmailAccount[] = [];
 function useEmailAccounts(): EmailAccount[] {
   return useSyncExternalStore(
     subscribeEmailAccounts,
     getEmailAccounts,
-    () => [] as EmailAccount[],
+    () => EMPTY_EMAILS,
   );
 }
 
