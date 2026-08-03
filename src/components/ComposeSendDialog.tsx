@@ -60,10 +60,7 @@ import {
 } from "@/lib/mailboxes";
 import {
   createReach,
-  chargeAiGeneration,
   costForChannel,
-  COST_AI_EMAIL,
-  COST_AI_SMS,
   COST_VIEW_EMAIL,
   COST_VIEW_PHONE,
   computeReachBreakdown,
@@ -141,10 +138,8 @@ export function ComposeSendDialog({
   const [subject, setSubject] = useState("");
   const [content, setContent] = useState("");
   const [aiUsed, setAiUsed] = useState(false);
-  const [aiCount, setAiCount] = useState(0);
   const [senderId, setSenderId] = useState<string>("");
   const [previewIdx, setPreviewIdx] = useState(0);
-  const [aiOpen, setAiOpen] = useState(false);
   const [aiLoading, setAiLoading] = useState(false);
   const [targetLang, setTargetLang] = useState<"zh" | "en">("zh");
   // 短信合规追踪：内容是否来自已报备模板
@@ -260,8 +255,8 @@ export function ComposeSendDialog({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [recipients, isEmail, ledger]);
 
-  const aiCost = aiCount * (isEmail ? COST_AI_EMAIL : COST_AI_SMS);
-  const grandTotal = sendTotal + viewCostTotal + aiCost;
+  const aiCost = 0;
+  const grandTotal = sendTotal + viewCostTotal;
 
   // 发件邮箱日发上限剩余额度（仅邮件）
   const remainingQuota =
@@ -349,43 +344,31 @@ export function ComposeSendDialog({
     doSend();
   }
 
-  async function handleAiGenerate(params: {
-    scene: string;
-    tone: "formal" | "friendly" | "concise";
-    language: "zh" | "en";
-    extra?: string;
-  }) {
+  async function handleAiGenerate() {
+    if (aiLoading) return;
     setAiLoading(true);
     try {
       const sample = recipients[0];
       const res = await callGenerate({
         data: {
           channel: isEmail ? "email" : "sms",
-          ...params,
+          scene: "开发信",
+          tone: "friendly",
+          language: targetLang,
           myCompany: profile.companyName,
           myName: user.name,
           sampleEnterprise: sample?.ctx.企业名,
         },
       });
-      // 调用成功才扣 AI 费用
-      chargeAiGeneration({
-        channel: isEmail ? "email" : "phone",
-        targetName: sample?.name ?? "AI 生成",
-      });
-      setTargetLang(params.language);
       if (isEmail && res.subject) setSubject(res.subject);
       if (res.content) setContent(res.content);
       setAiUsed(true);
-      setAiCount((c) => c + 1);
       // AI 生成 → 视为未报备草稿
       if (!isEmail) {
         setSmsTemplateId(null);
         setSmsTemplateName(null);
       }
-      setAiOpen(false);
-      toast.success(`AI 已生成${isEmail ? "邮件" : "短信"}文案，扣除 ${
-        isEmail ? COST_AI_EMAIL : COST_AI_SMS
-      } 积分`);
+      toast.success(`AI 已生成${isEmail ? "邮件" : "短信"}首次接触文案`);
     } catch (e) {
       const msg = e instanceof Error ? e.message : String(e);
       toast.error("AI 生成失败", { description: msg });
@@ -578,23 +561,23 @@ export function ComposeSendDialog({
               </Label>
               <div className="flex items-center gap-2">
                 <Button
-                type="button"
-                size="sm"
-                variant="outline"
-                onClick={() => setAiOpen(true)}
-                className="h-7 gap-1"
-              >
-                <Sparkles className="h-3.5 w-3.5 text-primary" />
-                {isEmail
-                  ? aiUsed
-                    ? "AI 重新生成"
-                    : "AI 生成"
-                  : aiUsed
-                    ? "AI 重新起草"
-                    : "AI 起草模板"}
-                <span className="text-xs text-muted-foreground">
-                  -{isEmail ? COST_AI_EMAIL : COST_AI_SMS} 积分/次
-                </span>
+                  type="button"
+                  size="sm"
+                  variant="outline"
+                  disabled={aiLoading}
+                  onClick={() => handleAiGenerate()}
+                  className="h-7 gap-1"
+                >
+                  {aiLoading ? (
+                    <Loader2 className="h-3.5 w-3.5 animate-spin text-primary" />
+                  ) : (
+                    <Sparkles className="h-3.5 w-3.5 text-primary" />
+                  )}
+                  {aiLoading
+                    ? "生成中…"
+                    : aiUsed
+                      ? "AI 重新生成"
+                      : "AI 生成文案"}
                 </Button>
               </div>
             </div>
@@ -771,15 +754,6 @@ export function ComposeSendDialog({
                 </div>
               );
             })()}
-            {aiCost > 0 && (
-              <div className="flex justify-between">
-                <span className="text-muted-foreground">
-                  AI 生成（{aiCount} 次 × {isEmail ? COST_AI_EMAIL : COST_AI_SMS}{" "}
-                  积分）
-                </span>
-                <span className="font-medium">{aiCost} 积分</span>
-              </div>
-            )}
             <div className="flex justify-between border-t border-rose-200/70 pt-1 dark:border-rose-900/50">
               <span className="font-semibold text-rose-700 dark:text-rose-300">
                 合计
@@ -811,14 +785,6 @@ export function ComposeSendDialog({
         </DialogFooter>
       </DialogContent>
 
-      <AiComposeDialog
-        open={aiOpen}
-        onOpenChange={setAiOpen}
-        channel={channel}
-        loading={aiLoading}
-        defaultLanguage={targetLang}
-        onGenerate={handleAiGenerate}
-      />
 
       <SubmitTemplateDialog
         open={submitTplOpen}
@@ -873,115 +839,6 @@ export function ComposeSendDialog({
   );
 }
 
-/* -------------------- AI 生成子弹窗 -------------------- */
-
-function AiComposeDialog({
-  open,
-  onOpenChange,
-  channel,
-  loading,
-  defaultLanguage = "zh",
-  onGenerate,
-}: {
-  open: boolean;
-  onOpenChange: (v: boolean) => void;
-  channel: ComposeChannel;
-  loading: boolean;
-  defaultLanguage?: "zh" | "en";
-  onGenerate: (p: {
-    scene: string;
-    tone: "formal" | "friendly" | "concise";
-    language: "zh" | "en";
-    extra?: string;
-  }) => void;
-}) {
-  const isEmail = channel === "email";
-  const [scene, setScene] = useState("开发信");
-  const [tone, setTone] = useState<"formal" | "friendly" | "concise">("friendly");
-  const [language, setLanguage] = useState<"zh" | "en">(defaultLanguage);
-  const [extra, setExtra] = useState("");
-  useEffect(() => {
-    if (open) setLanguage(defaultLanguage);
-  }, [open, defaultLanguage]);
-
-  return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-md">
-        <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
-            <Sparkles className="h-5 w-5 text-primary" />
-            AI 生成{isEmail ? "邮件" : "短信"}文案
-          </DialogTitle>
-          <DialogDescription className="text-xs">
-            生成成功即扣 {isEmail ? COST_AI_EMAIL : COST_AI_SMS} 积分；失败不扣费。
-          </DialogDescription>
-        </DialogHeader>
-        <div className="space-y-3">
-          <ComposeFormatHint channel={isEmail ? "email" : "sms"} />
-          <div className="space-y-1">
-            <Label className="text-xs">场景</Label>
-            <Select value={scene} onValueChange={setScene}>
-              <SelectTrigger className="h-9"><SelectValue /></SelectTrigger>
-              <SelectContent>
-                <SelectItem value="开发信">开发信（首次接触）</SelectItem>
-                <SelectItem value="跟进">跟进未回复客户</SelectItem>
-                <SelectItem value="报价">报价 / 商品推荐</SelectItem>
-                <SelectItem value="展会邀请">展会邀请</SelectItem>
-                <SelectItem value="节日问候">节日问候</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-          <div className="grid grid-cols-2 gap-3">
-            <div className="space-y-1">
-              <Label className="text-xs">语气</Label>
-              <Select value={tone} onValueChange={(v) => setTone(v as typeof tone)}>
-                <SelectTrigger className="h-9"><SelectValue /></SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="formal">正式商务</SelectItem>
-                  <SelectItem value="friendly">友好诚恳</SelectItem>
-                  <SelectItem value="concise">简洁直接</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="space-y-1">
-              <Label className="text-xs">目标语言</Label>
-              <Select value={language} onValueChange={(v) => setLanguage(v as typeof language)}>
-                <SelectTrigger className="h-9"><SelectValue /></SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="zh">中文</SelectItem>
-                  <SelectItem value="en">英文</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
-          <div className="space-y-1">
-            <Label className="text-xs">补充要求（可选）</Label>
-            <Textarea
-              rows={3}
-              value={extra}
-              onChange={(e) => setExtra(e.target.value)}
-              placeholder="如：突出我方价格优势、提及具体产品类目等"
-              maxLength={500}
-            />
-          </div>
-        </div>
-        <DialogFooter>
-          <Button variant="outline" onClick={() => onOpenChange(false)} disabled={loading}>
-            取消
-          </Button>
-          <Button
-            disabled={loading}
-            onClick={() => onGenerate({ scene, tone, language, extra: extra.trim() || undefined })}
-            className={cn("bg-primary", loading && "opacity-80")}
-          >
-            {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />}
-            {loading ? "生成中…" : "生成"}
-          </Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
-  );
-}
 
 /* -------------------- 短信模板选择器 -------------------- */
 
