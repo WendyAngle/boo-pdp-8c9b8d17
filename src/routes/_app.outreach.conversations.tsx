@@ -1517,27 +1517,15 @@ function ThreadDetail({
             ) : (
               <Sparkles className="h-3.5 w-3.5" />
             )}
-            AI 生成回复（{targetLang.zh}）
-          </Button>
-          <Button
-            variant="ghost"
-            size="sm"
-            className="gap-1 h-7"
-            onClick={doTranslate}
-            disabled={translating || !reply.trim() || winInfo?.closed}
-            title={`将输入框内容翻译为${targetLang.zh}`}
-          >
-            {translating ? (
-              <Loader2 className="h-3.5 w-3.5 animate-spin" />
-            ) : (
-              <Languages className="h-3.5 w-3.5" />
-            )}
-            翻译为{targetLang.zh}
+            AI 生成回复（中文）
           </Button>
           <QuickTemplateMenu
             channel={thread.channel}
             disabled={!!winInfo?.closed}
-            onPick={(body) => setReply(body)}
+            onPick={(body) => {
+              setReply(body);
+              setTranslated("");
+            }}
           />
         </div>
         {winInfo?.closed && templates.length > 0 ? (
@@ -1558,79 +1546,104 @@ function ThreadDetail({
               ))}
             </div>
           </div>
-        ) : (
-          <Textarea
-            value={reply}
-            onChange={(e) => setReply(e.target.value)}
-            placeholder='写点什么，或点击"AI 生成回复"由 AI 起草…'
-            rows={4}
-            className="resize-none bg-background"
-            disabled={winInfo?.closed}
-          />
-        )}
-        {/* 手动输入内容的语言提示 */}
-        {!winInfo?.closed && (langMismatch || preTranslate) && (
-          <div
-            className={cn(
-              "mt-2 flex items-center gap-2 flex-wrap rounded-md border px-2.5 py-1.5 text-xs",
-              langMismatch
-                ? "border-amber-300 bg-amber-50 text-amber-800"
-                : "border-emerald-300 bg-emerald-50 text-emerald-700",
-            )}
-          >
-            <Languages className="h-3.5 w-3.5 shrink-0" />
-            {langMismatch ? (
-              <>
-                <span>
-                  AI 识别当前内容为「{draftLang!.zh}」，与目标语言「{targetLang.zh}
-                  」不一致，客户可能看不懂。
+        ) : needsTranslation ? (
+          <div className="grid gap-2 md:grid-cols-2">
+            {/* 左：中文原文 */}
+            <div className="space-y-1">
+              <div className="flex items-center gap-2 text-[11px] text-muted-foreground">
+                <span className="font-medium text-foreground">中文原文</span>
+                <span>（内部撰写，不发送）</span>
+              </div>
+              <Textarea
+                value={reply}
+                onChange={(e) => setReply(e.target.value)}
+                placeholder='用中文写点什么，或点击"AI 生成回复（中文）"…'
+                rows={6}
+                className="resize-none bg-background"
+                disabled={winInfo?.closed}
+              />
+            </div>
+            {/* 右：目标语言译文（实际发送） */}
+            <div className="space-y-1">
+              <div className="flex items-center gap-2 text-[11px] text-muted-foreground">
+                <span className="font-medium text-foreground">
+                  {targetLang.zh}译文
                 </span>
+                <span>（实际发送内容）</span>
                 <Button
                   size="sm"
                   variant="outline"
-                  className="h-6 gap-1 px-2 text-[11px] bg-background"
+                  className="ml-auto h-6 gap-1 px-2 text-[11px] bg-background"
                   onClick={doTranslate}
-                  disabled={translating}
+                  disabled={translating || !reply.trim() || winInfo?.closed}
                 >
                   {translating ? (
                     <Loader2 className="h-3 w-3 animate-spin" />
                   ) : (
-                    <Sparkles className="h-3 w-3" />
+                    <Languages className="h-3 w-3" />
                   )}
-                  一键翻译为{targetLang.zh}
+                  {translated ? "重新翻译" : `翻译为${targetLang.zh}`}
                 </Button>
-                <Button
-                  size="sm"
-                  variant="ghost"
-                  className="h-6 px-2 text-[11px]"
-                  onClick={() => setReplyLang(draftLang!.code)}
-                >
-                  改用{draftLang!.zh}发送
-                </Button>
-              </>
-            ) : (
-              <>
-                <span>已翻译为「{targetLang.zh}」，发送前请复核译文。</span>
-                <Button
-                  size="sm"
-                  variant="ghost"
-                  className="h-6 gap-1 px-2 text-[11px]"
-                  onClick={undoTranslate}
-                >
-                  <Undo2 className="h-3 w-3" />
-                  撤销翻译
-                </Button>
-              </>
+              </div>
+              <Textarea
+                value={translated}
+                onChange={(e) => setTranslated(e.target.value)}
+                placeholder={`点击「翻译为${targetLang.zh}」生成译文，可手动微调`}
+                rows={6}
+                className="resize-none bg-background"
+                disabled={winInfo?.closed}
+              />
+            </div>
+          </div>
+        ) : (
+          <Textarea
+            value={reply}
+            onChange={(e) => setReply(e.target.value)}
+            placeholder='写点什么，或点击"AI 生成回复（中文）"由 AI 起草…'
+            rows={5}
+            className="resize-none bg-background"
+            disabled={winInfo?.closed}
+          />
+        )}
+        {/* 译文状态提示 */}
+        {!winInfo?.closed && needsTranslation && (
+          <div
+            className={cn(
+              "mt-2 flex items-center gap-2 flex-wrap rounded-md border px-2.5 py-1.5 text-xs",
+              translationStale
+                ? "border-amber-300 bg-amber-50 text-amber-800"
+                : translated
+                  ? "border-emerald-300 bg-emerald-50 text-emerald-700"
+                  : "border-border bg-muted/40 text-muted-foreground",
             )}
+          >
+            <Languages className="h-3.5 w-3.5 shrink-0" />
+            {translationStale ? (
+              <span>中文原文已修改，译文可能已过期，建议重新翻译后再发送。</span>
+            ) : translated ? (
+              <span>
+                已生成「{targetLang.zh}」译文，发送时以右侧译文为准，中文原文仅内部留存。
+              </span>
+            ) : (
+              <span>
+                目标语言默认跟随对方语言「{detectedLang.zh}」，翻译后即可发送。
+              </span>
+            )}
+          </div>
+        )}
+        {!winInfo?.closed && !needsTranslation && (
+          <div className="mt-2 text-xs text-muted-foreground">
+            对方语言为中文，将直接发送原文，无需翻译。
           </div>
         )}
         <div className="mt-2 flex items-center gap-2">
           <Button
-            onClick={attemptSend}
+            onClick={() => doSend(false)}
             disabled={
               sending ||
               (winInfo?.closed && templates.length > 0 && !selectedTpl) ||
-              (winInfo?.closed && templates.length === 0)
+              (winInfo?.closed && templates.length === 0) ||
+              (!winInfo?.closed && !sendContent.trim())
             }
             className="gap-1.5"
           >
@@ -1639,20 +1652,23 @@ function ThreadDetail({
             ) : (
               <Send className="h-4 w-4" />
             )}
-            {winInfo?.closed && templates.length > 0 ? "发送模板消息" : "发送回复"}
+            {winInfo?.closed && templates.length > 0
+              ? "发送模板消息"
+              : needsTranslation
+                ? `发送${targetLang.zh}译文`
+                : "发送回复"}
           </Button>
           <Button
             variant="outline"
             onClick={() => {
               setReply("");
+              setTranslated("");
               setSelectedTpl("");
-              setPreTranslate(null);
-              setLangConfirmed(null);
               if (typeof window !== "undefined")
                 window.localStorage.removeItem(draftKey);
               setDraftSavedAt(null);
             }}
-            disabled={(!reply && !selectedTpl) || sending}
+            disabled={(!reply && !translated && !selectedTpl) || sending}
           >
             清空
           </Button>
@@ -1667,48 +1683,6 @@ function ThreadDetail({
           </div>
         </div>
       </div>
-
-      {/* 发送前语言一致性提醒 */}
-      <AlertDialog open={langAlertOpen} onOpenChange={setLangAlertOpen}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>发送语言与目标语言不一致</AlertDialogTitle>
-            <AlertDialogDescription asChild>
-              <div className="space-y-2 text-sm">
-                <p>
-                  AI 识别你输入的内容为「{draftLang?.zh}」（置信度{" "}
-                  {draftLang?.confidence}%），而本会话目标语言为「{targetLang.zh}」
-                  {replyLang === "auto" ? "（跟随对方语言）" : "（手动指定）"}。
-                </p>
-                <p className="text-muted-foreground">
-                  建议先翻译为{targetLang.zh}再发送，避免客户理解成本过高影响回复率。
-                </p>
-              </div>
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>返回修改</AlertDialogCancel>
-            <Button
-              variant="outline"
-              onClick={() => {
-                setLangConfirmed(reply.trim());
-                setLangAlertOpen(false);
-                doSend(false);
-              }}
-            >
-              仍按原文发送
-            </Button>
-            <AlertDialogAction
-              onClick={async () => {
-                setLangAlertOpen(false);
-                await doTranslate();
-              }}
-            >
-              翻译为{targetLang.zh}
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
     </div>
   );
 }
