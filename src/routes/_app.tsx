@@ -34,7 +34,7 @@ function TopBar() {
       <div className="ml-auto flex items-center gap-3">
         <button
           type="button"
-          onClick={() => navigate({ to: "/outreach/certification" })}
+          disabled
           className={cn(
             "inline-flex items-center gap-1.5 rounded-md px-3 py-1.5 text-sm font-medium transition-colors",
             status === "unverified"
