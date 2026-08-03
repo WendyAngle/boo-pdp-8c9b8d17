@@ -305,16 +305,7 @@ function MailboxesPage() {
           <Button variant="outline" onClick={reset}>
             <RotateCcw className="h-4 w-4" /> 重置
           </Button>
-          {isAdmin && (
-            <Button
-              onClick={() => {
-                setEditing(null);
-                setFormOpen(true);
-              }}
-            >
-              <Plus className="h-4 w-4" /> 新增邮箱
-            </Button>
-          )}
+        </div>
       </Card>
 
       {/* List */}
