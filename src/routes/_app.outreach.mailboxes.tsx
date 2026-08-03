@@ -715,7 +715,7 @@ function MailboxFormDialog({
     setManualServer(!!editing);
     setNameTouched(!!editing);
     setDetect(editing ? null : null);
-    setShowGuide(false);
+    
     setForm(
       editing
         ? {
