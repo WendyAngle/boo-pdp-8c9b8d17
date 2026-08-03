@@ -692,11 +692,11 @@ function MailboxFormDialog({
   onOpenChange: (v: boolean) => void;
   editing: Mailbox | null;
 }) {
-  const [form, setForm] = useState<FormState>(emptyForm(initScope));
+  const [form, setForm] = useState<FormState>(emptyForm());
   const [testing, setTesting] = useState(false);
 
   // 同步 editing → form（依赖 open + editing.id）
-  const editingKey = editing?.id ?? `new:${initScope}`;
+  const editingKey = editing?.id ?? "new";
   const [lastKey, setLastKey] = useState<string>("");
   if (open && lastKey !== editingKey) {
     setLastKey(editingKey);
@@ -715,9 +715,8 @@ function MailboxFormDialog({
             dailyLimit: editing.dailyLimit,
             isDefault: editing.isDefault,
             status: editing.status,
-            scope: editing.scope,
           }
-        : emptyForm(initScope),
+        : emptyForm(),
     );
   }
   if (!open && lastKey !== "") setTimeout(() => setLastKey(""), 0);
@@ -738,9 +737,6 @@ function MailboxFormDialog({
 
   const validate = (): string | null => {
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email)) return "请输入有效的邮箱地址";
-    if (form.scope === "personal" && isTenantDomain(form.email)) {
-      return `该域名 (${TENANT_DOMAINS.join("、")}) 归企业管理，请联系租户管理员添加为团队邮箱`;
-    }
     if (!form.displayName.trim()) return "请输入显示名称";
     if (!form.smtpHost.trim()) return "请输入 SMTP 主机";
     if (!(form.smtpPort > 0 && form.smtpPort < 65536)) return "SMTP 端口无效";
@@ -771,8 +767,6 @@ function MailboxFormDialog({
         dailyLimit: form.dailyLimit,
         status: form.status,
         isDefault: form.isDefault,
-        scope: form.scope,
-        ownerId: form.scope === "personal" ? (editing.ownerId ?? CURRENT_TENANT_USER.id) : undefined,
       });
       toast.success("已更新邮箱信息");
     } else {
@@ -789,8 +783,6 @@ function MailboxFormDialog({
         dailyLimit: form.dailyLimit,
         status: form.status,
         isDefault: form.isDefault,
-        scope: form.scope,
-        ownerId: form.scope === "personal" ? CURRENT_TENANT_USER.id : undefined,
       });
       id = created.id;
       toast.success("已新增邮箱");
@@ -816,41 +808,13 @@ function MailboxFormDialog({
         </DialogHeader>
         <div className="rounded-md border bg-muted/30 p-3 flex items-start gap-3">
           <div className="pt-0.5">
-            {form.scope === "team" ? (
-              <Users className="h-4 w-4 text-primary" />
-            ) : (
-              <UserRound className="h-4 w-4 text-primary" />
-            )}
+            <Users className="h-4 w-4 text-primary" />
           </div>
           <div className="flex-1 space-y-1">
-            <div className="text-sm font-medium">
-              归属：{form.scope === "team" ? "团队共享邮箱" : "我的个人邮箱"}
-            </div>
+            <div className="text-sm font-medium">归属：企业邮箱</div>
             <div className="text-[11px] text-muted-foreground">
-              {form.scope === "team"
-                ? "全员可用；仅租户管理员可维护。"
-                : `仅本人 (${CURRENT_TENANT_USER.name}) 可用。若为本企业域名邮箱，请改为团队邮箱。`}
+              企业内部全员均可使用该邮箱发信；仅管理员可新增、编辑、启用/停用与删除。
             </div>
-            {isAdmin && !editing && (
-              <div className="flex gap-2 pt-1">
-                <Button
-                  size="sm"
-                  variant={form.scope === "team" ? "default" : "outline"}
-                  className="h-7 px-2 text-xs"
-                  onClick={() => update("scope", "team")}
-                >
-                  团队共享
-                </Button>
-                <Button
-                  size="sm"
-                  variant={form.scope === "personal" ? "default" : "outline"}
-                  className="h-7 px-2 text-xs"
-                  onClick={() => update("scope", "personal")}
-                >
-                  个人
-                </Button>
-              </div>
-            )}
           </div>
         </div>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
