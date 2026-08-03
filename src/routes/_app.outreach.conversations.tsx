@@ -1047,24 +1047,19 @@ function ThreadDetail({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [autoAi, thread.id]);
 
-  /* ---------- 手动输入内容的语言识别 & 翻译 ---------- */
-  // 识别当前草稿使用的语言（仅在内容足够长时判断，避免误报）
-  const draftLang = useMemo(() => {
-    const t = reply.trim();
-    if (t.length < 12) return null;
-    return detectLanguage(t);
-  }, [reply]);
-  /** 草稿语言与目标语言不一致（且识别有一定把握） */
-  const langMismatch =
-    !!draftLang &&
-    draftLang.code !== targetLang.code &&
-    draftLang.confidence >= 60 &&
-    !winInfo?.closed;
+  /* ---------- 中文原文 → 目标语言译文 ---------- */
+  /** 目标语言为中文时无需翻译 */
+  const needsTranslation = targetLang.code !== "zh";
+  /** 译文是否已过期（中文原文在翻译后被改动） */
+  const translationStale =
+    needsTranslation && !!translated && reply.trim() !== translatedFrom;
+  /** 实际发送内容 */
+  const sendContent = needsTranslation ? translated : reply;
 
   async function doTranslate() {
     const text = reply.trim();
     if (!text) {
-      toast.error("请先输入要翻译的内容");
+      toast.error("请先输入中文原文");
       return;
     }
     setTranslating(true);
@@ -1073,14 +1068,13 @@ function ThreadDetail({
         data: {
           text,
           targetLanguageName: targetLang.en,
-          sourceLanguageName: draftLang?.en,
+          sourceLanguageName: "Chinese (Simplified)",
           tone: "friendly",
         },
       });
       if (!res.content) throw new Error("译文为空");
-      setPreTranslate(text);
-      setReply(res.content);
-      setLangConfirmed(null);
+      setTranslated(res.content);
+      setTranslatedFrom(text);
       toast.success(`已翻译为${targetLang.zh}，请复核后发送`);
     } catch (e) {
       toast.error(`翻译失败：${(e as Error).message}`);
@@ -1089,27 +1083,12 @@ function ThreadDetail({
     }
   }
 
-  function undoTranslate() {
-    if (preTranslate === null) return;
-    setReply(preTranslate);
-    setPreTranslate(null);
-  }
-
-  /** 发送前的语言一致性校验：不一致时先提示，不直接发出 */
-  function attemptSend() {
-    if (langMismatch && langConfirmed !== reply.trim()) {
-      setLangAlertOpen(true);
-      return;
-    }
-    doSend(false);
-  }
-
   function doSend(aiGen = false) {
     const content = winInfo?.closed && templates.length
-      ? templates.find((t) => t.id === selectedTpl)?.body ?? reply
-      : reply;
+      ? templates.find((t) => t.id === selectedTpl)?.body ?? sendContent
+      : sendContent;
     if (!content.trim()) {
-      toast.error("请输入回复内容");
+      toast.error(needsTranslation ? "请先生成目标语言译文" : "请输入回复内容");
       return;
     }
     setSending(true);
@@ -1125,8 +1104,8 @@ function ThreadDetail({
       });
       setReply("");
       setSelectedTpl("");
-      setPreTranslate(null);
-      setLangConfirmed(null);
+      setTranslated("");
+      setTranslatedFrom("");
       if (typeof window !== "undefined") window.localStorage.removeItem(draftKey);
       setDraftSavedAt(null);
       setSending(false);
