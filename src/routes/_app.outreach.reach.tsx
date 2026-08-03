@@ -377,8 +377,8 @@ function ReachPage() {
         />
       </div>
 
-      {/* 操作按钮：统计卡片下方 / 列表上方 */}
-      <div className="flex items-center gap-2">
+      {/* 操作按钮：统计卡片下方 / 列表上方，右对齐 */}
+      <div className="flex items-center justify-end gap-2">
         <Button size="sm" className="h-9 gap-1.5" onClick={() => setCreateReachOpen(true)}>
           <Plus className="h-4 w-4" />
           新建社媒触达任务
