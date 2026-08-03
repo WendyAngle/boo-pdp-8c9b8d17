@@ -921,6 +921,7 @@ function ThreadDetail({
   onToggleScorePanel?: () => void;
 }) {
   const [reply, setReply] = useState("");
+  const detailSender = useThreadSenderResolver()(thread);
   // AI 识别的对方语言
   const detectedLang = useMemo(() => detectThreadLanguage(thread), [thread]);
   // 回复目标语言：auto = 跟随对方语言
@@ -1464,11 +1465,9 @@ function ThreadDetail({
           <MessageCircleReply className="h-4 w-4 text-muted-foreground" />
           <span className="text-sm font-medium">回复</span>
           <span className="text-xs text-muted-foreground">
-            {thread.channel === "email"
-              ? `将以 ${thread.senderEmail || "outreach@bytetech.cn"} 发出`
-              : thread.channel === "whatsapp"
-                ? "由公司共享 WhatsApp 商号发出（对客户显示同一号码）"
-                : `将以 ${CHANNEL_LABEL[thread.channel]} 渠道发出`}
+            {thread.channel === "whatsapp"
+              ? "由公司共享 WhatsApp 商号发出（对客户显示同一号码）"
+              : `将以 ${detailSender.address} 发出`}
             ，保持在同一会话内
           </span>
           <div className="ml-auto flex items-center gap-1.5">
