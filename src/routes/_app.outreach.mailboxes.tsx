@@ -322,23 +322,22 @@ function MailboxesPage() {
 
       {/* List */}
       <ScopeSection
-        title="团队共享邮箱"
+        title="企业邮箱"
         subtitle={
           isAdmin
-            ? "归企业所有，全员可用于发信。仅租户管理员可维护。"
-            : "归企业所有，全员可用于发信。如需变更请联系租户管理员。"
+            ? "归企业所有，企业内部全员均可用于发信；仅管理员可新增、编辑、启用/停用、删除。"
+            : "归企业所有，全员可用于发信。如需新增或变更，请联系企业管理员。"
         }
         icon={<Users className="h-4 w-4" />}
-        count={teamList.length}
+        count={filtered.length}
         canAdd={isAdmin}
         onAdd={() => {
           setEditing(null);
-          setFormInitScope("team");
           setFormOpen(true);
         }}
-        empty="暂无团队共享邮箱"
+        empty={isAdmin ? "暂无企业邮箱，点击右上「新增邮箱」添加" : "暂无可用的企业邮箱"}
       >
-        {teamList.map((m) => (
+        {filtered.map((m) => (
           <MailboxCard
             key={m.id}
             m={m}
@@ -356,55 +355,12 @@ function MailboxesPage() {
         ))}
       </ScopeSection>
 
-      <ScopeSection
-        title={isAdmin ? "全员个人邮箱" : "我的发信邮箱"}
-        subtitle={
-          isAdmin
-            ? "员工自助绑定，仅本人可用。管理员可查看/回收。"
-            : "由你本人绑定，仅你可用；离职时管理员将回收。"
-        }
-        icon={<UserRound className="h-4 w-4" />}
-        count={personalList.length}
-        canAdd={true}
-        onAdd={() => {
-          setEditing(null);
-          setFormInitScope("personal");
-          setFormOpen(true);
-        }}
-        empty={
-          isAdmin
-            ? "暂无成员个人邮箱"
-            : "尚未绑定个人邮箱，点击右上「新增邮箱」开始"
-        }
-      >
-        {personalList.map((m) => {
-          const isOwner = m.ownerId === CURRENT_TENANT_USER.id;
-          return (
-            <MailboxCard
-              key={m.id}
-              m={m}
-              readOnly={!isAdmin && !isOwner}
-              testing={testingId === m.id}
-              onTest={() => onTest(m)}
-              onEdit={() => {
-                setEditing(m);
-                setFormOpen(true);
-              }}
-              onDelete={() => setDelTarget(m)}
-              onSetDefault={() => onSetDefault(m)}
-              onToggleStatus={() => onToggleStatus(m)}
-            />
-          );
-        })}
-      </ScopeSection>
-
       <MailboxFormDialog
         open={formOpen}
         onOpenChange={setFormOpen}
         editing={editing}
-        initScope={formInitScope}
-        isAdmin={isAdmin}
       />
+
 
       <AlertDialog open={!!delTarget} onOpenChange={(o) => !o && setDelTarget(null)}>
         <AlertDialogContent>
