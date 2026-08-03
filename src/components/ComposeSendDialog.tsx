@@ -580,6 +580,9 @@ export function ComposeSendDialog({
               </div>
             </div>
 
+            <ComposeFormatHint channel={isEmail ? "email" : "sms"} />
+
+
             {!isEmail && (
               <div className="rounded-md border border-primary/30 bg-primary/5 p-2.5 space-y-1.5">
                 <div className="flex items-center gap-1.5 text-xs font-medium">

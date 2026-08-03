@@ -397,6 +397,12 @@ export function BatchSocialPlatformDialog({
               </Button>
             </div>
 
+            <ComposeFormatHint
+              channel="social"
+              platform={platform === "all" ? "Facebook" : platform}
+            />
+
+
             <div className="flex flex-wrap items-center gap-1.5">
               <span className="text-xs text-muted-foreground">插入变量：</span>
               {MESSAGE_VARIABLES.map((v) => (
