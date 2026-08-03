@@ -1750,13 +1750,16 @@ export function ProfileTab() {
               onChange={(v) => set("competitors", v)}
             />
           </Field>
-          <Field label="差异化优势">
+          <Field
+            label="我方优势（相对竞品）"
+            hint="填写「我方」相较上述竞品的优势，而非竞争对手的优势。AI 会据此在触达文案中突出我方卖点。"
+          >
             <CountedTextarea
               rows={3}
               max={2000}
               value={draft.advantage}
               onChange={(v) => set("advantage", v)}
-              placeholder="简述您的产品 / 服务相较竞品的核心差异化优势"
+              placeholder="例如：自有钢厂产能稳定、港口现货交期快 7 天、支持多语种 7×24 售后"
             />
           </Field>
         </Section>
@@ -1780,7 +1783,16 @@ export function ProfileTab() {
               onChange={(v) => set("brandStory", v)}
               placeholder="一段简短的企业故事，将用于 AI 理解品牌定位"
             />
+            <div className="pt-2">
+              <FilesUploader
+                idPrefix="brand-story"
+                label="上传品牌手册 / 宣传图（支持 PNG / JPG / PDF）"
+                files={draft.brandFiles ?? []}
+                onChange={(v) => set("brandFiles", v)}
+              />
+            </div>
           </Field>
+
           <Field label="企业资质">
             <QualificationsEditor
               items={draft.qualifications}
