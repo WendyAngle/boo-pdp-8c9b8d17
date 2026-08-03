@@ -392,45 +392,14 @@ function ReachPage() {
       </div>
 
       <Card className="p-0 overflow-hidden">
-        {/* 视图切换 + 筛选 */}
+        {/* 标题 + 筛选 */}
         <div className="flex items-center gap-1 border-b border-border px-5 pt-3 pb-2">
           <span className="text-sm font-medium">
             触达成功记录
             <span className="ml-1 text-muted-foreground">{reachRows.length}</span>
           </span>
-
-          <div className="ml-auto inline-flex rounded-md border bg-muted/40 p-0.5">
-            <button
-              type="button"
-              onClick={() => {
-                setView("task");
-                setTaskKey(null);
-              }}
-              className={cn(
-                "inline-flex items-center gap-1 rounded px-2.5 py-1 text-xs font-medium transition-colors",
-                view === "task"
-                  ? "bg-background text-foreground shadow-sm"
-                  : "text-muted-foreground hover:text-foreground",
-              )}
-            >
-              <ListChecks className="h-3.5 w-3.5" />
-              任务视图
-            </button>
-            <button
-              type="button"
-              onClick={() => setView("record")}
-              className={cn(
-                "inline-flex items-center gap-1 rounded px-2.5 py-1 text-xs font-medium transition-colors",
-                view === "record"
-                  ? "bg-background text-foreground shadow-sm"
-                  : "text-muted-foreground hover:text-foreground",
-              )}
-            >
-              <Users className="h-3.5 w-3.5" />
-              记录视图
-            </button>
-          </div>
         </div>
+
         <div className="px-5 py-3 flex items-center gap-3 flex-wrap border-b border-border bg-muted/20">
           <div className="flex items-center gap-2">
             <span className="text-sm text-muted-foreground whitespace-nowrap">触达渠道</span>
@@ -478,15 +447,7 @@ function ReachPage() {
               className="pl-9 h-9 bg-background"
             />
           </div>
-          {taskKey && view === "record" && (
-            <Badge variant="secondary" className="gap-1 font-normal">
-              任务：{taskGroups.find((g) => g.key === taskKey)?.name ?? "已选任务"}
-              <button type="button" onClick={() => setTaskKey(null)} className="ml-1">
-                <X className="h-3 w-3" />
-              </button>
-            </Badge>
-          )}
-          {(kw || channel !== "all" || targetKind !== "all" || taskKey) && (
+          {(kw || channel !== "all" || targetKind !== "all") && (
             <Button
               variant="ghost"
               size="sm"
@@ -494,7 +455,6 @@ function ReachPage() {
                 setKw("");
                 setChannel("all");
                 setTargetKind("all");
-                setTaskKey(null);
               }}
               className="gap-1"
             >
@@ -505,10 +465,11 @@ function ReachPage() {
           <div className="text-sm text-muted-foreground ml-auto">
             共{" "}
             <span className="text-foreground font-semibold">
-              {view === "task" ? taskGroups.length : recordRows.length}
+              {taskGroups.length}
             </span>{" "}
-            {view === "task" ? "个任务" : "条记录"}
+            个任务
           </div>
+
         </div>
 
         {filtered.length === 0 ? (
@@ -542,15 +503,8 @@ function ReachPage() {
 
             <TableBody>
               {taskPageData.map((g) => (
-                <TableRow
-                  key={g.key}
-                  className="hover:bg-muted/30 cursor-pointer"
-                  onClick={() => {
-                    setTaskKey(g.key);
-                    setView("record");
-                  }}
-                  title="点击查看该任务下的触达记录"
-                >
+                <TableRow key={g.key} className="hover:bg-muted/30">
+
                   <TableCell className="max-w-[280px]">
                     <div className="flex items-center gap-1.5">
                       <span className="font-medium">{g.name}</span>
@@ -598,43 +552,14 @@ function ReachPage() {
               ))}
             </TableBody>
           </Table>
-        ) : (
-          <Table>
-            <TableHeader>
-              <TableRow className="bg-primary/5 hover:bg-primary/5">
-                <TableHead className="w-[170px]">触达时间</TableHead>
-                <TableHead className="w-[140px]">渠道</TableHead>
-                <TableHead>明细说明</TableHead>
-                <TableHead className="w-[110px]">回复</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {pageData.map((r) => (
-                <TableRow key={r.id} className="hover:bg-muted/30">
-                  <TableCell className="font-mono tabular-nums text-xs text-muted-foreground whitespace-nowrap">
-                    {fmtTime(r.createdAt)}
-                  </TableCell>
-                  <TableCell>
-                    <ChannelBadge channel={r.channel!} platform={r.platform} />
-                  </TableCell>
-                  <TableCell className="text-xs max-w-[420px]">
-                    <DetailCell row={r} onViewContent={() => setViewing(r)} />
-                  </TableCell>
-                  <TableCell className="text-xs">
-                    <ReplyCell reach={r} thread={threadByKey.get(threadKeyFor(r) ?? "") ?? null} />
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        )}
+        ) : null}
 
         {filtered.length > 0 && (
           <div className="px-5 pb-4">
             <ListPagination
               page={page}
               pageSize={pageSize}
-              total={view === "task" ? taskGroups.length : recordRows.length}
+              total={taskGroups.length}
               onPageChange={setPage}
             />
           </div>
