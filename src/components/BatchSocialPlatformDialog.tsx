@@ -41,9 +41,7 @@ import {
 } from "@/lib/message-vars";
 import {
   createReach,
-  chargeAiGeneration,
   costForSocialPlatform,
-  COST_AI_SOCIAL,
 } from "@/lib/credits-ledger";
 import { useSocialAccounts, type SocialAccount } from "@/data/social-accounts";
 import { useLeadProfile } from "@/lib/lead-profile";
@@ -101,9 +99,7 @@ export function BatchSocialPlatformDialog({
   const [platform, setPlatform] = useState<ReachPlatform | "all">("all");
   const [content, setContent] = useState("");
   const [aiUsed, setAiUsed] = useState(false);
-  const [aiCount, setAiCount] = useState(0);
   const [previewIdx, setPreviewIdx] = useState(0);
-  const [aiOpen, setAiOpen] = useState(false);
   const [aiLoading, setAiLoading] = useState(false);
   const [targetLang, setTargetLang] = useState<"zh" | "en">("zh");
 
@@ -112,7 +108,6 @@ export function BatchSocialPlatformDialog({
     setPlatform("all");
     setContent("");
     setAiUsed(false);
-    setAiCount(0);
     setPreviewIdx(0);
     setTargetLang("zh");
   }, [open]);
@@ -183,8 +178,8 @@ export function BatchSocialPlatformDialog({
   // 费用：按目标数量全额扣除（含顺延次日执行的部分）
   const unit = costForSocialPlatform("Facebook");
   const sendTotal = targetCount * unit;
-  const aiCost = aiCount * COST_AI_SOCIAL;
-  const grandTotal = sendTotal + aiCost;
+  const aiCost = 0;
+  const grandTotal = sendTotal;
 
   const contentRef = useRef<HTMLTextAreaElement | null>(null);
   function insertVarAt(v: string) {
@@ -251,12 +246,8 @@ export function BatchSocialPlatformDialog({
     });
   }
 
-  async function handleAiGenerate(params: {
-    scene: string;
-    tone: "formal" | "friendly" | "concise";
-    language: "zh" | "en";
-    extra?: string;
-  }) {
+  async function handleAiGenerate() {
+    if (aiLoading) return;
     setAiLoading(true);
     try {
       const sample = jobs[0]?.candidate ?? candidates[0];
@@ -264,22 +255,17 @@ export function BatchSocialPlatformDialog({
         data: {
           channel: "social",
           platform: platform === "all" ? "Facebook" : platform,
-          ...params,
+          scene: "开发信",
+          tone: "friendly",
+          language: targetLang,
           myCompany: profile.companyName,
           myName: user.name,
           sampleEnterprise: sample?.ctx.企业名,
         },
       });
-      chargeAiGeneration({
-        channel: "social",
-        targetName: sample?.name ?? "AI 生成",
-      });
-      setTargetLang(params.language);
       if (res.content) setContent(res.content);
       setAiUsed(true);
-      setAiCount((c) => c + 1);
-      setAiOpen(false);
-      toast.success(`AI 已生成社媒文案`);
+      toast.success("AI 已生成社媒首次接触文案");
     } catch (e) {
       const msg = e instanceof Error ? e.message : String(e);
       toast.error("AI 生成失败", { description: msg });
@@ -400,14 +386,16 @@ export function BatchSocialPlatformDialog({
                 type="button"
                 size="sm"
                 variant="outline"
-                onClick={() => setAiOpen(true)}
+                disabled={aiLoading}
+                onClick={() => handleAiGenerate()}
                 className="h-7 gap-1"
               >
-                <Sparkles className="h-3.5 w-3.5 text-primary" />
-                {aiUsed ? "AI 重新生成" : "AI 生成"}
-                <span className="text-xs text-muted-foreground">
-                  免费
-                </span>
+                {aiLoading ? (
+                  <Loader2 className="h-3.5 w-3.5 animate-spin text-primary" />
+                ) : (
+                  <Sparkles className="h-3.5 w-3.5 text-primary" />
+                )}
+                {aiLoading ? "生成中…" : aiUsed ? "AI 重新生成" : "AI 生成文案"}
               </Button>
             </div>
 
@@ -493,14 +481,6 @@ export function BatchSocialPlatformDialog({
                 其中 {deferredCount} 条顺延至明日 09:00 执行
               </div>
             )}
-            {aiCost > 0 && (
-              <div className="flex justify-between">
-                <span className="text-muted-foreground">
-                  AI 生成（{aiCount} 次 × {COST_AI_SOCIAL} 积分）
-                </span>
-                <span className="font-medium">{aiCost} 积分</span>
-              </div>
-            )}
             <div className="flex justify-between border-t border-rose-200/70 pt-1">
               <span className="font-semibold text-rose-700">合计</span>
               <span className="font-semibold text-rose-700">{grandTotal} 积分</span>
@@ -518,15 +498,6 @@ export function BatchSocialPlatformDialog({
           </Button>
         </DialogFooter>
       </DialogContent>
-
-      <AiComposeMiniDialog
-        platform={platform === "all" ? "Facebook" : platform}
-        open={aiOpen}
-        onOpenChange={setAiOpen}
-        loading={aiLoading}
-        defaultLanguage={targetLang}
-        onGenerate={handleAiGenerate}
-      />
     </Dialog>
   );
 }
@@ -558,128 +529,3 @@ function StatCell({
   );
 }
 
-/* -------------------- AI 子弹窗 -------------------- */
-function AiComposeMiniDialog({
-  open,
-  onOpenChange,
-  loading,
-  platform,
-  defaultLanguage = "zh",
-  onGenerate,
-}: {
-  open: boolean;
-  onOpenChange: (v: boolean) => void;
-  loading: boolean;
-  platform: string;
-  defaultLanguage?: "zh" | "en";
-  onGenerate: (p: {
-    scene: string;
-    tone: "formal" | "friendly" | "concise";
-    language: "zh" | "en";
-    extra?: string;
-  }) => void;
-}) {
-  const [scene, setScene] = useState("开发信");
-  const [tone, setTone] = useState<"formal" | "friendly" | "concise">("friendly");
-  const [language, setLanguage] = useState<"zh" | "en">(defaultLanguage);
-  const [extra, setExtra] = useState("");
-  useEffect(() => {
-    if (open) setLanguage(defaultLanguage);
-  }, [open, defaultLanguage]);
-
-  return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-md">
-        <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
-            <Sparkles className="h-5 w-5 text-primary" />
-            AI 生成社媒文案
-          </DialogTitle>
-          <DialogDescription className="text-xs">
-            AI 生成社媒文案免费，不消耗积分。
-          </DialogDescription>
-        </DialogHeader>
-        <div className="space-y-3">
-          <ComposeFormatHint channel="social" platform={platform} />
-          <div className="space-y-1">
-            <Label className="text-xs">场景</Label>
-            <Select value={scene} onValueChange={setScene}>
-              <SelectTrigger className="h-9">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="开发信">开发信（首次接触）</SelectItem>
-                <SelectItem value="跟进">跟进未回复客户</SelectItem>
-                <SelectItem value="报价">报价 / 商品推荐</SelectItem>
-                <SelectItem value="展会邀请">展会邀请</SelectItem>
-                <SelectItem value="节日问候">节日问候</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-          <div className="grid grid-cols-2 gap-3">
-            <div className="space-y-1">
-              <Label className="text-xs">语气</Label>
-              <Select value={tone} onValueChange={(v) => setTone(v as typeof tone)}>
-                <SelectTrigger className="h-9">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="formal">正式商务</SelectItem>
-                  <SelectItem value="friendly">友好诚恳</SelectItem>
-                  <SelectItem value="concise">简洁直接</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="space-y-1">
-              <Label className="text-xs">目标语言</Label>
-              <Select
-                value={language}
-                onValueChange={(v) => setLanguage(v as typeof language)}
-              >
-                <SelectTrigger className="h-9">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="zh">中文</SelectItem>
-                  <SelectItem value="en">英文</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
-          <div className="space-y-1">
-            <Label className="text-xs">补充要求（可选）</Label>
-            <Input
-              value={extra}
-              onChange={(e) => setExtra(e.target.value)}
-              placeholder="如：突出报价、请求预约会议等"
-              maxLength={200}
-            />
-          </div>
-        </div>
-        <DialogFooter>
-          <Button
-            variant="outline"
-            onClick={() => onOpenChange(false)}
-            disabled={loading}
-          >
-            取消
-          </Button>
-          <Button
-            disabled={loading}
-            onClick={() =>
-              onGenerate({ scene, tone, language, extra: extra.trim() || undefined })
-            }
-            className={cn("bg-primary", loading && "opacity-80")}
-          >
-            {loading ? (
-              <Loader2 className="h-4 w-4 animate-spin" />
-            ) : (
-              <Sparkles className="h-4 w-4" />
-            )}
-            {loading ? "生成中…" : "生成"}
-          </Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
-  );
-}
