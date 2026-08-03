@@ -183,7 +183,7 @@ function LeadsPage() {
 
 type AiView = "new" | "seen" | "ignored";
 
-/* ---------- 画像健康度卡片（inline 快速补全） ---------- */
+/* ---------- 企业信息健康度卡片（inline 快速补全） ---------- */
 
 const AI_SCALE_OPTIONS = ["1-50", "51-200", "201-1000", "1000+"];
 const AI_REVENUE_OPTIONS = [
@@ -264,7 +264,7 @@ function ProfileHealthCard({
           </div>
           <div className="min-w-0 flex-1">
             <div className="flex items-center gap-2">
-              <div className="font-semibold">当前企业画像</div>
+              <div className="font-semibold">当前企业信息</div>
               <Badge
                 variant="secondary"
                 className="text-[10px] bg-primary/10 text-primary"
@@ -276,7 +276,7 @@ function ProfileHealthCard({
                   variant="secondary"
                   className="text-[10px] bg-emerald-100 text-emerald-700"
                 >
-                  画像已完善
+                  企业信息已完善
                 </Badge>
               )}
             </div>
@@ -574,7 +574,7 @@ function AiTab({ onGoProfile }: { onGoProfile: () => void }) {
   const [profileDirty, setProfileDirty] = useState(false);
   const [packsOpen, setPacksOpen] = useState(false);
 
-  // 画像被 inline 修改后，提示用户重新生成；leads 已存在才有意义
+  // 企业信息被 inline 修改后，提示用户重新生成；leads 已存在才有意义
   const handleProfilePatch = <K extends keyof LeadProfile>(
     key: K,
     value: LeadProfile[K],
@@ -700,7 +700,7 @@ function AiTab({ onGoProfile }: { onGoProfile: () => void }) {
 
   return (
     <div className="space-y-5">
-      {/* 画像摘要 + 操作 */}
+      {/* 企业信息摘要 + 操作 */}
       <ProfileHealthCard
         profile={profile}
         completeness={completeness}
@@ -747,7 +747,7 @@ function AiTab({ onGoProfile }: { onGoProfile: () => void }) {
                     <li>永不再推标记（{fb.ignored.length}）—— 已忽略企业将重新参与匹配</li>
                   </ul>
                   <div className="text-xs pt-1 text-emerald-700">
-                    ✓ 不会影响：企业画像、收藏夹、触达历史与积分明细
+                    ✓ 不会影响：企业信息、收藏夹、触达历史与积分明细
                   </div>
                 </div>
               </AlertDialogDescription>
@@ -774,7 +774,7 @@ function AiTab({ onGoProfile }: { onGoProfile: () => void }) {
             <Sparkles className="h-8 w-8" />
           </div>
           <div className="flex-1 text-center md:text-left">
-            <div className="font-semibold text-lg">基于您的企业画像，匹配全球潜在客户</div>
+            <div className="font-semibold text-lg">基于您的企业信息，匹配全球潜在客户</div>
             <div className="text-sm text-muted-foreground mt-1 flex flex-wrap items-center justify-center md:justify-start gap-x-1 gap-y-1">
               <span>结合主营产品、目标市场、HS 编码及竞品客户网络综合排序 ·</span>
               <span className="text-primary font-medium">
@@ -839,7 +839,7 @@ function AiTab({ onGoProfile }: { onGoProfile: () => void }) {
             {profileDirty && (
               <div className="mt-2 inline-flex items-center gap-2 text-xs text-primary bg-primary/8 px-2.5 py-1 rounded-md">
                 <Sparkles className="h-3 w-3" />
-                画像已更新，建议重新生成推荐以获得更精准的匹配
+                企业信息已更新，建议重新生成推荐以获得更精准的匹配
               </div>
             )}
           </div>
@@ -919,7 +919,7 @@ function AiTab({ onGoProfile }: { onGoProfile: () => void }) {
           </div>
           <div className="font-medium">点击上方按钮开始 AI 推荐</div>
           <div className="text-sm text-muted-foreground mt-1">
-            画像越完整，匹配越精准
+            企业信息越完整，匹配越精准
           </div>
         </Card>
       )}
@@ -1538,7 +1538,7 @@ function ShortcutCard({
   );
 }
 
-/* ============================ 企业画像 ============================ */
+/* ============================ 企业信息 ============================ */
 
 const INDUSTRY_OPTIONS = [
   "制造业",
@@ -1630,7 +1630,7 @@ export function ProfileTab() {
 
   const handleSave = () => {
     saveProfile(draft);
-    toast.success("企业画像已保存", {
+    toast.success("企业信息已保存", {
       description: `当前完整度 ${profileCompleteness(draft)}%，AI 推荐结果将更精准`,
     });
   };
@@ -1796,9 +1796,9 @@ export function ProfileTab() {
             </AlertDialogTrigger>
             <AlertDialogContent>
               <AlertDialogHeader>
-                <AlertDialogTitle>确认重置画像编辑？</AlertDialogTitle>
+                <AlertDialogTitle>确认重置企业信息编辑？</AlertDialogTitle>
                 <AlertDialogDescription>
-                  将放弃本次未保存的修改，恢复到上次保存的画像内容。此操作不可撤销。
+                  将放弃本次未保存的修改，恢复到上次保存的企业信息内容。此操作不可撤销。
                 </AlertDialogDescription>
               </AlertDialogHeader>
               <AlertDialogFooter>
@@ -1806,7 +1806,7 @@ export function ProfileTab() {
                 <AlertDialogAction
                   onClick={() => {
                     setDraft(current);
-                    toast.success("已恢复到上次保存的画像");
+                    toast.success("已恢复到上次保存的企业信息");
                   }}
                 >
                   确认重置
@@ -1815,14 +1815,14 @@ export function ProfileTab() {
             </AlertDialogContent>
           </AlertDialog>
           <Button onClick={handleSave} className="gap-1.5">
-            <Save className="h-4 w-4" /> 保存画像
+            <Save className="h-4 w-4" /> 保存企业信息
           </Button>
         </div>
       </div>
 
       <aside className="lg:sticky lg:top-6 self-start">
         <Card className="p-5 space-y-4">
-          <div className="text-sm font-medium">画像完整度</div>
+          <div className="text-sm font-medium">企业信息完整度</div>
           <div className="relative h-32 w-32 mx-auto">
             <svg viewBox="0 0 100 100" className="h-full w-full -rotate-90">
               <circle
