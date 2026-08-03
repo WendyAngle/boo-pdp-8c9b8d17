@@ -361,14 +361,7 @@ function ReachPage() {
       </div>
 
       <Card className="p-0 overflow-hidden">
-        {/* 标题 + 筛选 */}
-        <div className="flex items-center gap-1 border-b border-border px-5 pt-3 pb-2">
-          <span className="text-sm font-medium">
-            触达成功记录
-            <span className="ml-1 text-muted-foreground">{reachRows.length}</span>
-          </span>
-        </div>
-
+        {/* 筛选 */}
         <div className="px-5 py-3 flex items-center gap-3 flex-wrap border-b border-border bg-muted/20">
           <div className="flex items-center gap-2">
             <span className="text-sm text-muted-foreground whitespace-nowrap">触达渠道</span>
