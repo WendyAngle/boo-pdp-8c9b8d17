@@ -1757,11 +1757,13 @@ export function ProfileTab() {
         </Section>
 
         <Section title="竞争情报" icon={<TrendingUp className="h-4 w-4" />}>
-          <Field label="主要竞品企业">
-            <ChipInput
-              placeholder="输入竞品企业名后回车"
+          <Field label="主要竞品企业（多选）">
+            <MultiPick
+              options={COMPETITOR_OPTIONS}
               value={draft.competitors}
               onChange={(v) => set("competitors", v)}
+              allowCustom
+              addPlaceholder="输入竞品企业名后回车，可添加多个"
             />
           </Field>
           <Field
