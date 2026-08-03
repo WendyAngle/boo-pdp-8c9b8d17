@@ -173,7 +173,7 @@ function ReachPage() {
 
   useEffect(() => {
     setPage(1);
-  }, [channel, targetKind, kw, view, taskKey]);
+  }, [channel, targetKind, kw]);
 
   const targetKindCounts = useMemo(() => {
     let ent = 0;
@@ -185,15 +185,6 @@ function ReachPage() {
     return { ent, con };
   }, [reachRows]);
 
-  const recordRows = useMemo(
-    () => (taskKey ? filtered.filter((r) => groupKeyOf(r) === taskKey) : filtered),
-    [filtered, taskKey],
-  );
-
-  const pageData = useMemo(
-    () => recordRows.slice((page - 1) * pageSize, page * pageSize),
-    [recordRows, page],
-  );
 
   // 社媒账号池运营指标（替代原积分口径，突出触达任务本身的执行能力）
   const accounts = useSocialAccounts();
@@ -487,7 +478,7 @@ function ReachPage() {
               </Link>
             </Button>
           </div>
-        ) : view === "task" ? (
+        ) : (
           <Table>
             <TableHeader>
               <TableRow className="bg-primary/5 hover:bg-primary/5">
