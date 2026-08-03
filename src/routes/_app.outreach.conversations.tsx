@@ -1510,11 +1510,30 @@ function ThreadDetail({
             </div>
             {/* 右：目标语言译文（实际发送） */}
             <div className="space-y-1">
-              <div className="flex items-center gap-2 text-[11px] text-muted-foreground">
-                <span className="font-medium text-foreground">
-                  {targetLang.zh}译文
-                </span>
-                <span>（实际发送内容）</span>
+              <div className="flex items-center gap-1.5 text-[11px] text-muted-foreground">
+                <Languages className="h-3.5 w-3.5 shrink-0" />
+                <Select value={replyLang} onValueChange={setReplyLang}>
+                  <SelectTrigger className="h-6 w-[168px] text-[11px] bg-background">
+                    <SelectValue placeholder="目标语言" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectGroup>
+                      <SelectLabel className="text-[11px]">AI 建议</SelectLabel>
+                      <SelectItem value="auto" className="text-xs">
+                        跟随对方语言 · {detectedLang.zh}
+                      </SelectItem>
+                    </SelectGroup>
+                    <SelectGroup>
+                      <SelectLabel className="text-[11px]">指定目标语言</SelectLabel>
+                      {LANGUAGES.map((l) => (
+                        <SelectItem key={l.code} value={l.code} className="text-xs">
+                          {l.zh}（{l.en}）
+                        </SelectItem>
+                      ))}
+                    </SelectGroup>
+                  </SelectContent>
+                </Select>
+                <span>译文（实际发送内容）</span>
                 <Button
                   size="sm"
                   variant="outline"
@@ -1530,6 +1549,7 @@ function ThreadDetail({
                   {translated ? "重新翻译" : `翻译为${targetLang.zh}`}
                 </Button>
               </div>
+
               <Textarea
                 value={translated}
                 onChange={(e) => setTranslated(e.target.value)}
