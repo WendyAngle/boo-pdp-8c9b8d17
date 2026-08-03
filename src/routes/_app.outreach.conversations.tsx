@@ -1450,8 +1450,8 @@ function ThreadDetail({
             ，保持在同一会话内
           </span>
           <Button
-
             variant="ghost"
+
             size="sm"
             className="gap-1 h-7"
             onClick={aiGenerate}
