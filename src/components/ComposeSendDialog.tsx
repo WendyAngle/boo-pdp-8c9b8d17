@@ -156,7 +156,7 @@ export function ComposeSendDialog({
     setSubject("");
     setContent("");
     setAiUsed(false);
-    setAiCount(0);
+    
     setTargetLang("zh");
     setSmsTemplateId(null);
     setSmsTemplateName(null);
