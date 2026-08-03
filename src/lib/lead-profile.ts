@@ -62,6 +62,7 @@ export const EMPTY_PROFILE: LeadProfile = {
   brandStory: "",
   brandFiles: [],
   knowledgeFiles: [],
+  qualifications: [],
 };
 
 function readProfile(): LeadProfile {
@@ -70,7 +71,12 @@ function readProfile(): LeadProfile {
     const raw = window.localStorage.getItem(KEY);
     if (!raw) return EMPTY_PROFILE;
     const obj = JSON.parse(raw);
-    return { ...EMPTY_PROFILE, ...obj, brandFiles: obj.brandFiles ?? [] };
+    return {
+      ...EMPTY_PROFILE,
+      ...obj,
+      brandFiles: obj.brandFiles ?? [],
+      knowledgeFiles: obj.knowledgeFiles ?? [],
+    };
   } catch {
     return EMPTY_PROFILE;
   }
