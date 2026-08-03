@@ -867,7 +867,10 @@ function MailboxFormDialog({
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                      {PROVIDERS.map((p) => (
+                      {(editing?.provider === "自定义SMTP"
+                        ? [...FORM_PROVIDERS, "自定义SMTP"]
+                        : FORM_PROVIDERS
+                      ).map((p) => (
                         <SelectItem key={p} value={p}>
                           {p}
                         </SelectItem>
