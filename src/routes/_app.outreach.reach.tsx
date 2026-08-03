@@ -370,11 +370,7 @@ function ReachPage() {
               <li>
                 列表仅展示
                 <span className="text-foreground font-medium mx-1">触达成功</span>
-                的数据；点击任务行的目标数可查看目标明细，点击客户回复可进入
-                <Link to="/outreach/conversations" className="text-primary mx-1 hover:underline">
-                  触达会话
-                </Link>
-                跟进。
+                的数据；点击任务行的目标数可查看该任务的目标资料明细。
               </li>
             </ol>
           </div>
