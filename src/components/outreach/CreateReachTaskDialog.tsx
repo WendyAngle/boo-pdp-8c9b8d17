@@ -38,6 +38,7 @@ import {
 import { LANGUAGES, langByCode } from "@/lib/lang-detect";
 import { useLeadProfile, saveProfile } from "@/lib/lead-profile";
 import { useCurrentUser } from "@/lib/current-user";
+import { ComposeFormatHint } from "@/components/outreach/ComposeFormatHint";
 import { generateAiContent } from "@/lib/api/ai-compose.functions";
 import { translateMessage } from "@/lib/api/ai-translate.functions";
 import {
@@ -630,6 +631,8 @@ export function CreateReachTaskDialog({
                 <span className="text-[11px] text-emerald-600">免费</span>
               </Button>
             </div>
+
+            <ComposeFormatHint channel="social" platform={platform} />
 
             <div className="flex flex-wrap items-center gap-1.5">
               <span className="text-xs text-muted-foreground">插入变量：</span>
