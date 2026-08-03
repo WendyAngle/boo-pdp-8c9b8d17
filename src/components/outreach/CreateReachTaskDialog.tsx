@@ -140,6 +140,10 @@ export function CreateReachTaskDialog({
     setRegion("美国");
     setKeywords("");
     setTargetCap(30);
+    setPromoProducts([]);
+    setCustomProduct("");
+    setProductOpen(false);
+
     setContent("");
     setTranslated("");
     setTrSource("");
