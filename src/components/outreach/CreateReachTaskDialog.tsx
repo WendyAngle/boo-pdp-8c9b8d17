@@ -1,12 +1,14 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
-import { Sparkles, Loader2, Eye, Send, Zap, Wand2, Languages } from "lucide-react";
+import { Sparkles, Loader2, Eye, Send, Zap, Wand2, Languages, Package, X, Plus, Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+
 import {
   Dialog,
   DialogContent,
@@ -112,6 +114,11 @@ export function CreateReachTaskDialog({
   const [region, setRegion] = useState<string>("美国");
   const [keywords, setKeywords] = useState("");
   const [targetCap, setTargetCap] = useState<number>(30);
+  /** 推广产品（最多 3 个） */
+  const [promoProducts, setPromoProducts] = useState<string[]>([]);
+  const [customProduct, setCustomProduct] = useState("");
+  const [productOpen, setProductOpen] = useState(false);
+
   /** 中文原文 */
   const [content, setContent] = useState("");
   /** 目标语言译文（实际发送内容） */
@@ -133,6 +140,10 @@ export function CreateReachTaskDialog({
     setRegion("美国");
     setKeywords("");
     setTargetCap(30);
+    setPromoProducts([]);
+    setCustomProduct("");
+    setProductOpen(false);
+
     setContent("");
     setTranslated("");
     setTrSource("");
@@ -154,6 +165,34 @@ export function CreateReachTaskDialog({
     [accounts, platform],
   );
   const dailyCap = availableAccounts.length * DAILY_PER_ACCOUNT;
+
+  /** 推广产品候选：企业信息主营产品 + 手动添加项 */
+  const productOptions = useMemo(() => {
+    const base = profile.mainProducts ?? [];
+    return Array.from(new Set([...base, ...promoProducts]));
+  }, [profile.mainProducts, promoProducts]);
+
+  const MAX_PROMO = 3;
+  function toggleProduct(p: string) {
+    setPromoProducts((prev) => {
+      if (prev.includes(p)) return prev.filter((x) => x !== p);
+      if (prev.length >= MAX_PROMO) {
+        toast.error(`最多可选择 ${MAX_PROMO} 个推广产品`);
+        return prev;
+      }
+      return [...prev, p];
+    });
+  }
+  function addCustomProduct() {
+    const v = customProduct.trim();
+    if (!v) return;
+    if (promoProducts.includes(v)) return setCustomProduct("");
+    if (promoProducts.length >= MAX_PROMO)
+      return toast.error(`最多可选择 ${MAX_PROMO} 个推广产品`);
+    setPromoProducts((prev) => [...prev, v]);
+    setCustomProduct("");
+  }
+
 
   const my = useMemo<VarContext>(() => myContext(profile, user), [profile, user]);
   const targetLangOpt = langByCode(targetLang);
@@ -223,7 +262,9 @@ export function CreateReachTaskDialog({
     try {
       // 基于企业信息行业 / 产品做本地推荐（免费）
       await new Promise((r) => setTimeout(r, 400));
-      const products = profile.mainProducts.slice(0, 4);
+      const products =
+        promoProducts.length > 0 ? promoProducts : profile.mainProducts.slice(0, 4);
+
       const industries = profile.industries.slice(0, 2);
       const en = ["steel supplier", "building materials", "construction procurement"];
       const merged = Array.from(new Set([...products, ...industries, ...en]));
@@ -249,7 +290,11 @@ export function CreateReachTaskDialog({
           myCompany: profile.companyName,
           myName: user.name,
           sampleEnterprise: previewTargets[0]?.name,
-          extra: `严格控制篇幅：建议 ${AI_SUGGESTED_CHAR_LEN} 字符长度以内（中文/日文/韩文每字按 2 字符计），绝对不得超过 ${platform} 平台上限 ${charLimit} 字符。`,
+          extra: `${
+            promoProducts.length > 0
+              ? `本次重点推广产品（必须自然融入文案）：${promoProducts.join("、")}。`
+              : ""
+          }严格控制篇幅：建议 ${AI_SUGGESTED_CHAR_LEN} 字符长度以内（中文/日文/韩文每字按 2 字符计），绝对不得超过 ${platform} 平台上限 ${charLimit} 字符。`,
         },
       });
       if (res.content) setContent(res.content);
@@ -393,6 +438,116 @@ export function CreateReachTaskDialog({
               />
             </div>
           </div>
+
+          {/* 推广产品 */}
+          <div className="space-y-1">
+            <div className="flex items-center justify-between">
+              <Label className="text-xs text-muted-foreground flex items-center gap-1">
+                <Package className="h-3.5 w-3.5 text-primary" />
+                推广产品
+                <span className="text-[10px]">
+                  （来自企业信息主营产品，可手动添加，最多 {MAX_PROMO} 个）
+                </span>
+              </Label>
+              <span
+                className={`text-[10px] tabular-nums ${
+                  promoProducts.length >= MAX_PROMO ? "text-amber-600" : "text-muted-foreground"
+                }`}
+              >
+                已选 {promoProducts.length}/{MAX_PROMO}
+              </span>
+            </div>
+            <Popover open={productOpen} onOpenChange={setProductOpen}>
+              <PopoverTrigger asChild>
+                <button
+                  type="button"
+                  className="w-full min-h-9 rounded-md border border-input bg-background px-3 py-1.5 text-sm text-left flex items-center gap-2 hover:border-primary/50 transition-colors"
+                >
+                  <div className="flex-1 flex flex-wrap gap-1">
+                    {promoProducts.length === 0 ? (
+                      <span className="text-muted-foreground">
+                        选择本次任务重点推广的产品（可选，最多 {MAX_PROMO} 个）
+                      </span>
+                    ) : (
+                      promoProducts.map((p) => (
+                        <Badge key={p} variant="secondary" className="font-normal">
+                          {p}
+                          <span
+                            role="button"
+                            tabIndex={0}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setPromoProducts((prev) => prev.filter((x) => x !== p));
+                            }}
+                            className="ml-1 -mr-0.5 rounded hover:bg-black/10 inline-flex"
+                          >
+                            <X className="h-3 w-3" />
+                          </span>
+                        </Badge>
+                      ))
+                    )}
+                  </div>
+                  <Plus className="h-4 w-4 text-muted-foreground shrink-0" />
+                </button>
+              </PopoverTrigger>
+              <PopoverContent className="w-[--radix-popover-trigger-width] p-0" align="start">
+                <div className="max-h-56 overflow-y-auto py-1">
+                  {productOptions.length === 0 ? (
+                    <div className="px-4 py-6 text-center text-xs text-muted-foreground">
+                      企业信息中暂无主营产品，可在下方手动添加
+                    </div>
+                  ) : (
+                    productOptions.map((p) => {
+                      const checked = promoProducts.includes(p);
+                      const disabled = !checked && promoProducts.length >= MAX_PROMO;
+                      return (
+                        <button
+                          key={p}
+                          type="button"
+                          disabled={disabled}
+                          onClick={() => toggleProduct(p)}
+                          className={`w-full flex items-center gap-2 px-3 py-1.5 text-sm text-left hover:bg-accent/60 ${
+                            disabled ? "opacity-50 cursor-not-allowed" : ""
+                          }`}
+                        >
+                          <span className="flex-1">{p}</span>
+                          {checked && <Check className="h-3.5 w-3.5 text-primary" />}
+                        </button>
+                      );
+                    })
+                  )}
+                </div>
+                <div className="border-t p-2 flex gap-2">
+                  <Input
+                    value={customProduct}
+                    onChange={(e) => setCustomProduct(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") {
+                        e.preventDefault();
+                        addCustomProduct();
+                      }
+                    }}
+                    placeholder="手动添加产品，回车确认"
+                    className="h-8 text-sm"
+                  />
+                  <Button
+                    type="button"
+                    size="sm"
+                    className="h-8"
+                    onClick={addCustomProduct}
+                    disabled={!customProduct.trim() || promoProducts.length >= MAX_PROMO}
+                  >
+                    添加
+                  </Button>
+                </div>
+              </PopoverContent>
+            </Popover>
+            <p className="text-[10px] text-muted-foreground">
+              已选产品将用于 AI 文案生成与关键词推荐，聚焦 1-3 个产品转化更佳。
+            </p>
+          </div>
+
+
 
           <div className="space-y-1">
             <div className="flex items-center justify-between">
