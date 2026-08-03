@@ -31,7 +31,6 @@ import { Route as AppOutreachFavoritesEmptyRouteImport } from './routes/_app.out
 import { Route as AppOutreachFavoritesRouteImport } from './routes/_app.outreach.favorites'
 import { Route as AppOutreachEnterpriseRouteImport } from './routes/_app.outreach.enterprise'
 import { Route as AppOutreachConversationsRouteImport } from './routes/_app.outreach.conversations'
-import { Route as AppOutreachCertificationRouteImport } from './routes/_app.outreach.certification'
 import { Route as AppOutreachBillsRouteImport } from './routes/_app.outreach.bills'
 import { Route as AppOutreachBillingEmptyRouteImport } from './routes/_app.outreach.billing-empty'
 import { Route as AppOutreachBillingRouteImport } from './routes/_app.outreach.billing'
@@ -169,12 +168,6 @@ const AppOutreachConversationsRoute =
   AppOutreachConversationsRouteImport.update({
     id: '/outreach/conversations',
     path: '/outreach/conversations',
-    getParentRoute: () => AppRoute,
-  } as any)
-const AppOutreachCertificationRoute =
-  AppOutreachCertificationRouteImport.update({
-    id: '/outreach/certification',
-    path: '/outreach/certification',
     getParentRoute: () => AppRoute,
   } as any)
 const AppOutreachBillsRoute = AppOutreachBillsRouteImport.update({
@@ -326,7 +319,6 @@ export interface FileRoutesByFullPath {
   '/outreach/billing': typeof AppOutreachBillingRoute
   '/outreach/billing-empty': typeof AppOutreachBillingEmptyRoute
   '/outreach/bills': typeof AppOutreachBillsRoute
-  '/outreach/certification': typeof AppOutreachCertificationRoute
   '/outreach/conversations': typeof AppOutreachConversationsRoute
   '/outreach/enterprise': typeof AppOutreachEnterpriseRouteWithChildren
   '/outreach/favorites': typeof AppOutreachFavoritesRoute
@@ -375,7 +367,6 @@ export interface FileRoutesByTo {
   '/outreach/billing': typeof AppOutreachBillingRoute
   '/outreach/billing-empty': typeof AppOutreachBillingEmptyRoute
   '/outreach/bills': typeof AppOutreachBillsRoute
-  '/outreach/certification': typeof AppOutreachCertificationRoute
   '/outreach/conversations': typeof AppOutreachConversationsRoute
   '/outreach/favorites': typeof AppOutreachFavoritesRoute
   '/outreach/favorites-empty': typeof AppOutreachFavoritesEmptyRoute
@@ -423,7 +414,6 @@ export interface FileRoutesById {
   '/_app/outreach/billing': typeof AppOutreachBillingRoute
   '/_app/outreach/billing-empty': typeof AppOutreachBillingEmptyRoute
   '/_app/outreach/bills': typeof AppOutreachBillsRoute
-  '/_app/outreach/certification': typeof AppOutreachCertificationRoute
   '/_app/outreach/conversations': typeof AppOutreachConversationsRoute
   '/_app/outreach/enterprise': typeof AppOutreachEnterpriseRouteWithChildren
   '/_app/outreach/favorites': typeof AppOutreachFavoritesRoute
@@ -474,7 +464,6 @@ export interface FileRouteTypes {
     | '/outreach/billing'
     | '/outreach/billing-empty'
     | '/outreach/bills'
-    | '/outreach/certification'
     | '/outreach/conversations'
     | '/outreach/enterprise'
     | '/outreach/favorites'
@@ -523,7 +512,6 @@ export interface FileRouteTypes {
     | '/outreach/billing'
     | '/outreach/billing-empty'
     | '/outreach/bills'
-    | '/outreach/certification'
     | '/outreach/conversations'
     | '/outreach/favorites'
     | '/outreach/favorites-empty'
@@ -570,7 +558,6 @@ export interface FileRouteTypes {
     | '/_app/outreach/billing'
     | '/_app/outreach/billing-empty'
     | '/_app/outreach/bills'
-    | '/_app/outreach/certification'
     | '/_app/outreach/conversations'
     | '/_app/outreach/enterprise'
     | '/_app/outreach/favorites'
@@ -773,13 +760,6 @@ declare module '@tanstack/react-router' {
       path: '/outreach/conversations'
       fullPath: '/outreach/conversations'
       preLoaderRoute: typeof AppOutreachConversationsRouteImport
-      parentRoute: typeof AppRoute
-    }
-    '/_app/outreach/certification': {
-      id: '/_app/outreach/certification'
-      path: '/outreach/certification'
-      fullPath: '/outreach/certification'
-      preLoaderRoute: typeof AppOutreachCertificationRouteImport
       parentRoute: typeof AppRoute
     }
     '/_app/outreach/bills': {
@@ -1019,7 +999,6 @@ interface AppRouteChildren {
   AppOutreachBillingRoute: typeof AppOutreachBillingRoute
   AppOutreachBillingEmptyRoute: typeof AppOutreachBillingEmptyRoute
   AppOutreachBillsRoute: typeof AppOutreachBillsRoute
-  AppOutreachCertificationRoute: typeof AppOutreachCertificationRoute
   AppOutreachConversationsRoute: typeof AppOutreachConversationsRoute
   AppOutreachEnterpriseRoute: typeof AppOutreachEnterpriseRouteWithChildren
   AppOutreachFavoritesRoute: typeof AppOutreachFavoritesRoute
@@ -1061,7 +1040,6 @@ const AppRouteChildren: AppRouteChildren = {
   AppOutreachBillingRoute: AppOutreachBillingRoute,
   AppOutreachBillingEmptyRoute: AppOutreachBillingEmptyRoute,
   AppOutreachBillsRoute: AppOutreachBillsRoute,
-  AppOutreachCertificationRoute: AppOutreachCertificationRoute,
   AppOutreachConversationsRoute: AppOutreachConversationsRoute,
   AppOutreachEnterpriseRoute: AppOutreachEnterpriseRouteWithChildren,
   AppOutreachFavoritesRoute: AppOutreachFavoritesRoute,
@@ -1108,3 +1086,13 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}
