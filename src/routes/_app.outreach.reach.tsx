@@ -126,8 +126,6 @@ function ReachPage() {
   const [kw, setKw] = useState("");
   const [page, setPage] = useState(1);
   const pageSize = 10;
-  const [view, setView] = useState<"task" | "record">("task");
-  const [taskKey, setTaskKey] = useState<string | null>(null);
   const [viewing, setViewing] = useState<
     | null
     | {
