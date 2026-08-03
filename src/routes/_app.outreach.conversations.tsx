@@ -1636,8 +1636,10 @@ function ThreadDetail({
               sending ||
               (winInfo?.closed && templates.length > 0 && !selectedTpl) ||
               (winInfo?.closed && templates.length === 0) ||
+              (!winInfo?.closed && translationStale) ||
               (!winInfo?.closed && !sendContent.trim())
             }
+
             className="gap-1.5"
           >
             {sending ? (
