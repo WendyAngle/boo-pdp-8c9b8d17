@@ -262,7 +262,9 @@ export function CreateReachTaskDialog({
     try {
       // 基于企业信息行业 / 产品做本地推荐（免费）
       await new Promise((r) => setTimeout(r, 400));
-      const products = profile.mainProducts.slice(0, 4);
+      const products =
+        promoProducts.length > 0 ? promoProducts : profile.mainProducts.slice(0, 4);
+
       const industries = profile.industries.slice(0, 2);
       const en = ["steel supplier", "building materials", "construction procurement"];
       const merged = Array.from(new Set([...products, ...industries, ...en]));
