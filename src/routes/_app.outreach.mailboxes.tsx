@@ -75,8 +75,15 @@ import {
   type MailboxEncryption,
   type MailboxStatus,
 } from "@/lib/mailboxes";
+import {
+  detectProvider,
+  suggestDisplayName,
+  PROVIDER_GUIDES,
+  PROVIDER_DAILY_LIMIT,
+  type DetectResult,
+} from "@/lib/mailbox-setup-guide";
 import { useTenantRole, setTenantRole } from "@/lib/tenant-role";
-import { Users, EyeOff, Eye, Lock } from "lucide-react";
+import { Users, EyeOff, Eye, Lock, BookOpen, Sparkles } from "lucide-react";
 
 const CURRENT_TENANT = { id: "T202600", name: "字节跳动" };
 
