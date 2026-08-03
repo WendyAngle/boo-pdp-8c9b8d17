@@ -1,4 +1,4 @@
-import { createFileRoute, Outlet, Link, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, Outlet } from "@tanstack/react-router";
 import { ShieldCheck, Clock, AlertTriangle, CheckCircle2 } from "lucide-react";
 import { AppSidebar } from "@/components/AppSidebar";
 import { useCertification, type CertStatus } from "@/lib/certification";
@@ -24,7 +24,6 @@ function AppLayout() {
 
 function TopBar() {
   const cert = useCertification();
-  const navigate = useNavigate();
   const status: CertStatus = cert.status;
 
   return (
@@ -35,7 +34,7 @@ function TopBar() {
       <div className="ml-auto flex items-center gap-3">
         <button
           type="button"
-          onClick={() => navigate({ to: "/outreach/certification" })}
+          onClick={(e) => e.preventDefault()}
           className={cn(
             "inline-flex items-center gap-1.5 rounded-md px-3 py-1.5 text-sm font-medium transition-colors",
             status === "unverified"
