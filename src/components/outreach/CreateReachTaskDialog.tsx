@@ -42,6 +42,10 @@ import { ComposeFormatHint } from "@/components/outreach/ComposeFormatHint";
 import { generateAiContent } from "@/lib/api/ai-compose.functions";
 import { translateMessage } from "@/lib/api/ai-translate.functions";
 import {
+  recommendProductKeywords,
+  type KeywordGroup,
+} from "@/lib/api/ai-keywords.functions";
+import {
   AI_SUGGESTED_CHAR_LEN,
   charLength,
   platformCharLimit,
@@ -109,6 +113,7 @@ export function CreateReachTaskDialog({
   const balance = useCreditBalance();
   const callGenerate = useServerFn(generateAiContent);
   const callTranslate = useServerFn(translateMessage);
+  const callKeywords = useServerFn(recommendProductKeywords);
 
   const [name, setName] = useState("");
   const [platform, setPlatform] = useState<SocialTaskPlatform>("Facebook");
@@ -131,6 +136,8 @@ export function CreateReachTaskDialog({
   const [aiLoading, setAiLoading] = useState(false);
   const [trLoading, setTrLoading] = useState(false);
   const [kwLoading, setKwLoading] = useState(false);
+  /** AI 按产品推荐的关键词分组 */
+  const [kwGroups, setKwGroups] = useState<KeywordGroup[]>([]);
   /** 译文对应的原文快照，用于提示「原文已修改，需重新翻译」 */
   const [trSource, setTrSource] = useState("");
 
@@ -140,6 +147,7 @@ export function CreateReachTaskDialog({
     setPlatform("Facebook");
     setRegion("美国");
     setKeywords("");
+    setKwGroups([]);
     setTargetCap(30);
     setPromoProducts([]);
     setCustomProduct("");
@@ -264,19 +272,36 @@ export function CreateReachTaskDialog({
     });
   }
 
+  /** 按推广产品维度 AI 推荐关键词（每个产品 3-5 个，免费） */
   async function recommendKeywords() {
+    if (promoProducts.length === 0) {
+      toast.error("请先选择推广产品", {
+        description: "关键词将按每个推广产品分别推荐 3-5 个",
+      });
+      return;
+    }
     setKwLoading(true);
     try {
-      // 基于企业信息行业 / 产品做本地推荐（免费）
-      await new Promise((r) => setTimeout(r, 400));
-      const products =
-        promoProducts.length > 0 ? promoProducts : profile.mainProducts.slice(0, 4);
-
-      const industries = profile.industries.slice(0, 2);
-      const en = ["steel supplier", "building materials", "construction procurement"];
-      const merged = Array.from(new Set([...products, ...industries, ...en]));
+      const res = await callKeywords({
+        data: {
+          products: promoProducts,
+          platform,
+          industries: profile.industries.slice(0, 3),
+          region,
+        },
+      });
+      const groups = res.groups.filter((g) => g.keywords.length > 0);
+      if (groups.length === 0) throw new Error("AI 未返回可用关键词，请重试");
+      setKwGroups(groups);
+      const merged = Array.from(new Set(groups.flatMap((g) => g.keywords)));
       setKeywords(merged.join(", "));
-      toast.success("已根据企业信息推荐关键词，可手动编辑");
+      toast.success(
+        `已按 ${groups.length} 个推广产品推荐 ${merged.length} 个关键词`,
+        { description: "可手动编辑，或点击分组内关键词移除" },
+      );
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : String(e);
+      toast.error("关键词推荐失败", { description: msg });
     } finally {
       setKwLoading(false);
     }
@@ -556,7 +581,7 @@ export function CreateReachTaskDialog({
 
 
 
-          <div className="space-y-1">
+          <div className="space-y-1.5">
             <div className="flex items-center justify-between">
               <Label className="text-xs text-muted-foreground">
                 目标关键词 * <span className="text-[10px]">（英文逗号分隔）</span>
@@ -566,7 +591,12 @@ export function CreateReachTaskDialog({
                 size="sm"
                 variant="outline"
                 onClick={recommendKeywords}
-                disabled={kwLoading}
+                disabled={kwLoading || promoProducts.length === 0}
+                title={
+                  promoProducts.length === 0
+                    ? "请先选择推广产品，AI 将按产品推荐关键词"
+                    : undefined
+                }
                 className="h-7 gap-1"
               >
                 {kwLoading ? (
@@ -574,7 +604,7 @@ export function CreateReachTaskDialog({
                 ) : (
                   <Wand2 className="h-3.5 w-3.5 text-primary" />
                 )}
-                AI 推荐
+                {kwLoading ? "推荐中…" : "AI 推荐"}
               </Button>
             </div>
             <Textarea
@@ -583,7 +613,62 @@ export function CreateReachTaskDialog({
               rows={2}
               placeholder="例如：steel supplier, building materials, 建筑螺纹钢"
             />
+            <p className="text-[11px] text-muted-foreground">
+              {promoProducts.length === 0
+                ? "AI 推荐依据「推广产品」，请先选择产品；每个产品推荐 3-5 个关键词。"
+                : `将为已选的 ${promoProducts.length} 个推广产品各推荐 3-5 个关键词。`}
+            </p>
+
+            {kwGroups.length > 0 && (
+              <div className="rounded-md border bg-muted/30 p-2.5 space-y-2">
+                <div className="text-[11px] font-medium text-muted-foreground">
+                  按推广产品推荐（点击关键词可从上方输入框移除）
+                </div>
+                {kwGroups.map((g) => (
+                  <div key={g.product} className="space-y-1">
+                    <div className="flex items-center gap-1.5 text-[11px] font-medium">
+                      <Package className="h-3 w-3 text-primary" />
+                      {g.product}
+                      <span className="text-muted-foreground font-normal">
+                        · {g.keywords.length} 个
+                      </span>
+                    </div>
+                    <div className="flex flex-wrap gap-1">
+                      {g.keywords.map((k) => {
+                        const list = keywords
+                          .split(/[,，]/)
+                          .map((s) => s.trim())
+                          .filter(Boolean);
+                        const active = list.includes(k);
+                        return (
+                          <button
+                            key={`${g.product}-${k}`}
+                            type="button"
+                            onClick={() =>
+                              setKeywords(
+                                (active
+                                  ? list.filter((x) => x !== k)
+                                  : [...list, k]
+                                ).join(", "),
+                              )
+                            }
+                          >
+                            <Badge
+                              variant={active ? "secondary" : "outline"}
+                              className="cursor-pointer text-[11px] font-normal"
+                            >
+                              {k}
+                            </Badge>
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
+
 
           {/* 可用账号 */}
           <div className="rounded-md border bg-muted/30 px-3 py-2 flex items-center gap-3 text-xs">
