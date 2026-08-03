@@ -286,15 +286,18 @@ export function BatchSocialPlatformDialog({
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Users className="h-5 w-5 text-primary" />
-            社媒平台 系统自动触达
+            批量社媒私信 · 已选 {candidates.length} 个目标
             <Badge variant="secondary" className="ml-1 font-normal">
-              选中 {candidates.length} · 可触达 {targetCount}
+              可触达 {targetCount}
             </Badge>
           </DialogTitle>
-          <DialogDescription className="sr-only">
-            社媒平台批量私信触达
+          <DialogDescription className="text-xs">
+            向你收藏的目标按平台分发私信，超出当日额度将顺延至次日。
+            <br />
+            目标来源：我的收藏（已选 {candidates.length} 个）· 需要系统帮你找新目标？前往「触达任务 → 社媒拓客触达」。
           </DialogDescription>
         </DialogHeader>
+
 
         <div className="space-y-5">
           {/* 分组统计 */}
