@@ -439,6 +439,116 @@ export function CreateReachTaskDialog({
             </div>
           </div>
 
+          {/* 推广产品 */}
+          <div className="space-y-1">
+            <div className="flex items-center justify-between">
+              <Label className="text-xs text-muted-foreground flex items-center gap-1">
+                <Package className="h-3.5 w-3.5 text-primary" />
+                推广产品
+                <span className="text-[10px]">
+                  （来自企业信息主营产品，可手动添加，最多 {MAX_PROMO} 个）
+                </span>
+              </Label>
+              <span
+                className={`text-[10px] tabular-nums ${
+                  promoProducts.length >= MAX_PROMO ? "text-amber-600" : "text-muted-foreground"
+                }`}
+              >
+                已选 {promoProducts.length}/{MAX_PROMO}
+              </span>
+            </div>
+            <Popover open={productOpen} onOpenChange={setProductOpen}>
+              <PopoverTrigger asChild>
+                <button
+                  type="button"
+                  className="w-full min-h-9 rounded-md border border-input bg-background px-3 py-1.5 text-sm text-left flex items-center gap-2 hover:border-primary/50 transition-colors"
+                >
+                  <div className="flex-1 flex flex-wrap gap-1">
+                    {promoProducts.length === 0 ? (
+                      <span className="text-muted-foreground">
+                        选择本次任务重点推广的产品（可选，最多 {MAX_PROMO} 个）
+                      </span>
+                    ) : (
+                      promoProducts.map((p) => (
+                        <Badge key={p} variant="secondary" className="font-normal">
+                          {p}
+                          <span
+                            role="button"
+                            tabIndex={0}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setPromoProducts((prev) => prev.filter((x) => x !== p));
+                            }}
+                            className="ml-1 -mr-0.5 rounded hover:bg-black/10 inline-flex"
+                          >
+                            <X className="h-3 w-3" />
+                          </span>
+                        </Badge>
+                      ))
+                    )}
+                  </div>
+                  <Plus className="h-4 w-4 text-muted-foreground shrink-0" />
+                </button>
+              </PopoverTrigger>
+              <PopoverContent className="w-[--radix-popover-trigger-width] p-0" align="start">
+                <div className="max-h-56 overflow-y-auto py-1">
+                  {productOptions.length === 0 ? (
+                    <div className="px-4 py-6 text-center text-xs text-muted-foreground">
+                      企业信息中暂无主营产品，可在下方手动添加
+                    </div>
+                  ) : (
+                    productOptions.map((p) => {
+                      const checked = promoProducts.includes(p);
+                      const disabled = !checked && promoProducts.length >= MAX_PROMO;
+                      return (
+                        <button
+                          key={p}
+                          type="button"
+                          disabled={disabled}
+                          onClick={() => toggleProduct(p)}
+                          className={`w-full flex items-center gap-2 px-3 py-1.5 text-sm text-left hover:bg-accent/60 ${
+                            disabled ? "opacity-50 cursor-not-allowed" : ""
+                          }`}
+                        >
+                          <span className="flex-1">{p}</span>
+                          {checked && <Check className="h-3.5 w-3.5 text-primary" />}
+                        </button>
+                      );
+                    })
+                  )}
+                </div>
+                <div className="border-t p-2 flex gap-2">
+                  <Input
+                    value={customProduct}
+                    onChange={(e) => setCustomProduct(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") {
+                        e.preventDefault();
+                        addCustomProduct();
+                      }
+                    }}
+                    placeholder="手动添加产品，回车确认"
+                    className="h-8 text-sm"
+                  />
+                  <Button
+                    type="button"
+                    size="sm"
+                    className="h-8"
+                    onClick={addCustomProduct}
+                    disabled={!customProduct.trim() || promoProducts.length >= MAX_PROMO}
+                  >
+                    添加
+                  </Button>
+                </div>
+              </PopoverContent>
+            </Popover>
+            <p className="text-[10px] text-muted-foreground">
+              已选产品将用于 AI 文案生成与关键词推荐，聚焦 1-3 个产品转化更佳。
+            </p>
+          </div>
+
+
+
           <div className="space-y-1">
             <div className="flex items-center justify-between">
               <Label className="text-xs text-muted-foreground">
