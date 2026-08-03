@@ -205,7 +205,7 @@ export function BatchSocialDialog({
     return total;
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [verified, sendableCount, platform, ledger]);
-  const aiCost = 0;
+  
   const grandTotal = sendTotal + viewCostTotal;
 
   const contentRef = useRef<HTMLTextAreaElement | null>(null);
@@ -303,8 +303,6 @@ export function BatchSocialDialog({
     toast.success(`已加入触达队列：${n} 条 ${platform} 私信`, {
       description: `共扣除 ${grandTotal} 积分${
         viewCostTotal > 0 ? `（含自动解锁查看 ${viewCostTotal} 积分）` : ""
-      }${
-        aiCost > 0 ? `（含 AI 文案 ${aiCost} 积分）` : ""
       }，可在「触达」模块查看进度`,
     });
   }

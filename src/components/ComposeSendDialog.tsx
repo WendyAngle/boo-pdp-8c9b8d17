@@ -255,7 +255,7 @@ export function ComposeSendDialog({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [recipients, isEmail, ledger]);
 
-  const aiCost = 0;
+  
   const grandTotal = sendTotal + viewCostTotal;
 
   // 发件邮箱日发上限剩余额度（仅邮件）
@@ -327,8 +327,6 @@ export function ComposeSendDialog({
       {
         description: `共扣除 ${grandTotal} 积分${
           viewCostTotal > 0 ? `（含自动解锁查看 ${viewCostTotal} 积分）` : ""
-        }${
-          aiCost > 0 ? `（含 AI 文案 ${aiCost} 积分）` : ""
         }，可在「触达」模块查看进度`,
       },
     );

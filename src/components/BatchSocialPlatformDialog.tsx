@@ -178,7 +178,7 @@ export function BatchSocialPlatformDialog({
   // 费用：按目标数量全额扣除（含顺延次日执行的部分）
   const unit = costForSocialPlatform("Facebook");
   const sendTotal = targetCount * unit;
-  const aiCost = 0;
+  
   const grandTotal = sendTotal;
 
   const contentRef = useRef<HTMLTextAreaElement | null>(null);
@@ -240,9 +240,7 @@ export function BatchSocialPlatformDialog({
         deferredCount > 0
           ? `今日执行 ${todayCount} 条，剩余 ${deferredCount} 条将于明日 09:00 自动继续执行；`
           : ""
-      }共扣除 ${grandTotal} 积分${
-        aiCost > 0 ? `（含 AI 文案 ${aiCost} 积分）` : ""
-      }，可在「触达任务」模块查看进度`,
+      }共扣除 ${grandTotal} 积分，可在「触达任务」模块查看进度`,
     });
   }
 
