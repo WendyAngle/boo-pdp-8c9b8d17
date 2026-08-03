@@ -2,7 +2,7 @@ import { useSyncExternalStore } from "react";
 
 export type MailboxStatus = "正常" | "停用" | "异常";
 export type MailboxEncryption = "SSL" | "TLS" | "STARTTLS" | "NONE";
-export type MailboxScope = "team" | "personal";
+
 export type MailboxProvider =
   | "Gmail"
   | "Outlook"
@@ -28,10 +28,7 @@ export interface Mailbox {
   isDefault: boolean;
   createdAt: string;
   lastTestedAt?: string;
-  /** team = 企业共享（管理员维护）；personal = 个人邮箱（本人自助） */
-  scope: MailboxScope;
-  /** personal 必填：邮箱所属员工 id */
-  ownerId?: string;
+
 }
 
 export const PROVIDER_PRESETS: Record<
