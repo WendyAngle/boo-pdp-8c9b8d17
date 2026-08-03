@@ -221,14 +221,14 @@ export function CreateReachTaskDialog({
   async function recommendKeywords() {
     setKwLoading(true);
     try {
-      // 基于企业画像行业 / 产品做本地推荐（免费）
+      // 基于企业信息行业 / 产品做本地推荐（免费）
       await new Promise((r) => setTimeout(r, 400));
       const products = profile.mainProducts.slice(0, 4);
       const industries = profile.industries.slice(0, 2);
       const en = ["steel supplier", "building materials", "construction procurement"];
       const merged = Array.from(new Set([...products, ...industries, ...en]));
       setKeywords(merged.join(", "));
-      toast.success("已根据企业画像推荐关键词，可手动编辑");
+      toast.success("已根据企业信息推荐关键词，可手动编辑");
     } finally {
       setKwLoading(false);
     }

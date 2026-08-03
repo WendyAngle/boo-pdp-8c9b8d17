@@ -15,6 +15,7 @@ export interface LeadProfile {
   advantage: string;
   website: string;
   brandStory: string;
+  brandFiles: QualificationFile[];
   qualifications: QualificationItem[];
   businessLicense?: QualificationFile;
 }
@@ -57,6 +58,7 @@ export const EMPTY_PROFILE: LeadProfile = {
   advantage: "自有钢厂 + 唐山/宁波港口现货 + 7×24 中英阿俄多语客服",
   website: "",
   brandStory: "",
+  brandFiles: [],
   qualifications: [],
 };
 
@@ -66,7 +68,7 @@ function readProfile(): LeadProfile {
     const raw = window.localStorage.getItem(KEY);
     if (!raw) return EMPTY_PROFILE;
     const obj = JSON.parse(raw);
-    return { ...EMPTY_PROFILE, ...obj };
+    return { ...EMPTY_PROFILE, ...obj, brandFiles: obj.brandFiles ?? [] };
   } catch {
     return EMPTY_PROFILE;
   }
@@ -117,7 +119,7 @@ export function profileCompleteness(p: LeadProfile): number {
     [p.competitors.length > 0, 10],
     [!!p.advantage, 4],
     [!!p.website, 2],
-    [!!p.brandStory, 2],
+    [!!p.brandStory || (p.brandFiles?.length ?? 0) > 0, 2],
     [p.qualifications.length > 0, 4],
   ];
   return weights.reduce((s, [ok, w]) => s + (ok ? w : 0), 0);

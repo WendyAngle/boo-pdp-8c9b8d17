@@ -36,7 +36,7 @@ function MyProfilePage() {
             <div>
               <h1 className="text-xl font-bold">企业信息</h1>
               <p className="text-white/85 text-sm mt-0.5 max-w-2xl">
-                维护企业基础信息、主营业务、目标市场与竞争情报。画像越完整，AI 智能推荐、触达文案个性化就越精准。
+                维护企业基础信息、主营业务、目标市场与竞争情报。企业信息越完整，AI 智能推荐、触达文案个性化就越精准。
               </p>
             </div>
           </div>
