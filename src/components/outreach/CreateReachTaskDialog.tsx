@@ -581,7 +581,7 @@ export function CreateReachTaskDialog({
 
 
 
-          <div className="space-y-1">
+          <div className="space-y-1.5">
             <div className="flex items-center justify-between">
               <Label className="text-xs text-muted-foreground">
                 目标关键词 * <span className="text-[10px]">（英文逗号分隔）</span>
@@ -591,7 +591,12 @@ export function CreateReachTaskDialog({
                 size="sm"
                 variant="outline"
                 onClick={recommendKeywords}
-                disabled={kwLoading}
+                disabled={kwLoading || promoProducts.length === 0}
+                title={
+                  promoProducts.length === 0
+                    ? "请先选择推广产品，AI 将按产品推荐关键词"
+                    : undefined
+                }
                 className="h-7 gap-1"
               >
                 {kwLoading ? (
@@ -599,7 +604,7 @@ export function CreateReachTaskDialog({
                 ) : (
                   <Wand2 className="h-3.5 w-3.5 text-primary" />
                 )}
-                AI 推荐
+                {kwLoading ? "推荐中…" : "AI 推荐"}
               </Button>
             </div>
             <Textarea
@@ -608,7 +613,62 @@ export function CreateReachTaskDialog({
               rows={2}
               placeholder="例如：steel supplier, building materials, 建筑螺纹钢"
             />
+            <p className="text-[11px] text-muted-foreground">
+              {promoProducts.length === 0
+                ? "AI 推荐依据「推广产品」，请先选择产品；每个产品推荐 3-5 个关键词。"
+                : `将为已选的 ${promoProducts.length} 个推广产品各推荐 3-5 个关键词。`}
+            </p>
+
+            {kwGroups.length > 0 && (
+              <div className="rounded-md border bg-muted/30 p-2.5 space-y-2">
+                <div className="text-[11px] font-medium text-muted-foreground">
+                  按推广产品推荐（点击关键词可从上方输入框移除）
+                </div>
+                {kwGroups.map((g) => (
+                  <div key={g.product} className="space-y-1">
+                    <div className="flex items-center gap-1.5 text-[11px] font-medium">
+                      <Package className="h-3 w-3 text-primary" />
+                      {g.product}
+                      <span className="text-muted-foreground font-normal">
+                        · {g.keywords.length} 个
+                      </span>
+                    </div>
+                    <div className="flex flex-wrap gap-1">
+                      {g.keywords.map((k) => {
+                        const list = keywords
+                          .split(/[,，]/)
+                          .map((s) => s.trim())
+                          .filter(Boolean);
+                        const active = list.includes(k);
+                        return (
+                          <button
+                            key={`${g.product}-${k}`}
+                            type="button"
+                            onClick={() =>
+                              setKeywords(
+                                (active
+                                  ? list.filter((x) => x !== k)
+                                  : [...list, k]
+                                ).join(", "),
+                              )
+                            }
+                          >
+                            <Badge
+                              variant={active ? "secondary" : "outline"}
+                              className="cursor-pointer text-[11px] font-normal"
+                            >
+                              {k}
+                            </Badge>
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
+
 
           {/* 可用账号 */}
           <div className="rounded-md border bg-muted/30 px-3 py-2 flex items-center gap-3 text-xs">
