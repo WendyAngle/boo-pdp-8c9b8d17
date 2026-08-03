@@ -1905,6 +1905,7 @@ function MultiPick({
   addPlaceholder,
   labelMap,
   hint,
+  mono,
 }: {
   options: string[];
   value: string[];
@@ -1913,6 +1914,7 @@ function MultiPick({
   addPlaceholder?: string;
   labelMap?: Record<string, string>;
   hint?: string;
+  mono?: boolean;
 }) {
   const [adding, setAdding] = useState(false);
   const [draftInput, setDraftInput] = useState("");
