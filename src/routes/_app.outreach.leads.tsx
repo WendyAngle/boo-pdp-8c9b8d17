@@ -1662,23 +1662,25 @@ export function ProfileTab() {
               value={draft.industries}
               onChange={(v) => set("industries", v)}
               allowCustom
-              addPlaceholder="推荐输入英文，例如 manufacturing"
-              labelMap={INDUSTRY_CN}
-              hint="为提升 AI 匹配精度，建议使用英文名称"
+              addPlaceholder="输入行业名称后回车，可添加多个"
             />
           </Field>
           <Field label="主营产品">
-            <ChipInput
-              placeholder="输入产品名后回车，可添加多个"
+            <MultiPick
+              options={PRODUCT_OPTIONS}
               value={draft.mainProducts}
               onChange={(v) => set("mainProducts", v)}
+              allowCustom
+              addPlaceholder="输入产品名后回车，可添加多个"
             />
           </Field>
           <Field label="主要 HS 编码">
-            <ChipInput
-              placeholder="输入 HS 编码后回车"
+            <MultiPick
+              options={HS_CODE_OPTIONS}
               value={draft.hsCodes}
               onChange={(v) => set("hsCodes", v)}
+              allowCustom
+              addPlaceholder="输入 HS 编码后回车，可添加多个"
               mono
             />
           </Field>
