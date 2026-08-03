@@ -264,8 +264,9 @@ function ReachPage() {
           <div className="flex-1">
             <h1 className="text-xl font-bold">触达</h1>
             <p className="text-white/85 text-sm mt-0.5">
-              统一管理对目标企业 / 关键人物的触达动作、渠道与跟进结果
+              汇总「我的收藏」发起的批量触达与本页发起的社媒拓客任务，仅展示触达成功的数据
             </p>
+
           </div>
           <div className="flex items-center gap-5 text-right text-white/90">
             <div>
