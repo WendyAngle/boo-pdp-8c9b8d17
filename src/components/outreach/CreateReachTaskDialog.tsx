@@ -114,6 +114,11 @@ export function CreateReachTaskDialog({
   const [region, setRegion] = useState<string>("美国");
   const [keywords, setKeywords] = useState("");
   const [targetCap, setTargetCap] = useState<number>(30);
+  /** 推广产品（最多 3 个） */
+  const [promoProducts, setPromoProducts] = useState<string[]>([]);
+  const [customProduct, setCustomProduct] = useState("");
+  const [productOpen, setProductOpen] = useState(false);
+
   /** 中文原文 */
   const [content, setContent] = useState("");
   /** 目标语言译文（实际发送内容） */
