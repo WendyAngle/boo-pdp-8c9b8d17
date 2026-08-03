@@ -1882,17 +1882,23 @@ function Grid2({ children }: { children: React.ReactNode }) {
 
 function Field({
   label,
+  hint,
   children,
 }: {
   label: string;
+  hint?: string;
   children: React.ReactNode;
 }) {
   return (
     <div className="space-y-1.5">
       <Label className="text-xs text-muted-foreground">{label}</Label>
+      {hint && (
+        <p className="text-[11px] leading-relaxed text-muted-foreground/80">{hint}</p>
+      )}
       {children}
     </div>
   );
+
 }
 
 function MultiPick({
