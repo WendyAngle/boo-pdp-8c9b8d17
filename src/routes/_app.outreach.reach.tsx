@@ -348,20 +348,6 @@ function ReachPage() {
         />
       </div>
 
-      {/* 操作按钮：统计卡片下方 / 列表上方，右对齐 */}
-      <div className="flex items-center justify-end gap-2">
-        <Button size="sm" className="h-9 gap-1.5" onClick={() => setCreateReachOpen(true)}>
-          <Plus className="h-4 w-4" />
-          社媒拓客触达
-        </Button>
-        <Button asChild size="sm" variant="outline" className="h-9 gap-1.5">
-          <Link to="/outreach/social/accounts">
-            <UserCircle2 className="h-4 w-4" />
-            社媒账号
-          </Link>
-        </Button>
-      </div>
-
       {/* 任务来源说明 */}
       <Card className="p-4 border-primary/20 bg-primary/5">
         <div className="flex items-start gap-3">
@@ -394,6 +380,20 @@ function ReachPage() {
           </div>
         </div>
       </Card>
+
+      {/* 操作按钮：统计卡片下方 / 列表上方，右对齐 */}
+      <div className="flex items-center justify-end gap-2">
+        <Button size="sm" className="h-9 gap-1.5" onClick={() => setCreateReachOpen(true)}>
+          <Plus className="h-4 w-4" />
+          社媒拓客触达
+        </Button>
+        <Button asChild size="sm" variant="outline" className="h-9 gap-1.5">
+          <Link to="/outreach/social/accounts">
+            <UserCircle2 className="h-4 w-4" />
+            社媒账号
+          </Link>
+        </Button>
+      </div>
 
       <Card className="p-0 overflow-hidden">
         {/* 筛选 */}
