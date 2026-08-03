@@ -750,7 +750,13 @@ function MailboxFormDialog({
     }));
     const d = detectProvider(email);
     setDetect(d);
-    if (d) applyProvider(d.provider, email);
+    if (d && d.matched) {
+      applyProvider(d.provider, email);
+    } else if (d && !d.matched) {
+      // 未能识别服务商：保持已选服务商，自动开启手动配置以便用户自行填写 SMTP 参数
+      setManualServer(true);
+      setForm((s) => ({ ...s, username: email }));
+    }
   };
 
   const onProviderChange = (p: MailboxProvider) => {
