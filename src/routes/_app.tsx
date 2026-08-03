@@ -1,4 +1,4 @@
-import { createFileRoute, Outlet, Link, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, Outlet } from "@tanstack/react-router";
 import { ShieldCheck, Clock, AlertTriangle, CheckCircle2 } from "lucide-react";
 import { AppSidebar } from "@/components/AppSidebar";
 import { useCertification, type CertStatus } from "@/lib/certification";
@@ -24,7 +24,6 @@ function AppLayout() {
 
 function TopBar() {
   const cert = useCertification();
-  const navigate = useNavigate();
   const status: CertStatus = cert.status;
 
   return (
