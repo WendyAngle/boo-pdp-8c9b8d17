@@ -228,7 +228,7 @@ const PROFILE_FIELDS: ProfileFieldMeta[] = [
   { key: "scale", label: "企业规模", weight: 6, type: "enum", options: AI_SCALE_OPTIONS },
   { key: "revenue", label: "年营业额", weight: 6, type: "enum", options: AI_REVENUE_OPTIONS },
   { key: "targetScale", label: "目标客户规模", weight: 6, type: "enum", options: AI_SCALE_OPTIONS },
-  { key: "advantage", label: "差异化优势", weight: 4, type: "text", placeholder: "简述核心差异化优势", multiline: true },
+  { key: "advantage", label: "我方优势（相对竞品）", weight: 4, type: "text", placeholder: "简述我方相较竞品的核心优势", multiline: true },
   { key: "website", label: "企业官网", weight: 2, type: "text", placeholder: "https://" },
   { key: "brandStory", label: "品牌故事", weight: 2, type: "text", placeholder: "一句话品牌故事", multiline: true },
 ];
@@ -2139,6 +2139,124 @@ const MAX_FILES_PER_ITEM = 8;
 
 function newQualificationId() {
   return `q-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+}
+
+const MAX_BRAND_FILES = 6;
+
+function FilesUploader({
+  idPrefix,
+  label,
+  files,
+  onChange,
+  max = MAX_BRAND_FILES,
+}: {
+  idPrefix: string;
+  label: string;
+  files: QualificationFile[];
+  onChange: (next: QualificationFile[]) => void;
+  max?: number;
+}) {
+  const inputId = `${idPrefix}-files`;
+
+  const handleFiles = async (list: FileList | null) => {
+    if (!list || !list.length) return;
+    const valid = Array.from(list).filter((f) => ACCEPTED_MIME.includes(f.type));
+    if (list.length - valid.length > 0) {
+      toast.error(
+        `已忽略 ${list.length - valid.length} 个不支持的文件（仅支持 PNG / JPG / PDF）`,
+      );
+    }
+    if (!valid.length) return;
+    const room = max - files.length;
+    if (valid.length > room) {
+      toast.warning(`最多上传 ${max} 个文件，已截取前 ${room} 个`);
+    }
+    const next = [...files];
+    for (const f of valid.slice(0, room)) {
+      const dataUrl = await new Promise<string>((resolve) => {
+        const r = new FileReader();
+        r.onload = () => resolve(String(r.result || ""));
+        r.readAsDataURL(f);
+      });
+      next.push({
+        id: `f-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+        name: f.name,
+        dataUrl,
+        mime: f.type,
+      });
+    }
+    onChange(next);
+  };
+
+  return (
+    <div className="space-y-2">
+      <div className="flex items-center justify-between text-xs text-muted-foreground">
+        <span className="inline-flex items-center gap-1">
+          <ImageIcon className="h-3.5 w-3.5" />
+          {label}
+        </span>
+        <span className="tabular-nums">
+          {files.length}/{max}
+        </span>
+      </div>
+      <div className="grid grid-cols-3 sm:grid-cols-5 gap-2">
+        {files.map((f) => {
+          const isPdf = f.mime === "application/pdf";
+          return (
+            <div
+              key={f.id}
+              className="group relative aspect-square rounded-lg ring-1 ring-border overflow-hidden bg-muted/30"
+            >
+              {isPdf ? (
+                <a
+                  href={f.dataUrl}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="h-full w-full flex flex-col items-center justify-center gap-1 text-muted-foreground hover:text-primary p-2"
+                >
+                  <Upload className="h-5 w-5" />
+                  <span className="text-[10px] uppercase tracking-wide">PDF</span>
+                </a>
+              ) : (
+                <img src={f.dataUrl} alt={f.name} className="h-full w-full object-cover" />
+              )}
+              <button
+                type="button"
+                onClick={() => onChange(files.filter((x) => x.id !== f.id))}
+                className="absolute top-1 right-1 h-5 w-5 rounded-full bg-black/60 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+                aria-label="删除"
+              >
+                <XIcon className="h-3 w-3" />
+              </button>
+              <div className="absolute bottom-0 inset-x-0 px-1.5 py-1 text-[10px] text-white bg-gradient-to-t from-black/70 to-transparent truncate">
+                {f.name}
+              </div>
+            </div>
+          );
+        })}
+        {files.length < max && (
+          <label
+            htmlFor={inputId}
+            className="aspect-square rounded-lg ring-1 ring-dashed ring-border hover:ring-primary/50 hover:bg-primary/5 transition-colors flex flex-col items-center justify-center gap-1 cursor-pointer text-muted-foreground"
+          >
+            <Upload className="h-4 w-4" />
+            <span className="text-[11px]">点击上传</span>
+            <input
+              id={inputId}
+              type="file"
+              accept={ACCEPT_ATTR}
+              multiple
+              className="hidden"
+              onChange={(e) => {
+                handleFiles(e.target.files);
+                e.currentTarget.value = "";
+              }}
+            />
+          </label>
+        )}
+      </div>
+    </div>
+  );
 }
 
 function QualificationsEditor({
