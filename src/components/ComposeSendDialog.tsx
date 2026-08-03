@@ -71,37 +71,13 @@ import { useLeadProfile } from "@/lib/lead-profile";
 import { useCurrentUser } from "@/lib/current-user";
 import { ComposeFormatHint } from "@/components/outreach/ComposeFormatHint";
 import { generateAiContent } from "@/lib/api/ai-compose.functions";
+import { TargetLangSection } from "@/components/outreach/TargetLangSection";
+
 
 export type ComposeChannel = "email" | "phone";
 
-function LangToggle({
-  value,
-  onChange,
-}: {
-  value: "zh" | "en";
-  onChange: (v: "zh" | "en") => void;
-}) {
-  return (
-    <div className="inline-flex items-center rounded-md border bg-background p-0.5 text-xs">
-      <span className="px-1.5 text-[10px] text-muted-foreground">目标语言</span>
-      {(["zh", "en"] as const).map((v) => (
-        <button
-          key={v}
-          type="button"
-          onClick={() => onChange(v)}
-          className={cn(
-            "rounded px-2 py-0.5 transition-colors",
-            value === v
-              ? "bg-primary/10 text-primary font-medium"
-              : "text-muted-foreground hover:text-foreground",
-          )}
-        >
-          {v === "zh" ? "中文" : "英文"}
-        </button>
-      ))}
-    </div>
-  );
-}
+
+
 
 export interface ComposeSendDialogProps {
   open: boolean;
@@ -141,7 +117,12 @@ export function ComposeSendDialog({
   const [senderId, setSenderId] = useState<string>("");
   const [previewIdx, setPreviewIdx] = useState(0);
   const [aiLoading, setAiLoading] = useState(false);
-  const [targetLang, setTargetLang] = useState<"zh" | "en">("zh");
+  /** 目标语言（发送语言）代码 */
+  const [targetLang, setTargetLang] = useState<string>("en");
+  /** 目标语言译文（实际发送内容） */
+  const [translated, setTranslated] = useState("");
+  const [translatedSubject, setTranslatedSubject] = useState("");
+
   // 短信合规追踪：内容是否来自已报备模板
   const [smsTemplateId, setSmsTemplateId] = useState<string | null>(null);
   const [smsTemplateName, setSmsTemplateName] = useState<string | null>(null);
@@ -157,7 +138,10 @@ export function ComposeSendDialog({
     setContent("");
     setAiUsed(false);
     
-    setTargetLang("zh");
+    setTargetLang("en");
+    setTranslated("");
+    setTranslatedSubject("");
+
     setSmsTemplateId(null);
     setSmsTemplateName(null);
     if (isEmail) {
@@ -220,11 +204,14 @@ export function ComposeSendDialog({
     },
     [recipients, isEmail],
   );
+  /** 实际发送内容：有译文则发译文 */
+  const sendSubject = (translatedSubject.trim() || subject).trim();
+  const sendContent = (translated.trim() || content).trim();
   const previewSubject = previewRecipient
-    ? renderTemplate(subject, previewRecipient.ctx)
+    ? renderTemplate(sendSubject, previewRecipient.ctx)
     : "";
   const previewContent = previewRecipient
-    ? renderTemplate(content, previewRecipient.ctx)
+    ? renderTemplate(sendContent, previewRecipient.ctx)
     : "";
 
   const missingContact = useMemo(
@@ -234,7 +221,7 @@ export function ComposeSendDialog({
 
   // 费用合计
   const unit = costForChannel(isEmail ? "email" : "phone");
-  const segments = isEmail ? 1 : Math.max(1, smsSegments(content || ""));
+  const segments = isEmail ? 1 : Math.max(1, smsSegments(sendContent || ""));
   const sendCostPerRecipient = isEmail ? unit : unit * segments;
   const sendTotal = recipients.length * sendCostPerRecipient;
 
@@ -282,8 +269,8 @@ export function ComposeSendDialog({
     }
     let n = 0;
     for (const r of active) {
-      const finalSubject = isEmail ? renderTemplate(subject, r.ctx) : undefined;
-      const finalContent = renderTemplate(content, r.ctx);
+      const finalSubject = isEmail ? renderTemplate(sendSubject, r.ctx) : undefined;
+      const finalContent = renderTemplate(sendContent, r.ctx);
       // 未解锁时先扣查看费并永久解锁（幂等）
       performReachAutoUnlocks({
         targetKind: r.targetKind,
@@ -352,7 +339,9 @@ export function ComposeSendDialog({
           channel: isEmail ? "email" : "sms",
           scene: "开发信",
           tone: "friendly",
-          language: targetLang,
+          language: "zh",
+          languageName: "中文",
+
           myCompany: profile.companyName,
           myName: user.name,
           sampleEnterprise: sample?.ctx.企业名,
@@ -683,7 +672,22 @@ export function ComposeSendDialog({
             </div>
           </section>
 
+          {/* 目标语言文案（实际发送内容） */}
+          <TargetLangSection
+            source={content}
+            sourceSubject={isEmail ? subject : undefined}
+            lang={targetLang}
+            onLangChange={setTargetLang}
+            value={translated}
+            onChange={setTranslated}
+            subjectValue={isEmail ? translatedSubject : undefined}
+            onSubjectChange={isEmail ? setTranslatedSubject : undefined}
+            rows={isEmail ? 8 : 5}
+            kindLabel={isEmail ? "邮件" : "短信"}
+          />
+
           {/* 预览 */}
+
           {recipients.length > 0 && (
             <section className="space-y-2 rounded-md border bg-muted/30 p-3">
               <div className="flex items-center justify-between">
@@ -734,7 +738,7 @@ export function ComposeSendDialog({
               <span className="text-muted-foreground">
                 发送费用（{recipients.length} {isEmail ? "封" : "条"} ×{" "}
                 {sendCostPerRecipient} 积分{
-                  !isEmail && content ? `，按 ${smsSegments(content)} 条拆分` : ""
+                  !isEmail && sendContent ? `，按 ${smsSegments(sendContent)} 条拆分` : ""
                 }）
               </span>
               <span className="font-medium">{sendTotal} 积分</span>

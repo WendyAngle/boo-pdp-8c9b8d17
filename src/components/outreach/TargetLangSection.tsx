@@ -1,0 +1,198 @@
+import { useEffect, useState } from "react";
+import { useServerFn } from "@tanstack/react-start";
+import { Languages, Loader2 } from "lucide-react";
+import { toast } from "sonner";
+
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Badge } from "@/components/ui/badge";
+import { Textarea } from "@/components/ui/textarea";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { LANGUAGES, langByCode } from "@/lib/lang-detect";
+import { translateMessage } from "@/lib/api/ai-translate.functions";
+
+/** 目标语言候选（中文为原文，故排除） */
+export const TARGET_LANGS = LANGUAGES.filter((l) => l.code !== "zh");
+
+/**
+ * 「目标语言文案」板块（与 触达任务-新建社媒触达任务 弹窗一致）：
+ * 中文原文 → 选择目标语言 → 一键翻译 → 译文即实际发送内容（可手动修改）。
+ */
+export function TargetLangSection({
+  source,
+  sourceSubject,
+  lang,
+  onLangChange,
+  value,
+  onChange,
+  subjectValue,
+  onSubjectChange,
+  rows = 6,
+  kindLabel = "文案",
+  className,
+}: {
+  /** 中文原文正文 */
+  source: string;
+  /** 中文原文主题（邮件） */
+  sourceSubject?: string;
+  lang: string;
+  onLangChange: (v: string) => void;
+  value: string;
+  onChange: (v: string) => void;
+  subjectValue?: string;
+  onSubjectChange?: (v: string) => void;
+  rows?: number;
+  kindLabel?: string;
+  className?: string;
+}) {
+  const callTranslate = useServerFn(translateMessage);
+  const [loading, setLoading] = useState(false);
+  /** 译文对应的原文快照，用于「原文已修改，建议重新翻译」提示 */
+  const [snapshot, setSnapshot] = useState("");
+  const hasSubject = typeof subjectValue === "string" && !!onSubjectChange;
+  const opt = langByCode(lang);
+
+  // 原文清空时同步清空译文
+  useEffect(() => {
+    if (!source.trim() && (value || subjectValue)) {
+      onChange("");
+      onSubjectChange?.("");
+      setSnapshot("");
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [source]);
+
+  const stale =
+    !!value.trim() && snapshot.trim() !== `${sourceSubject ?? ""}\u0000${source}`.trim();
+
+  async function translate(code = lang) {
+    const src = source.trim();
+    if (!src) return toast.error("请先生成或输入中文内容");
+    const target = langByCode(code);
+    if (!target) return;
+    setLoading(true);
+    try {
+      const jobs: Promise<{ content: string }>[] = [
+        callTranslate({
+          data: {
+            text: src,
+            targetLanguageName: target.en,
+            sourceLanguageName: "Chinese (Simplified)",
+            tone: "friendly",
+          },
+        }),
+      ];
+      if (hasSubject && (sourceSubject ?? "").trim()) {
+        jobs.push(
+          callTranslate({
+            data: {
+              text: (sourceSubject ?? "").trim(),
+              targetLanguageName: target.en,
+              sourceLanguageName: "Chinese (Simplified)",
+              tone: "friendly",
+            },
+          }),
+        );
+      }
+      const [body, subj] = await Promise.all(jobs);
+      onChange(body?.content ?? "");
+      if (hasSubject) onSubjectChange?.(subj?.content ?? "");
+      setSnapshot(`${sourceSubject ?? ""}\u0000${src}`);
+      toast.success(`已翻译为${target.zh}（免费）`);
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : String(e);
+      toast.error("翻译失败", { description: msg });
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  return (
+    <section
+      className={`space-y-2 rounded-md border border-primary/25 bg-primary/[0.03] p-3 ${className ?? ""}`}
+    >
+      <div className="flex items-center justify-between gap-2">
+        <Label className="text-sm font-medium flex items-center gap-2">
+          <Languages className="h-4 w-4 text-primary" />
+          目标语言{kindLabel}
+          <Badge variant="outline" className="font-normal text-[10px]">
+            实际发送内容
+          </Badge>
+        </Label>
+        <div className="flex items-center gap-2">
+          <Select
+            value={lang}
+            onValueChange={(v) => {
+              onLangChange(v);
+              if (source.trim()) void translate(v);
+            }}
+          >
+            <SelectTrigger className="h-8 w-[150px] text-xs">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent className="max-h-[280px]">
+              {TARGET_LANGS.map((l) => (
+                <SelectItem key={l.code} value={l.code}>
+                  {l.flag} {l.zh}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          <Button
+            type="button"
+            size="sm"
+            variant="outline"
+            className="h-8 gap-1"
+            disabled={loading || !source.trim()}
+            onClick={() => void translate()}
+          >
+            {loading ? (
+              <Loader2 className="h-3.5 w-3.5 animate-spin" />
+            ) : (
+              <Languages className="h-3.5 w-3.5 text-primary" />
+            )}
+            {value ? "重新翻译" : "翻译"}
+            <span className="text-[11px] text-emerald-600">免费</span>
+          </Button>
+        </div>
+      </div>
+
+      {hasSubject && (
+        <div className="space-y-1">
+          <Label className="text-xs text-muted-foreground">主题（译文）</Label>
+          <Input
+            value={subjectValue}
+            onChange={(e) => onSubjectChange?.(e.target.value)}
+            placeholder={`翻译后此处展示${opt?.zh ?? "目标语言"}主题，可手动修改`}
+          />
+        </div>
+      )}
+
+      <Textarea
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        rows={rows}
+        placeholder={`选择目标语言后点击「翻译」，此处展示${
+          opt?.zh ?? "目标语言"
+        }${kindLabel}，可手动修改`}
+      />
+      <div className="flex items-center justify-between text-[11px]">
+        <span className="text-muted-foreground">
+          {value.trim()
+            ? `将以${opt?.zh ?? ""}发送 · ${value.trim().length} 字`
+            : "未翻译时，将直接发送中文原文"}
+        </span>
+        {stale && (
+          <span className="text-amber-600">中文原文已修改，建议重新翻译</span>
+        )}
+      </div>
+    </section>
+  );
+}

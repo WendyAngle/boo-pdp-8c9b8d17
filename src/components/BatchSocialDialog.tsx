@@ -74,6 +74,7 @@ import { useLeadProfile } from "@/lib/lead-profile";
 import { useCurrentUser } from "@/lib/current-user";
 import { ComposeFormatHint } from "@/components/outreach/ComposeFormatHint";
 import { generateAiContent } from "@/lib/api/ai-compose.functions";
+import { TargetLangSection } from "@/components/outreach/TargetLangSection";
 
 /** 目标候选人（收藏 → 社媒收件人） */
 export interface SocialCandidate extends Recipient {
@@ -88,34 +89,8 @@ export interface BatchSocialDialogProps {
   candidates: SocialCandidate[];
 }
 
-function LangToggle({
-  value,
-  onChange,
-}: {
-  value: "zh" | "en";
-  onChange: (v: "zh" | "en") => void;
-}) {
-  return (
-    <div className="inline-flex items-center rounded-md border bg-background p-0.5 text-xs">
-      <span className="px-1.5 text-[10px] text-muted-foreground">目标语言</span>
-      {(["zh", "en"] as const).map((v) => (
-        <button
-          key={v}
-          type="button"
-          onClick={() => onChange(v)}
-          className={cn(
-            "rounded px-2 py-0.5 transition-colors",
-            value === v
-              ? "bg-primary/10 text-primary font-medium"
-              : "text-muted-foreground hover:text-foreground",
-          )}
-        >
-          {v === "zh" ? "中文" : "英文"}
-        </button>
-      ))}
-    </div>
-  );
-}
+
+
 
 export function BatchSocialDialog({
   open,
@@ -135,7 +110,10 @@ export function BatchSocialDialog({
   const [aiUsed, setAiUsed] = useState(false);
   const [previewIdx, setPreviewIdx] = useState(0);
   const [aiLoading, setAiLoading] = useState(false);
-  const [targetLang, setTargetLang] = useState<"zh" | "en">("zh");
+  /** 目标语言（发送语言）代码 */
+  const [targetLang, setTargetLang] = useState<string>("en");
+  /** 目标语言译文（实际发送内容） */
+  const [translated, setTranslated] = useState("");
 
   useEffect(() => {
     if (!open) return;
@@ -143,7 +121,8 @@ export function BatchSocialDialog({
     setContent("");
     setAiUsed(false);
     setPreviewIdx(0);
-    setTargetLang("zh");
+    setTargetLang("en");
+    setTranslated("");
     // 打开即自动校验（跳过已缓存）
     void verifyMany(
       incoming
@@ -225,9 +204,11 @@ export function BatchSocialDialog({
     });
   }
 
+  /** 实际发送内容：有译文则发译文 */
+  const sendContent = (translated.trim() || content).trim();
   const previewRecipient = verified[Math.min(previewIdx, Math.max(0, verified.length - 1))];
   const previewContent = previewRecipient
-    ? renderTemplate(content, previewRecipient.ctx)
+    ? renderTemplate(sendContent, previewRecipient.ctx)
     : "";
 
   const noPool = capacity === 0;
@@ -271,7 +252,7 @@ export function BatchSocialDialog({
     }
     let n = 0;
     for (const r of verified.slice(0, dispatched)) {
-      const finalContent = renderTemplate(content, r.ctx);
+      const finalContent = renderTemplate(sendContent, r.ctx);
       // 触达 WhatsApp 自动解锁电话；其他社媒解锁 social:platform
       const fields: AutoUnlockField[] =
         platform === "WhatsApp"
@@ -318,7 +299,8 @@ export function BatchSocialDialog({
           platform,
           scene: "开发信",
           tone: "friendly",
-          language: targetLang,
+          language: "zh",
+          languageName: "中文",
           myCompany: profile.companyName,
           myName: user.name,
           sampleEnterprise: sample?.ctx.企业名,
@@ -591,7 +573,18 @@ export function BatchSocialDialog({
             </div>
           </section>
 
+          {/* 目标语言文案（实际发送内容） */}
+          <TargetLangSection
+            source={content}
+            lang={targetLang}
+            onLangChange={setTargetLang}
+            value={translated}
+            onChange={setTranslated}
+            kindLabel="私信"
+          />
+
           {/* 预览 */}
+
           {verified.length > 0 && (
             <section className="space-y-2 rounded-md border bg-muted/30 p-3">
               <div className="flex items-center justify-between">
