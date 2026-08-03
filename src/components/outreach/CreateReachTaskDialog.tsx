@@ -36,7 +36,7 @@ import {
   type VarContext,
 } from "@/lib/message-vars";
 import { LANGUAGES, langByCode } from "@/lib/lang-detect";
-import { useLeadProfile } from "@/lib/lead-profile";
+import { useLeadProfile, saveProfile } from "@/lib/lead-profile";
 import { useCurrentUser } from "@/lib/current-user";
 import { generateAiContent } from "@/lib/api/ai-compose.functions";
 import { translateMessage } from "@/lib/api/ai-translate.functions";
