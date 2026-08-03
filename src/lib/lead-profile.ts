@@ -16,6 +16,8 @@ export interface LeadProfile {
   website: string;
   brandStory: string;
   brandFiles: QualificationFile[];
+  /** 企业知识库：AI 智能外呼/触达回答客户问题的参考资料 */
+  knowledgeFiles: QualificationFile[];
   qualifications: QualificationItem[];
   businessLicense?: QualificationFile;
 }
