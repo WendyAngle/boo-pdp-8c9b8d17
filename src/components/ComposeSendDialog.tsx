@@ -683,7 +683,22 @@ export function ComposeSendDialog({
             </div>
           </section>
 
+          {/* 目标语言文案（实际发送内容） */}
+          <TargetLangSection
+            source={content}
+            sourceSubject={isEmail ? subject : undefined}
+            lang={targetLang}
+            onLangChange={setTargetLang}
+            value={translated}
+            onChange={setTranslated}
+            subjectValue={isEmail ? translatedSubject : undefined}
+            onSubjectChange={isEmail ? setTranslatedSubject : undefined}
+            rows={isEmail ? 8 : 5}
+            kindLabel={isEmail ? "邮件" : "短信"}
+          />
+
           {/* 预览 */}
+
           {recipients.length > 0 && (
             <section className="space-y-2 rounded-md border bg-muted/30 p-3">
               <div className="flex items-center justify-between">
