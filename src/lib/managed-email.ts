@@ -13,6 +13,9 @@ export type ManagedSource = "own" | "ai";
 /** 待受理 → 执行中 → 已完成 / 已中止 / 已驳回 */
 export type ManagedStatus =
   | "pending"
+  | "claimed"
+  | "confirming"
+  | "queued"
   | "running"
   | "completed"
   | "cancelled"
@@ -54,7 +57,65 @@ export type ManagedOrder = {
   updatedAt: string;
   /** 运营侧备注（受理说明、执行说明） */
   opsNote?: string;
+  /** 执行台工作区数据（受理后生成） */
+  exec?: ManagedExec;
 };
+
+/** 执行台四步 */
+export type ManagedExecStep = 0 | 1 | 2 | 3;
+
+export type ManagedExec = {
+  /** 当前进行到第几步（0 目标确认 / 1 文案 / 2 排期 / 3 生成任务） */
+  step: ManagedExecStep;
+  /** 目标池 */
+  targets: {
+    raw: number;
+    dup: number;
+    invalid: number;
+    blocked: number;
+    /** 有效目标数（顾问确认后写入） */
+    valid: number;
+    confirmed: boolean;
+    note?: string;
+  };
+  /** 文案 */
+  copy: {
+    subject: string;
+    body: string;
+    followupSubject?: string;
+    followupBody?: string;
+    lang: string;
+    confirmed: boolean;
+  };
+  /** 排期 */
+  schedule: {
+    startAt: string;
+    dailyCap: number;
+    days: number;
+    mailboxes: string[];
+    confirmed: boolean;
+  };
+  /** 已生成的发信任务批次号 */
+  taskNo?: string;
+};
+
+/** 可用于代发的平台邮箱资源（mock） */
+export const MANAGED_MAILBOXES = [
+  "sales01@boo-mail.com",
+  "sales02@boo-mail.com",
+  "biz01@boo-mail.com",
+  "biz02@boo-mail.com",
+  "market01@boo-mail.com",
+];
+
+/** 处于流程中的状态 */
+export const MANAGED_ACTIVE_STATUS: ManagedStatus[] = [
+  "pending",
+  "claimed",
+  "confirming",
+  "queued",
+  "running",
+];
 
 export function managedMinQty(source: ManagedSource) {
   return source === "own" ? MANAGED_MIN_OWN : MANAGED_MIN_AI;
@@ -62,6 +123,9 @@ export function managedMinQty(source: ManagedSource) {
 
 export const MANAGED_STATUS_LABEL: Record<ManagedStatus, string> = {
   pending: "待受理",
+  claimed: "已认领",
+  confirming: "方案确认中",
+  queued: "待执行",
   running: "执行中",
   completed: "已完成",
   cancelled: "已中止",
@@ -302,7 +366,7 @@ export function assignManagedOrder(id: string, assignee: string) {
 /** 运营：驳回工单，积分全额退回 */
 export function rejectManagedOrder(id: string, reason: string) {
   const o = orders.find((x) => x.id === id);
-  if (!o || o.status !== "pending") return;
+  if (!o || (o.status !== "pending" && o.status !== "claimed")) return;
   const refund = (o.qty - o.sent) * MANAGED_EMAIL_COST_PER_TARGET;
   update(id, {
     status: "rejected",
@@ -327,25 +391,108 @@ function update(id: string, patch: Partial<ManagedOrder>) {
   persist();
 }
 
-/** 运营受理 → 执行中 */
+/** 运营受理 → 已认领，并初始化执行台工作区 */
 export function acceptManagedOrder(id: string, opsNote?: string) {
   const o = orders.find((x) => x.id === id);
   if (!o || o.status !== "pending") return;
-  update(id, { status: "running", opsNote: opsNote ?? o.opsNote });
+  update(id, {
+    status: "claimed",
+    opsNote: opsNote ?? o.opsNote,
+    exec: o.exec ?? initExec(o),
+  });
+}
+
+function initExec(o: ManagedOrder): ManagedExec {
+  const dup = o.source === "own" ? Math.round(o.qty * 0.04) : 0;
+  const invalid = Math.round(o.qty * 0.03);
+  const blocked = Math.round(o.qty * 0.01);
+  const dailyCap = o.dailyCap && o.dailyCap > 0 ? o.dailyCap : 100;
+  const valid = Math.max(0, o.qty - dup - invalid - blocked);
+  return {
+    step: 0,
+    targets: { raw: o.qty, dup, invalid, blocked, valid, confirmed: false },
+    copy: {
+      subject:
+        o.copyMode === "client"
+          ? "（使用客户提供文案，待录入）"
+          : `${o.product} — supplier introduction from ${o.company}`,
+      body:
+        o.copyMode === "client"
+          ? ""
+          : `Hi there,\n\nWe are a China-based manufacturer of ${o.product}. ...`,
+      lang: "en",
+      confirmed: false,
+    },
+    schedule: {
+      startAt: o.expectStartAt ?? new Date().toISOString().slice(0, 10),
+      dailyCap,
+      days: Math.max(1, Math.ceil(valid / Math.max(1, dailyCap))),
+      mailboxes: MANAGED_MAILBOXES.slice(0, 2),
+      confirmed: false,
+    },
+  };
+}
+
+/** 执行台：保存工作区数据 */
+export function updateManagedExec(id: string, patch: Partial<ManagedExec>) {
+  const o = orders.find((x) => x.id === id);
+  if (!o) return;
+  const exec = { ...(o.exec ?? initExec(o)), ...patch } as ManagedExec;
+  update(id, { exec });
+}
+
+/** 执行台：提交方案给客户确认 */
+export function submitManagedPlan(id: string) {
+  const o = orders.find((x) => x.id === id);
+  if (!o) return;
+  update(id, { status: "confirming" });
+}
+
+/** 执行台：客户确认方案 → 待执行 */
+export function confirmManagedPlan(id: string) {
+  const o = orders.find((x) => x.id === id);
+  if (!o || o.status !== "confirming") return;
+  update(id, { status: "queued" });
+}
+
+/** 执行台：生成发信任务 → 执行中 */
+export function generateManagedTasks(id: string) {
+  const o = orders.find((x) => x.id === id);
+  if (!o || !o.exec) return;
+  const taskNo = `MT${Date.now().toString(36).toUpperCase()}`;
+  update(id, {
+    status: "running",
+    exec: { ...o.exec, step: 3, taskNo },
+    opsNote:
+      o.opsNote ??
+      `已生成发信任务 ${taskNo}：有效目标 ${o.exec.targets.valid} 个，分 ${o.exec.schedule.days} 天投递。`,
+  });
+}
+
+/** 待受理超 24h / 执行超期，用于 SLA 看板 */
+export function managedSla(o: ManagedOrder): "overdue" | "warn" | "ok" {
+  const hours = (Date.now() - new Date(o.createdAt).getTime()) / 36e5;
+  if (o.status === "pending" && hours > 24) return "overdue";
+  if ((o.status === "claimed" || o.status === "confirming") && hours > 48) return "warn";
+  if (o.status === "running" && o.expectStartAt) {
+    const due = new Date(o.expectStartAt).getTime() + 14 * 864e5;
+    if (Date.now() > due) return "warn";
+  }
+  return "ok";
 }
 
 /** 运营回填执行进度（已发出目标数） */
 export function updateManagedProgress(id: string, sent: number) {
   const o = orders.find((x) => x.id === id);
-  if (!o || (o.status !== "running" && o.status !== "pending")) return;
+  if (!o || !MANAGED_ACTIVE_STATUS.includes(o.status)) return;
   const next = Math.max(0, Math.min(o.qty, Math.round(sent)));
-  update(id, { sent: next, status: o.status === "pending" ? "running" : o.status });
+  update(id, { sent: next, status: o.status === "running" ? o.status : "running" });
 }
 
 /** 结算完成：未执行部分退回积分 */
 export function completeManagedOrder(id: string) {
   const o = orders.find((x) => x.id === id);
-  if (!o || (o.status !== "running" && o.status !== "pending")) return;
+  if (!o || !MANAGED_ACTIVE_STATUS.includes(o.status)) return;
   const remain = o.qty - o.sent;
   const refund = remain * MANAGED_EMAIL_COST_PER_TARGET;
   update(id, { status: "completed", refunded: o.refunded + refund });
@@ -362,7 +509,7 @@ export function completeManagedOrder(id: string) {
 /** 中途叫停：剩余未执行目标退回积分 */
 export function cancelManagedOrder(id: string, reason?: string) {
   const o = orders.find((x) => x.id === id);
-  if (!o || (o.status !== "running" && o.status !== "pending")) return;
+  if (!o || !MANAGED_ACTIVE_STATUS.includes(o.status)) return;
   const remain = o.qty - o.sent;
   const refund = remain * MANAGED_EMAIL_COST_PER_TARGET;
   update(id, {
