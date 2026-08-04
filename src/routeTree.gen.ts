@@ -57,6 +57,7 @@ import { Route as AppOutreachAdminManagedExecIndexRouteImport } from './routes/_
 import { Route as AppOutreachAdminManagedEmailIndexRouteImport } from './routes/_app.outreach.admin.managed-email.index'
 import { Route as AppOutreachSocialReachDmRouteImport } from './routes/_app.outreach.social.reach.dm'
 import { Route as AppOutreachSocialProspectingTaskIdRouteImport } from './routes/_app.outreach.social.prospecting.$taskId'
+import { Route as AppOutreachAdminManagedExecOrderIdRouteImport } from './routes/_app.outreach.admin.managed-exec.$orderId'
 import { Route as AppOutreachAdminManagedEmailOrderIdRouteImport } from './routes/_app.outreach.admin.managed-email.$orderId'
 import { Route as AppOutreachSocialReachProspectingIndexRouteImport } from './routes/_app.outreach.social.reach.prospecting.index'
 import { Route as AppOutreachSocialReachProspectingTaskIdRouteImport } from './routes/_app.outreach.social.reach.prospecting.$taskId'
@@ -324,6 +325,12 @@ const AppOutreachSocialProspectingTaskIdRoute =
     path: '/outreach/social/prospecting/$taskId',
     getParentRoute: () => AppRoute,
   } as any)
+const AppOutreachAdminManagedExecOrderIdRoute =
+  AppOutreachAdminManagedExecOrderIdRouteImport.update({
+    id: '/$orderId',
+    path: '/$orderId',
+    getParentRoute: () => AppOutreachAdminManagedExecRoute,
+  } as any)
 const AppOutreachAdminManagedEmailOrderIdRoute =
   AppOutreachAdminManagedEmailOrderIdRouteImport.update({
     id: '/$orderId',
@@ -391,6 +398,7 @@ export interface FileRoutesByFullPath {
   '/outreach/enterprise/': typeof AppOutreachEnterpriseIndexRoute
   '/outreach/products/': typeof AppOutreachProductsIndexRoute
   '/outreach/admin/managed-email/$orderId': typeof AppOutreachAdminManagedEmailOrderIdRoute
+  '/outreach/admin/managed-exec/$orderId': typeof AppOutreachAdminManagedExecOrderIdRoute
   '/outreach/social/prospecting/$taskId': typeof AppOutreachSocialProspectingTaskIdRoute
   '/outreach/social/reach/dm': typeof AppOutreachSocialReachDmRoute
   '/outreach/admin/managed-email/': typeof AppOutreachAdminManagedEmailIndexRoute
@@ -439,6 +447,7 @@ export interface FileRoutesByTo {
   '/outreach/enterprise': typeof AppOutreachEnterpriseIndexRoute
   '/outreach/products': typeof AppOutreachProductsIndexRoute
   '/outreach/admin/managed-email/$orderId': typeof AppOutreachAdminManagedEmailOrderIdRoute
+  '/outreach/admin/managed-exec/$orderId': typeof AppOutreachAdminManagedExecOrderIdRoute
   '/outreach/social/prospecting/$taskId': typeof AppOutreachSocialProspectingTaskIdRoute
   '/outreach/social/reach/dm': typeof AppOutreachSocialReachDmRoute
   '/outreach/admin/managed-email': typeof AppOutreachAdminManagedEmailIndexRoute
@@ -494,6 +503,7 @@ export interface FileRoutesById {
   '/_app/outreach/enterprise/': typeof AppOutreachEnterpriseIndexRoute
   '/_app/outreach/products/': typeof AppOutreachProductsIndexRoute
   '/_app/outreach/admin/managed-email/$orderId': typeof AppOutreachAdminManagedEmailOrderIdRoute
+  '/_app/outreach/admin/managed-exec/$orderId': typeof AppOutreachAdminManagedExecOrderIdRoute
   '/_app/outreach/social/prospecting/$taskId': typeof AppOutreachSocialProspectingTaskIdRoute
   '/_app/outreach/social/reach/dm': typeof AppOutreachSocialReachDmRoute
   '/_app/outreach/admin/managed-email/': typeof AppOutreachAdminManagedEmailIndexRoute
@@ -549,6 +559,7 @@ export interface FileRouteTypes {
     | '/outreach/enterprise/'
     | '/outreach/products/'
     | '/outreach/admin/managed-email/$orderId'
+    | '/outreach/admin/managed-exec/$orderId'
     | '/outreach/social/prospecting/$taskId'
     | '/outreach/social/reach/dm'
     | '/outreach/admin/managed-email/'
@@ -597,6 +608,7 @@ export interface FileRouteTypes {
     | '/outreach/enterprise'
     | '/outreach/products'
     | '/outreach/admin/managed-email/$orderId'
+    | '/outreach/admin/managed-exec/$orderId'
     | '/outreach/social/prospecting/$taskId'
     | '/outreach/social/reach/dm'
     | '/outreach/admin/managed-email'
@@ -651,6 +663,7 @@ export interface FileRouteTypes {
     | '/_app/outreach/enterprise/'
     | '/_app/outreach/products/'
     | '/_app/outreach/admin/managed-email/$orderId'
+    | '/_app/outreach/admin/managed-exec/$orderId'
     | '/_app/outreach/social/prospecting/$taskId'
     | '/_app/outreach/social/reach/dm'
     | '/_app/outreach/admin/managed-email/'
@@ -1005,6 +1018,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppOutreachSocialProspectingTaskIdRouteImport
       parentRoute: typeof AppRoute
     }
+    '/_app/outreach/admin/managed-exec/$orderId': {
+      id: '/_app/outreach/admin/managed-exec/$orderId'
+      path: '/$orderId'
+      fullPath: '/outreach/admin/managed-exec/$orderId'
+      preLoaderRoute: typeof AppOutreachAdminManagedExecOrderIdRouteImport
+      parentRoute: typeof AppOutreachAdminManagedExecRoute
+    }
     '/_app/outreach/admin/managed-email/$orderId': {
       id: '/_app/outreach/admin/managed-email/$orderId'
       path: '/$orderId'
@@ -1087,11 +1107,14 @@ const AppOutreachAdminManagedEmailRouteWithChildren =
   )
 
 interface AppOutreachAdminManagedExecRouteChildren {
+  AppOutreachAdminManagedExecOrderIdRoute: typeof AppOutreachAdminManagedExecOrderIdRoute
   AppOutreachAdminManagedExecIndexRoute: typeof AppOutreachAdminManagedExecIndexRoute
 }
 
 const AppOutreachAdminManagedExecRouteChildren: AppOutreachAdminManagedExecRouteChildren =
   {
+    AppOutreachAdminManagedExecOrderIdRoute:
+      AppOutreachAdminManagedExecOrderIdRoute,
     AppOutreachAdminManagedExecIndexRoute:
       AppOutreachAdminManagedExecIndexRoute,
   }
