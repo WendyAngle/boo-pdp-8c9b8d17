@@ -933,6 +933,11 @@ function FavoritesPage() {
         onOpenChange={setBatchPlatformOpen}
         candidates={platformCandidates}
       />
+      <AiVoiceCallDialog
+        open={aiCallOpen}
+        onOpenChange={setAiCallOpen}
+        targets={aiCallTargets}
+      />
 
     </div>
   );
