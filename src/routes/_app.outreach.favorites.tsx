@@ -179,6 +179,7 @@ function FavoritesPage() {
   const [batchSenderId, setBatchSenderId] = useState("");
   const [batchSocialOpen, setBatchSocialOpen] = useState(false);
   const [batchPlatformOpen, setBatchPlatformOpen] = useState(false);
+  const [aiCallOpen, setAiCallOpen] = useState(false);
 
   const [calOpen, setCalOpen] = useState(false);
   const profile = useLeadProfile();
