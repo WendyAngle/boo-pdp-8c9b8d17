@@ -63,7 +63,8 @@ import {
 import { useSocialAccounts, friendRemaining } from "@/data/social-accounts";
 import { poolAverageHealth } from "@/lib/social-account-health";
 import { CreateReachTaskDialog } from "@/components/outreach/CreateReachTaskDialog";
-import { UserCircle2, Plus } from "lucide-react";
+import { ManagedEmailReachDialog } from "@/components/outreach/ManagedEmailReachDialog";
+import { UserCircle2, Plus, Handshake } from "lucide-react";
 
 
 export const Route = createFileRoute("/_app/outreach/reach")({
