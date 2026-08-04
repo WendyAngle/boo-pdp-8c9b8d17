@@ -603,7 +603,28 @@ function ReachPage() {
 }
 
 
+function SourceNote({ title, items }: { title: string; items: React.ReactNode[] }) {
+  return (
+    <Card className="p-4 border-primary/20 bg-primary/5">
+      <div className="flex items-start gap-3">
+        <div className="h-8 w-8 rounded-lg bg-primary/10 text-primary flex items-center justify-center shrink-0">
+          <Info className="h-4 w-4" />
+        </div>
+        <div className="text-sm space-y-1.5 flex-1 min-w-0">
+          <div className="font-medium">{title}</div>
+          <ol className="text-xs text-muted-foreground space-y-1 list-decimal pl-4">
+            {items.map((it, i) => (
+              <li key={i}>{it}</li>
+            ))}
+          </ol>
+        </div>
+      </div>
+    </Card>
+  );
+}
+
 function KpiCard({
+
   icon,
   label,
   value,
