@@ -137,10 +137,56 @@ export function ComposeSendDialog({
   const [submitTplOpen, setSubmitTplOpen] = useState(false);
   const [confirmSendOpen, setConfirmSendOpen] = useState(false);
 
+  /** 手动添加收件人输入框 */
+  const [manualInput, setManualInput] = useState("");
+
+  function addManualRecipients() {
+    const raw = manualInput
+      .split(/[,，;；\s]+/)
+      .map((s) => s.trim())
+      .filter(Boolean);
+    if (raw.length === 0) return;
+    const exists = new Set(recipients.map((r) => r.address.toLowerCase()));
+    const added: Recipient[] = [];
+    const invalid: string[] = [];
+    const dup: string[] = [];
+    for (const v of raw) {
+      const ok = isEmail ? EMAIL_RE.test(v) : PHONE_RE.test(v);
+      if (!ok) {
+        invalid.push(v);
+        continue;
+      }
+      if (exists.has(v.toLowerCase())) {
+        dup.push(v);
+        continue;
+      }
+      exists.add(v.toLowerCase());
+      const key = `${MANUAL_PREFIX}${v.toLowerCase()}`;
+      const name = isEmail ? v.split("@")[0] : v;
+      added.push({
+        key,
+        address: v,
+        name,
+        targetKind: "contact",
+        targetId: key,
+        ctx: { 联系人名: name, ...my } as VarContext,
+      });
+    }
+    if (added.length > 0) setRecipients((prev) => [...prev, ...added]);
+    setManualInput(invalid.join(" "));
+    if (invalid.length > 0)
+      toast.error(`${invalid.length} 个${isEmail ? "邮箱" : "手机号"}格式不正确`, {
+        description: invalid.slice(0, 3).join("、"),
+      });
+    if (dup.length > 0) toast.info(`已忽略 ${dup.length} 个重复收件人`);
+    if (added.length > 0) toast.success(`已添加 ${added.length} 个收件人`);
+  }
+
   // 重置 state 每次打开
   useEffect(() => {
     if (!open) return;
     setRecipients(incomingRecipients);
+    setManualInput("");
     setPreviewIdx(0);
     setSubject("");
     setContent("");
