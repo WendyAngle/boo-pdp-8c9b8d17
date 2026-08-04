@@ -25,6 +25,9 @@ import {
   updateManagedProgress,
   completeManagedOrder,
   cancelManagedOrder,
+  assignManagedOrder,
+  rejectManagedOrder,
+  MANAGED_ASSIGNEES,
   MANAGED_EMAIL_COST_PER_TARGET,
   MANAGED_STATUS_LABEL,
   type ManagedOrder,
@@ -150,9 +153,10 @@ function ManagedEmailAdminPage() {
           <TableHeader>
             <TableRow>
               <TableHead>工单号 / 提交时间</TableHead>
+              <TableHead>客户企业 / 对接人</TableHead>
               <TableHead>目标来源</TableHead>
               <TableHead>推广产品 / 市场</TableHead>
-              <TableHead>对接人</TableHead>
+              <TableHead>负责顾问</TableHead>
               <TableHead className="w-[200px]">执行进度</TableHead>
               <TableHead className="text-right">积分</TableHead>
               <TableHead>状态</TableHead>
@@ -162,7 +166,7 @@ function ManagedEmailAdminPage() {
           <TableBody>
             {rows.length === 0 && (
               <TableRow>
-                <TableCell colSpan={8} className="text-center text-sm text-muted-foreground py-12">
+                <TableCell colSpan={9} className="text-center text-sm text-muted-foreground py-12">
                   暂无托管工单
                 </TableCell>
               </TableRow>
