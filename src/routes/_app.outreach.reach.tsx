@@ -402,11 +402,28 @@ function ReachPage() {
           </div>
         </div>
 
-        <TabsContent value="managed" className="mt-0">
+        <TabsContent value="managed" className="mt-0 space-y-4">
+          <SourceNote
+            title="邮件托管批次说明"
+            items={[
+              <>由平台营销团队以你的企业名义、使用平台发信资源代为执行，全流程含目标确认、文案、排期与执行。</>,
+              <>自有名单起做 <b className="text-foreground">200</b> 个目标，AI 智能寻源起做 <b className="text-foreground">500</b> 个目标；统一 <b className="text-foreground">10 积分/目标</b>。</>,
+              <>支持中途叫停，未执行部分积分原路退回；批次进度与回执在本页跟踪。</>,
+            ]}
+          />
           <ManagedEmailBatches embedded onCreate={() => setManagedEmailOpen(true)} />
         </TabsContent>
 
-        <TabsContent value="self" className="mt-0">
+        <TabsContent value="self" className="mt-0 space-y-4">
+          <SourceNote
+            title="自助触达任务来源"
+            items={[
+              <>「我的收藏」勾选目标后发起的邮件／短信／WhatsApp／批量社媒私信（存量名单群发）。</>,
+              <>本页<b className="text-foreground mx-1">社媒拓客触达</b>由系统按推广产品与关键词自动寻找新目标账号（增量拓客）。</>,
+              <>列表仅展示<b className="text-foreground mx-1">触达成功</b>的数据；点击任务行的目标数可查看目标资料明细。</>,
+            ]}
+          />
+
       <Card className="p-0 overflow-hidden">
 
         {/* 筛选 */}
