@@ -65,7 +65,10 @@ import { poolAverageHealth } from "@/lib/social-account-health";
 import { CreateReachTaskDialog } from "@/components/outreach/CreateReachTaskDialog";
 import { ManagedEmailReachDialog } from "@/components/outreach/ManagedEmailReachDialog";
 import { ManagedEmailBatches } from "@/components/outreach/ManagedEmailBatches";
+import { useManagedOrders } from "@/lib/managed-email";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { UserCircle2, Plus, Handshake } from "lucide-react";
+
 
 
 export const Route = createFileRoute("/_app/outreach/reach")({
@@ -106,6 +109,9 @@ function ReachPage() {
   const [now, setNow] = useState(() => Date.now());
   const [createReachOpen, setCreateReachOpen] = useState(false);
   const [managedEmailOpen, setManagedEmailOpen] = useState(false);
+  const [tab, setTab] = useState<"self" | "managed">("self");
+  const managedOrders = useManagedOrders();
+
 
   useEffect(() => {
     const t = setInterval(() => {
@@ -388,32 +394,60 @@ function ReachPage() {
         </div>
       </Card>
 
-      {/* 操作按钮：统计卡片下方 / 列表上方，右对齐 */}
-      <div className="flex items-center justify-end gap-2">
-        <Button size="sm" className="h-9 gap-1.5" onClick={() => setCreateReachOpen(true)}>
-          <Plus className="h-4 w-4" />
-          社媒拓客触达
-        </Button>
-        <Button
-          size="sm"
-          variant="outline"
-          className="h-9 gap-1.5"
-          onClick={() => setManagedEmailOpen(true)}
-        >
-          <Handshake className="h-4 w-4" />
-          邮件托管触达
-        </Button>
-        <Button asChild size="sm" variant="outline" className="h-9 gap-1.5">
-          <Link to="/outreach/social/accounts">
-            <UserCircle2 className="h-4 w-4" />
-            社媒账号
-          </Link>
-        </Button>
-      </div>
+      {/* Tab：自助触达任务 / 邮件托管批次 */}
+      <Tabs value={tab} onValueChange={(v) => setTab(v as typeof tab)} className="space-y-4">
+        <div className="flex items-center justify-between gap-3 flex-wrap">
+          <TabsList>
+            <TabsTrigger value="self" className="gap-1.5">
+              <Send className="h-3.5 w-3.5" />
+              自助触达任务
+              <span className="tabular-nums text-xs text-muted-foreground">
+                {taskGroups.length}
+              </span>
+            </TabsTrigger>
+            <TabsTrigger value="managed" className="gap-1.5">
+              <Handshake className="h-3.5 w-3.5" />
+              邮件托管批次
+              <span className="tabular-nums text-xs text-muted-foreground">
+                {managedOrders.length}
+              </span>
+            </TabsTrigger>
+          </TabsList>
 
-      <ManagedEmailBatches />
+          <div className="flex items-center gap-2">
+            {tab === "self" ? (
+              <>
+                <Button size="sm" className="h-9 gap-1.5" onClick={() => setCreateReachOpen(true)}>
+                  <Plus className="h-4 w-4" />
+                  社媒拓客触达
+                </Button>
+                <Button asChild size="sm" variant="outline" className="h-9 gap-1.5">
+                  <Link to="/outreach/social/accounts">
+                    <UserCircle2 className="h-4 w-4" />
+                    社媒账号
+                  </Link>
+                </Button>
+              </>
+            ) : (
+              <Button
+                size="sm"
+                className="h-9 gap-1.5"
+                onClick={() => setManagedEmailOpen(true)}
+              >
+                <Handshake className="h-4 w-4" />
+                邮件托管触达
+              </Button>
+            )}
+          </div>
+        </div>
 
+        <TabsContent value="managed" className="mt-0">
+          <ManagedEmailBatches embedded onCreate={() => setManagedEmailOpen(true)} />
+        </TabsContent>
+
+        <TabsContent value="self" className="mt-0">
       <Card className="p-0 overflow-hidden">
+
         {/* 筛选 */}
         <div className="px-5 py-3 flex items-center gap-3 flex-wrap border-b border-border bg-muted/20">
           <div className="flex items-center gap-2">
@@ -580,6 +614,10 @@ function ReachPage() {
           </div>
         )}
       </Card>
+        </TabsContent>
+      </Tabs>
+
+
 
     </div>
     </TooltipProvider>
