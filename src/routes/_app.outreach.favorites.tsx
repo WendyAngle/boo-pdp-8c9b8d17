@@ -15,6 +15,7 @@ import {
   Send,
   MailPlus,
   MessageSquare,
+  PhoneCall,
   MailWarning,
   Mailbox as MailboxIcon,
   ExternalLink,
