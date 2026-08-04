@@ -49,6 +49,16 @@ export type ManagedDailyLog = {
   refill: number;
 };
 
+/** 单个发信邮箱在本任务中的使用情况 */
+export type ManagedMailboxUsage = {
+  email: string;
+  /** 邮件服务商 ID */
+  esp: string;
+  sent: number;
+  success: number;
+  bounce: number;
+};
+
 export type ManagedExec = {
   /** 阶段 1：AI 寻源 */
   sourcing: {
@@ -77,6 +87,8 @@ export type ManagedExec = {
     days: number;
     mailboxes: string[];
   };
+  /** 各发信邮箱 / 服务商的用量分布 */
+  mailboxUsage: ManagedMailboxUsage[];
   /** 阶段 4：分日发送 + 自动补量 */
   delivery: {
     /** 累计发出封数（含失败） */
@@ -96,6 +108,7 @@ export type ManagedExec = {
   /** 上次自动推进时间，用于离开页面后按时间差补算 */
   lastTickAt: string;
 };
+
 
 export type ManagedOrder = {
   id: string;
