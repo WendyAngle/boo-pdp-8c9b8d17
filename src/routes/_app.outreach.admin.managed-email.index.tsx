@@ -104,7 +104,7 @@ function ManagedEmailAdminPage() {
   }, [orders]);
 
   return (
-    <div className="space-y-5">
+    <div className="p-8 space-y-6">
       <div>
         <h1 className="text-xl font-semibold flex items-center gap-2">
           <Handshake className="h-5 w-5 text-primary" />

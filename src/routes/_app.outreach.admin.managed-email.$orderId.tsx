@@ -82,7 +82,7 @@ function ManagedEmailExecPage() {
   const setStep = (s: ManagedExecStep) => updateManagedExec(order.id, { step: s });
 
   return (
-    <div className="space-y-5">
+    <div className="p-8 space-y-6">
       <div className="flex items-start justify-between gap-4 flex-wrap">
         <div>
           <Button asChild variant="ghost" size="sm" className="h-7 -ml-2 mb-1 gap-1">
