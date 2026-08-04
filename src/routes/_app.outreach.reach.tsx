@@ -608,6 +608,10 @@ function ReachPage() {
           </div>
         )}
       </Card>
+        </TabsContent>
+      </Tabs>
+
+
 
     </div>
     </TooltipProvider>
