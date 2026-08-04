@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 import { Handshake, Info, Mail, Users, Sparkles } from "lucide-react";
 import {
@@ -62,6 +62,12 @@ export function ManagedEmailReachDialog({
   const [market, setMarket] = useState("");
   const [contact, setContact] = useState("");
   const [note, setNote] = useState("");
+
+  useEffect(() => {
+    if (!open) return;
+    setSource(defaultSource);
+    setQty(String(Math.max(defaultQty ?? 0, SOURCE_META[defaultSource].min)));
+  }, [open, defaultSource, defaultQty]);
 
   const min = SOURCE_META[source].min;
   const qtyNum = Number(qty) || 0;
