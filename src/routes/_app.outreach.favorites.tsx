@@ -762,17 +762,6 @@ function FavoritesPage() {
               size="sm"
               disabled={selected.size === 0}
               className="gap-1.5 border-primary/30 text-primary hover:bg-primary/10 hover:text-primary disabled:opacity-50"
-              onClick={() => setManagedEmailOpen(true)}
-              title="由平台营销团队以你的企业名义代发邮件"
-            >
-              <Handshake className="h-4 w-4" />
-              邮件托管代发
-            </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              disabled={selected.size === 0}
-              className="gap-1.5 border-primary/30 text-primary hover:bg-primary/10 hover:text-primary disabled:opacity-50"
               onClick={() => {
                 if (!guardBatch(smsEligible, "短信")) return;
                 setBatchSmsOpen(true);
