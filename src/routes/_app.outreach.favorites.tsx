@@ -34,6 +34,7 @@ import {
 
   
 
+  Handshake,
 } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -83,6 +84,7 @@ import {
 import { formatDateTime } from "@/lib/format-date";
 import { toast } from "sonner";
 import { ComposeSendDialog } from "@/components/ComposeSendDialog";
+import { ManagedEmailReachDialog } from "@/components/outreach/ManagedEmailReachDialog";
 import { recipientsFromFavorites, myContext } from "@/lib/message-vars";
 import { useLeadProfile } from "@/lib/lead-profile";
 import { useCurrentUser } from "@/lib/current-user";
@@ -174,6 +176,7 @@ function FavoritesPage() {
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const navigate = useNavigate();
   const usableMailboxes = useUsableMailboxes();
+  const [managedEmailOpen, setManagedEmailOpen] = useState(false);
   const [noMailboxOpen, setNoMailboxOpen] = useState(false);
   const [batchEmailOpen, setBatchEmailOpen] = useState(false);
   const [batchSmsOpen, setBatchSmsOpen] = useState(false);
@@ -759,6 +762,17 @@ function FavoritesPage() {
               size="sm"
               disabled={selected.size === 0}
               className="gap-1.5 border-primary/30 text-primary hover:bg-primary/10 hover:text-primary disabled:opacity-50"
+              onClick={() => setManagedEmailOpen(true)}
+              title="由平台营销团队以你的企业名义代发邮件"
+            >
+              <Handshake className="h-4 w-4" />
+              邮件托管代发
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              disabled={selected.size === 0}
+              className="gap-1.5 border-primary/30 text-primary hover:bg-primary/10 hover:text-primary disabled:opacity-50"
               onClick={() => {
                 if (!guardBatch(smsEligible, "短信")) return;
                 setBatchSmsOpen(true);
@@ -876,6 +890,14 @@ function FavoritesPage() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      <ManagedEmailReachDialog
+        open={managedEmailOpen}
+        onOpenChange={setManagedEmailOpen}
+        defaultSource="own"
+        defaultQty={Math.max(selected.size, 200)}
+        entryHint={`来自「我的收藏」：已勾选 ${selected.size} 个目标。自有名单起做 200 个目标，不足部分可由平台按你的推广产品与目标市场补齐。`}
+      />
 
       <ComposeSendDialog
         open={batchEmailOpen}

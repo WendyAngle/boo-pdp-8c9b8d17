@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 import { Handshake, Info, Mail, Users, Sparkles } from "lucide-react";
 import {
@@ -15,8 +15,12 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { cn } from "@/lib/utils";
-
-const CREDIT_PER_TARGET = 10;
+import {
+  MANAGED_EMAIL_COST_PER_TARGET as CREDIT_PER_TARGET,
+  MANAGED_MIN_AI,
+  MANAGED_MIN_OWN,
+  createManagedOrder,
+} from "@/lib/managed-email";
 
 type SourceKind = "own" | "ai";
 
@@ -27,13 +31,13 @@ const SOURCE_META: Record<
   own: {
     label: "我的名单（收藏 / 已解锁客户）",
     desc: "由营销团队对你提供的名单做清洗、撰写双语文案并代为发送",
-    min: 200,
+    min: MANAGED_MIN_OWN,
     icon: <Users className="h-4 w-4" />,
   },
   ai: {
     label: "AI 智能寻源（平台补充目标）",
     desc: "按推广产品与目标市场，由平台补齐目标名单后代为发送",
-    min: 500,
+    min: MANAGED_MIN_AI,
     icon: <Sparkles className="h-4 w-4" />,
   },
 };
@@ -41,16 +45,29 @@ const SOURCE_META: Record<
 export function ManagedEmailReachDialog({
   open,
   onOpenChange,
+  defaultSource = "own",
+  defaultQty,
+  entryHint,
 }: {
   open: boolean;
   onOpenChange: (v: boolean) => void;
+  defaultSource?: SourceKind;
+  /** 入口预填的目标数量（如「我的收藏」已勾选目标数） */
+  defaultQty?: number;
+  entryHint?: string;
 }) {
-  const [source, setSource] = useState<SourceKind>("own");
-  const [qty, setQty] = useState("200");
+  const [source, setSource] = useState<SourceKind>(defaultSource);
+  const [qty, setQty] = useState(String(defaultQty ?? MANAGED_MIN_OWN));
   const [product, setProduct] = useState("");
   const [market, setMarket] = useState("");
   const [contact, setContact] = useState("");
   const [note, setNote] = useState("");
+
+  useEffect(() => {
+    if (!open) return;
+    setSource(defaultSource);
+    setQty(String(Math.max(defaultQty ?? 0, SOURCE_META[defaultSource].min)));
+  }, [open, defaultSource, defaultQty]);
 
   const min = SOURCE_META[source].min;
   const qtyNum = Number(qty) || 0;
@@ -60,9 +77,17 @@ export function ManagedEmailReachDialog({
 
   const submit = () => {
     if (!canSubmit) return;
+    const order = createManagedOrder({
+      source,
+      qty: qtyNum,
+      product: product.trim(),
+      market: market.trim() || undefined,
+      contact: contact.trim(),
+      note: note.trim() || undefined,
+    });
     onOpenChange(false);
-    toast.success("托管需求已提交", {
-      description: `${SOURCE_META[source].label}｜${qtyNum} 个目标，预计扣除 ${cost.toLocaleString()} 积分。营销团队将在 1 个工作日内与你确认名单与文案。`,
+    toast.success(`托管需求已提交（${order.orderNo}）`, {
+      description: `${SOURCE_META[source].label}｜${qtyNum} 个目标，已扣除 ${cost.toLocaleString()} 积分。营销团队将在 1 个工作日内受理并与你确认名单与文案。`,
     });
     setNote("");
   };
@@ -81,6 +106,11 @@ export function ManagedEmailReachDialog({
         </DialogHeader>
 
         <div className="space-y-5 max-h-[60vh] overflow-y-auto pr-1">
+          {entryHint && (
+            <div className="rounded-md border border-border bg-muted/40 px-3 py-2 text-xs text-muted-foreground">
+              {entryHint}
+            </div>
+          )}
           <div className="space-y-2">
             <Label>目标来源</Label>
             <RadioGroup

@@ -1686,3 +1686,51 @@ if (typeof window !== "undefined") {
     syncUnlocksFromLedger();
   } catch {}
 }
+/* -------------------- 邮件托管触达 -------------------- */
+
+/** 托管批次确认时一次性扣除积分（10 积分/目标） */
+export function chargeManagedEmailBatch(input: {
+  orderNo: string;
+  qty: number;
+  cost: number;
+  detail: string;
+}): LedgerEntry {
+  const entry: LedgerEntry = {
+    id: makeId("mer"),
+    kind: "reach",
+    cost: input.cost,
+    createdAt: new Date().toISOString(),
+    targetKind: "enterprise",
+    targetId: input.orderNo,
+    targetName: `邮件托管批次 ${input.orderNo}`,
+    channel: "email",
+    detail: input.detail,
+    forcedStatus: "success",
+  };
+  ledger = [entry, ...ledger];
+  persistLedger();
+  return entry;
+}
+
+/** 托管批次中止/结算后，未执行目标退回积分 */
+export function refundManagedEmailTargets(input: {
+  orderNo: string;
+  qty: number;
+  cost: number;
+  detail: string;
+}): LedgerEntry {
+  const entry: LedgerEntry = {
+    id: makeId("mef"),
+    kind: "refund",
+    cost: input.cost,
+    createdAt: new Date().toISOString(),
+    targetKind: "enterprise",
+    targetId: input.orderNo,
+    targetName: `邮件托管批次 ${input.orderNo}`,
+    channel: "email",
+    detail: input.detail,
+  };
+  ledger = [entry, ...ledger];
+  persistLedger();
+  return entry;
+}
