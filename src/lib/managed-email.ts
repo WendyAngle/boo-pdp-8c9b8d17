@@ -146,14 +146,51 @@ export type ManagedOrder = {
   exec?: ManagedExec;
 };
 
-/** 可用于代发的平台邮箱资源（mock） */
-export const MANAGED_MAILBOXES = [
-  "sales01@boo-mail.com",
-  "sales02@boo-mail.com",
-  "biz01@boo-mail.com",
-  "biz02@boo-mail.com",
-  "market01@boo-mail.com",
+/** 邮件服务商（ESP）资源池 */
+export type ManagedEsp = {
+  id: string;
+  name: string;
+  /** 发信域名 */
+  domain: string;
+  /** 每日总配额 */
+  dailyQuota: number;
+};
+
+export const MANAGED_ESPS: ManagedEsp[] = [
+  { id: "ses", name: "Amazon SES", domain: "boo-mail.com", dailyQuota: 5000 },
+  { id: "sendgrid", name: "SendGrid", domain: "boo-trade.com", dailyQuota: 3000 },
+  { id: "mailgun", name: "Mailgun", domain: "boo-global.com", dailyQuota: 2000 },
+  { id: "aliyun", name: "阿里云邮件推送", domain: "boo-cn.com", dailyQuota: 2000 },
 ];
+
+export function espName(id: string) {
+  return MANAGED_ESPS.find((e) => e.id === id)?.name ?? id;
+}
+
+/** 可用于代发的平台邮箱资源（mock） */
+export type ManagedMailbox = {
+  email: string;
+  esp: string;
+  /** 单邮箱日发送上限 */
+  dailyLimit: number;
+  health: "good" | "warn" | "bad";
+};
+
+export const MANAGED_MAILBOX_POOL: ManagedMailbox[] = [
+  { email: "sales01@boo-mail.com", esp: "ses", dailyLimit: 300, health: "good" },
+  { email: "sales02@boo-mail.com", esp: "ses", dailyLimit: 300, health: "good" },
+  { email: "biz01@boo-trade.com", esp: "sendgrid", dailyLimit: 250, health: "warn" },
+  { email: "biz02@boo-trade.com", esp: "sendgrid", dailyLimit: 250, health: "good" },
+  { email: "market01@boo-global.com", esp: "mailgun", dailyLimit: 200, health: "good" },
+  { email: "market02@boo-cn.com", esp: "aliyun", dailyLimit: 200, health: "good" },
+];
+
+export const MANAGED_MAILBOXES = MANAGED_MAILBOX_POOL.map((m) => m.email);
+
+export function mailboxEsp(email: string) {
+  return MANAGED_MAILBOX_POOL.find((m) => m.email === email)?.esp ?? "ses";
+}
+
 
 /** 处于流程中的状态 */
 export const MANAGED_ACTIVE_STATUS: ManagedStatus[] = [
