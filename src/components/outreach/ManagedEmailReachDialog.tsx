@@ -249,45 +249,20 @@ export function ManagedEmailReachDialog({
           </div>
 
           <div className="space-y-2">
-            <Label>文案方式</Label>
-            <RadioGroup
-              value={copyMode}
-              onValueChange={(v) => setCopyMode(v as "ours" | "client")}
-              className="grid grid-cols-2 gap-2"
-            >
-              {[
-                { k: "ours", t: "顾问代写（推荐）", d: "由营销顾问撰写中文文案 + 目标语言翻译，确认后发送" },
-                { k: "client", t: "使用自有文案", d: "你提供文案内容，受理后由顾问与你确认" },
-              ].map((i) => (
-                <label
-                  key={i.k}
-                  className={cn(
-                    "flex items-start gap-2 rounded-lg border p-3 cursor-pointer transition-colors",
-                    copyMode === i.k ? "border-primary bg-primary/5" : "border-border hover:bg-muted/40",
-                  )}
-                >
-                  <RadioGroupItem value={i.k} className="mt-0.5" />
-                  <div className="min-w-0">
-                    <div className="text-sm font-medium">{i.t}</div>
-                    <div className="text-xs text-muted-foreground mt-0.5">{i.d}</div>
-                  </div>
-                </label>
-              ))}
-            </RadioGroup>
-            {copyMode === "client" && (
-              <div className="rounded-lg border border-border bg-muted/20 p-3">
-                <EmailComposeFields
-                  value={draft}
-                  onChange={setDraft}
-                  scene="开发信"
-                  aiHint={{ product: product.trim(), market: market.trim() }}
-                />
-                <p className="mt-2 text-[11px] text-muted-foreground">
-                  提交后顾问将按此文案执行；如未填写目标语言译文，顾问会在执行前补充翻译并与你确认。
-                </p>
-              </div>
-            )}
+            <Label>撰写内容（选填）</Label>
+            <div className="rounded-lg border border-border bg-muted/20 p-3">
+              <EmailComposeFields
+                value={draft}
+                onChange={setDraft}
+                scene="开发信"
+                aiHint={{ product: product.trim(), market: market.trim() }}
+              />
+              <p className="mt-2 text-[11px] text-muted-foreground">
+                填写后顾问将按此文案执行；留空则由营销顾问代写并在执行前与你确认。如未填写目标语言译文，顾问会补充翻译。
+              </p>
+            </div>
           </div>
+
 
 
           <div className="space-y-2">
