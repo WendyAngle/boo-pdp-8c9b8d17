@@ -319,7 +319,48 @@ function ManagedEmailAdminPage() {
         </Table>
       </Card>
 
+      {/* 驳回 */}
+      <Dialog open={!!rejectOf} onOpenChange={(v) => !v && setRejectOf(null)}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>驳回托管工单</DialogTitle>
+            <DialogDescription>
+              工单 {rejectOf?.orderNo}｜驳回后该批次已扣的{" "}
+              {rejectOf ? rejectOf.charged.toLocaleString() : 0} 积分将全额退回客户，原因对客户可见。
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-2">
+            <Label htmlFor="reject-reason">驳回原因</Label>
+            <Textarea
+              id="reject-reason"
+              rows={3}
+              value={rejectReason}
+              onChange={(e) => setRejectReason(e.target.value)}
+              placeholder="如：名单有效邮箱不足、目标条件过窄无法凑齐起做量等"
+            />
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setRejectOf(null)}>
+              取消
+            </Button>
+            <Button
+              variant="destructive"
+              disabled={!rejectReason.trim()}
+              onClick={() => {
+                if (!rejectOf) return;
+                rejectManagedOrder(rejectOf.id, rejectReason.trim());
+                toast.success(`工单 ${rejectOf.orderNo} 已驳回，积分已退回`);
+                setRejectOf(null);
+              }}
+            >
+              确认驳回
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
       {/* 回填进度 */}
+
       <Dialog open={!!progressOf} onOpenChange={(v) => !v && setProgressOf(null)}>
         <DialogContent className="max-w-md">
           <DialogHeader>
