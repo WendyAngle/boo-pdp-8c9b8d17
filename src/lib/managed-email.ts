@@ -252,6 +252,10 @@ export function createManagedOrder(input: {
   qty: number;
   product: string;
   market?: string;
+  keywords?: string;
+  copyMode?: ManagedCopyMode;
+  expectStartAt?: string;
+  dailyCap?: number;
   contact: string;
   note?: string;
 }): ManagedOrder {
@@ -260,11 +264,16 @@ export function createManagedOrder(input: {
   const order: ManagedOrder = {
     id: `me_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 7)}`,
     orderNo: nextOrderNo(),
+    company: CURRENT_COMPANY,
     source: input.source,
     qty: input.qty,
     sent: 0,
     product: input.product,
     market: input.market,
+    keywords: input.keywords,
+    copyMode: input.copyMode ?? "ours",
+    expectStartAt: input.expectStartAt,
+    dailyCap: input.dailyCap,
     contact: input.contact,
     note: input.note,
     status: "pending",
@@ -283,6 +292,32 @@ export function createManagedOrder(input: {
   });
   return order;
 }
+
+/** 运营：认领 / 指派顾问 */
+export function assignManagedOrder(id: string, assignee: string) {
+  update(id, { assignee });
+}
+
+/** 运营：驳回工单，积分全额退回 */
+export function rejectManagedOrder(id: string, reason: string) {
+  const o = orders.find((x) => x.id === id);
+  if (!o || o.status !== "pending") return;
+  const refund = (o.qty - o.sent) * MANAGED_EMAIL_COST_PER_TARGET;
+  update(id, {
+    status: "rejected",
+    rejectReason: reason,
+    refunded: o.refunded + refund,
+  });
+  if (refund > 0) {
+    refundManagedEmailTargets({
+      orderNo: o.orderNo,
+      qty: o.qty - o.sent,
+      cost: refund,
+      detail: `邮件托管触达驳回退回 · ${o.qty - o.sent} 个目标`,
+    });
+  }
+}
+
 
 function update(id: string, patch: Partial<ManagedOrder>) {
   orders = orders.map((o) =>
