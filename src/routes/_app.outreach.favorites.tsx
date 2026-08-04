@@ -176,7 +176,7 @@ function FavoritesPage() {
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const navigate = useNavigate();
   const usableMailboxes = useUsableMailboxes();
-  const [managedEmailOpen, setManagedEmailOpen] = useState(false);
+  
   const [noMailboxOpen, setNoMailboxOpen] = useState(false);
   const [batchEmailOpen, setBatchEmailOpen] = useState(false);
   const [batchSmsOpen, setBatchSmsOpen] = useState(false);
