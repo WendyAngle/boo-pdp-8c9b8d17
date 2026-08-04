@@ -177,6 +177,10 @@ function ManagedEmailAdminPage() {
                     <div className="text-xs text-muted-foreground">{fmt(o.createdAt)}</div>
                   </TableCell>
                   <TableCell>
+                    <div className="text-sm">{o.company}</div>
+                    <div className="text-xs text-muted-foreground">{o.contact}</div>
+                  </TableCell>
+                  <TableCell>
                     <span className="inline-flex items-center gap-1.5 text-sm">
                       {o.source === "own" ? (
                         <Users className="h-3.5 w-3.5 text-primary" />
@@ -185,12 +189,36 @@ function ManagedEmailAdminPage() {
                       )}
                       {o.source === "own" ? "自有名单" : "AI 智能寻源"}
                     </span>
+                    <div className="text-xs text-muted-foreground">
+                      {o.copyMode === "client" ? "客户自有文案" : "我方撰写文案"}
+                    </div>
                   </TableCell>
                   <TableCell>
                     <div className="text-sm">{o.product}</div>
                     <div className="text-xs text-muted-foreground">{o.market || "—"}</div>
                   </TableCell>
-                  <TableCell className="text-sm">{o.contact}</TableCell>
+                  <TableCell>
+                    <Select
+                      value={o.assignee ?? "none"}
+                      onValueChange={(v) => {
+                        assignManagedOrder(o.id, v === "none" ? "" : v);
+                        if (v !== "none") toast.success(`已指派给 ${v}`);
+                      }}
+                    >
+                      <SelectTrigger className="h-8 w-[132px]">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="none">未指派</SelectItem>
+                        {MANAGED_ASSIGNEES.map((a) => (
+                          <SelectItem key={a} value={a}>
+                            {a}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </TableCell>
+
                   <TableCell>
                     <Progress value={pct} className="h-1.5" />
                     <div className="text-xs text-muted-foreground mt-1 tabular-nums">
