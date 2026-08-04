@@ -247,6 +247,15 @@ function FavoritesPage() {
     () => recipientsFromFavorites(smsEligible, "phone", myVars),
     [smsEligible, myVars],
   );
+  const aiCallTargets = useMemo(
+    () =>
+      recipientsFromFavorites(selectedRecords, "phone", myVars).map((r) => ({
+        key: r.key,
+        name: r.name,
+        phone: r.address,
+      })),
+    [selectedRecords, myVars],
+  );
 
 
   // 社媒候选人（企业/联系人）构造
