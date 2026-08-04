@@ -209,10 +209,10 @@ function ManagedExecPage() {
                   </TableCell>
                   <TableCell>
                     <ManagedStatusBadge status={o.status} />
-                    {abnormal && (
+                    {exec.exhausted && (
                       <div className="mt-1 inline-flex items-center gap-1 text-[11px] text-amber-600">
                         <AlertTriangle className="h-3 w-3" />
-                        {exec.exhausted ? "候选池不足" : "已暂停"}
+                        候选池不足
                       </div>
                     )}
                   </TableCell>
