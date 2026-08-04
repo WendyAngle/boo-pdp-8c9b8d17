@@ -401,17 +401,12 @@ function ReachPage() {
             <TabsTrigger value="self" className="gap-1.5">
               <Send className="h-3.5 w-3.5" />
               自助触达任务
-              <span className="tabular-nums text-xs text-muted-foreground">
-                {taskGroups.length}
-              </span>
             </TabsTrigger>
             <TabsTrigger value="managed" className="gap-1.5">
               <Handshake className="h-3.5 w-3.5" />
               邮件托管批次
-              <span className="tabular-nums text-xs text-muted-foreground">
-                {managedOrders.length}
-              </span>
             </TabsTrigger>
+
           </TabsList>
 
           <div className="flex items-center gap-2">
