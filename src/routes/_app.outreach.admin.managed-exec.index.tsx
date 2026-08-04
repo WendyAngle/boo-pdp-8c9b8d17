@@ -180,7 +180,7 @@ function ManagedExecPage() {
             {rows.map((o) => {
               const exec = o.exec!;
               const pct = o.qty ? Math.round((o.sent / o.qty) * 100) : 0;
-              const abnormal = isAbnormal(o);
+              
               return (
                 <TableRow key={o.id}>
                   <TableCell>
