@@ -372,6 +372,12 @@ function ReachPage() {
                 由系统按推广产品与关键词自动寻找新目标账号（增量拓客）。
               </li>
               <li>
+                本页
+                <span className="text-foreground font-medium mx-1">邮件托管触达</span>
+                由平台营销团队以你的企业名义、使用平台发信资源代为执行（自有名单起做
+                200 个目标，AI 智能寻源起做 500 个目标；统一 10 积分/目标，支持中途叫停并退回未执行部分）。
+              </li>
+              <li>
                 列表仅展示
                 <span className="text-foreground font-medium mx-1">触达成功</span>
                 的数据；点击任务行的目标数可查看该任务的目标资料明细。
@@ -386,6 +392,15 @@ function ReachPage() {
         <Button size="sm" className="h-9 gap-1.5" onClick={() => setCreateReachOpen(true)}>
           <Plus className="h-4 w-4" />
           社媒拓客触达
+        </Button>
+        <Button
+          size="sm"
+          variant="outline"
+          className="h-9 gap-1.5"
+          onClick={() => setManagedEmailOpen(true)}
+        >
+          <Handshake className="h-4 w-4" />
+          邮件托管触达
         </Button>
         <Button asChild size="sm" variant="outline" className="h-9 gap-1.5">
           <Link to="/outreach/social/accounts">
