@@ -65,7 +65,10 @@ import { poolAverageHealth } from "@/lib/social-account-health";
 import { CreateReachTaskDialog } from "@/components/outreach/CreateReachTaskDialog";
 import { ManagedEmailReachDialog } from "@/components/outreach/ManagedEmailReachDialog";
 import { ManagedEmailBatches } from "@/components/outreach/ManagedEmailBatches";
+import { useManagedOrders } from "@/lib/managed-email";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { UserCircle2, Plus, Handshake } from "lucide-react";
+
 
 
 export const Route = createFileRoute("/_app/outreach/reach")({
