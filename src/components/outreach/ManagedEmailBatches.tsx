@@ -168,6 +168,7 @@ export function ManagedEmailBatches({
           </DialogFooter>
         </DialogContent>
       </Dialog>
-    </Card>
+    </Wrapper>
+
   );
 }
