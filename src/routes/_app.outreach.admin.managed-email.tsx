@@ -155,14 +155,14 @@ function ManagedEmailAdminPage() {
           <TableHeader>
             <TableRow>
               <TableHead>工单号 / 提交时间</TableHead>
-              <TableHead>客户企业 / 对接人</TableHead>
-              <TableHead>目标来源</TableHead>
-              <TableHead>推广产品 / 市场</TableHead>
+              <TableHead className="min-w-[180px]">客户企业 / 对接人</TableHead>
+              <TableHead className="min-w-[130px]">目标来源</TableHead>
+              <TableHead className="min-w-[150px]">推广产品 / 市场</TableHead>
               <TableHead>负责顾问</TableHead>
               <TableHead className="w-[200px]">执行进度</TableHead>
               <TableHead className="text-right">积分</TableHead>
               <TableHead>状态</TableHead>
-              <TableHead className="text-right">操作</TableHead>
+              <TableHead className="text-right min-w-[220px]">操作</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>

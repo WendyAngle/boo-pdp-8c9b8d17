@@ -228,9 +228,10 @@ function subscribe(cb: () => void) {
 }
 
 const getVersion = () => version;
+const getServerVersion = () => 0;
 
 export function useManagedOrders(): ManagedOrder[] {
-  useSyncExternalStore(subscribe, getVersion, getVersion);
+  useSyncExternalStore(subscribe, getVersion, getServerVersion);
   return orders;
 }
 
