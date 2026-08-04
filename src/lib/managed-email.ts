@@ -282,6 +282,12 @@ function seed(): ManagedOrder[] {
       order.exec.delivery.refill = order.exec.delivery.bounce;
       order.exec.daily = buildDaily(order.exec, order.sent);
       order.exec.logs = buildLogs(order.exec.delivery.sent);
+      order.exec.mailboxUsage = spreadUsage(
+        order.exec.mailboxUsage,
+        order.exec.delivery.sent,
+        order.exec.delivery.success,
+        order.exec.delivery.bounce,
+      );
       order.acceptedAt = order.acceptedAt ?? order.createdAt;
     }
     return order;
