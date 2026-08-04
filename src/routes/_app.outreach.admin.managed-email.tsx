@@ -75,6 +75,8 @@ function ManagedEmailAdminPage() {
   const [progressOf, setProgressOf] = useState<ManagedOrder | null>(null);
   const [progressVal, setProgressVal] = useState("");
   const [cancelOf, setCancelOf] = useState<ManagedOrder | null>(null);
+  const [rejectOf, setRejectOf] = useState<ManagedOrder | null>(null);
+  const [rejectReason, setRejectReason] = useState("");
   const [cancelReason, setCancelReason] = useState("");
 
   const rows = useMemo(() => {
