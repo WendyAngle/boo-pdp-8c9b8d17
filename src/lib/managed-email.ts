@@ -24,6 +24,16 @@ export type ManagedStatus =
 /** 文案模式：顾问代写 / 客户提供 */
 export type ManagedCopyMode = "ours" | "client";
 
+/** 客户在提单时自备的邮件文案（copyMode = client） */
+export type ManagedClientCopy = {
+  subject: string;
+  body: string;
+  lang: string;
+  translatedSubject?: string;
+  translatedBody?: string;
+  aiGenerated?: boolean;
+};
+
 export type ManagedOrder = {
   id: string;
   orderNo: string;
@@ -38,6 +48,8 @@ export type ManagedOrder = {
   /** 目标关键词（B 档寻源用） */
   keywords?: string;
   copyMode: ManagedCopyMode;
+  /** 使用自有文案时，客户提交的文案内容 */
+  clientCopy?: ManagedClientCopy;
   /** 期望开始日期 YYYY-MM-DD */
   expectStartAt?: string;
   /** 每日发送上限，0/空表示按邮箱健康度自动 */
@@ -319,6 +331,7 @@ export function createManagedOrder(input: {
   market?: string;
   keywords?: string;
   copyMode?: ManagedCopyMode;
+  clientCopy?: ManagedClientCopy;
   expectStartAt?: string;
   dailyCap?: number;
   contact: string;
@@ -337,6 +350,7 @@ export function createManagedOrder(input: {
     market: input.market,
     keywords: input.keywords,
     copyMode: input.copyMode ?? "ours",
+    clientCopy: input.clientCopy,
     expectStartAt: input.expectStartAt,
     dailyCap: input.dailyCap,
     contact: input.contact,
@@ -414,13 +428,15 @@ function initExec(o: ManagedOrder): ManagedExec {
     copy: {
       subject:
         o.copyMode === "client"
-          ? "（使用客户提供文案，待录入）"
+          ? o.clientCopy?.translatedSubject?.trim() ||
+            o.clientCopy?.subject ||
+            "（使用客户提供文案，待录入）"
           : `${o.product} — supplier introduction from ${o.company}`,
       body:
         o.copyMode === "client"
-          ? ""
+          ? o.clientCopy?.translatedBody?.trim() || o.clientCopy?.body || ""
           : `Hi there,\n\nWe are a China-based manufacturer of ${o.product}. ...`,
-      lang: "en",
+      lang: o.copyMode === "client" ? (o.clientCopy?.lang ?? "en") : "en",
       confirmed: false,
     },
     schedule: {
