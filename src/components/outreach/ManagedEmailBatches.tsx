@@ -23,6 +23,7 @@ const STATUS_CLS: Record<ManagedStatus, string> = {
   running: "bg-blue-50 text-blue-700 border-blue-200",
   completed: "bg-emerald-50 text-emerald-700 border-emerald-200",
   cancelled: "bg-muted text-muted-foreground border-border",
+  rejected: "bg-rose-50 text-rose-700 border-rose-200",
 };
 
 /** 用户侧：邮件托管批次进度与中途叫停 */
