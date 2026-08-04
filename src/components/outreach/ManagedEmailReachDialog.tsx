@@ -234,8 +234,8 @@ export function ManagedEmailReachDialog({
               className="grid grid-cols-2 gap-2"
             >
               {[
-                { k: "ours", t: "我方撰写（推荐）", d: "中文文案 + 目标语言翻译，确认后发送" },
-                { k: "client", t: "使用我的文案", d: "受理后由顾问与你确认文案内容" },
+                { k: "ours", t: "顾问代写（推荐）", d: "由营销顾问撰写中文文案 + 目标语言翻译，确认后发送" },
+                { k: "client", t: "使用自有文案", d: "你提供文案内容，受理后由顾问与你确认" },
               ].map((i) => (
                 <label
                   key={i.k}
