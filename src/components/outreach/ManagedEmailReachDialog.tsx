@@ -85,8 +85,12 @@ export function ManagedEmailReachDialog({
   const qtyNum = Number(qty) || 0;
   const qtyValid = qtyNum >= min;
   const cost = useMemo(() => qtyNum * CREDIT_PER_TARGET, [qtyNum]);
-  const hasOwnCopy = draft.subject.trim().length > 0 && draft.body.trim().length > 0;
-  const canSubmit = qtyValid && product.trim() && contact.trim();
+  const copyReady =
+    draft.subject.trim().length > 0 &&
+    draft.body.trim().length > 0 &&
+    draft.translatedSubject.trim().length > 0 &&
+    draft.translatedBody.trim().length > 0;
+  const canSubmit = qtyValid && product.trim() && contact.trim() && copyReady;
 
   const submit = () => {
     if (!canSubmit) return;
@@ -96,18 +100,14 @@ export function ManagedEmailReachDialog({
       product: product.trim(),
       market: market.trim() || undefined,
       keywords: keywords.trim() || undefined,
-      copyMode: hasOwnCopy ? "client" : "ours",
-      clientCopy: hasOwnCopy
-        ? {
-            subject: draft.subject.trim(),
-            body: draft.body.trim(),
-            lang: draft.lang,
-            translatedSubject: draft.translatedSubject.trim() || undefined,
-            translatedBody: draft.translatedBody.trim() || undefined,
-            aiGenerated: draft.aiGenerated,
-          }
-        : undefined,
-
+      copy: {
+        subject: draft.subject.trim(),
+        body: draft.body.trim(),
+        lang: draft.lang,
+        translatedSubject: draft.translatedSubject.trim(),
+        translatedBody: draft.translatedBody.trim(),
+        aiGenerated: draft.aiGenerated,
+      },
       expectStartAt: expectStartAt || undefined,
       dailyCap: Number(dailyCap) || undefined,
       contact: contact.trim(),
@@ -115,11 +115,12 @@ export function ManagedEmailReachDialog({
     });
     onOpenChange(false);
     toast.success(`托管需求已提交（${order.orderNo}）`, {
-      description: `${SOURCE_META[source].label}｜${qtyNum} 个目标，已扣除 ${cost.toLocaleString()} 积分。营销团队将在 1 个工作日内受理并与你确认名单与文案。`,
+      description: `${SOURCE_META[source].label}｜${qtyNum} 个目标，已扣除 ${cost.toLocaleString()} 积分。平台受理后由系统自动寻源并按你提交的文案发送。`,
     });
     setNote("");
     setDraft(emptyEmailCopyDraft());
   };
+
 
 
   return (
