@@ -493,8 +493,8 @@ function buildDaily(exec: ManagedExec, success: number): ManagedDailyLog[] {
       success: done,
       bounce,
       refill: bounce,
-including: false as never,
-    } as ManagedDailyLog);
+    });
+
   }
   return out;
 }
