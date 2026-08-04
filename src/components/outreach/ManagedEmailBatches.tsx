@@ -30,20 +30,53 @@ const STATUS_CLS: Record<ManagedStatus, string> = {
 };
 
 /** 用户侧：邮件托管批次进度与中途叫停 */
-export function ManagedEmailBatches() {
+export function ManagedEmailBatches({
+  embedded = false,
+  onCreate,
+}: {
+  /** 作为 Tab 内容嵌入时不再包一层卡片与标题 */
+  embedded?: boolean;
+  onCreate?: () => void;
+}) {
   const orders = useManagedOrders();
   const [cancelOf, setCancelOf] = useState<ManagedOrder | null>(null);
-  if (orders.length === 0) return null;
+
+  if (orders.length === 0) {
+    if (!embedded) return null;
+    return (
+      <Card className="p-16 flex flex-col items-center text-center gap-3">
+        <div className="h-14 w-14 rounded-full bg-muted flex items-center justify-center">
+          <Handshake className="h-7 w-7 text-muted-foreground" />
+        </div>
+        <div className="text-base font-medium">暂无邮件托管批次</div>
+        <div className="text-sm text-muted-foreground max-w-md">
+          提交托管需求后，由平台营销团队以你的企业名义代为执行，
+          {MANAGED_EMAIL_COST_PER_TARGET} 积分/目标，支持中途叫停并退回未执行部分
+        </div>
+        {onCreate && (
+          <Button size="sm" className="mt-2 gap-1.5" onClick={onCreate}>
+            <Handshake className="h-4 w-4" />
+            提交托管需求
+          </Button>
+        )}
+      </Card>
+    );
+  }
+
+  const Wrapper = embedded ? "div" : Card;
 
   return (
-    <Card className="p-5 space-y-4">
-      <div className="flex items-center gap-2">
-        <Handshake className="h-4 w-4 text-primary" />
-        <span className="font-medium text-sm">邮件托管批次</span>
-        <span className="text-xs text-muted-foreground">
-          由平台营销团队以你的企业名义代为执行，{MANAGED_EMAIL_COST_PER_TARGET} 积分/目标
-        </span>
-      </div>
+    <Wrapper className={cn(embedded ? "space-y-4" : "p-5 space-y-4")}>
+      {!embedded && (
+        <div className="flex items-center gap-2">
+          <Handshake className="h-4 w-4 text-primary" />
+          <span className="font-medium text-sm">邮件托管批次</span>
+          <span className="text-xs text-muted-foreground">
+            由平台营销团队以你的企业名义代为执行，{MANAGED_EMAIL_COST_PER_TARGET} 积分/目标
+          </span>
+        </div>
+      )}
+
 
       <div className="grid gap-3">
         {orders.map((o) => {
