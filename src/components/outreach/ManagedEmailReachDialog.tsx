@@ -66,7 +66,7 @@ export function ManagedEmailReachDialog({
   const [product, setProduct] = useState("");
   const [market, setMarket] = useState("");
   const [keywords, setKeywords] = useState("");
-  const [copyMode, setCopyMode] = useState<"ours" | "client">("ours");
+  
   const [draft, setDraft] = useState<EmailCopyDraft>(emptyEmailCopyDraft());
   const [expectStartAt, setExpectStartAt] = useState("");
   const [dailyCap, setDailyCap] = useState("");
@@ -77,7 +77,7 @@ export function ManagedEmailReachDialog({
     if (!open) return;
     setSource(defaultSource);
     setQty(String(Math.max(defaultQty ?? 0, SOURCE_META[defaultSource].min)));
-    setCopyMode("ours");
+    
     setDraft(emptyEmailCopyDraft());
   }, [open, defaultSource, defaultQty]);
 
@@ -85,9 +85,8 @@ export function ManagedEmailReachDialog({
   const qtyNum = Number(qty) || 0;
   const qtyValid = qtyNum >= min;
   const cost = useMemo(() => qtyNum * CREDIT_PER_TARGET, [qtyNum]);
-  const copyReady =
-    copyMode === "ours" || (draft.subject.trim().length > 0 && draft.body.trim().length > 0);
-  const canSubmit = qtyValid && product.trim() && contact.trim() && copyReady;
+  const hasOwnCopy = draft.subject.trim().length > 0 && draft.body.trim().length > 0;
+  const canSubmit = qtyValid && product.trim() && contact.trim();
 
   const submit = () => {
     if (!canSubmit) return;
@@ -97,18 +96,18 @@ export function ManagedEmailReachDialog({
       product: product.trim(),
       market: market.trim() || undefined,
       keywords: keywords.trim() || undefined,
-      copyMode,
-      clientCopy:
-        copyMode === "client"
-          ? {
-              subject: draft.subject.trim(),
-              body: draft.body.trim(),
-              lang: draft.lang,
-              translatedSubject: draft.translatedSubject.trim() || undefined,
-              translatedBody: draft.translatedBody.trim() || undefined,
-              aiGenerated: draft.aiGenerated,
-            }
-          : undefined,
+      copyMode: hasOwnCopy ? "client" : "ours",
+      clientCopy: hasOwnCopy
+        ? {
+            subject: draft.subject.trim(),
+            body: draft.body.trim(),
+            lang: draft.lang,
+            translatedSubject: draft.translatedSubject.trim() || undefined,
+            translatedBody: draft.translatedBody.trim() || undefined,
+            aiGenerated: draft.aiGenerated,
+          }
+        : undefined,
+
       expectStartAt: expectStartAt || undefined,
       dailyCap: Number(dailyCap) || undefined,
       contact: contact.trim(),
@@ -249,45 +248,20 @@ export function ManagedEmailReachDialog({
           </div>
 
           <div className="space-y-2">
-            <Label>文案方式</Label>
-            <RadioGroup
-              value={copyMode}
-              onValueChange={(v) => setCopyMode(v as "ours" | "client")}
-              className="grid grid-cols-2 gap-2"
-            >
-              {[
-                { k: "ours", t: "顾问代写（推荐）", d: "由营销顾问撰写中文文案 + 目标语言翻译，确认后发送" },
-                { k: "client", t: "使用自有文案", d: "你提供文案内容，受理后由顾问与你确认" },
-              ].map((i) => (
-                <label
-                  key={i.k}
-                  className={cn(
-                    "flex items-start gap-2 rounded-lg border p-3 cursor-pointer transition-colors",
-                    copyMode === i.k ? "border-primary bg-primary/5" : "border-border hover:bg-muted/40",
-                  )}
-                >
-                  <RadioGroupItem value={i.k} className="mt-0.5" />
-                  <div className="min-w-0">
-                    <div className="text-sm font-medium">{i.t}</div>
-                    <div className="text-xs text-muted-foreground mt-0.5">{i.d}</div>
-                  </div>
-                </label>
-              ))}
-            </RadioGroup>
-            {copyMode === "client" && (
-              <div className="rounded-lg border border-border bg-muted/20 p-3">
-                <EmailComposeFields
-                  value={draft}
-                  onChange={setDraft}
-                  scene="开发信"
-                  aiHint={{ product: product.trim(), market: market.trim() }}
-                />
-                <p className="mt-2 text-[11px] text-muted-foreground">
-                  提交后顾问将按此文案执行；如未填写目标语言译文，顾问会在执行前补充翻译并与你确认。
-                </p>
-              </div>
-            )}
+            <Label>撰写内容（选填）</Label>
+            <div className="rounded-lg border border-border bg-muted/20 p-3">
+              <EmailComposeFields
+                value={draft}
+                onChange={setDraft}
+                scene="开发信"
+                aiHint={{ product: product.trim(), market: market.trim() }}
+              />
+              <p className="mt-2 text-[11px] text-muted-foreground">
+                填写后顾问将按此文案执行；留空则由营销顾问代写并在执行前与你确认。如未填写目标语言译文，顾问会补充翻译。
+              </p>
+            </div>
           </div>
+
 
 
           <div className="space-y-2">
