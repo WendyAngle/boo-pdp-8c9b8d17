@@ -82,6 +82,10 @@ export function AiVoiceCallDialog({
   // step 4
   const [launch, setLaunch] = useState<"now" | "scheduled">("now");
   const [scheduledAt, setScheduledAt] = useState("");
+  const [ramp, setRamp] = useState(true);
+  const [rampInit, setRampInit] = useState("5");
+  const [rampStep, setRampStep] = useState("5");
+  const [rampInterval, setRampInterval] = useState("30");
 
   useEffect(() => {
     if (!open) return;
@@ -97,6 +101,10 @@ export function AiVoiceCallDialog({
     setMaxRetry("3");
     setLaunch("now");
     setScheduledAt("");
+    setRamp(true);
+    setRampInit("5");
+    setRampStep("5");
+    setRampInterval("30");
     setList(targets);
   }, [open, targets]);
 
