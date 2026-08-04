@@ -21,6 +21,11 @@ import {
   MANAGED_MIN_OWN,
   createManagedOrder,
 } from "@/lib/managed-email";
+import {
+  EmailComposeFields,
+  emptyEmailCopyDraft,
+  type EmailCopyDraft,
+} from "@/components/outreach/EmailComposeFields";
 
 type SourceKind = "own" | "ai";
 
@@ -62,6 +67,7 @@ export function ManagedEmailReachDialog({
   const [market, setMarket] = useState("");
   const [keywords, setKeywords] = useState("");
   const [copyMode, setCopyMode] = useState<"ours" | "client">("ours");
+  const [draft, setDraft] = useState<EmailCopyDraft>(emptyEmailCopyDraft());
   const [expectStartAt, setExpectStartAt] = useState("");
   const [dailyCap, setDailyCap] = useState("");
   const [contact, setContact] = useState("");
@@ -71,13 +77,17 @@ export function ManagedEmailReachDialog({
     if (!open) return;
     setSource(defaultSource);
     setQty(String(Math.max(defaultQty ?? 0, SOURCE_META[defaultSource].min)));
+    setCopyMode("ours");
+    setDraft(emptyEmailCopyDraft());
   }, [open, defaultSource, defaultQty]);
 
   const min = SOURCE_META[source].min;
   const qtyNum = Number(qty) || 0;
   const qtyValid = qtyNum >= min;
   const cost = useMemo(() => qtyNum * CREDIT_PER_TARGET, [qtyNum]);
-  const canSubmit = qtyValid && product.trim() && contact.trim();
+  const copyReady =
+    copyMode === "ours" || (draft.subject.trim().length > 0 && draft.body.trim().length > 0);
+  const canSubmit = qtyValid && product.trim() && contact.trim() && copyReady;
 
   const submit = () => {
     if (!canSubmit) return;
@@ -88,6 +98,17 @@ export function ManagedEmailReachDialog({
       market: market.trim() || undefined,
       keywords: keywords.trim() || undefined,
       copyMode,
+      clientCopy:
+        copyMode === "client"
+          ? {
+              subject: draft.subject.trim(),
+              body: draft.body.trim(),
+              lang: draft.lang,
+              translatedSubject: draft.translatedSubject.trim() || undefined,
+              translatedBody: draft.translatedBody.trim() || undefined,
+              aiGenerated: draft.aiGenerated,
+            }
+          : undefined,
       expectStartAt: expectStartAt || undefined,
       dailyCap: Number(dailyCap) || undefined,
       contact: contact.trim(),
@@ -98,6 +119,7 @@ export function ManagedEmailReachDialog({
       description: `${SOURCE_META[source].label}｜${qtyNum} 个目标，已扣除 ${cost.toLocaleString()} 积分。营销团队将在 1 个工作日内受理并与你确认名单与文案。`,
     });
     setNote("");
+    setDraft(emptyEmailCopyDraft());
   };
 
 
@@ -252,6 +274,19 @@ export function ManagedEmailReachDialog({
                 </label>
               ))}
             </RadioGroup>
+            {copyMode === "client" && (
+              <div className="rounded-lg border border-border bg-muted/20 p-3">
+                <EmailComposeFields
+                  value={draft}
+                  onChange={setDraft}
+                  scene="开发信"
+                  aiHint={{ product: product.trim(), market: market.trim() }}
+                />
+                <p className="mt-2 text-[11px] text-muted-foreground">
+                  提交后顾问将按此文案执行；如未填写目标语言译文，顾问会在执行前补充翻译并与你确认。
+                </p>
+              </div>
+            )}
           </div>
 
 
