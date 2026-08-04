@@ -101,7 +101,6 @@ export function AiVoiceCallDialog({
     setMaxRetry("3");
     setLaunch("now");
     setScheduledAt("");
-    setRamp(true);
     setRampInit("5");
     setRampStep("5");
     setRampInterval("30");
