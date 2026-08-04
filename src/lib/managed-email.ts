@@ -156,11 +156,12 @@ export type ManagedEsp = {
   dailyQuota: number;
 };
 
+/** 与「管理后台 → 邮件服务商 / 邮件账号」保持一致的服务商 ID */
 export const MANAGED_ESPS: ManagedEsp[] = [
-  { id: "ses", name: "Amazon SES", domain: "boo-mail.com", dailyQuota: 5000 },
-  { id: "sendgrid", name: "SendGrid", domain: "boo-trade.com", dailyQuota: 3000 },
-  { id: "mailgun", name: "Mailgun", domain: "boo-global.com", dailyQuota: 2000 },
-  { id: "aliyun", name: "阿里云邮件推送", domain: "boo-cn.com", dailyQuota: 2000 },
+  { id: "aws-ses", name: "Amazon SES", domain: "boo-mail.com", dailyQuota: 5000 },
+  { id: "sendgrid", name: "SendGrid 主账号", domain: "boo-trade.com", dailyQuota: 3000 },
+  { id: "mailgun", name: "Mailgun 备用", domain: "boo-global.com", dailyQuota: 2000 },
+  { id: "aliyun-dm", name: "阿里云邮件推送", domain: "boo-cn.com", dailyQuota: 2000 },
 ];
 
 export function espName(id: string) {
@@ -177,19 +178,20 @@ export type ManagedMailbox = {
 };
 
 export const MANAGED_MAILBOX_POOL: ManagedMailbox[] = [
-  { email: "sales01@boo-mail.com", esp: "ses", dailyLimit: 300, health: "good" },
-  { email: "sales02@boo-mail.com", esp: "ses", dailyLimit: 300, health: "good" },
+  { email: "sales01@boo-mail.com", esp: "aws-ses", dailyLimit: 300, health: "good" },
+  { email: "sales02@boo-mail.com", esp: "aws-ses", dailyLimit: 300, health: "good" },
   { email: "biz01@boo-trade.com", esp: "sendgrid", dailyLimit: 250, health: "warn" },
   { email: "biz02@boo-trade.com", esp: "sendgrid", dailyLimit: 250, health: "good" },
   { email: "market01@boo-global.com", esp: "mailgun", dailyLimit: 200, health: "good" },
-  { email: "market02@boo-cn.com", esp: "aliyun", dailyLimit: 200, health: "good" },
+  { email: "market02@boo-cn.com", esp: "aliyun-dm", dailyLimit: 200, health: "good" },
 ];
 
 export const MANAGED_MAILBOXES = MANAGED_MAILBOX_POOL.map((m) => m.email);
 
 export function mailboxEsp(email: string) {
-  return MANAGED_MAILBOX_POOL.find((m) => m.email === email)?.esp ?? "ses";
+  return MANAGED_MAILBOX_POOL.find((m) => m.email === email)?.esp ?? "aws-ses";
 }
+
 
 
 /** 处于流程中的状态 */
