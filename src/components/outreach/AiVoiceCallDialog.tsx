@@ -10,6 +10,7 @@ import {
   Clock,
   Rocket,
   CalendarClock,
+  TrendingUp,
 } from "lucide-react";
 import {
   Dialog,
@@ -82,6 +83,10 @@ export function AiVoiceCallDialog({
   // step 4
   const [launch, setLaunch] = useState<"now" | "scheduled">("now");
   const [scheduledAt, setScheduledAt] = useState("");
+  const [ramp, setRamp] = useState(true);
+  const [rampInit, setRampInit] = useState("5");
+  const [rampStep, setRampStep] = useState("5");
+  const [rampInterval, setRampInterval] = useState("30");
 
   useEffect(() => {
     if (!open) return;
@@ -97,6 +102,10 @@ export function AiVoiceCallDialog({
     setMaxRetry("3");
     setLaunch("now");
     setScheduledAt("");
+    setRamp(true);
+    setRampInit("5");
+    setRampStep("5");
+    setRampInterval("30");
     setList(targets);
   }, [open, targets]);
 
@@ -151,7 +160,13 @@ export function AiVoiceCallDialog({
 
   const step1Valid = name.trim().length > 0 && name.length <= 100 && list.length > 0;
   const step2Valid = script.trim().length > 0 && startTime < endTime;
-  const step4Valid = launch === "now" || scheduledAt.length > 0;
+  const rampValid =
+    !ramp ||
+    (Number(rampInit) >= 1 &&
+      Number(rampInit) <= Number(concurrency) &&
+      Number(rampStep) > 0 &&
+      Number(rampInterval) > 0);
+  const step4Valid = (launch === "now" || scheduledAt.length > 0) && rampValid;
 
   const canNext = useMemo(() => {
     if (step === 0) return step1Valid;
@@ -166,8 +181,8 @@ export function AiVoiceCallDialog({
       launch === "now" ? `外呼任务「${name.trim()}」已启动` : `外呼任务「${name.trim()}」已定时`,
       {
         description: `${sceneLabel}｜${list.length} 个号码｜并发 ${concurrency} 路｜${startTime}-${endTime}｜最多重试 ${maxRetry} 次${
-          launch === "scheduled" ? `｜启动时间 ${scheduledAt.replace("T", " ")}` : ""
-        }`,
+          ramp ? `｜灰度启动 ${rampInit} 路起，每 ${rampInterval} 秒 +${rampStep} 路` : ""
+        }${launch === "scheduled" ? `｜启动时间 ${scheduledAt.replace("T", " ")}` : ""}`,
       },
     );
   };
@@ -511,6 +526,76 @@ export function AiVoiceCallDialog({
                   </div>
                 </label>
               </RadioGroup>
+
+              <div className="rounded-lg border border-border p-3 space-y-3">
+                <div className="text-sm font-medium">灰度启动</div>
+                <label className="flex items-start gap-3 cursor-pointer">
+                  <Checkbox
+                    checked={ramp}
+                    onCheckedChange={(v) => setRamp(v === true)}
+                    className="mt-0.5"
+                  />
+                  <div className="min-w-0">
+                    <div className="text-sm font-medium flex items-center gap-1.5">
+                      <TrendingUp className="h-4 w-4 text-primary" />
+                      逐步爬坡至目标并发
+                      <Badge variant="secondary" className="text-[11px]">
+                        推荐
+                      </Badge>
+                    </div>
+                    <div className="text-xs text-muted-foreground mt-0.5">
+                      从较低并发起步逐步提升至并发上限（{concurrency} 路），降低线路风险、提升接通率。
+                    </div>
+                  </div>
+                </label>
+
+                {ramp && (
+                  <div className="grid gap-3 pl-7 sm:grid-cols-2">
+                    <div className="space-y-1.5">
+                      <Label className="text-xs">初始并发</Label>
+                      <div className="flex items-center gap-2">
+                        <Input
+                          type="number"
+                          min={1}
+                          max={Number(concurrency)}
+                          value={rampInit}
+                          onChange={(e) => setRampInit(e.target.value)}
+                          className="w-24"
+                        />
+                        <span className="text-sm text-muted-foreground">路</span>
+                      </div>
+                    </div>
+                    <div className="space-y-1.5">
+                      <Label className="text-xs">爬坡节奏</Label>
+                      <div className="flex items-center gap-2">
+                        <span className="text-sm text-muted-foreground">每</span>
+                        <Input
+                          type="number"
+                          min={10}
+                          step={10}
+                          value={rampInterval}
+                          onChange={(e) => setRampInterval(e.target.value)}
+                          className="w-20"
+                        />
+                        <span className="text-sm text-muted-foreground">秒增加</span>
+                        <Input
+                          type="number"
+                          min={1}
+                          value={rampStep}
+                          onChange={(e) => setRampStep(e.target.value)}
+                          className="w-20"
+                        />
+                        <span className="text-sm text-muted-foreground">路</span>
+                      </div>
+                    </div>
+                    {!rampValid && (
+                      <p className="text-xs text-destructive sm:col-span-2">
+                        初始并发需为 1 ~ {concurrency} 之间，爬坡步长与间隔需大于 0
+                      </p>
+                    )}
+                  </div>
+                )}
+              </div>
             </div>
           )}
         </div>
