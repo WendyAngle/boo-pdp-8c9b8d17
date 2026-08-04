@@ -77,7 +77,7 @@ export function ManagedEmailReachDialog({
     if (!open) return;
     setSource(defaultSource);
     setQty(String(Math.max(defaultQty ?? 0, SOURCE_META[defaultSource].min)));
-    setCopyMode("ours");
+    
     setDraft(emptyEmailCopyDraft());
   }, [open, defaultSource, defaultQty]);
 
