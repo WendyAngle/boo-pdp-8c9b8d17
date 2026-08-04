@@ -84,7 +84,7 @@ import {
 import { formatDateTime } from "@/lib/format-date";
 import { toast } from "sonner";
 import { ComposeSendDialog } from "@/components/ComposeSendDialog";
-import { ManagedEmailReachDialog } from "@/components/outreach/ManagedEmailReachDialog";
+
 import { recipientsFromFavorites, myContext } from "@/lib/message-vars";
 import { useLeadProfile } from "@/lib/lead-profile";
 import { useCurrentUser } from "@/lib/current-user";
