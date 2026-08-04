@@ -185,6 +185,36 @@ export function ManagedEmailReachDialog({
                 placeholder="如：东南亚、欧洲"
               />
             </div>
+            {source === "ai" && (
+              <div className="space-y-2">
+                <Label htmlFor="managed-keywords">目标关键词（选填）</Label>
+                <Input
+                  id="managed-keywords"
+                  value={keywords}
+                  onChange={(e) => setKeywords(e.target.value)}
+                  placeholder="如：portable power station, solar generator"
+                />
+              </div>
+            )}
+            <div className="space-y-2">
+              <Label htmlFor="managed-start">期望开始日期（选填）</Label>
+              <Input
+                id="managed-start"
+                type="date"
+                value={expectStartAt}
+                onChange={(e) => setExpectStartAt(e.target.value)}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="managed-cap">每日发送上限（选填）</Label>
+              <Input
+                id="managed-cap"
+                inputMode="numeric"
+                value={dailyCap}
+                onChange={(e) => setDailyCap(e.target.value.replace(/[^\d]/g, ""))}
+                placeholder="留空则按发信邮箱健康度自动排期"
+              />
+            </div>
             <div className="space-y-2">
               <Label htmlFor="managed-contact">对接人 / 联系方式</Label>
               <Input
@@ -195,6 +225,35 @@ export function ManagedEmailReachDialog({
               />
             </div>
           </div>
+
+          <div className="space-y-2">
+            <Label>文案方式</Label>
+            <RadioGroup
+              value={copyMode}
+              onValueChange={(v) => setCopyMode(v as "ours" | "client")}
+              className="grid grid-cols-2 gap-2"
+            >
+              {[
+                { k: "ours", t: "我方撰写（推荐）", d: "中文文案 + 目标语言翻译，确认后发送" },
+                { k: "client", t: "使用我的文案", d: "受理后由顾问与你确认文案内容" },
+              ].map((i) => (
+                <label
+                  key={i.k}
+                  className={cn(
+                    "flex items-start gap-2 rounded-lg border p-3 cursor-pointer transition-colors",
+                    copyMode === i.k ? "border-primary bg-primary/5" : "border-border hover:bg-muted/40",
+                  )}
+                >
+                  <RadioGroupItem value={i.k} className="mt-0.5" />
+                  <div className="min-w-0">
+                    <div className="text-sm font-medium">{i.t}</div>
+                    <div className="text-xs text-muted-foreground mt-0.5">{i.d}</div>
+                  </div>
+                </label>
+              ))}
+            </RadioGroup>
+          </div>
+
 
           <div className="space-y-2">
             <Label htmlFor="managed-note">补充说明（选填）</Label>
