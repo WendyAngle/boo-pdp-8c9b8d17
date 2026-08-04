@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react";
-import { createFileRoute } from "@tanstack/react-router";
-import { Handshake, Search, Users, Sparkles, Play, CheckCircle2, Ban, Info } from "lucide-react";
+import { createFileRoute, Link } from "@tanstack/react-router";
+import { Handshake, Search, Users, Sparkles, Play, CheckCircle2, Ban, Info, AlertTriangle, ArrowRight } from "lucide-react";
 import { toast } from "sonner";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -30,11 +30,13 @@ import {
   MANAGED_ASSIGNEES,
   MANAGED_EMAIL_COST_PER_TARGET,
   MANAGED_STATUS_LABEL,
+  MANAGED_ACTIVE_STATUS,
+  managedSla,
   type ManagedOrder,
   type ManagedStatus,
 } from "@/lib/managed-email";
 
-export const Route = createFileRoute("/_app/outreach/admin/managed-email")({
+export const Route = createFileRoute("/_app/outreach/admin/managed-email/")({
   head: () => ({
     meta: [
       { title: "邮件托管工单 | 出海大数据平台" },
@@ -56,6 +58,9 @@ export const Route = createFileRoute("/_app/outreach/admin/managed-email")({
 
 const STATUS_CLS: Record<ManagedStatus, string> = {
   pending: "bg-amber-50 text-amber-700 border-amber-200",
+  claimed: "bg-indigo-50 text-indigo-700 border-indigo-200",
+  confirming: "bg-violet-50 text-violet-700 border-violet-200",
+  queued: "bg-sky-50 text-sky-700 border-sky-200",
   running: "bg-blue-50 text-blue-700 border-blue-200",
   completed: "bg-emerald-50 text-emerald-700 border-emerald-200",
   cancelled: "bg-muted text-muted-foreground border-border",
@@ -175,7 +180,8 @@ function ManagedEmailAdminPage() {
             )}
             {rows.map((o) => {
               const pct = o.qty ? Math.round((o.sent / o.qty) * 100) : 0;
-              const active = o.status === "pending" || o.status === "running";
+              const active = MANAGED_ACTIVE_STATUS.includes(o.status);
+              const sla = managedSla(o);
               return (
                 <TableRow key={o.id}>
                   <TableCell>
@@ -241,6 +247,17 @@ function ManagedEmailAdminPage() {
                     <Badge variant="outline" className={cn("font-normal", STATUS_CLS[o.status])}>
                       {MANAGED_STATUS_LABEL[o.status]}
                     </Badge>
+                    {sla !== "ok" && (
+                      <div
+                        className={cn(
+                          "mt-1 inline-flex items-center gap-1 text-[11px]",
+                          sla === "overdue" ? "text-rose-600" : "text-amber-600",
+                        )}
+                      >
+                        <AlertTriangle className="h-3 w-3" />
+                        {sla === "overdue" ? "受理超时 >24h" : "交付超期预警"}
+                      </div>
+                    )}
                   </TableCell>
                   <TableCell className="text-right whitespace-nowrap">
                     {o.status === "pending" && (
@@ -251,7 +268,7 @@ function ManagedEmailAdminPage() {
                           className="h-8 gap-1"
                           onClick={() => {
                             acceptManagedOrder(o.id);
-                            toast.success(`工单 ${o.orderNo} 已受理，进入执行中`);
+                            toast.success(`工单 ${o.orderNo} 已受理，可进入执行台`);
                           }}
                         >
                           <Play className="h-3.5 w-3.5" />
@@ -269,6 +286,18 @@ function ManagedEmailAdminPage() {
                           驳回
                         </Button>
                       </>
+                    )}
+
+                    {active && o.status !== "pending" && (
+                      <Button asChild size="sm" variant="outline" className="h-8 gap-1 mr-1">
+                        <Link
+                          to="/outreach/admin/managed-email/$orderId"
+                          params={{ orderId: o.id }}
+                        >
+                          执行台
+                          <ArrowRight className="h-3.5 w-3.5" />
+                        </Link>
+                      </Button>
                     )}
 
                     {active && (
