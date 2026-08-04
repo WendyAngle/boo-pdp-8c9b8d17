@@ -281,15 +281,17 @@ export function ComposeSendDialog({
     for (const r of active) {
       const finalSubject = isEmail ? renderTemplate(sendSubject, r.ctx) : undefined;
       const finalContent = renderTemplate(sendContent, r.ctx);
-      // 未解锁时先扣查看费并永久解锁（幂等）
-      performReachAutoUnlocks({
-        targetKind: r.targetKind,
-        targetId: r.targetId,
-        targetName: r.name,
-        parentRef: r.parentRef,
-        detail: r.address,
-        fields: isEmail ? [{ field: "email" }] : [{ field: "phone" }],
-      });
+      // 未解锁时先扣查看费并永久解锁（幂等）；手动添加的地址无需解锁
+      if (!isManualRecipient(r)) {
+        performReachAutoUnlocks({
+          targetKind: r.targetKind,
+          targetId: r.targetId,
+          targetName: r.name,
+          parentRef: r.parentRef,
+          detail: r.address,
+          fields: isEmail ? [{ field: "email" }] : [{ field: "phone" }],
+        });
+      }
       createReach({
         targetKind: r.targetKind,
         targetId: r.targetId,
