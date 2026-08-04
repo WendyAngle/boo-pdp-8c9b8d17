@@ -776,6 +776,7 @@ function advance(o: ManagedOrder): ManagedOrder | null {
       refill: exec.delivery.refill + bounce,
     },
     daily,
+    mailboxUsage: spreadUsage(execMailboxUsage(exec), attempts, step, bounce),
     logs: buildLogs(exec.delivery.sent + attempts),
     exhausted,
     lastTickAt: new Date().toISOString(),
