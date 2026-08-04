@@ -359,40 +359,6 @@ function ReachPage() {
         />
       </div>
 
-      {/* 任务来源说明 */}
-      <Card className="p-4 border-primary/20 bg-primary/5">
-        <div className="flex items-start gap-3">
-          <div className="h-8 w-8 rounded-lg bg-primary/10 text-primary flex items-center justify-center shrink-0">
-            <Info className="h-4 w-4" />
-          </div>
-          <div className="text-sm space-y-1.5 flex-1 min-w-0">
-            <div className="font-medium">任务来源说明</div>
-            <ol className="text-xs text-muted-foreground space-y-1 list-decimal pl-4">
-              <li>
-                「我的收藏」勾选目标后发起的
-                <span className="text-foreground font-medium mx-1">批量社媒私信</span>
-                ／邮件／短信／WhatsApp 触达（存量名单群发）。
-              </li>
-              <li>
-                本页
-                <span className="text-foreground font-medium mx-1">社媒拓客触达</span>
-                由系统按推广产品与关键词自动寻找新目标账号（增量拓客）。
-              </li>
-              <li>
-                本页
-                <span className="text-foreground font-medium mx-1">邮件托管触达</span>
-                由平台营销团队以你的企业名义、使用平台发信资源代为执行（自有名单起做
-                200 个目标，AI 智能寻源起做 500 个目标；统一 10 积分/目标，支持中途叫停并退回未执行部分）。
-              </li>
-              <li>
-                列表仅展示
-                <span className="text-foreground font-medium mx-1">触达成功</span>
-                的数据；点击任务行的目标数可查看该任务的目标资料明细。
-              </li>
-            </ol>
-          </div>
-        </div>
-      </Card>
 
       {/* Tab：自助触达任务 / 邮件托管批次 */}
       <Tabs value={tab} onValueChange={(v) => setTab(v as typeof tab)} className="space-y-4">
@@ -436,11 +402,28 @@ function ReachPage() {
           </div>
         </div>
 
-        <TabsContent value="managed" className="mt-0">
+        <TabsContent value="managed" className="mt-0 space-y-4">
+          <SourceNote
+            title="邮件托管批次说明"
+            items={[
+              <>由平台营销团队以你的企业名义、使用平台发信资源代为执行，全流程含目标确认、文案、排期与执行。</>,
+              <>自有名单起做 <b className="text-foreground">200</b> 个目标，AI 智能寻源起做 <b className="text-foreground">500</b> 个目标；统一 <b className="text-foreground">10 积分/目标</b>。</>,
+              <>支持中途叫停，未执行部分积分原路退回；批次进度与回执在本页跟踪。</>,
+            ]}
+          />
           <ManagedEmailBatches embedded onCreate={() => setManagedEmailOpen(true)} />
         </TabsContent>
 
-        <TabsContent value="self" className="mt-0">
+        <TabsContent value="self" className="mt-0 space-y-4">
+          <SourceNote
+            title="自助触达任务来源"
+            items={[
+              <>「我的收藏」勾选目标后发起的邮件／短信／WhatsApp／批量社媒私信（存量名单群发）。</>,
+              <>本页<b className="text-foreground mx-1">社媒拓客触达</b>由系统按推广产品与关键词自动寻找新目标账号（增量拓客）。</>,
+              <>列表仅展示<b className="text-foreground mx-1">触达成功</b>的数据；点击任务行的目标数可查看目标资料明细。</>,
+            ]}
+          />
+
       <Card className="p-0 overflow-hidden">
 
         {/* 筛选 */}
@@ -620,7 +603,28 @@ function ReachPage() {
 }
 
 
+function SourceNote({ title, items }: { title: string; items: React.ReactNode[] }) {
+  return (
+    <Card className="p-4 border-primary/20 bg-primary/5">
+      <div className="flex items-start gap-3">
+        <div className="h-8 w-8 rounded-lg bg-primary/10 text-primary flex items-center justify-center shrink-0">
+          <Info className="h-4 w-4" />
+        </div>
+        <div className="text-sm space-y-1.5 flex-1 min-w-0">
+          <div className="font-medium">{title}</div>
+          <ol className="text-xs text-muted-foreground space-y-1 list-decimal pl-4">
+            {items.map((it, i) => (
+              <li key={i}>{it}</li>
+            ))}
+          </ol>
+        </div>
+      </div>
+    </Card>
+  );
+}
+
 function KpiCard({
+
   icon,
   label,
   value,
