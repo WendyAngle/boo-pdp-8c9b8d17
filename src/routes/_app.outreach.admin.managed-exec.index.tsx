@@ -180,7 +180,7 @@ function ManagedExecPage() {
             {rows.map((o) => {
               const exec = o.exec!;
               const pct = o.qty ? Math.round((o.sent / o.qty) * 100) : 0;
-              const abnormal = isAbnormal(o);
+              
               return (
                 <TableRow key={o.id}>
                   <TableCell>
@@ -209,10 +209,10 @@ function ManagedExecPage() {
                   </TableCell>
                   <TableCell>
                     <ManagedStatusBadge status={o.status} />
-                    {abnormal && (
+                    {exec.exhausted && (
                       <div className="mt-1 inline-flex items-center gap-1 text-[11px] text-amber-600">
                         <AlertTriangle className="h-3 w-3" />
-                        {exec.exhausted ? "候选池不足" : "已暂停"}
+                        候选池不足
                       </div>
                     )}
                   </TableCell>
