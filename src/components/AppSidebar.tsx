@@ -58,6 +58,10 @@ const menu: Root[] = [
     label: "管理后台",
     icon: ShieldCheck,
     children: [
+      {
+        label: "运营管理",
+        children: [{ label: "邮件托管工单", to: "/outreach/admin/managed-email" }],
+      },
       { label: "邮件服务商", to: "/outreach/admin/email-providers", children: [] },
       { label: "邮件账号", to: "/outreach/admin/email-accounts", children: [] },
       { label: "短信服务商", to: "/outreach/admin/sms-providers", children: [] },
