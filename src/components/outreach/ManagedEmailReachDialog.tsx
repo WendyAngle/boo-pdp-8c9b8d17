@@ -60,6 +60,10 @@ export function ManagedEmailReachDialog({
   const [qty, setQty] = useState(String(defaultQty ?? MANAGED_MIN_OWN));
   const [product, setProduct] = useState("");
   const [market, setMarket] = useState("");
+  const [keywords, setKeywords] = useState("");
+  const [copyMode, setCopyMode] = useState<"ours" | "client">("ours");
+  const [expectStartAt, setExpectStartAt] = useState("");
+  const [dailyCap, setDailyCap] = useState("");
   const [contact, setContact] = useState("");
   const [note, setNote] = useState("");
 
@@ -82,6 +86,10 @@ export function ManagedEmailReachDialog({
       qty: qtyNum,
       product: product.trim(),
       market: market.trim() || undefined,
+      keywords: keywords.trim() || undefined,
+      copyMode,
+      expectStartAt: expectStartAt || undefined,
+      dailyCap: Number(dailyCap) || undefined,
       contact: contact.trim(),
       note: note.trim() || undefined,
     });
@@ -91,6 +99,7 @@ export function ManagedEmailReachDialog({
     });
     setNote("");
   };
+
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
