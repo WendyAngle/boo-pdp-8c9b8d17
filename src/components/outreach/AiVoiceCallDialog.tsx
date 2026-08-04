@@ -10,6 +10,7 @@ import {
   Clock,
   Rocket,
   CalendarClock,
+  TrendingUp,
 } from "lucide-react";
 import {
   Dialog,
