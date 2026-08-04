@@ -178,14 +178,17 @@ export function AiVoiceCallDialog({
   const submit = () => {
     if (!step4Valid) return;
     onOpenChange(false);
-    toast.success(
-      launch === "now" ? `外呼任务「${name.trim()}」已启动` : `外呼任务「${name.trim()}」已定时`,
-      {
-        description: `${sceneLabel}｜${list.length} 个号码｜并发 ${concurrency} 路｜${startTime}-${endTime}｜最多重试 ${maxRetry} 次${
-          ramp ? `｜灰度启动 ${rampInit} 路起，每 ${rampInterval} 秒 +${rampStep} 路` : ""
-        }${launch === "scheduled" ? `｜启动时间 ${scheduledAt.replace("T", " ")}` : ""}`,
-      },
-    );
+    const launchLabel =
+      launch === "now"
+        ? `外呼任务「${name.trim()}」已启动`
+        : launch === "scheduled"
+          ? `外呼任务「${name.trim()}」已定时`
+          : `外呼任务「${name.trim()}」已灰度启动`;
+    toast.success(launchLabel, {
+      description: `${sceneLabel}｜${list.length} 个号码｜并发 ${concurrency} 路｜${startTime}-${endTime}｜最多重试 ${maxRetry} 次${
+        launch === "ramp" ? `｜灰度启动 ${rampInit} 路起，每 ${rampInterval} 秒 +${rampStep} 路` : ""
+      }${launch === "scheduled" ? `｜启动时间 ${scheduledAt.replace("T", " ")}` : ""}`,
+    });
   };
 
   return (
