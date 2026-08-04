@@ -66,7 +66,7 @@ export function ManagedEmailReachDialog({
   const [product, setProduct] = useState("");
   const [market, setMarket] = useState("");
   const [keywords, setKeywords] = useState("");
-  const [copyMode, setCopyMode] = useState<"ours" | "client">("ours");
+  
   const [draft, setDraft] = useState<EmailCopyDraft>(emptyEmailCopyDraft());
   const [expectStartAt, setExpectStartAt] = useState("");
   const [dailyCap, setDailyCap] = useState("");
