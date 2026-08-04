@@ -61,8 +61,7 @@ const menu: Root[] = [
       {
         label: "运营管理",
         children: [
-          { label: "邮件托管工单", to: "/outreach/admin/managed-email" },
-          { label: "托管执行台", to: "/outreach/admin/managed-exec" },
+          { label: "邮件托管运营", to: "/outreach/admin/managed-email" },
         ],
       },
       { label: "邮件服务商", to: "/outreach/admin/email-providers", children: [] },

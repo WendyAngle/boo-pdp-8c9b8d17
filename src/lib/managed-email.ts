@@ -49,6 +49,16 @@ export type ManagedDailyLog = {
   refill: number;
 };
 
+/** 单个发信邮箱在本任务中的使用情况 */
+export type ManagedMailboxUsage = {
+  email: string;
+  /** 邮件服务商 ID */
+  esp: string;
+  sent: number;
+  success: number;
+  bounce: number;
+};
+
 export type ManagedExec = {
   /** 阶段 1：AI 寻源 */
   sourcing: {
@@ -77,6 +87,8 @@ export type ManagedExec = {
     days: number;
     mailboxes: string[];
   };
+  /** 各发信邮箱 / 服务商的用量分布 */
+  mailboxUsage: ManagedMailboxUsage[];
   /** 阶段 4：分日发送 + 自动补量 */
   delivery: {
     /** 累计发出封数（含失败） */
@@ -96,6 +108,7 @@ export type ManagedExec = {
   /** 上次自动推进时间，用于离开页面后按时间差补算 */
   lastTickAt: string;
 };
+
 
 export type ManagedOrder = {
   id: string;
@@ -133,14 +146,53 @@ export type ManagedOrder = {
   exec?: ManagedExec;
 };
 
-/** 可用于代发的平台邮箱资源（mock） */
-export const MANAGED_MAILBOXES = [
-  "sales01@boo-mail.com",
-  "sales02@boo-mail.com",
-  "biz01@boo-mail.com",
-  "biz02@boo-mail.com",
-  "market01@boo-mail.com",
+/** 邮件服务商（ESP）资源池 */
+export type ManagedEsp = {
+  id: string;
+  name: string;
+  /** 发信域名 */
+  domain: string;
+  /** 每日总配额 */
+  dailyQuota: number;
+};
+
+/** 与「管理后台 → 邮件服务商 / 邮件账号」保持一致的服务商 ID */
+export const MANAGED_ESPS: ManagedEsp[] = [
+  { id: "aws-ses", name: "Amazon SES", domain: "boo-mail.com", dailyQuota: 5000 },
+  { id: "sendgrid", name: "SendGrid 主账号", domain: "boo-trade.com", dailyQuota: 3000 },
+  { id: "mailgun", name: "Mailgun 备用", domain: "boo-global.com", dailyQuota: 2000 },
+  { id: "aliyun-dm", name: "阿里云邮件推送", domain: "boo-cn.com", dailyQuota: 2000 },
 ];
+
+export function espName(id: string) {
+  return MANAGED_ESPS.find((e) => e.id === id)?.name ?? id;
+}
+
+/** 可用于代发的平台邮箱资源（mock） */
+export type ManagedMailbox = {
+  email: string;
+  esp: string;
+  /** 单邮箱日发送上限 */
+  dailyLimit: number;
+  health: "good" | "warn" | "bad";
+};
+
+export const MANAGED_MAILBOX_POOL: ManagedMailbox[] = [
+  { email: "sales01@boo-mail.com", esp: "aws-ses", dailyLimit: 300, health: "good" },
+  { email: "sales02@boo-mail.com", esp: "aws-ses", dailyLimit: 300, health: "good" },
+  { email: "biz01@boo-trade.com", esp: "sendgrid", dailyLimit: 250, health: "warn" },
+  { email: "biz02@boo-trade.com", esp: "sendgrid", dailyLimit: 250, health: "good" },
+  { email: "market01@boo-global.com", esp: "mailgun", dailyLimit: 200, health: "good" },
+  { email: "market02@boo-cn.com", esp: "aliyun-dm", dailyLimit: 200, health: "good" },
+];
+
+export const MANAGED_MAILBOXES = MANAGED_MAILBOX_POOL.map((m) => m.email);
+
+export function mailboxEsp(email: string) {
+  return MANAGED_MAILBOX_POOL.find((m) => m.email === email)?.esp ?? "aws-ses";
+}
+
+
 
 /** 处于流程中的状态 */
 export const MANAGED_ACTIVE_STATUS: ManagedStatus[] = [
@@ -167,7 +219,7 @@ export const MANAGED_STATUS_LABEL: Record<ManagedStatus, string> = {
   rejected: "已驳回",
 };
 
-const KEY = "boo:managed-email:v3";
+const KEY = "boo:managed-email:v4";
 
 const CURRENT_COMPANY = "深圳市博奥智能科技有限公司";
 
@@ -232,6 +284,12 @@ function seed(): ManagedOrder[] {
       order.exec.delivery.refill = order.exec.delivery.bounce;
       order.exec.daily = buildDaily(order.exec, order.sent);
       order.exec.logs = buildLogs(order.exec.delivery.sent);
+      order.exec.mailboxUsage = spreadUsage(
+        order.exec.mailboxUsage,
+        order.exec.delivery.sent,
+        order.exec.delivery.success,
+        order.exec.delivery.bounce,
+      );
       order.acceptedAt = order.acceptedAt ?? order.createdAt;
     }
     return order;
@@ -509,6 +567,8 @@ function initExec(o: ManagedOrder): ManagedExec {
   const lang = o.copy.lang || "en";
   const subject = o.copy.translatedSubject?.trim() || o.copy.subject;
   const body = o.copy.translatedBody?.trim() || o.copy.body;
+  const count = o.qty > 600 ? 4 : o.qty > 400 ? 3 : 2;
+  const mailboxes = MANAGED_MAILBOX_POOL.filter((m) => m.health !== "bad").slice(0, count);
   return {
     sourcing: { raw, dup, invalid, blocked, valid: o.qty, pool, done: false },
     copy: {
@@ -522,8 +582,15 @@ function initExec(o: ManagedOrder): ManagedExec {
       startAt: o.expectStartAt ?? new Date().toISOString().slice(0, 10),
       dailyCap,
       days: Math.max(1, Math.ceil(o.qty / Math.max(1, dailyCap))),
-      mailboxes: MANAGED_MAILBOXES.slice(0, o.qty > 400 ? 3 : 2),
+      mailboxes: mailboxes.map((m) => m.email),
     },
+    mailboxUsage: mailboxes.map((m) => ({
+      email: m.email,
+      esp: m.esp,
+      sent: 0,
+      success: 0,
+      bounce: 0,
+    })),
     delivery: { sent: 0, success: 0, bounce: 0, refill: 0 },
     daily: [],
     logs: [],
@@ -531,6 +598,39 @@ function initExec(o: ManagedOrder): ManagedExec {
     lastTickAt: new Date().toISOString(),
   };
 }
+
+/** 把一次发送量按邮箱均分（余数给前面的邮箱），用于 mock 用量分布 */
+function spreadUsage(
+  usage: ManagedMailboxUsage[],
+  sent: number,
+  success: number,
+  bounce: number,
+): ManagedMailboxUsage[] {
+  const n = usage.length;
+  if (!n) return usage;
+  const split = (total: number, i: number) =>
+    Math.floor(total / n) + (i < total % n ? 1 : 0);
+  return usage.map((u, i) => ({
+    ...u,
+    sent: u.sent + split(sent, i),
+    success: u.success + split(success, i),
+    bounce: u.bounce + split(bounce, i),
+  }));
+}
+
+/** 兼容旧数据：缺少 mailboxUsage 时按邮箱均分现有用量补齐 */
+export function execMailboxUsage(exec: ManagedExec): ManagedMailboxUsage[] {
+  if (exec.mailboxUsage?.length) return exec.mailboxUsage;
+  const list = exec.schedule.mailboxes.map((email) => ({
+    email,
+    esp: mailboxEsp(email),
+    sent: 0,
+    success: 0,
+    bounce: 0,
+  }));
+  return spreadUsage(list, exec.delivery.sent, exec.delivery.success, exec.delivery.bounce);
+}
+
 
 /** 运营受理 → 系统自动开始寻源与发送 */
 export function acceptManagedOrder(id: string, opsNote?: string) {
@@ -678,6 +778,7 @@ function advance(o: ManagedOrder): ManagedOrder | null {
       refill: exec.delivery.refill + bounce,
     },
     daily,
+    mailboxUsage: spreadUsage(execMailboxUsage(exec), attempts, step, bounce),
     logs: buildLogs(exec.delivery.sent + attempts),
     exhausted,
     lastTickAt: new Date().toISOString(),
