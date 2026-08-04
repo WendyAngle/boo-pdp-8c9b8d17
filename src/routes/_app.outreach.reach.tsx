@@ -64,6 +64,7 @@ import { useSocialAccounts, friendRemaining } from "@/data/social-accounts";
 import { poolAverageHealth } from "@/lib/social-account-health";
 import { CreateReachTaskDialog } from "@/components/outreach/CreateReachTaskDialog";
 import { ManagedEmailReachDialog } from "@/components/outreach/ManagedEmailReachDialog";
+import { ManagedEmailBatches } from "@/components/outreach/ManagedEmailBatches";
 import { UserCircle2, Plus, Handshake } from "lucide-react";
 
 
@@ -409,6 +410,8 @@ function ReachPage() {
           </Link>
         </Button>
       </div>
+
+      <ManagedEmailBatches />
 
       <Card className="p-0 overflow-hidden">
         {/* 筛选 */}
