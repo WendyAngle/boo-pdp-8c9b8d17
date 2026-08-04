@@ -15,6 +15,7 @@ import {
   Send,
   MailPlus,
   MessageSquare,
+  PhoneCall,
   MailWarning,
   Mailbox as MailboxIcon,
   ExternalLink,
@@ -93,6 +94,7 @@ import {
   type PlatformCandidate,
   type ReachPlatform,
 } from "@/components/BatchSocialPlatformDialog";
+import { AiVoiceCallDialog } from "@/components/outreach/AiVoiceCallDialog";
 import {
   useReachedMap,
   methodsOfFavorite,
@@ -179,6 +181,7 @@ function FavoritesPage() {
   const [batchSenderId, setBatchSenderId] = useState("");
   const [batchSocialOpen, setBatchSocialOpen] = useState(false);
   const [batchPlatformOpen, setBatchPlatformOpen] = useState(false);
+  const [aiCallOpen, setAiCallOpen] = useState(false);
 
   const [calOpen, setCalOpen] = useState(false);
   const profile = useLeadProfile();
@@ -245,6 +248,15 @@ function FavoritesPage() {
   const smsRecipients = useMemo(
     () => recipientsFromFavorites(smsEligible, "phone", myVars),
     [smsEligible, myVars],
+  );
+  const aiCallTargets = useMemo(
+    () =>
+      recipientsFromFavorites(selectedRecords, "phone", myVars).map((r) => ({
+        key: r.key,
+        name: r.name,
+        phone: r.address,
+      })),
+    [selectedRecords, myVars],
   );
 
 
@@ -772,6 +784,24 @@ function FavoritesPage() {
               disabled={selected.size === 0}
               className="gap-1.5 border-primary/30 text-primary hover:bg-primary/10 hover:text-primary disabled:opacity-50"
               onClick={() => {
+                if (aiCallTargets.length === 0) {
+                  toast.warning("所选对象均没有可用电话号码", {
+                    description: "请选择包含电话号码的企业或人物，或在弹窗中手动添加号码。",
+                  });
+                  return;
+                }
+                setAiCallOpen(true);
+              }}
+            >
+              <PhoneCall className="h-4 w-4" />
+              批量AI智能外呼
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              disabled={selected.size === 0}
+              className="gap-1.5 border-primary/30 text-primary hover:bg-primary/10 hover:text-primary disabled:opacity-50"
+              onClick={() => {
                 if (!guardBatch(waEligible, "WhatsApp")) return;
                 setBatchSocialOpen(true);
               }}
@@ -902,6 +932,11 @@ function FavoritesPage() {
         open={batchPlatformOpen}
         onOpenChange={setBatchPlatformOpen}
         candidates={platformCandidates}
+      />
+      <AiVoiceCallDialog
+        open={aiCallOpen}
+        onOpenChange={setAiCallOpen}
+        targets={aiCallTargets}
       />
 
     </div>
