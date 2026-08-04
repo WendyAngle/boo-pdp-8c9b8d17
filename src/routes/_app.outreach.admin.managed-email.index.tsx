@@ -202,7 +202,7 @@ function ManagedEmailAdminPage() {
                       {o.source === "own" ? "自有名单" : "AI 智能寻源"}
                     </span>
                     <div className="text-xs text-muted-foreground">
-                      {o.copyMode === "client" ? "客户自有文案" : "我方撰写文案"}
+                      {o.copyMode === "client" ? "客户自有文案" : "顾问代写文案"}
                     </div>
                   </TableCell>
                   <TableCell>

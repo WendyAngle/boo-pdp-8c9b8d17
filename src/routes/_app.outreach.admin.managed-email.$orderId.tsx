@@ -304,7 +304,7 @@ function CopyStep({ order }: P) {
         <p className="text-sm text-muted-foreground mt-1">
           {order.copyMode === "client"
             ? "客户提供文案：录入客户文案，顾问做合规与送达率优化。"
-            : "我方撰写：基于企业资料与推广产品生成首封开发信与一封跟进信，供客户确认。"}
+            : "顾问代写：基于企业资料与推广产品生成首封开发信与一封跟进信，供客户确认。"}
         </p>
       </div>
 

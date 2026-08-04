@@ -21,7 +21,7 @@ export type ManagedStatus =
   | "cancelled"
   | "rejected";
 
-/** 文案模式：我方撰写 / 客户提供 */
+/** 文案模式：顾问代写 / 客户提供 */
 export type ManagedCopyMode = "ours" | "client";
 
 export type ManagedOrder = {
