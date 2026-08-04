@@ -124,8 +124,13 @@ export function EmailComposeFields({
           languageName: "中文",
           myCompany: profile.companyName,
           myName: user.name,
-          sampleEnterprise: samples[0]?.ctx.企业名 ?? aiHint?.market,
-          product: aiHint?.product,
+          sampleEnterprise: samples[0]?.ctx.企业名,
+          extra: [
+            aiHint?.product ? `推广产品: ${aiHint.product}` : "",
+            aiHint?.market ? `目标市场: ${aiHint.market}` : "",
+          ]
+            .filter(Boolean)
+            .join("；") || undefined,
         },
       });
       set({
