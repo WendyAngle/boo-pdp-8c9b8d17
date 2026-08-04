@@ -76,6 +76,14 @@ import { TargetLangSection } from "@/components/outreach/TargetLangSection";
 
 export type ComposeChannel = "email" | "phone";
 
+/** 手动添加的收件人：key 以 manual: 开头，不参与解锁扣费 */
+const MANUAL_PREFIX = "manual:";
+function isManualRecipient(r: Recipient) {
+  return r.key.startsWith(MANUAL_PREFIX);
+}
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
+const PHONE_RE = /^\+?[0-9][0-9\s-]{5,19}$/;
+
 
 
 
