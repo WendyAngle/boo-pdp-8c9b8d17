@@ -229,6 +229,8 @@ export function ComposeSendDialog({
   const viewCostTotal = useMemo(() => {
     let total = 0;
     for (const r of recipients) {
+      // 手动添加的收件人地址由用户自行提供，无需解锁、不产生查看费
+      if (isManualRecipient(r)) continue;
       const bd = computeReachBreakdown(
         { targetKind: r.targetKind, targetId: r.targetId },
         isEmail ? "email" : "phone",
