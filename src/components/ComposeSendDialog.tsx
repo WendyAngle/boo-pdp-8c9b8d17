@@ -442,17 +442,22 @@ export function ComposeSendDialog({
                 </div>
               </div>
             )}
-            <div className="flex flex-wrap gap-1.5 rounded-md border bg-muted/30 p-2 max-h-28 overflow-y-auto">
-              {recipients.map((r) => (
-                <span
-                  key={r.key}
-                  className="inline-flex items-center gap-1 rounded-md border bg-background px-2 py-0.5 text-xs"
-                >
-                  <span className="font-medium">{r.name}</span>
-                  <span className="text-muted-foreground font-mono">
-                    · {r.address}
-                  </span>
-                  {recipients.length > 1 && (
+            {recipients.length > 0 && (
+              <div className="flex flex-wrap gap-1.5 rounded-md border bg-muted/30 p-2 max-h-28 overflow-y-auto">
+                {recipients.map((r) => (
+                  <span
+                    key={r.key}
+                    className="inline-flex items-center gap-1 rounded-md border bg-background px-2 py-0.5 text-xs"
+                  >
+                    <span className="font-medium">{r.name}</span>
+                    <span className="text-muted-foreground font-mono">
+                      · {r.address}
+                    </span>
+                    {isManualRecipient(r) && (
+                      <Badge variant="secondary" className="h-4 px-1 text-[10px]">
+                        手动
+                      </Badge>
+                    )}
                     <button
                       type="button"
                       onClick={() =>
@@ -463,10 +468,43 @@ export function ComposeSendDialog({
                     >
                       <X className="h-3 w-3" />
                     </button>
-                  )}
-                </span>
-              ))}
+                  </span>
+                ))}
+              </div>
+            )}
+            {/* 手动添加收件人 */}
+            <div className="flex items-center gap-2">
+              <Input
+                value={manualInput}
+                onChange={(e) => setManualInput(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") {
+                    e.preventDefault();
+                    addManualRecipients();
+                  }
+                }}
+                placeholder={
+                  isEmail
+                    ? "手动添加收件邮箱，多个用逗号/空格分隔"
+                    : "手动添加手机号，多个用逗号/空格分隔"
+                }
+                className="h-8 text-xs"
+              />
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                className="h-8 shrink-0"
+                onClick={addManualRecipients}
+                disabled={!manualInput.trim()}
+              >
+                添加
+              </Button>
             </div>
+            <p className="text-[11px] text-muted-foreground">
+              手动添加的{isEmail ? "邮箱" : "手机号"}由你自行提供，不产生解锁查看费，仅按渠道计发送费。
+            </p>
+
           </section>
 
           {/* 发件人（邮件） */}
