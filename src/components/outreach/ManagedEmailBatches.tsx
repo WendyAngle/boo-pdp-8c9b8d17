@@ -23,6 +23,7 @@ const STATUS_CLS: Record<ManagedStatus, string> = {
   running: "bg-blue-50 text-blue-700 border-blue-200",
   completed: "bg-emerald-50 text-emerald-700 border-emerald-200",
   cancelled: "bg-muted text-muted-foreground border-border",
+  rejected: "bg-rose-50 text-rose-700 border-rose-200",
 };
 
 /** 用户侧：邮件托管批次进度与中途叫停 */
@@ -83,7 +84,14 @@ export function ManagedEmailBatches() {
               <div className="text-xs text-muted-foreground tabular-nums">
                 执行进度 {o.sent} / {o.qty}（{pct}%）
                 {o.status === "pending" && " · 营销团队将在 1 个工作日内受理"}
+                {o.assignee && ` · 对接顾问：${o.assignee}`}
               </div>
+              {(o.rejectReason || o.opsNote) && (
+                <div className="text-xs text-muted-foreground rounded-md bg-muted/50 px-2.5 py-1.5">
+                  {o.rejectReason ? `驳回原因：${o.rejectReason}` : `顾问备注：${o.opsNote}`}
+                </div>
+              )}
+
             </div>
           );
         })}

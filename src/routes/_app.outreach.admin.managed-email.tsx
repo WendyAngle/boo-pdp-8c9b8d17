@@ -25,6 +25,9 @@ import {
   updateManagedProgress,
   completeManagedOrder,
   cancelManagedOrder,
+  assignManagedOrder,
+  rejectManagedOrder,
+  MANAGED_ASSIGNEES,
   MANAGED_EMAIL_COST_PER_TARGET,
   MANAGED_STATUS_LABEL,
   type ManagedOrder,
@@ -56,6 +59,7 @@ const STATUS_CLS: Record<ManagedStatus, string> = {
   running: "bg-blue-50 text-blue-700 border-blue-200",
   completed: "bg-emerald-50 text-emerald-700 border-emerald-200",
   cancelled: "bg-muted text-muted-foreground border-border",
+  rejected: "bg-rose-50 text-rose-700 border-rose-200",
 };
 
 function fmt(iso: string) {
@@ -71,6 +75,8 @@ function ManagedEmailAdminPage() {
   const [progressOf, setProgressOf] = useState<ManagedOrder | null>(null);
   const [progressVal, setProgressVal] = useState("");
   const [cancelOf, setCancelOf] = useState<ManagedOrder | null>(null);
+  const [rejectOf, setRejectOf] = useState<ManagedOrder | null>(null);
+  const [rejectReason, setRejectReason] = useState("");
   const [cancelReason, setCancelReason] = useState("");
 
   const rows = useMemo(() => {
@@ -149,19 +155,20 @@ function ManagedEmailAdminPage() {
           <TableHeader>
             <TableRow>
               <TableHead>工单号 / 提交时间</TableHead>
-              <TableHead>目标来源</TableHead>
-              <TableHead>推广产品 / 市场</TableHead>
-              <TableHead>对接人</TableHead>
+              <TableHead className="min-w-[180px]">客户企业 / 对接人</TableHead>
+              <TableHead className="min-w-[130px]">目标来源</TableHead>
+              <TableHead className="min-w-[150px]">推广产品 / 市场</TableHead>
+              <TableHead>负责顾问</TableHead>
               <TableHead className="w-[200px]">执行进度</TableHead>
               <TableHead className="text-right">积分</TableHead>
               <TableHead>状态</TableHead>
-              <TableHead className="text-right">操作</TableHead>
+              <TableHead className="text-right min-w-[220px]">操作</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {rows.length === 0 && (
               <TableRow>
-                <TableCell colSpan={8} className="text-center text-sm text-muted-foreground py-12">
+                <TableCell colSpan={9} className="text-center text-sm text-muted-foreground py-12">
                   暂无托管工单
                 </TableCell>
               </TableRow>
@@ -176,6 +183,10 @@ function ManagedEmailAdminPage() {
                     <div className="text-xs text-muted-foreground">{fmt(o.createdAt)}</div>
                   </TableCell>
                   <TableCell>
+                    <div className="text-sm">{o.company}</div>
+                    <div className="text-xs text-muted-foreground">{o.contact}</div>
+                  </TableCell>
+                  <TableCell>
                     <span className="inline-flex items-center gap-1.5 text-sm">
                       {o.source === "own" ? (
                         <Users className="h-3.5 w-3.5 text-primary" />
@@ -184,12 +195,36 @@ function ManagedEmailAdminPage() {
                       )}
                       {o.source === "own" ? "自有名单" : "AI 智能寻源"}
                     </span>
+                    <div className="text-xs text-muted-foreground">
+                      {o.copyMode === "client" ? "客户自有文案" : "我方撰写文案"}
+                    </div>
                   </TableCell>
                   <TableCell>
                     <div className="text-sm">{o.product}</div>
                     <div className="text-xs text-muted-foreground">{o.market || "—"}</div>
                   </TableCell>
-                  <TableCell className="text-sm">{o.contact}</TableCell>
+                  <TableCell>
+                    <Select
+                      value={o.assignee ?? "none"}
+                      onValueChange={(v) => {
+                        assignManagedOrder(o.id, v === "none" ? "" : v);
+                        if (v !== "none") toast.success(`已指派给 ${v}`);
+                      }}
+                    >
+                      <SelectTrigger className="h-8 w-[132px]">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="none">未指派</SelectItem>
+                        {MANAGED_ASSIGNEES.map((a) => (
+                          <SelectItem key={a} value={a}>
+                            {a}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </TableCell>
+
                   <TableCell>
                     <Progress value={pct} className="h-1.5" />
                     <div className="text-xs text-muted-foreground mt-1 tabular-nums">
@@ -209,19 +244,33 @@ function ManagedEmailAdminPage() {
                   </TableCell>
                   <TableCell className="text-right whitespace-nowrap">
                     {o.status === "pending" && (
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        className="h-8 gap-1"
-                        onClick={() => {
-                          acceptManagedOrder(o.id);
-                          toast.success(`工单 ${o.orderNo} 已受理，进入执行中`);
-                        }}
-                      >
-                        <Play className="h-3.5 w-3.5" />
-                        受理
-                      </Button>
+                      <>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          className="h-8 gap-1"
+                          onClick={() => {
+                            acceptManagedOrder(o.id);
+                            toast.success(`工单 ${o.orderNo} 已受理，进入执行中`);
+                          }}
+                        >
+                          <Play className="h-3.5 w-3.5" />
+                          受理
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          className="h-8 gap-1 text-destructive hover:text-destructive"
+                          onClick={() => {
+                            setRejectOf(o);
+                            setRejectReason("");
+                          }}
+                        >
+                          驳回
+                        </Button>
+                      </>
                     )}
+
                     {active && (
                       <>
                         <Button
@@ -270,7 +319,48 @@ function ManagedEmailAdminPage() {
         </Table>
       </Card>
 
+      {/* 驳回 */}
+      <Dialog open={!!rejectOf} onOpenChange={(v) => !v && setRejectOf(null)}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>驳回托管工单</DialogTitle>
+            <DialogDescription>
+              工单 {rejectOf?.orderNo}｜驳回后该批次已扣的{" "}
+              {rejectOf ? rejectOf.charged.toLocaleString() : 0} 积分将全额退回客户，原因对客户可见。
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-2">
+            <Label htmlFor="reject-reason">驳回原因</Label>
+            <Textarea
+              id="reject-reason"
+              rows={3}
+              value={rejectReason}
+              onChange={(e) => setRejectReason(e.target.value)}
+              placeholder="如：名单有效邮箱不足、目标条件过窄无法凑齐起做量等"
+            />
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setRejectOf(null)}>
+              取消
+            </Button>
+            <Button
+              variant="destructive"
+              disabled={!rejectReason.trim()}
+              onClick={() => {
+                if (!rejectOf) return;
+                rejectManagedOrder(rejectOf.id, rejectReason.trim());
+                toast.success(`工单 ${rejectOf.orderNo} 已驳回，积分已退回`);
+                setRejectOf(null);
+              }}
+            >
+              确认驳回
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
       {/* 回填进度 */}
+
       <Dialog open={!!progressOf} onOpenChange={(v) => !v && setProgressOf(null)}>
         <DialogContent className="max-w-md">
           <DialogHeader>
