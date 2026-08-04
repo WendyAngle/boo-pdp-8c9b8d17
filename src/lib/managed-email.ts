@@ -559,6 +559,8 @@ function initExec(o: ManagedOrder): ManagedExec {
   const lang = o.copy.lang || "en";
   const subject = o.copy.translatedSubject?.trim() || o.copy.subject;
   const body = o.copy.translatedBody?.trim() || o.copy.body;
+  const count = o.qty > 600 ? 4 : o.qty > 400 ? 3 : 2;
+  const mailboxes = MANAGED_MAILBOX_POOL.filter((m) => m.health !== "bad").slice(0, count);
   return {
     sourcing: { raw, dup, invalid, blocked, valid: o.qty, pool, done: false },
     copy: {
@@ -572,8 +574,15 @@ function initExec(o: ManagedOrder): ManagedExec {
       startAt: o.expectStartAt ?? new Date().toISOString().slice(0, 10),
       dailyCap,
       days: Math.max(1, Math.ceil(o.qty / Math.max(1, dailyCap))),
-      mailboxes: MANAGED_MAILBOXES.slice(0, o.qty > 400 ? 3 : 2),
+      mailboxes: mailboxes.map((m) => m.email),
     },
+    mailboxUsage: mailboxes.map((m) => ({
+      email: m.email,
+      esp: m.esp,
+      sent: 0,
+      success: 0,
+      bounce: 0,
+    })),
     delivery: { sent: 0, success: 0, bounce: 0, refill: 0 },
     daily: [],
     logs: [],
@@ -581,6 +590,39 @@ function initExec(o: ManagedOrder): ManagedExec {
     lastTickAt: new Date().toISOString(),
   };
 }
+
+/** 把一次发送量按邮箱均分（余数给前面的邮箱），用于 mock 用量分布 */
+function spreadUsage(
+  usage: ManagedMailboxUsage[],
+  sent: number,
+  success: number,
+  bounce: number,
+): ManagedMailboxUsage[] {
+  const n = usage.length;
+  if (!n) return usage;
+  const split = (total: number, i: number) =>
+    Math.floor(total / n) + (i < total % n ? 1 : 0);
+  return usage.map((u, i) => ({
+    ...u,
+    sent: u.sent + split(sent, i),
+    success: u.success + split(success, i),
+    bounce: u.bounce + split(bounce, i),
+  }));
+}
+
+/** 兼容旧数据：缺少 mailboxUsage 时按邮箱均分现有用量补齐 */
+export function execMailboxUsage(exec: ManagedExec): ManagedMailboxUsage[] {
+  if (exec.mailboxUsage?.length) return exec.mailboxUsage;
+  const list = exec.schedule.mailboxes.map((email) => ({
+    email,
+    esp: mailboxEsp(email),
+    sent: 0,
+    success: 0,
+    bounce: 0,
+  }));
+  return spreadUsage(list, exec.delivery.sent, exec.delivery.success, exec.delivery.bounce);
+}
+
 
 /** 运营受理 → 系统自动开始寻源与发送 */
 export function acceptManagedOrder(id: string, opsNote?: string) {
