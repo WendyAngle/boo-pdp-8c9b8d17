@@ -880,13 +880,6 @@ function FavoritesPage() {
         </AlertDialogContent>
       </AlertDialog>
 
-      <ManagedEmailReachDialog
-        open={managedEmailOpen}
-        onOpenChange={setManagedEmailOpen}
-        defaultSource="own"
-        defaultQty={Math.max(selected.size, 200)}
-        entryHint={`来自「我的收藏」：已勾选 ${selected.size} 个目标。自有名单起做 200 个目标，不足部分可由平台按你的推广产品与目标市场补齐。`}
-      />
 
       <ComposeSendDialog
         open={batchEmailOpen}
