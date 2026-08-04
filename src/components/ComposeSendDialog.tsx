@@ -76,6 +76,14 @@ import { TargetLangSection } from "@/components/outreach/TargetLangSection";
 
 export type ComposeChannel = "email" | "phone";
 
+/** 手动添加的收件人：key 以 manual: 开头，不参与解锁扣费 */
+const MANUAL_PREFIX = "manual:";
+function isManualRecipient(r: Recipient) {
+  return r.key.startsWith(MANUAL_PREFIX);
+}
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
+const PHONE_RE = /^\+?[0-9][0-9\s-]{5,19}$/;
+
 
 
 
@@ -129,10 +137,56 @@ export function ComposeSendDialog({
   const [submitTplOpen, setSubmitTplOpen] = useState(false);
   const [confirmSendOpen, setConfirmSendOpen] = useState(false);
 
+  /** 手动添加收件人输入框 */
+  const [manualInput, setManualInput] = useState("");
+
+  function addManualRecipients() {
+    const raw = manualInput
+      .split(/[,，;；\s]+/)
+      .map((s) => s.trim())
+      .filter(Boolean);
+    if (raw.length === 0) return;
+    const exists = new Set(recipients.map((r) => r.address.toLowerCase()));
+    const added: Recipient[] = [];
+    const invalid: string[] = [];
+    const dup: string[] = [];
+    for (const v of raw) {
+      const ok = isEmail ? EMAIL_RE.test(v) : PHONE_RE.test(v);
+      if (!ok) {
+        invalid.push(v);
+        continue;
+      }
+      if (exists.has(v.toLowerCase())) {
+        dup.push(v);
+        continue;
+      }
+      exists.add(v.toLowerCase());
+      const key = `${MANUAL_PREFIX}${v.toLowerCase()}`;
+      const name = isEmail ? v.split("@")[0] : v;
+      added.push({
+        key,
+        address: v,
+        name,
+        targetKind: "contact",
+        targetId: key,
+        ctx: { 联系人名: name, ...my } as VarContext,
+      });
+    }
+    if (added.length > 0) setRecipients((prev) => [...prev, ...added]);
+    setManualInput(invalid.join(" "));
+    if (invalid.length > 0)
+      toast.error(`${invalid.length} 个${isEmail ? "邮箱" : "手机号"}格式不正确`, {
+        description: invalid.slice(0, 3).join("、"),
+      });
+    if (dup.length > 0) toast.info(`已忽略 ${dup.length} 个重复收件人`);
+    if (added.length > 0) toast.success(`已添加 ${added.length} 个收件人`);
+  }
+
   // 重置 state 每次打开
   useEffect(() => {
     if (!open) return;
     setRecipients(incomingRecipients);
+    setManualInput("");
     setPreviewIdx(0);
     setSubject("");
     setContent("");
@@ -229,6 +283,8 @@ export function ComposeSendDialog({
   const viewCostTotal = useMemo(() => {
     let total = 0;
     for (const r of recipients) {
+      // 手动添加的收件人地址由用户自行提供，无需解锁、不产生查看费
+      if (isManualRecipient(r)) continue;
       const bd = computeReachBreakdown(
         { targetKind: r.targetKind, targetId: r.targetId },
         isEmail ? "email" : "phone",
@@ -271,15 +327,17 @@ export function ComposeSendDialog({
     for (const r of active) {
       const finalSubject = isEmail ? renderTemplate(sendSubject, r.ctx) : undefined;
       const finalContent = renderTemplate(sendContent, r.ctx);
-      // 未解锁时先扣查看费并永久解锁（幂等）
-      performReachAutoUnlocks({
-        targetKind: r.targetKind,
-        targetId: r.targetId,
-        targetName: r.name,
-        parentRef: r.parentRef,
-        detail: r.address,
-        fields: isEmail ? [{ field: "email" }] : [{ field: "phone" }],
-      });
+      // 未解锁时先扣查看费并永久解锁（幂等）；手动添加的地址无需解锁
+      if (!isManualRecipient(r)) {
+        performReachAutoUnlocks({
+          targetKind: r.targetKind,
+          targetId: r.targetId,
+          targetName: r.name,
+          parentRef: r.parentRef,
+          detail: r.address,
+          fields: isEmail ? [{ field: "email" }] : [{ field: "phone" }],
+        });
+      }
       createReach({
         targetKind: r.targetKind,
         targetId: r.targetId,
@@ -391,7 +449,7 @@ export function ComposeSendDialog({
                 <span className="text-xs text-rose-600">
                   {typeof totalSelected === "number" && totalSelected > 0
                     ? `已选 ${totalSelected} 条，均无${isEmail ? "邮箱" : "电话"}，已全部过滤`
-                    : "无有效收件人，请关闭后重试"}
+                    : "暂无收件人，可在下方手动添加"}
                 </span>
               ) : (
                 typeof totalSelected === "number" &&
@@ -430,17 +488,22 @@ export function ComposeSendDialog({
                 </div>
               </div>
             )}
-            <div className="flex flex-wrap gap-1.5 rounded-md border bg-muted/30 p-2 max-h-28 overflow-y-auto">
-              {recipients.map((r) => (
-                <span
-                  key={r.key}
-                  className="inline-flex items-center gap-1 rounded-md border bg-background px-2 py-0.5 text-xs"
-                >
-                  <span className="font-medium">{r.name}</span>
-                  <span className="text-muted-foreground font-mono">
-                    · {r.address}
-                  </span>
-                  {recipients.length > 1 && (
+            {recipients.length > 0 && (
+              <div className="flex flex-wrap gap-1.5 rounded-md border bg-muted/30 p-2 max-h-28 overflow-y-auto">
+                {recipients.map((r) => (
+                  <span
+                    key={r.key}
+                    className="inline-flex items-center gap-1 rounded-md border bg-background px-2 py-0.5 text-xs"
+                  >
+                    <span className="font-medium">{r.name}</span>
+                    <span className="text-muted-foreground font-mono">
+                      · {r.address}
+                    </span>
+                    {isManualRecipient(r) && (
+                      <Badge variant="secondary" className="h-4 px-1 text-[10px]">
+                        手动
+                      </Badge>
+                    )}
                     <button
                       type="button"
                       onClick={() =>
@@ -451,10 +514,43 @@ export function ComposeSendDialog({
                     >
                       <X className="h-3 w-3" />
                     </button>
-                  )}
-                </span>
-              ))}
+                  </span>
+                ))}
+              </div>
+            )}
+            {/* 手动添加收件人 */}
+            <div className="flex items-center gap-2">
+              <Input
+                value={manualInput}
+                onChange={(e) => setManualInput(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") {
+                    e.preventDefault();
+                    addManualRecipients();
+                  }
+                }}
+                placeholder={
+                  isEmail
+                    ? "手动添加收件邮箱，多个用逗号/空格分隔"
+                    : "手动添加手机号，多个用逗号/空格分隔"
+                }
+                className="h-8 text-xs"
+              />
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                className="h-8 shrink-0"
+                onClick={addManualRecipients}
+                disabled={!manualInput.trim()}
+              >
+                添加
+              </Button>
             </div>
+            <p className="text-[11px] text-muted-foreground">
+              手动添加的{isEmail ? "邮箱" : "手机号"}由你自行提供，不产生解锁查看费，仅按渠道计发送费。
+            </p>
+
           </section>
 
           {/* 发件人（邮件） */}
