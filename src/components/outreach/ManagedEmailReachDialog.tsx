@@ -85,9 +85,8 @@ export function ManagedEmailReachDialog({
   const qtyNum = Number(qty) || 0;
   const qtyValid = qtyNum >= min;
   const cost = useMemo(() => qtyNum * CREDIT_PER_TARGET, [qtyNum]);
-  const copyReady =
-    copyMode === "ours" || (draft.subject.trim().length > 0 && draft.body.trim().length > 0);
-  const canSubmit = qtyValid && product.trim() && contact.trim() && copyReady;
+  const hasOwnCopy = draft.subject.trim().length > 0 && draft.body.trim().length > 0;
+  const canSubmit = qtyValid && product.trim() && contact.trim();
 
   const submit = () => {
     if (!canSubmit) return;
@@ -97,18 +96,18 @@ export function ManagedEmailReachDialog({
       product: product.trim(),
       market: market.trim() || undefined,
       keywords: keywords.trim() || undefined,
-      copyMode,
-      clientCopy:
-        copyMode === "client"
-          ? {
-              subject: draft.subject.trim(),
-              body: draft.body.trim(),
-              lang: draft.lang,
-              translatedSubject: draft.translatedSubject.trim() || undefined,
-              translatedBody: draft.translatedBody.trim() || undefined,
-              aiGenerated: draft.aiGenerated,
-            }
-          : undefined,
+      copyMode: hasOwnCopy ? "client" : "ours",
+      clientCopy: hasOwnCopy
+        ? {
+            subject: draft.subject.trim(),
+            body: draft.body.trim(),
+            lang: draft.lang,
+            translatedSubject: draft.translatedSubject.trim() || undefined,
+            translatedBody: draft.translatedBody.trim() || undefined,
+            aiGenerated: draft.aiGenerated,
+          }
+        : undefined,
+
       expectStartAt: expectStartAt || undefined,
       dailyCap: Number(dailyCap) || undefined,
       contact: contact.trim(),
