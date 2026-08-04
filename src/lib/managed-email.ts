@@ -217,7 +217,7 @@ export const MANAGED_STATUS_LABEL: Record<ManagedStatus, string> = {
   rejected: "已驳回",
 };
 
-const KEY = "boo:managed-email:v3";
+const KEY = "boo:managed-email:v4";
 
 const CURRENT_COMPANY = "深圳市博奥智能科技有限公司";
 
