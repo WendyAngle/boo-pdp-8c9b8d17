@@ -45,13 +45,13 @@ import { Route as AppOutreachEnterpriseIdRouteImport } from './routes/_app.outre
 import { Route as AppOutreachAdminSmsTemplatesRouteImport } from './routes/_app.outreach.admin.sms-templates'
 import { Route as AppOutreachAdminSmsRoutingRouteImport } from './routes/_app.outreach.admin.sms-routing'
 import { Route as AppOutreachAdminSmsProvidersRouteImport } from './routes/_app.outreach.admin.sms-providers'
-import { Route as AppOutreachAdminManagedEmailRouteImport } from './routes/_app.outreach.admin.managed-email'
 import { Route as AppOutreachAdminInvoiceReviewRouteImport } from './routes/_app.outreach.admin.invoice-review'
 import { Route as AppOutreachAdminEmailProvidersRouteImport } from './routes/_app.outreach.admin.email-providers'
 import { Route as AppOutreachAdminEmailAccountsRouteImport } from './routes/_app.outreach.admin.email-accounts'
 import { Route as AppOutreachSocialReachIndexRouteImport } from './routes/_app.outreach.social.reach.index'
 import { Route as AppOutreachSocialProspectingIndexRouteImport } from './routes/_app.outreach.social.prospecting.index'
 import { Route as AppOutreachEnterpriseIdIndexRouteImport } from './routes/_app.outreach.enterprise.$id.index'
+import { Route as AppOutreachAdminManagedEmailIndexRouteImport } from './routes/_app.outreach.admin.managed-email.index'
 import { Route as AppOutreachSocialReachDmRouteImport } from './routes/_app.outreach.social.reach.dm'
 import { Route as AppOutreachSocialProspectingTaskIdRouteImport } from './routes/_app.outreach.social.prospecting.$taskId'
 import { Route as AppOutreachSocialReachProspectingIndexRouteImport } from './routes/_app.outreach.social.reach.prospecting.index'
@@ -248,12 +248,6 @@ const AppOutreachAdminSmsProvidersRoute =
     path: '/outreach/admin/sms-providers',
     getParentRoute: () => AppRoute,
   } as any)
-const AppOutreachAdminManagedEmailRoute =
-  AppOutreachAdminManagedEmailRouteImport.update({
-    id: '/outreach/admin/managed-email',
-    path: '/outreach/admin/managed-email',
-    getParentRoute: () => AppRoute,
-  } as any)
 const AppOutreachAdminInvoiceReviewRoute =
   AppOutreachAdminInvoiceReviewRouteImport.update({
     id: '/outreach/admin/invoice-review',
@@ -289,6 +283,12 @@ const AppOutreachEnterpriseIdIndexRoute =
     id: '/',
     path: '/',
     getParentRoute: () => AppOutreachEnterpriseIdRoute,
+  } as any)
+const AppOutreachAdminManagedEmailIndexRoute =
+  AppOutreachAdminManagedEmailIndexRouteImport.update({
+    id: '/outreach/admin/managed-email/',
+    path: '/outreach/admin/managed-email/',
+    getParentRoute: () => AppRoute,
   } as any)
 const AppOutreachSocialReachDmRoute =
   AppOutreachSocialReachDmRouteImport.update({
@@ -349,7 +349,6 @@ export interface FileRoutesByFullPath {
   '/outreach/admin/email-accounts': typeof AppOutreachAdminEmailAccountsRoute
   '/outreach/admin/email-providers': typeof AppOutreachAdminEmailProvidersRoute
   '/outreach/admin/invoice-review': typeof AppOutreachAdminInvoiceReviewRoute
-  '/outreach/admin/managed-email': typeof AppOutreachAdminManagedEmailRoute
   '/outreach/admin/sms-providers': typeof AppOutreachAdminSmsProvidersRoute
   '/outreach/admin/sms-routing': typeof AppOutreachAdminSmsRoutingRoute
   '/outreach/admin/sms-templates': typeof AppOutreachAdminSmsTemplatesRoute
@@ -363,6 +362,7 @@ export interface FileRoutesByFullPath {
   '/outreach/products/': typeof AppOutreachProductsIndexRoute
   '/outreach/social/prospecting/$taskId': typeof AppOutreachSocialProspectingTaskIdRoute
   '/outreach/social/reach/dm': typeof AppOutreachSocialReachDmRoute
+  '/outreach/admin/managed-email/': typeof AppOutreachAdminManagedEmailIndexRoute
   '/outreach/enterprise/$id/': typeof AppOutreachEnterpriseIdIndexRoute
   '/outreach/social/prospecting/': typeof AppOutreachSocialProspectingIndexRoute
   '/outreach/social/reach/': typeof AppOutreachSocialReachIndexRoute
@@ -397,7 +397,6 @@ export interface FileRoutesByTo {
   '/outreach/admin/email-accounts': typeof AppOutreachAdminEmailAccountsRoute
   '/outreach/admin/email-providers': typeof AppOutreachAdminEmailProvidersRoute
   '/outreach/admin/invoice-review': typeof AppOutreachAdminInvoiceReviewRoute
-  '/outreach/admin/managed-email': typeof AppOutreachAdminManagedEmailRoute
   '/outreach/admin/sms-providers': typeof AppOutreachAdminSmsProvidersRoute
   '/outreach/admin/sms-routing': typeof AppOutreachAdminSmsRoutingRoute
   '/outreach/admin/sms-templates': typeof AppOutreachAdminSmsTemplatesRoute
@@ -409,6 +408,7 @@ export interface FileRoutesByTo {
   '/outreach/products': typeof AppOutreachProductsIndexRoute
   '/outreach/social/prospecting/$taskId': typeof AppOutreachSocialProspectingTaskIdRoute
   '/outreach/social/reach/dm': typeof AppOutreachSocialReachDmRoute
+  '/outreach/admin/managed-email': typeof AppOutreachAdminManagedEmailIndexRoute
   '/outreach/enterprise/$id': typeof AppOutreachEnterpriseIdIndexRoute
   '/outreach/social/prospecting': typeof AppOutreachSocialProspectingIndexRoute
   '/outreach/social/reach': typeof AppOutreachSocialReachIndexRoute
@@ -446,7 +446,6 @@ export interface FileRoutesById {
   '/_app/outreach/admin/email-accounts': typeof AppOutreachAdminEmailAccountsRoute
   '/_app/outreach/admin/email-providers': typeof AppOutreachAdminEmailProvidersRoute
   '/_app/outreach/admin/invoice-review': typeof AppOutreachAdminInvoiceReviewRoute
-  '/_app/outreach/admin/managed-email': typeof AppOutreachAdminManagedEmailRoute
   '/_app/outreach/admin/sms-providers': typeof AppOutreachAdminSmsProvidersRoute
   '/_app/outreach/admin/sms-routing': typeof AppOutreachAdminSmsRoutingRoute
   '/_app/outreach/admin/sms-templates': typeof AppOutreachAdminSmsTemplatesRoute
@@ -460,6 +459,7 @@ export interface FileRoutesById {
   '/_app/outreach/products/': typeof AppOutreachProductsIndexRoute
   '/_app/outreach/social/prospecting/$taskId': typeof AppOutreachSocialProspectingTaskIdRoute
   '/_app/outreach/social/reach/dm': typeof AppOutreachSocialReachDmRoute
+  '/_app/outreach/admin/managed-email/': typeof AppOutreachAdminManagedEmailIndexRoute
   '/_app/outreach/enterprise/$id/': typeof AppOutreachEnterpriseIdIndexRoute
   '/_app/outreach/social/prospecting/': typeof AppOutreachSocialProspectingIndexRoute
   '/_app/outreach/social/reach/': typeof AppOutreachSocialReachIndexRoute
@@ -497,7 +497,6 @@ export interface FileRouteTypes {
     | '/outreach/admin/email-accounts'
     | '/outreach/admin/email-providers'
     | '/outreach/admin/invoice-review'
-    | '/outreach/admin/managed-email'
     | '/outreach/admin/sms-providers'
     | '/outreach/admin/sms-routing'
     | '/outreach/admin/sms-templates'
@@ -511,6 +510,7 @@ export interface FileRouteTypes {
     | '/outreach/products/'
     | '/outreach/social/prospecting/$taskId'
     | '/outreach/social/reach/dm'
+    | '/outreach/admin/managed-email/'
     | '/outreach/enterprise/$id/'
     | '/outreach/social/prospecting/'
     | '/outreach/social/reach/'
@@ -545,7 +545,6 @@ export interface FileRouteTypes {
     | '/outreach/admin/email-accounts'
     | '/outreach/admin/email-providers'
     | '/outreach/admin/invoice-review'
-    | '/outreach/admin/managed-email'
     | '/outreach/admin/sms-providers'
     | '/outreach/admin/sms-routing'
     | '/outreach/admin/sms-templates'
@@ -557,6 +556,7 @@ export interface FileRouteTypes {
     | '/outreach/products'
     | '/outreach/social/prospecting/$taskId'
     | '/outreach/social/reach/dm'
+    | '/outreach/admin/managed-email'
     | '/outreach/enterprise/$id'
     | '/outreach/social/prospecting'
     | '/outreach/social/reach'
@@ -593,7 +593,6 @@ export interface FileRouteTypes {
     | '/_app/outreach/admin/email-accounts'
     | '/_app/outreach/admin/email-providers'
     | '/_app/outreach/admin/invoice-review'
-    | '/_app/outreach/admin/managed-email'
     | '/_app/outreach/admin/sms-providers'
     | '/_app/outreach/admin/sms-routing'
     | '/_app/outreach/admin/sms-templates'
@@ -607,6 +606,7 @@ export interface FileRouteTypes {
     | '/_app/outreach/products/'
     | '/_app/outreach/social/prospecting/$taskId'
     | '/_app/outreach/social/reach/dm'
+    | '/_app/outreach/admin/managed-email/'
     | '/_app/outreach/enterprise/$id/'
     | '/_app/outreach/social/prospecting/'
     | '/_app/outreach/social/reach/'
@@ -873,13 +873,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppOutreachAdminSmsProvidersRouteImport
       parentRoute: typeof AppRoute
     }
-    '/_app/outreach/admin/managed-email': {
-      id: '/_app/outreach/admin/managed-email'
-      path: '/outreach/admin/managed-email'
-      fullPath: '/outreach/admin/managed-email'
-      preLoaderRoute: typeof AppOutreachAdminManagedEmailRouteImport
-      parentRoute: typeof AppRoute
-    }
     '/_app/outreach/admin/invoice-review': {
       id: '/_app/outreach/admin/invoice-review'
       path: '/outreach/admin/invoice-review'
@@ -921,6 +914,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/outreach/enterprise/$id/'
       preLoaderRoute: typeof AppOutreachEnterpriseIdIndexRouteImport
       parentRoute: typeof AppOutreachEnterpriseIdRoute
+    }
+    '/_app/outreach/admin/managed-email/': {
+      id: '/_app/outreach/admin/managed-email/'
+      path: '/outreach/admin/managed-email'
+      fullPath: '/outreach/admin/managed-email/'
+      preLoaderRoute: typeof AppOutreachAdminManagedEmailIndexRouteImport
+      parentRoute: typeof AppRoute
     }
     '/_app/outreach/social/reach/dm': {
       id: '/_app/outreach/social/reach/dm'
@@ -1042,7 +1042,6 @@ interface AppRouteChildren {
   AppOutreachAdminEmailAccountsRoute: typeof AppOutreachAdminEmailAccountsRoute
   AppOutreachAdminEmailProvidersRoute: typeof AppOutreachAdminEmailProvidersRoute
   AppOutreachAdminInvoiceReviewRoute: typeof AppOutreachAdminInvoiceReviewRoute
-  AppOutreachAdminManagedEmailRoute: typeof AppOutreachAdminManagedEmailRoute
   AppOutreachAdminSmsProvidersRoute: typeof AppOutreachAdminSmsProvidersRoute
   AppOutreachAdminSmsRoutingRoute: typeof AppOutreachAdminSmsRoutingRoute
   AppOutreachAdminSmsTemplatesRoute: typeof AppOutreachAdminSmsTemplatesRoute
@@ -1053,6 +1052,7 @@ interface AppRouteChildren {
   AppOutreachSocialReachRoute: typeof AppOutreachSocialReachRouteWithChildren
   AppOutreachProductsIndexRoute: typeof AppOutreachProductsIndexRoute
   AppOutreachSocialProspectingTaskIdRoute: typeof AppOutreachSocialProspectingTaskIdRoute
+  AppOutreachAdminManagedEmailIndexRoute: typeof AppOutreachAdminManagedEmailIndexRoute
   AppOutreachSocialProspectingIndexRoute: typeof AppOutreachSocialProspectingIndexRoute
 }
 
@@ -1084,7 +1084,6 @@ const AppRouteChildren: AppRouteChildren = {
   AppOutreachAdminEmailAccountsRoute: AppOutreachAdminEmailAccountsRoute,
   AppOutreachAdminEmailProvidersRoute: AppOutreachAdminEmailProvidersRoute,
   AppOutreachAdminInvoiceReviewRoute: AppOutreachAdminInvoiceReviewRoute,
-  AppOutreachAdminManagedEmailRoute: AppOutreachAdminManagedEmailRoute,
   AppOutreachAdminSmsProvidersRoute: AppOutreachAdminSmsProvidersRoute,
   AppOutreachAdminSmsRoutingRoute: AppOutreachAdminSmsRoutingRoute,
   AppOutreachAdminSmsTemplatesRoute: AppOutreachAdminSmsTemplatesRoute,
@@ -1096,6 +1095,8 @@ const AppRouteChildren: AppRouteChildren = {
   AppOutreachProductsIndexRoute: AppOutreachProductsIndexRoute,
   AppOutreachSocialProspectingTaskIdRoute:
     AppOutreachSocialProspectingTaskIdRoute,
+  AppOutreachAdminManagedEmailIndexRoute:
+    AppOutreachAdminManagedEmailIndexRoute,
   AppOutreachSocialProspectingIndexRoute:
     AppOutreachSocialProspectingIndexRoute,
 }
@@ -1108,13 +1109,3 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}
