@@ -242,19 +242,33 @@ function ManagedEmailAdminPage() {
                   </TableCell>
                   <TableCell className="text-right whitespace-nowrap">
                     {o.status === "pending" && (
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        className="h-8 gap-1"
-                        onClick={() => {
-                          acceptManagedOrder(o.id);
-                          toast.success(`工单 ${o.orderNo} 已受理，进入执行中`);
-                        }}
-                      >
-                        <Play className="h-3.5 w-3.5" />
-                        受理
-                      </Button>
+                      <>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          className="h-8 gap-1"
+                          onClick={() => {
+                            acceptManagedOrder(o.id);
+                            toast.success(`工单 ${o.orderNo} 已受理，进入执行中`);
+                          }}
+                        >
+                          <Play className="h-3.5 w-3.5" />
+                          受理
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          className="h-8 gap-1 text-destructive hover:text-destructive"
+                          onClick={() => {
+                            setRejectOf(o);
+                            setRejectReason("");
+                          }}
+                        >
+                          驳回
+                        </Button>
+                      </>
                     )}
+
                     {active && (
                       <>
                         <Button
