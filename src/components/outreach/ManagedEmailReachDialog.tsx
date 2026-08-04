@@ -248,7 +248,6 @@ export function ManagedEmailReachDialog({
           </div>
 
           <div className="space-y-2">
-            <Label>撰写内容（选填）</Label>
             <div className="rounded-lg border border-border bg-muted/20 p-3">
               <EmailComposeFields
                 value={draft}
