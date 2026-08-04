@@ -449,7 +449,7 @@ export function ComposeSendDialog({
                 <span className="text-xs text-rose-600">
                   {typeof totalSelected === "number" && totalSelected > 0
                     ? `已选 ${totalSelected} 条，均无${isEmail ? "邮箱" : "电话"}，已全部过滤`
-                    : "无有效收件人，请关闭后重试"}
+                    : "暂无收件人，可在下方手动添加"}
                 </span>
               ) : (
                 typeof totalSelected === "number" &&
