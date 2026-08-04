@@ -159,12 +159,15 @@ export function AiVoiceCallDialog({
   const step1Valid = name.trim().length > 0 && name.length <= 100 && list.length > 0;
   const step2Valid = script.trim().length > 0 && startTime < endTime;
   const rampValid =
-    !ramp ||
+    launch !== "ramp" ||
     (Number(rampInit) >= 1 &&
       Number(rampInit) <= Number(concurrency) &&
       Number(rampStep) > 0 &&
       Number(rampInterval) > 0);
-  const step4Valid = (launch === "now" || scheduledAt.length > 0) && rampValid;
+  const step4Valid =
+    launch === "now" ||
+    (launch === "scheduled" && scheduledAt.length > 0) ||
+    (launch === "ramp" && rampValid);
 
   const canNext = useMemo(() => {
     if (step === 0) return step1Valid;
