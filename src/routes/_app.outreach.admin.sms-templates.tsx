@@ -1205,6 +1205,7 @@ function FilingDialog({ ctx, onOpenChange }: {
 }) {
   const existing = ctx ? getFilingsByTemplate(ctx.tpl.id)[ctx.channel] : undefined;
   const [status, setStatus] = useState<FilingStatus>("submitted");
+  const [regions, setRegions] = useState<string[]>([]);
   const [externalId, setExternalId] = useState("");
   const [submittedAt, setSubmittedAt] = useState("");
   const [approvedAt, setApprovedAt] = useState("");
@@ -1215,6 +1216,7 @@ function FilingDialog({ ctx, onOpenChange }: {
     if (!ctx) return;
     const today = new Date().toISOString().slice(0, 10);
     setStatus(existing?.status && existing.status !== "none" ? existing.status : "submitted");
+    setRegions(existing?.regions ?? defaultRegionsForChannel(ctx.channel));
     setExternalId(existing?.externalId ?? "");
     setSubmittedAt(existing?.submittedAt ?? today);
     setApprovedAt(existing?.approvedAt ?? "");
@@ -1226,10 +1228,15 @@ function FilingDialog({ ctx, onOpenChange }: {
   const chLabel = FILING_CHANNELS.find((c) => c.key === ctx.channel)?.label ?? ctx.channel;
 
   function save() {
+    if (regions.length === 0) {
+      toast.error("请至少选择一个目标地区");
+      return;
+    }
     upsertFiling({
       templateId: ctx!.tpl.id,
       channel: ctx!.channel,
       status,
+      regions,
       externalId: externalId.trim() || undefined,
       submittedAt: submittedAt || undefined,
       approvedAt: approvedAt || undefined,
@@ -1240,6 +1247,7 @@ function FilingDialog({ ctx, onOpenChange }: {
     toast.success(`已登记「${ctx!.tpl.name} · ${chLabel}」报备状态`);
     onOpenChange(false);
   }
+
 
   return (
     <Dialog open={!!ctx} onOpenChange={onOpenChange}>
