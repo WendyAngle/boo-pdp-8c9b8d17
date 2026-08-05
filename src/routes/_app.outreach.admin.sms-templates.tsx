@@ -1201,8 +1201,20 @@ function FilingsPanel({ filings, templates, onEdit }: {
                     </Badge>
                   )}
                 </div>
+                <div className="mt-1 flex items-center gap-1.5 flex-wrap text-[11px] text-muted-foreground">
+                  <span>目标地区：</span>
+                  {(f.regions ?? []).length === 0 ? (
+                    <span className="text-amber-600">未设置</span>
+                  ) : (
+                    (f.regions ?? []).map((r) => (
+                      <Badge key={r} variant="secondary" className="text-[10px] font-normal">
+                        {regionLabel(r)}
+                      </Badge>
+                    ))
+                  )}
+                </div>
                 <div className="mt-1 text-[11px] text-muted-foreground flex items-center gap-3 flex-wrap">
-                  {f.externalId && <span>回执号：<code className="text-[11px]">{f.externalId}</code></span>}
+
                   {f.submittedAt && <span>报备：{f.submittedAt}</span>}
                   {f.approvedAt && <span>通过：{f.approvedAt}</span>}
                   {f.expireAt && <span>到期：{f.expireAt}</span>}
