@@ -445,7 +445,7 @@ export function AiVoiceCallDialog({
                   ["场景类型", sceneLabel],
                   ["目标号码", `${list.length} 个`],
                   ["号码归属地识别", "已开启（当地号码呼出）"],
-                  ["并发上限", `${concurrency} 路（${dialMode === "fixed" ? "固定并发" : "随机并发"}）`],
+                  ["目标并发上限", `${concurrency} 路`],
                   ["拨打时间窗口", `按号码时区自动｜${startTime} ~ ${endTime}`],
                   ["单号码最大重试", `${maxRetry} 次`],
                 ].map(([k, v]) => (
