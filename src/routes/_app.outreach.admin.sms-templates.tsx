@@ -44,11 +44,21 @@ import {
   getFilingSummary,
   renewFiling,
   FILING_CHANNELS,
+  FILING_REGIONS,
+  regionLabel,
   type FilingChannel,
   type FilingStatus,
   type TemplateFiling,
   type TemplateApplication,
 } from "@/lib/sms-templates-store";
+
+/** 按渠道给出默认目标地区建议 */
+function defaultRegionsForChannel(ch: FilingChannel): string[] {
+  if (ch === "cmcc" || ch === "unicom" || ch === "telecom") return ["cn"];
+  if (ch === "twilio") return ["na"];
+  return [];
+}
+
 
 export const Route = createFileRoute("/_app/outreach/admin/sms-templates")({
   head: () => ({
@@ -1129,9 +1139,16 @@ function FilingsPanel({ filings, templates, onEdit }: {
   const tplMap = useMemo(() => Object.fromEntries(templates.map((t) => [t.id, t])), [templates]);
   const [ch, setCh] = useState<FilingChannel | "all">("all");
   const [st, setSt] = useState<FilingStatus | "all">("all");
+  const [rg, setRg] = useState<string>("all");
   const rows = filings
-    .filter((f) => (ch === "all" || f.channel === ch) && (st === "all" || f.status === st))
+    .filter(
+      (f) =>
+        (ch === "all" || f.channel === ch) &&
+        (st === "all" || f.status === st) &&
+        (rg === "all" || (f.regions ?? []).includes(rg)),
+    )
     .sort((a, b) => (b.submittedAt ?? "").localeCompare(a.submittedAt ?? ""));
+
   return (
     <Card className="p-0 overflow-hidden">
       <div className="flex items-center gap-3 border-b bg-muted/40 px-4 py-2">
@@ -1151,7 +1168,15 @@ function FilingsPanel({ filings, templates, onEdit }: {
             ))}
           </SelectContent>
         </Select>
+        <Select value={rg} onValueChange={setRg}>
+          <SelectTrigger className="h-8 w-44"><SelectValue placeholder="目标地区" /></SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">全部地区</SelectItem>
+            {FILING_REGIONS.map((r) => <SelectItem key={r.key} value={r.key}>{r.label}</SelectItem>)}
+          </SelectContent>
+        </Select>
         <span className="text-xs text-muted-foreground ml-auto">共 {rows.length} 条</span>
+
       </div>
       <div className="divide-y">
         {rows.length === 0 && (
@@ -1176,8 +1201,21 @@ function FilingsPanel({ filings, templates, onEdit }: {
                     </Badge>
                   )}
                 </div>
+                <div className="mt-1 flex items-center gap-1.5 flex-wrap text-[11px] text-muted-foreground">
+                  <span>目标地区：</span>
+                  {(f.regions ?? []).length === 0 ? (
+                    <span className="text-amber-600">未设置</span>
+                  ) : (
+                    (f.regions ?? []).map((r) => (
+                      <Badge key={r} variant="secondary" className="text-[10px] font-normal">
+                        {regionLabel(r)}
+                      </Badge>
+                    ))
+                  )}
+                </div>
                 <div className="mt-1 text-[11px] text-muted-foreground flex items-center gap-3 flex-wrap">
                   {f.externalId && <span>回执号：<code className="text-[11px]">{f.externalId}</code></span>}
+
                   {f.submittedAt && <span>报备：{f.submittedAt}</span>}
                   {f.approvedAt && <span>通过：{f.approvedAt}</span>}
                   {f.expireAt && <span>到期：{f.expireAt}</span>}
@@ -1205,6 +1243,7 @@ function FilingDialog({ ctx, onOpenChange }: {
 }) {
   const existing = ctx ? getFilingsByTemplate(ctx.tpl.id)[ctx.channel] : undefined;
   const [status, setStatus] = useState<FilingStatus>("submitted");
+  const [regions, setRegions] = useState<string[]>([]);
   const [externalId, setExternalId] = useState("");
   const [submittedAt, setSubmittedAt] = useState("");
   const [approvedAt, setApprovedAt] = useState("");
@@ -1215,6 +1254,7 @@ function FilingDialog({ ctx, onOpenChange }: {
     if (!ctx) return;
     const today = new Date().toISOString().slice(0, 10);
     setStatus(existing?.status && existing.status !== "none" ? existing.status : "submitted");
+    setRegions(existing?.regions ?? defaultRegionsForChannel(ctx.channel));
     setExternalId(existing?.externalId ?? "");
     setSubmittedAt(existing?.submittedAt ?? today);
     setApprovedAt(existing?.approvedAt ?? "");
@@ -1226,10 +1266,15 @@ function FilingDialog({ ctx, onOpenChange }: {
   const chLabel = FILING_CHANNELS.find((c) => c.key === ctx.channel)?.label ?? ctx.channel;
 
   function save() {
+    if (regions.length === 0) {
+      toast.error("请至少选择一个目标地区");
+      return;
+    }
     upsertFiling({
       templateId: ctx!.tpl.id,
       channel: ctx!.channel,
       status,
+      regions,
       externalId: externalId.trim() || undefined,
       submittedAt: submittedAt || undefined,
       approvedAt: approvedAt || undefined,
@@ -1240,6 +1285,7 @@ function FilingDialog({ ctx, onOpenChange }: {
     toast.success(`已登记「${ctx!.tpl.name} · ${chLabel}」报备状态`);
     onOpenChange(false);
   }
+
 
   return (
     <Dialog open={!!ctx} onOpenChange={onOpenChange}>
@@ -1267,6 +1313,39 @@ function FilingDialog({ ctx, onOpenChange }: {
               </SelectContent>
             </Select>
           </div>
+          <div className="col-span-2">
+            <label className="text-xs text-muted-foreground">
+              目标地区 * <span className="text-[11px]">（该报备生效的发送地区，用户端按此范围选用模板）</span>
+            </label>
+            <div className="mt-1.5 flex flex-wrap gap-1.5">
+              {FILING_REGIONS.map((r) => {
+                const on = regions.includes(r.key);
+                return (
+                  <button
+                    key={r.key}
+                    type="button"
+                    onClick={() =>
+                      setRegions((prev) =>
+                        prev.includes(r.key) ? prev.filter((x) => x !== r.key) : [...prev, r.key],
+                      )
+                    }
+                    className={cn(
+                      "rounded-full border px-2.5 py-1 text-xs transition-colors",
+                      on
+                        ? "border-primary bg-primary/10 text-primary font-medium"
+                        : "border-muted bg-background text-muted-foreground hover:bg-muted",
+                    )}
+                  >
+                    {on ? "✓ " : ""}{r.label}
+                  </button>
+                );
+              })}
+            </div>
+            {regions.length === 0 && (
+              <div className="mt-1 text-[11px] text-amber-600">请至少选择一个目标地区</div>
+            )}
+          </div>
+
           <div className="col-span-2">
             <label className="text-xs text-muted-foreground">外部回执号 / 模板ID</label>
             <Input value={externalId} onChange={(e) => setExternalId(e.target.value)} className="mt-1" placeholder="如 CM202607010881 / HXxxxxx" />

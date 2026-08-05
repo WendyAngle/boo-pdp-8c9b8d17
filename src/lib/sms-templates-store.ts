@@ -15,10 +15,28 @@ export const FILING_CHANNELS: { key: FilingChannel; label: string }[] = [
 
 export type FilingStatus = "none" | "submitted" | "approved" | "rejected" | "expired";
 
+/** 报备目标地区（运营商 / OTT 报备均按地区生效） */
+export const FILING_REGIONS: { key: string; label: string }[] = [
+  { key: "cn", label: "中国大陆" },
+  { key: "hk-tw", label: "中国港澳台" },
+  { key: "sea", label: "东南亚" },
+  { key: "in", label: "印度" },
+  { key: "me", label: "中东" },
+  { key: "eu", label: "欧洲（GDPR）" },
+  { key: "na", label: "北美" },
+  { key: "latam", label: "拉美" },
+  { key: "af", label: "非洲" },
+  { key: "anz", label: "澳新" },
+];
+export const regionLabel = (k: string) =>
+  FILING_REGIONS.find((r) => r.key === k)?.label ?? k;
+
 export interface TemplateFiling {
   templateId: string;
   channel: FilingChannel;
   status: FilingStatus;
+  /** 目标地区（报备生效范围），至少 1 个 */
+  regions: string[];
   externalId?: string;    // 运营商回执号
   submittedAt?: string;
   approvedAt?: string;
@@ -26,6 +44,7 @@ export interface TemplateFiling {
   comment?: string;       // 拒因 / 备注
   operator?: string;      // 登记人
 }
+
 
 /** 终端用户提交的自定义模板申请（内部运营审核） */
 export type AppStatus = "submitted" | "approved" | "rejected";
@@ -59,7 +78,7 @@ export interface SmsTemplate {
 }
 
 const KEY = "boo:sms-templates:v1";
-const KEY_FILINGS = "boo:sms-filings:v1";
+const KEY_FILINGS = "boo:sms-filings:v2";
 const KEY_APPS = "boo:sms-applications:v1";
 
 const SEED: SmsTemplate[] = [
@@ -154,13 +173,14 @@ function write(list: SmsTemplate[]) {
 }
 
 const SEED_FILINGS: TemplateFiling[] = [
-  { templateId: "t1", channel: "twilio", status: "approved", externalId: "HX8f21…", submittedAt: "2026-06-25", approvedAt: "2026-06-27", expireAt: "2027-06-27", operator: "合规组" },
-  { templateId: "t1", channel: "whatsapp", status: "submitted", submittedAt: "2026-07-05", operator: "合规组" },
-  { templateId: "t2", channel: "cmcc", status: "approved", externalId: "CM202607010881", submittedAt: "2026-06-28", approvedAt: "2026-07-01", expireAt: "2027-07-01", operator: "合规组" },
-  { templateId: "t2", channel: "unicom", status: "rejected", submittedAt: "2026-06-28", comment: "话术含金融词，需替换", operator: "合规组" },
-  { templateId: "t3", channel: "cmcc", status: "approved", externalId: "CM202606201122", approvedAt: "2026-06-22", expireAt: "2027-06-22", operator: "系统" },
-  { templateId: "t4", channel: "cmcc", status: "approved", externalId: "CM_OTP_09", approvedAt: "2026-06-10", expireAt: "2027-06-10", operator: "系统" },
+  { templateId: "t1", channel: "twilio", status: "approved", regions: ["na", "eu", "anz"], externalId: "HX8f21…", submittedAt: "2026-06-25", approvedAt: "2026-06-27", expireAt: "2027-06-27", operator: "合规组" },
+  { templateId: "t1", channel: "whatsapp", status: "submitted", regions: ["sea", "me"], submittedAt: "2026-07-05", operator: "合规组" },
+  { templateId: "t2", channel: "cmcc", status: "approved", regions: ["cn"], externalId: "CM202607010881", submittedAt: "2026-06-28", approvedAt: "2026-07-01", expireAt: "2027-07-01", operator: "合规组" },
+  { templateId: "t2", channel: "unicom", status: "rejected", regions: ["cn"], submittedAt: "2026-06-28", comment: "话术含金融词，需替换", operator: "合规组" },
+  { templateId: "t3", channel: "cmcc", status: "approved", regions: ["cn"], externalId: "CM202606201122", approvedAt: "2026-06-22", expireAt: "2027-06-22", operator: "系统" },
+  { templateId: "t4", channel: "cmcc", status: "approved", regions: ["cn", "hk-tw"], externalId: "CM_OTP_09", approvedAt: "2026-06-10", expireAt: "2027-06-10", operator: "系统" },
 ];
+
 const SEED_APPS: TemplateApplication[] = [
   { id: "a1", name: "客户回访 · 家居行业", channel: "marketing", locale: "zh-CN", content: "{{联系人名}}您好，我是{{我的公司}}的{{我的姓名}}，想跟进一下上次的家居采购需求，方便时可回复邮箱。回复T退订。", scenario: "针对家居行业老客户复购", status: "submitted", submittedBy: "李经理", submittedAt: "2026-07-08" },
   { id: "a2", name: "展会邀约 EN", channel: "marketing", locale: "en-US", content: "Hi {{联系人名}}, we'll exhibit at Canton Fair booth 5C-12. Coffee? -- {{我的姓名}}. Reply STOP to opt out.", scenario: "广交会前批量邀约", status: "submitted", submittedBy: "王销售", submittedAt: "2026-07-09" },
@@ -228,6 +248,17 @@ export function getFilingsByTemplate(templateId: string): Record<FilingChannel, 
   filings.filter((f) => f.templateId === templateId).forEach((f) => { m[f.channel] = f; });
   return m as Record<FilingChannel, TemplateFiling | undefined>;
 }
+
+/** 某模板已通过报备覆盖的目标地区（用户端展示可用范围） */
+export function getTemplateApprovedRegions(templateId: string): string[] {
+  const set = new Set<string>();
+  filings
+    .filter((f) => f.templateId === templateId && f.status === "approved")
+    .forEach((f) => (f.regions ?? []).forEach((r) => set.add(r)));
+  return FILING_REGIONS.filter((r) => set.has(r.key)).map((r) => r.key);
+}
+
+
 
 /** 登记 / 更新一条渠道报备 */
 export function upsertFiling(rec: TemplateFiling) {

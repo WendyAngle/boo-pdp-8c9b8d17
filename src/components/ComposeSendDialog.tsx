@@ -38,10 +38,9 @@ import { isSuppressed } from "@/lib/suppressions-store";
 import {
   useSmsTemplates,
   toComposeSyntax,
-  addSmsTemplate,
-  type SmsTplChannel,
+  getTemplateApprovedRegions,
+  regionLabel,
 } from "@/lib/sms-templates-store";
-import { Link } from "@tanstack/react-router";
 import { FileText, ShieldCheck, ShieldAlert } from "lucide-react";
 
 import {
@@ -134,8 +133,6 @@ export function ComposeSendDialog({
   // 短信合规追踪：内容是否来自已报备模板
   const [smsTemplateId, setSmsTemplateId] = useState<string | null>(null);
   const [smsTemplateName, setSmsTemplateName] = useState<string | null>(null);
-  const [submitTplOpen, setSubmitTplOpen] = useState(false);
-  const [confirmSendOpen, setConfirmSendOpen] = useState(false);
 
   /** 手动添加收件人输入框 */
   const [manualInput, setManualInput] = useState("");
@@ -311,6 +308,7 @@ export function ComposeSendDialog({
     (!isEmail || !!sender) &&
     (!isEmail || subject.trim().length > 0) &&
     content.trim().length > 0 &&
+    (isEmail || !!smsTemplateId) &&
     !overLimit;
 
   function doSend() {
@@ -379,11 +377,6 @@ export function ComposeSendDialog({
 
   function handleSend() {
     if (!canSend) return;
-    // 短信合规软性拦截：未套用已报备模板时二次确认
-    if (!isEmail && !smsTemplateId) {
-      setConfirmSendOpen(true);
-      return;
-    }
     doSend();
   }
 
@@ -642,7 +635,7 @@ export function ComposeSendDialog({
                   </Badge>
                 )}
               </Label>
-              <div className="flex items-center gap-2">
+              <div className={cn("flex items-center gap-2", !isEmail && "hidden")}>
                 <Button
                   type="button"
                   size="sm"
@@ -672,9 +665,9 @@ export function ComposeSendDialog({
               <div className="rounded-md border border-primary/30 bg-primary/5 p-2.5 space-y-1.5">
                 <div className="flex items-center gap-1.5 text-xs font-medium">
                   <ShieldCheck className="h-3.5 w-3.5 text-primary" />
-                  推荐使用已报备模板
+                  选择已报备短信模板 *
                   <span className="text-muted-foreground font-normal">
-                    海外营销短信须使用运营商预审模板，直发自由文本可能被拦截或封号
+                    模板由平台在「管理后台 · 短信模板」统一维护与报备，此处仅可选择使用
                   </span>
                 </div>
                 <SmsTemplatePicker
@@ -690,7 +683,7 @@ export function ComposeSendDialog({
             )}
 
             {/* 变量插入 */}
-            <div className="flex flex-wrap items-center gap-1.5">
+            <div className={cn("flex flex-wrap items-center gap-1.5", !isEmail && "hidden")}>
               <span className="text-xs text-muted-foreground">
                 插入变量（光标处插入到{focusField === "subject" ? "主题" : "正文"}）：
               </span>
@@ -722,18 +715,16 @@ export function ComposeSendDialog({
 
             <div className="space-y-1">
               <Label className="text-xs text-muted-foreground">
-                {isEmail ? "正文 *" : "短信内容 *"}
+                {isEmail ? "正文 *" : "短信内容 *（模板内容不可编辑）"}
               </Label>
               <Textarea
                 ref={contentRef}
                 value={content}
+                readOnly={!isEmail}
+                className={cn(!isEmail && "bg-muted/40 cursor-not-allowed")}
                 onChange={(e) => {
+                  if (!isEmail) return;
                   setContent(e.target.value);
-                  // 手动改动 → 视为脱离已报备模板
-                  if (smsTemplateId) {
-                    setSmsTemplateId(null);
-                    setSmsTemplateName(null);
-                  }
                 }}
                 onFocus={() => setFocusField("content")}
                 rows={isEmail ? 8 : 5}
@@ -760,10 +751,7 @@ export function ComposeSendDialog({
                 )}
               </div>
               {!isEmail && content.trim().length > 0 && (
-                <ComplianceStrip
-                  templateName={smsTemplateName}
-                  onSubmitAsTemplate={() => setSubmitTplOpen(true)}
-                />
+                <ComplianceStrip templateName={smsTemplateName} />
               )}
             </div>
           </section>
@@ -887,55 +875,6 @@ export function ComposeSendDialog({
       </DialogContent>
 
 
-      <SubmitTemplateDialog
-        open={submitTplOpen}
-        onOpenChange={setSubmitTplOpen}
-        initialContent={content}
-      />
-
-      <Dialog open={confirmSendOpen} onOpenChange={setConfirmSendOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
-              <ShieldAlert className="h-5 w-5 text-amber-600" />
-              内容未使用已报备模板
-            </DialogTitle>
-            <DialogDescription>
-              当前短信内容不是来自已审核模板，海外营销通道（Twilio 10DLC / 印度 DLT
-              等）可能拦截该消息，甚至导致发送账号被封。
-              <br />
-              <br />
-              建议：优先选择「已报备模板」发送；如为一次性沟通，也可先
-              <button
-                type="button"
-                className="text-primary underline mx-0.5"
-                onClick={() => {
-                  setConfirmSendOpen(false);
-                  setSubmitTplOpen(true);
-                }}
-              >
-                提交为模板送审
-              </button>
-              后再发送。
-            </DialogDescription>
-          </DialogHeader>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setConfirmSendOpen(false)}>
-              返回修改
-            </Button>
-            <Button
-              variant="outline"
-              className="border-amber-300 text-amber-700 hover:bg-amber-50"
-              onClick={() => {
-                setConfirmSendOpen(false);
-                doSend();
-              }}
-            >
-              仍然发送
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
     </Dialog>
   );
 }
@@ -966,7 +905,7 @@ function SmsTemplatePicker({
       >
         <SelectTrigger className="h-8 flex-1 text-xs bg-background">
           <FileText className="h-3.5 w-3.5 text-primary mr-1" />
-          <SelectValue placeholder="选择一个已报备模板套用…" />
+          <SelectValue placeholder="选择一个已报备模板（必选）…" />
         </SelectTrigger>
         <SelectContent>
           {approved.length === 0 ? (
@@ -988,32 +927,24 @@ function SmsTemplatePicker({
                   <span className="text-[10px] text-muted-foreground">
                     {t.locale}
                   </span>
+                  <span className="text-[10px] text-muted-foreground">
+                    {getTemplateApprovedRegions(t.id).length > 0
+                      ? getTemplateApprovedRegions(t.id).map(regionLabel).join(" / ")
+                      : "未报备地区"}
+                  </span>
                 </div>
               </SelectItem>
             ))
           )}
         </SelectContent>
       </Select>
-      <Link
-        to="/outreach/admin/sms-templates"
-        target="_blank"
-        className="text-primary hover:underline whitespace-nowrap"
-      >
-        管理模板 →
-      </Link>
     </div>
   );
 }
 
 /* -------------------- 合规状态条 -------------------- */
 
-function ComplianceStrip({
-  templateName,
-  onSubmitAsTemplate,
-}: {
-  templateName: string | null;
-  onSubmitAsTemplate: () => void;
-}) {
+function ComplianceStrip({ templateName }: { templateName: string | null }) {
   if (templateName) {
     return (
       <div className="flex items-center gap-1.5 text-[11px] text-emerald-700 dark:text-emerald-400 pt-1">
@@ -1025,167 +956,7 @@ function ComplianceStrip({
   return (
     <div className="flex items-center gap-2 text-[11px] text-amber-700 dark:text-amber-400 pt-1">
       <ShieldAlert className="h-3.5 w-3.5" />
-      <span>当前内容未报备，海外营销发送可能被拦截。</span>
-      <button
-        type="button"
-        onClick={onSubmitAsTemplate}
-        className="underline font-medium hover:text-amber-800"
-      >
-        提交为模板送审
-      </button>
+      <span>请先在上方选择一个已报备模板后再发送。</span>
     </div>
-  );
-}
-
-/* -------------------- 提交为模板送审 弹窗 -------------------- */
-
-function SubmitTemplateDialog({
-  open,
-  onOpenChange,
-  initialContent,
-}: {
-  open: boolean;
-  onOpenChange: (o: boolean) => void;
-  initialContent: string;
-}) {
-  const [name, setName] = useState("");
-  const [channel, setChannel] = useState<SmsTplChannel>("marketing");
-  const [locale, setLocale] = useState("zh-CN");
-  const [contentDraft, setContentDraft] = useState(initialContent);
-
-  useEffect(() => {
-    if (open) {
-      setName("");
-      setChannel("marketing");
-      setLocale(/[a-zA-Z]/.test(initialContent) ? "en-US" : "zh-CN");
-      setContentDraft(initialContent);
-    }
-  }, [open, initialContent]);
-
-  const hasOptOut = /STOP|UNSUBSCRIBE|退订|TD|回T/i.test(contentDraft);
-  const needOptOut = channel === "marketing" && !hasOptOut;
-
-  function submit() {
-    if (!name.trim()) {
-      toast.error("请填写模板名称");
-      return;
-    }
-    if (needOptOut) {
-      toast.error("营销类模板必须包含退订提示（STOP / 退订 / TD）", {
-        description: "可点击下方「一键补退订」自动追加",
-      });
-      return;
-    }
-    // 保留 {变量} 语法即可，模板存储层不做转换
-    addSmsTemplate({ name: name.trim(), channel, locale, content: contentDraft });
-    toast.success("已提交审核，预计 1 个工作日内反馈", {
-      description: "审核通过后即可在模板下拉中选用",
-    });
-    onOpenChange(false);
-  }
-
-  function appendOptOut() {
-    const suffix = locale === "en-US" ? " Reply STOP to opt out." : "回复T退订。";
-    setContentDraft((c) => (c.endsWith(suffix.trim()) ? c : c.trimEnd() + " " + suffix));
-  }
-
-  return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent>
-        <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
-            <FileText className="h-5 w-5 text-primary" />
-            提交为模板送审
-          </DialogTitle>
-          <DialogDescription>
-            当前撰写内容将进入合规审批流程；审批通过后成为可复用的已报备模板。
-          </DialogDescription>
-        </DialogHeader>
-        <div className="space-y-3">
-          <div>
-            <Label className="text-xs text-muted-foreground">模板名称 *</Label>
-            <Input
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              className="mt-1"
-              placeholder="例：跟进 · 报价请求 中文"
-            />
-          </div>
-          <div className="grid grid-cols-2 gap-3">
-            <div>
-              <Label className="text-xs text-muted-foreground">渠道类型</Label>
-              <Select value={channel} onValueChange={(v) => setChannel(v as SmsTplChannel)}>
-                <SelectTrigger className="mt-1 h-9">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="marketing">营销</SelectItem>
-                  <SelectItem value="notification">通知</SelectItem>
-                  <SelectItem value="otp">验证码</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            <div>
-              <Label className="text-xs text-muted-foreground">语言 / 地区</Label>
-              <Select value={locale} onValueChange={setLocale}>
-                <SelectTrigger className="mt-1 h-9">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="zh-CN">中文</SelectItem>
-                  <SelectItem value="en-US">英文</SelectItem>
-                  <SelectItem value="multi">多语言</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
-          <div>
-            <div className="flex items-center justify-between">
-              <Label className="text-xs text-muted-foreground">模板内容（可编辑）</Label>
-              <span className="text-[10px] text-muted-foreground">
-                {contentDraft.length} / 300 字
-              </span>
-            </div>
-            <Textarea
-              value={contentDraft}
-              onChange={(e) => setContentDraft(e.target.value)}
-              rows={5}
-              maxLength={300}
-              className="mt-1 font-mono text-xs"
-            />
-            {channel === "marketing" && (
-              needOptOut ? (
-                <div className="mt-1.5 flex items-center gap-2 rounded border border-amber-200 bg-amber-50 px-2 py-1.5 text-[11px] text-amber-800 dark:border-amber-900/50 dark:bg-amber-950/30 dark:text-amber-300">
-                  <ShieldAlert className="h-3.5 w-3.5 shrink-0" />
-                  <span className="flex-1">
-                    营销类模板必须包含退订提示（STOP / 退订 / TD / 回T）——运营商合规要求
-                  </span>
-                  <button
-                    type="button"
-                    onClick={appendOptOut}
-                    className="shrink-0 rounded border border-amber-300 bg-white px-2 py-0.5 font-medium hover:bg-amber-100"
-                  >
-                    一键补退订
-                  </button>
-                </div>
-              ) : (
-                <div className="mt-1.5 flex items-center gap-1.5 text-[11px] text-emerald-700 dark:text-emerald-400">
-                  <ShieldCheck className="h-3.5 w-3.5" />
-                  已包含退订提示，可提交审核
-                </div>
-              )
-            )}
-          </div>
-        </div>
-        <DialogFooter>
-          <Button variant="outline" onClick={() => onOpenChange(false)}>
-            取消
-          </Button>
-          <Button onClick={submit} disabled={needOptOut}>
-            提交审核
-          </Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
   );
 }
