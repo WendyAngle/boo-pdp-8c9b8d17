@@ -80,7 +80,7 @@ function SmsTemplatesPage() {
   const [libStatus, setLibStatus] = useState<Status | "all">("all");
   const [libSearch, setLibSearch] = useState("");
   const [libChannel, setLibChannel] = useState<"all" | Tpl["channel"]>("all");
-  const [libSource, setLibSource] = useState<"all" | "system" | "user">("all");
+  const [libRegion, setLibRegion] = useState<string>("all");
   const [addOpen, setAddOpen] = useState(false);
   const [editing, setEditing] = useState<Tpl | null>(null);
   const [previewing, setPreviewing] = useState<Tpl | null>(null);
