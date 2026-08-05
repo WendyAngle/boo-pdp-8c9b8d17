@@ -3,7 +3,6 @@ import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { toast } from "sonner";
 import {
   ChevronRight,
-  Plus,
   Search,
   Sparkles,
   Copy,
@@ -46,13 +45,7 @@ import {
 } from "@/components/ui/table";
 import {
   SCRIPT_SCENES,
-  SCRIPT_INDUSTRIES,
   SCRIPT_LANGUAGES,
-  STEP_TYPES,
-  TEMPLATE_INDUSTRY,
-  END_TARGET,
-  createScript,
-  deleteScript,
   duplicateScript,
   updateScript,
   useScripts,
@@ -91,7 +84,6 @@ function VoiceScriptsPage() {
   const [kw, setKw] = useState("");
   const [language, setLanguage] = useState("all");
   const [scene, setScene] = useState<string>("all");
-  const [createOpen, setCreateOpen] = useState(false);
   const [detail, setDetail] = useState<VoiceScript | null>(null);
 
   const filteredMine = useMemo(
@@ -130,16 +122,12 @@ function VoiceScriptsPage() {
             AI 智能外呼使用的对话内容。可从平台模板市场一键复制，再按线性步骤编排多轮对话与意向判定。
           </p>
         </div>
-        <Button className="gap-1.5" onClick={() => setCreateOpen(true)}>
-          <Plus className="h-4 w-4" />
-          新建话术
-        </Button>
       </div>
 
-      <Tabs defaultValue="mine">
+      <Tabs defaultValue="market">
         <TabsList>
-          <TabsTrigger value="mine">我的话术</TabsTrigger>
           <TabsTrigger value="market">模板市场</TabsTrigger>
+          <TabsTrigger value="mine">我的话术</TabsTrigger>
         </TabsList>
 
         <TabsContent value="mine" className="mt-4 space-y-4">
@@ -320,18 +308,10 @@ function VoiceScriptsPage() {
           }
         }}
       />
-
-      <CreateScriptDialog open={createOpen} onOpenChange={setCreateOpen} />
     </div>
   );
 }
 
-function CreateScriptDialog({ open, onOpenChange }: { open: boolean; onOpenChange: (v: boolean) => void }) {
-  const navigate = useNavigate();
-  const [name, setName] = useState("");
-  const [scene, setScene] = useState<ScriptScene>("marketing");
-  const [industry, setIndustry] = useState("通用");
-  const [language, setLanguage] = useState("zh");
 
   return (
     <Dialog open={open} onOpenChange={(v) => { onOpenChange(v); if (!v) setName(""); }}>
