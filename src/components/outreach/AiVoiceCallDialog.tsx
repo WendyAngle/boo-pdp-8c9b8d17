@@ -532,7 +532,7 @@ export function AiVoiceCallDialog({
               </div>
 
               <div className="space-y-3">
-                <Label>灰度启动</Label>
+                <Label>外呼策略</Label>
                 <div
                   className={cn(
                     "rounded-lg border p-3 transition-colors",
