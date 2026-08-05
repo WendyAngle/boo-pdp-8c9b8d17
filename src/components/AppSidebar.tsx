@@ -27,6 +27,7 @@ const menu: Root[] = [
         children: [
           { label: "我的收藏", to: "/outreach/favorites" },
           { label: "已解锁客户", to: "/outreach/unlocked" },
+          { label: "外呼话术", to: "/outreach/voice-scripts" },
           { label: "触达任务", to: "/outreach/reach" },
           { label: "触达会话", to: "/outreach/conversations" },
         ],
