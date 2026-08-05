@@ -193,14 +193,16 @@ function SmsTemplatesPage() {
               <SelectItem value="otp">验证码</SelectItem>
             </SelectContent>
           </Select>
-          <Select value={libSource} onValueChange={(v) => setLibSource(v as typeof libSource)}>
-            <SelectTrigger className="h-8 w-32"><SelectValue /></SelectTrigger>
+          <Select value={libRegion} onValueChange={setLibRegion}>
+            <SelectTrigger className="h-8 w-40"><SelectValue /></SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">全部来源</SelectItem>
-              <SelectItem value="system">系统内置</SelectItem>
-              <SelectItem value="user">用户创建</SelectItem>
+              <SelectItem value="all">全部覆盖地区</SelectItem>
+              {FILING_REGIONS.map((r) => (
+                <SelectItem key={r.key} value={r.key}>{r.label}</SelectItem>
+              ))}
             </SelectContent>
           </Select>
+
           <Select value={libStatus} onValueChange={(v) => setLibStatus(v as Status | "all")}>
             <SelectTrigger className="h-8 w-36"><SelectValue placeholder="状态" /></SelectTrigger>
             <SelectContent>
