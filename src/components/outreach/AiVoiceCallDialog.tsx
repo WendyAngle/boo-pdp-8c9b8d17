@@ -532,82 +532,115 @@ export function AiVoiceCallDialog({
               </div>
 
               <div className="space-y-3">
-                <Label>外呼策略</Label>
-                <div
-                  className={cn(
-                    "rounded-lg border p-3 transition-colors",
-                    ramp ? "border-primary bg-primary/5" : "border-border",
-                  )}
+                <Label>外呼策略（起量方式）</Label>
+                <p className="text-xs text-muted-foreground -mt-1">
+                  第 2 步已设定目标并发上限 {concurrency} 路，这里决定如何达到该上限。
+                </p>
+                <RadioGroup
+                  value={pacing}
+                  onValueChange={(v) => setPacing(v as Pacing)}
+                  className="grid gap-2"
                 >
-                  <label className="flex items-start gap-3 cursor-pointer">
-                    <Checkbox
-                      checked={ramp}
-                      onCheckedChange={(v) => setRamp(v === true)}
-                      className="mt-1"
-                    />
-                    <div className="min-w-0">
+                  <label
+                    className={cn(
+                      "flex items-start gap-3 rounded-lg border p-3 cursor-pointer transition-colors",
+                      pacing === "ramp" ? "border-primary bg-primary/5" : "border-border hover:bg-muted/40",
+                    )}
+                  >
+                    <RadioGroupItem value="ramp" className="mt-1" />
+                    <div className="min-w-0 flex-1">
                       <div className="text-sm font-medium flex items-center gap-1.5">
                         <TrendingUp className="h-4 w-4 text-primary" />
-                        逐步爬坡至目标并发
+                        灰度爬坡
                         <Badge variant="secondary" className="text-[11px]">
                           推荐
                         </Badge>
                       </div>
                       <div className="text-xs text-muted-foreground mt-0.5">
-                        从较低并发起步逐步提升至并发上限（{concurrency} 路），降低线路风险、提升接通率。
+                        从较低并发起步逐步提升至上限（{concurrency} 路），降低线路风险、提升接通率。
+                      </div>
+                      <div className="mt-3 grid gap-3 sm:grid-cols-2">
+                        <div className="space-y-1.5">
+                          <Label className="text-xs">初始并发</Label>
+                          <div className="flex items-center gap-2">
+                            <Input
+                              type="number"
+                              min={1}
+                              max={Number(concurrency)}
+                              value={rampInit}
+                              disabled={pacing !== "ramp"}
+                              onChange={(e) => setRampInit(e.target.value)}
+                              className="w-24"
+                            />
+                            <span className="text-sm text-muted-foreground">路</span>
+                          </div>
+                        </div>
+                        <div className="space-y-1.5">
+                          <Label className="text-xs">爬坡节奏</Label>
+                          <div className="flex items-center gap-2">
+                            <span className="text-sm text-muted-foreground">每</span>
+                            <Input
+                              type="number"
+                              min={10}
+                              step={10}
+                              value={rampInterval}
+                              disabled={pacing !== "ramp"}
+                              onChange={(e) => setRampInterval(e.target.value)}
+                              className="w-20"
+                            />
+                            <span className="text-sm text-muted-foreground">秒增加</span>
+                            <Input
+                              type="number"
+                              min={1}
+                              value={rampStep}
+                              disabled={pacing !== "ramp"}
+                              onChange={(e) => setRampStep(e.target.value)}
+                              className="w-20"
+                            />
+                            <span className="text-sm text-muted-foreground">路</span>
+                          </div>
+                        </div>
+                        {!rampValid && (
+                          <p className="text-xs text-destructive sm:col-span-2">
+                            初始并发需为 1 ~ {concurrency} 之间，爬坡步长与间隔需大于 0
+                          </p>
+                        )}
                       </div>
                     </div>
                   </label>
 
-                  <div className="mt-3 grid gap-3 sm:grid-cols-2 sm:pl-7">
-                    <div className="space-y-1.5">
-                      <Label className="text-xs">初始并发</Label>
-                      <div className="flex items-center gap-2">
-                        <Input
-                          type="number"
-                          min={1}
-                          max={Number(concurrency)}
-                          value={rampInit}
-                          disabled={!ramp}
-                          onChange={(e) => setRampInit(e.target.value)}
-                          className="w-24"
-                        />
-                        <span className="text-sm text-muted-foreground">路</span>
-                      </div>
-                    </div>
-                    <div className="space-y-1.5">
-                      <Label className="text-xs">爬坡节奏</Label>
-                      <div className="flex items-center gap-2">
-                        <span className="text-sm text-muted-foreground">每</span>
-                        <Input
-                          type="number"
-                          min={10}
-                          step={10}
-                          value={rampInterval}
-                          disabled={!ramp}
-                          onChange={(e) => setRampInterval(e.target.value)}
-                          className="w-20"
-                        />
-                        <span className="text-sm text-muted-foreground">秒增加</span>
-                        <Input
-                          type="number"
-                          min={1}
-                          value={rampStep}
-                          disabled={!ramp}
-                          onChange={(e) => setRampStep(e.target.value)}
-                          className="w-20"
-                        />
-                        <span className="text-sm text-muted-foreground">路</span>
-                      </div>
-                    </div>
-                    {!rampValid && (
-                      <p className="text-xs text-destructive sm:col-span-2">
-                        初始并发需为 1 ~ {concurrency} 之间，爬坡步长与间隔需大于 0
-                      </p>
+                  <label
+                    className={cn(
+                      "flex items-start gap-3 rounded-lg border p-3 cursor-pointer transition-colors",
+                      pacing === "steady" ? "border-primary bg-primary/5" : "border-border hover:bg-muted/40",
                     )}
-                  </div>
-                </div>
+                  >
+                    <RadioGroupItem value="steady" className="mt-1" />
+                    <div>
+                      <div className="text-sm font-medium">恒定并发</div>
+                      <div className="text-xs text-muted-foreground mt-0.5">
+                        启动即以 {concurrency} 路满并发拨打，起量最快，线路风险较高。
+                      </div>
+                    </div>
+                  </label>
+
+                  <label
+                    className={cn(
+                      "flex items-start gap-3 rounded-lg border p-3 cursor-pointer transition-colors",
+                      pacing === "random" ? "border-primary bg-primary/5" : "border-border hover:bg-muted/40",
+                    )}
+                  >
+                    <RadioGroupItem value="random" className="mt-1" />
+                    <div>
+                      <div className="text-sm font-medium">随机并发</div>
+                      <div className="text-xs text-muted-foreground mt-0.5">
+                        在上限内随机浮动（约 50%~100%），拨打节奏更自然，规避号码风控。
+                      </div>
+                    </div>
+                  </label>
+                </RadioGroup>
               </div>
+
             </div>
           )}
 
