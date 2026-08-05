@@ -41,6 +41,7 @@ import {
   approveApplication,
   rejectApplication,
   getFilingsByTemplate,
+  getTemplateApprovedRegions,
   getFilingSummary,
   renewFiling,
   FILING_CHANNELS,
@@ -80,7 +81,7 @@ function SmsTemplatesPage() {
   const [libStatus, setLibStatus] = useState<Status | "all">("all");
   const [libSearch, setLibSearch] = useState("");
   const [libChannel, setLibChannel] = useState<"all" | Tpl["channel"]>("all");
-  const [libSource, setLibSource] = useState<"all" | "system" | "user">("all");
+  const [libRegion, setLibRegion] = useState<string>("all");
   const [addOpen, setAddOpen] = useState(false);
   const [editing, setEditing] = useState<Tpl | null>(null);
   const [previewing, setPreviewing] = useState<Tpl | null>(null);
@@ -109,12 +110,10 @@ function SmsTemplatesPage() {
     expiring: filings.filter((f) => f.status === "approved" && f.expireAt && daysUntil(f.expireAt) <= 30).length,
   };
 
-  const isSystem = (t: Tpl) => t.submittedBy === "SysM" || t.submittedBy === "系统";
   const filtered = list.filter((t) => {
     if (libStatus !== "all" && t.status !== libStatus) return false;
     if (libChannel !== "all" && t.channel !== libChannel) return false;
-    if (libSource === "system" && !isSystem(t)) return false;
-    if (libSource === "user" && isSystem(t)) return false;
+    if (libRegion !== "all" && !getTemplateApprovedRegions(t.id).includes(libRegion)) return false;
     if (libSearch.trim()) {
       const q = libSearch.trim().toLowerCase();
       if (!t.name.toLowerCase().includes(q) && !t.content.toLowerCase().includes(q)) return false;
@@ -124,7 +123,8 @@ function SmsTemplatesPage() {
 
   useEffect(() => {
     setPage(1);
-  }, [libStatus, libChannel, libSource, libSearch]);
+  }, [libStatus, libChannel, libRegion, libSearch]);
+
 
   const pageData = useMemo(
     () => filtered.slice((page - 1) * pageSize, page * pageSize),
@@ -193,14 +193,16 @@ function SmsTemplatesPage() {
               <SelectItem value="otp">验证码</SelectItem>
             </SelectContent>
           </Select>
-          <Select value={libSource} onValueChange={(v) => setLibSource(v as typeof libSource)}>
-            <SelectTrigger className="h-8 w-32"><SelectValue /></SelectTrigger>
+          <Select value={libRegion} onValueChange={setLibRegion}>
+            <SelectTrigger className="h-8 w-40"><SelectValue /></SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">全部来源</SelectItem>
-              <SelectItem value="system">系统内置</SelectItem>
-              <SelectItem value="user">用户创建</SelectItem>
+              <SelectItem value="all">全部覆盖地区</SelectItem>
+              {FILING_REGIONS.map((r) => (
+                <SelectItem key={r.key} value={r.key}>{r.label}</SelectItem>
+              ))}
             </SelectContent>
           </Select>
+
           <Select value={libStatus} onValueChange={(v) => setLibStatus(v as Status | "all")}>
             <SelectTrigger className="h-8 w-36"><SelectValue placeholder="状态" /></SelectTrigger>
             <SelectContent>
@@ -224,48 +226,38 @@ function SmsTemplatesPage() {
               <thead className="bg-muted/30 text-[11px] text-muted-foreground">
                 <tr className="text-left">
                   <th className="px-4 py-2 font-medium w-[16%]">模板名称</th>
-                  <th className="px-3 py-2 font-medium w-[10%]">来源</th>
                   <th className="px-3 py-2 font-medium w-[8%]">模板类型</th>
                   <th className="px-3 py-2 font-medium">模板内容</th>
                   <th className="px-3 py-2 font-medium w-[9%]">内审状态</th>
-                  <th className="px-3 py-2 font-medium w-[22%]">渠道报备</th>
-                  <th className="px-3 py-2 font-medium w-[10%]">创建时间</th>
-                  <th className="px-3 py-2 font-medium w-[14%] text-right">操作</th>
+                  <th className="px-3 py-2 font-medium w-[28%]">渠道 + 目标地区报备</th>
+                  <th className="px-3 py-2 font-medium w-[10%]">更新时间</th>
+                  <th className="px-3 py-2 font-medium w-[12%] text-right">操作</th>
                 </tr>
               </thead>
               <tbody className="divide-y">
                 {filtered.length === 0 && (
                   <tr>
-                    <td colSpan={8} className="p-10 text-center text-sm text-muted-foreground">
+                    <td colSpan={7} className="p-10 text-center text-sm text-muted-foreground">
+
                       无匹配模板
                     </td>
                   </tr>
                 )}
                 {pageData.map((t) => {
-                  const system = isSystem(t);
                   return (
                     <tr key={t.id} className="align-top hover:bg-muted/20">
                       <td className="px-4 py-3">
                         <div className="font-medium">{t.name}</div>
-                      </td>
-                      <td className="px-3 py-3">
-                        <Badge
-                          variant="outline"
-                          className={cn(
-                            "text-[10px]",
-                            system
-                              ? "bg-sky-50 text-sky-700 border-sky-200"
-                              : "bg-violet-50 text-violet-700 border-violet-200",
-                          )}
-                        >
-                          {system ? "系统内置" : "用户创建"}
-                        </Badge>
+                        <div className="mt-1 text-[11px] text-muted-foreground">
+                          语言：{t.locale}
+                        </div>
                       </td>
                       <td className="px-3 py-3">
                         <Badge variant="outline" className="text-[10px]">
                           {t.channel === "otp" ? "验证码" : t.channel === "marketing" ? "营销" : "通知"}
                         </Badge>
                       </td>
+
                       <td className="px-3 py-3">
                         <Tooltip>
                           <TooltipTrigger asChild>
@@ -301,11 +293,10 @@ function SmsTemplatesPage() {
                           }}>
                             <Copy className="h-3.5 w-3.5" />
                           </IconAction>
-                          {system && (
-                            <IconAction title="编辑" onClick={() => setEditing(t)}>
-                              <Pencil className="h-3.5 w-3.5" />
-                            </IconAction>
-                          )}
+                          <IconAction title="编辑" onClick={() => setEditing(t)}>
+                            <Pencil className="h-3.5 w-3.5" />
+                          </IconAction>
+
                           <IconAction title="预览" onClick={() => setPreviewing(t)}>
                             <Eye className="h-3.5 w-3.5" />
                           </IconAction>
@@ -338,6 +329,23 @@ function SmsTemplatesPage() {
           )}
         </TooltipProvider>
       </Card>
+
+      <div className="space-y-2">
+        <div className="flex items-center gap-2 text-sm font-medium">
+          <Radio className="h-4 w-4 text-primary" />
+          报备记录
+          <span className="text-xs font-normal text-muted-foreground">
+            按「渠道 + 目标地区」登记的外部报备明细，决定用户端在各地区可选用的模板
+          </span>
+        </div>
+        <FilingsPanel
+          filings={filings}
+          templates={list}
+          onEdit={(tpl, ch) => setFilingCtx({ tpl, channel: ch })}
+        />
+      </div>
+
+
 
       <NewTplDialog open={addOpen} onOpenChange={setAddOpen} onSubmit={submitNew} />
       <NewTplDialog
@@ -836,16 +844,17 @@ function _processGuideInner() {
       >
         <span className="flex items-center gap-2 font-medium">
           <ShieldCheck className="h-4 w-4 text-primary" />
-          流程指引：新建 / 通过申请 → 渠道报备 → 用户可用
+          流程指引：平台新建 → 内审通过 → 渠道 + 地区报备 → 用户可选用
         </span>
         {open ? <ChevronUp className="h-4 w-4 text-muted-foreground" /> : <ChevronDown className="h-4 w-4 text-muted-foreground" />}
       </button>
       {open && (
         <div className="mt-3 grid grid-cols-1 md:grid-cols-3 gap-2 text-[12px]">
           {[
-            { n: 1, title: "创建 / 入库", desc: "系统内置由平台运营新建；用户创建来自终端提交，两者入库后统一进入『待审核』。" },
-            { n: 2, title: "内审 · 报备", desc: "在操作列点击『审核』确认通过或驳回；同时可在『报备』中为各渠道分别登记外部审核结果。" },
-            { n: 3, title: "用户可用", desc: "内审已通过 + 对应渠道报备通过后，终端用户即可选用群发；系统内置模板允许后续修改，用户创建的仅限查看。" },
+            { n: 1, title: "平台新建", desc: "所有短信模板均由平台运营在后台新建与维护，入库后进入『待审核』。" },
+            { n: 2, title: "内审 · 报备", desc: "操作列点击『审核』确认通过或驳回；再在『报备』中按渠道 + 目标地区分别登记外部审核结果。" },
+            { n: 3, title: "用户可用", desc: "内审通过 + 对应渠道地区报备通过后，终端用户在批量发短信时即可按覆盖地区选用该模板。" },
+
           ].map((s) => (
             <div key={s.n} className="rounded-md border bg-muted/30 p-2">
               <div className="flex items-center gap-1.5 font-medium text-foreground">
@@ -1015,36 +1024,57 @@ const FILING_STATUS_CLASS: Record<FilingStatus, string> = {
 
 function FilingMatrix({ template, onPick }: { template: Tpl; onPick: (ch: FilingChannel) => void }) {
   const map = getFilingsByTemplate(template.id);
+  const recs = FILING_CHANNELS.map((c) => ({ c, rec: map[c.key] })).filter((x) => !!x.rec);
+  const missing = FILING_CHANNELS.filter((c) => !map[c.key]);
   return (
-    <div className="mt-2 flex items-center gap-1.5 flex-wrap">
-      <span className="text-[11px] text-muted-foreground flex items-center gap-1">
-        <Radio className="h-3 w-3" /> 渠道报备：
-      </span>
-      {FILING_CHANNELS.map((c) => {
-        const rec = map[c.key];
-        const st: FilingStatus = rec?.status ?? "none";
-        const isExpiring = rec?.status === "approved" && rec.expireAt && daysUntil(rec.expireAt) <= 30;
-        return (
-          <button
-            key={c.key}
-            onClick={() => onPick(c.key)}
-            className={cn(
-              "px-2 py-0.5 rounded-md border text-[10px] leading-none flex items-center gap-1 hover:opacity-80 transition-opacity",
-              FILING_STATUS_CLASS[st],
-              isExpiring && "ring-1 ring-orange-300",
-            )}
-            title={rec?.comment || FILING_STATUS_LABEL[st]}
-          >
-            <span>{c.label}</span>
-            <span className="opacity-70">·</span>
-            <span>{FILING_STATUS_LABEL[st]}</span>
-            {isExpiring && <AlertTriangle className="h-2.5 w-2.5" />}
-          </button>
-        );
-      })}
+    <div className="flex flex-col gap-1.5">
+      {recs.length === 0 && (
+        <span className="text-[11px] text-muted-foreground">尚未登记任何渠道报备</span>
+      )}
+      <div className="flex flex-wrap gap-1.5">
+        {recs.map(({ c, rec }) => {
+          const st: FilingStatus = rec!.status;
+          const isExpiring = st === "approved" && rec!.expireAt && daysUntil(rec!.expireAt!) <= 30;
+          const regions = rec!.regions ?? [];
+          return (
+            <button
+              key={c.key}
+              onClick={() => onPick(c.key)}
+              className={cn(
+                "px-2 py-0.5 rounded-md border text-[10px] leading-tight flex items-center gap-1 hover:opacity-80 transition-opacity text-left",
+                FILING_STATUS_CLASS[st],
+                isExpiring && "ring-1 ring-orange-300",
+              )}
+              title={rec!.comment || FILING_STATUS_LABEL[st]}
+            >
+              <span className="font-medium">{c.label}</span>
+              <span className="opacity-60">·</span>
+              <span>{regions.length ? regions.map(regionLabel).join(" / ") : "未设地区"}</span>
+              <span className="opacity-60">·</span>
+              <span>{FILING_STATUS_LABEL[st]}</span>
+              {isExpiring && <AlertTriangle className="h-2.5 w-2.5" />}
+            </button>
+          );
+        })}
+      </div>
+      {missing.length > 0 && (
+        <div className="flex flex-wrap items-center gap-1 text-[10px] text-muted-foreground">
+          <span>未报备：</span>
+          {missing.map((c) => (
+            <button
+              key={c.key}
+              onClick={() => onPick(c.key)}
+              className="px-1.5 py-0.5 rounded border border-dashed hover:bg-muted"
+            >
+              {c.label}
+            </button>
+          ))}
+        </div>
+      )}
     </div>
   );
 }
+
 
 function ApplicationsPanel({ apps, onReview }: { apps: TemplateApplication[]; onReview: (a: TemplateApplication) => void }) {
   const [tab, setTab] = useState<"submitted" | "approved" | "rejected" | "all">("submitted");
