@@ -47,6 +47,15 @@ import {
 } from "@/components/ui/select";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
+import {
+  useSmsProviders,
+  patchProvider,
+  upsertProvider,
+  type SmsProvider,
+  type ProviderHealth,
+} from "@/lib/sms-network-store";
+import { FILING_CHANNELS, FILING_REGIONS, regionLabel } from "@/lib/sms-templates-store";
+
 
 export const Route = createFileRoute("/_app/outreach/admin/sms-providers")({
   head: () => ({
@@ -61,105 +70,11 @@ export const Route = createFileRoute("/_app/outreach/admin/sms-providers")({
   component: SmsProvidersPage,
 });
 
-type Health = "healthy" | "degraded" | "down" | "paused";
+type Health = ProviderHealth;
+type Provider = SmsProvider;
 
 // USD 记账口径，其他币种保留原始展示。汇率写死为演示值。
 const FX_TO_USD: Record<string, number> = { USD: 1, CNY: 0.14 };
-
-interface Provider {
-  id: string;
-  name: string;
-  vendor: string;
-  regions: string[];
-  channels: Array<"marketing" | "otp" | "notification">;
-  enabled: boolean;
-  health: Health;
-  deliveryRate: number; // 0-1
-  respMs: number; // 平均响应耗时
-  tps: number;
-  quotaUsed: number; // 0-1
-  /** 原始计价 */
-  cost: { currency: "USD" | "CNY"; perSegment: number };
-  lastCheck: string;
-}
-
-const SEED: Provider[] = [
-  {
-    id: "twilio",
-    name: "Twilio 主账号",
-    vendor: "Twilio",
-    regions: ["全球", "US", "EU"],
-    channels: ["marketing", "otp", "notification"],
-    enabled: true,
-    health: "healthy",
-    deliveryRate: 0.973,
-    respMs: 1800,
-    tps: 100,
-    quotaUsed: 0.42,
-    cost: { currency: "USD", perSegment: 0.0075 },
-    lastCheck: "1 分钟前",
-  },
-  {
-    id: "vonage",
-    name: "Vonage 备用",
-    vendor: "Vonage",
-    regions: ["EU", "APAC"],
-    channels: ["marketing", "notification"],
-    enabled: true,
-    health: "healthy",
-    deliveryRate: 0.951,
-    respMs: 2300,
-    tps: 60,
-    quotaUsed: 0.28,
-    cost: { currency: "USD", perSegment: 0.0068 },
-    lastCheck: "刚刚",
-  },
-  {
-    id: "aliyun-intl",
-    name: "阿里云国际站",
-    vendor: "Aliyun",
-    regions: ["APAC", "CN"],
-    channels: ["marketing", "notification"],
-    enabled: true,
-    health: "degraded",
-    deliveryRate: 0.881,
-    respMs: 6200,
-    tps: 200,
-    quotaUsed: 0.76,
-    cost: { currency: "CNY", perSegment: 0.045 },
-    lastCheck: "3 分钟前",
-  },
-  {
-    id: "infobip",
-    name: "Infobip",
-    vendor: "Infobip",
-    regions: ["全球"],
-    channels: ["otp"],
-    enabled: true,
-    health: "healthy",
-    deliveryRate: 0.988,
-    respMs: 900,
-    tps: 300,
-    quotaUsed: 0.15,
-    cost: { currency: "USD", perSegment: 0.010 },
-    lastCheck: "刚刚",
-  },
-  {
-    id: "sinch",
-    name: "Sinch A2P",
-    vendor: "Sinch",
-    regions: ["US", "LATAM"],
-    channels: ["marketing"],
-    enabled: false,
-    health: "down",
-    deliveryRate: 0.62,
-    respMs: 15200,
-    tps: 80,
-    quotaUsed: 0,
-    cost: { currency: "USD", perSegment: 0.008 },
-    lastCheck: "12 分钟前",
-  },
-];
 
 /** 统一转 USD 显示，tooltip 展示原币值 */
 function formatCostUSD(cost: Provider["cost"]) {
@@ -171,8 +86,9 @@ function formatCostOriginal(cost: Provider["cost"]) {
   return `${sym}${cost.perSegment.toFixed(4)}/段（${cost.currency}）`;
 }
 
+
 function SmsProvidersPage() {
-  const [list, setList] = useState<Provider[]>(SEED);
+  const list = useSmsProviders();
   const [editorOpen, setEditorOpen] = useState(false);
   const [editing, setEditing] = useState<Provider | null>(null);
   const [page, setPage] = useState(1);
@@ -200,30 +116,22 @@ function SmsProvidersPage() {
   }, [list]);
 
   function toggle(id: string) {
-    setList((s) =>
-      s.map((p) => {
-        if (p.id !== id) return p;
-        if (p.health === "down") {
-          toast.error("服务商已触发熔断，无法在此手动启用；请先解决底层问题");
-          return p;
-        }
-        return { ...p, enabled: !p.enabled };
-      }),
-    );
+    const p = list.find((x) => x.id === id);
+    if (!p) return;
+    if (p.health === "down") {
+      toast.error("服务商已触发熔断，无法在此手动启用；请先解决底层问题");
+      return;
+    }
+    patchProvider(id, { enabled: !p.enabled });
     toast.success("已更新服务商启用状态");
   }
 
   /** 熔断重置：进入观察态（paused），路由权重 0、只观测健康度，30 min 后自动恢复评估 */
   function resetToObservation(id: string) {
-    setList((s) =>
-      s.map((p) =>
-        p.id === id
-          ? { ...p, health: "paused", enabled: false, lastCheck: "刚刚" }
-          : p,
-      ),
-    );
+    patchProvider(id, { health: "paused", enabled: false, lastCheck: "刚刚" });
     toast.success("已重置为观察态，30 分钟内不参与路由，稳定后可手动启用");
   }
+
 
   function openCreate() {
     setEditing(null);
@@ -234,13 +142,11 @@ function SmsProvidersPage() {
     setEditorOpen(true);
   }
   function handleSave(next: Provider) {
-    setList((s) => {
-      const exists = s.some((x) => x.id === next.id);
-      return exists ? s.map((x) => (x.id === next.id ? next : x)) : [...s, next];
-    });
+    upsertProvider(next);
     setEditorOpen(false);
     toast.success(editing ? "已更新服务商配置" : "已新增服务商，默认置为观察态");
   }
+
 
   return (
     <TooltipProvider delayDuration={200}>
@@ -310,8 +216,10 @@ function SmsProvidersPage() {
           <TableHeader>
             <TableRow>
               <TableHead>服务商</TableHead>
-              <TableHead>覆盖区域</TableHead>
+              <TableHead>覆盖地区</TableHead>
+              <TableHead>承载报备通道</TableHead>
               <TableHead>支持渠道</TableHead>
+
               <TableHead>健康度</TableHead>
               <TableHead>送达率</TableHead>
               <TableHead>
@@ -339,15 +247,25 @@ function SmsProvidersPage() {
                   </div>
                 </TableCell>
                 <TableCell>
-                  <div className="flex flex-wrap gap-1">
+                  <div className="flex flex-wrap gap-1 max-w-[220px]">
                     {p.regions.map((r) => (
                       <Badge key={r} variant="outline" className="text-[10px]">
-                        {r}
+                        {regionLabel(r)}
                       </Badge>
                     ))}
                   </div>
                 </TableCell>
                 <TableCell>
+                  <div className="flex flex-wrap gap-1 max-w-[180px]">
+                    {p.filingChannels.map((fc) => (
+                      <Badge key={fc} variant="secondary" className="text-[10px]">
+                        {FILING_CHANNELS.find((c) => c.key === fc)?.label ?? fc}
+                      </Badge>
+                    ))}
+                  </div>
+                </TableCell>
+                <TableCell>
+
                   <div className="flex flex-wrap gap-1">
                     {p.channels.map((c) => (
                       <Badge
@@ -513,12 +431,21 @@ function ProviderEditor({
       toast.error("至少选择一种支持渠道");
       return;
     }
+    if (form.regions.length === 0) {
+      toast.error("至少选择一个覆盖地区");
+      return;
+    }
+    if (form.filingChannels.length === 0) {
+      toast.error("至少选择一个承载报备通道");
+      return;
+    }
     if (form.tps <= 0) {
       toast.error("TPS 需大于 0");
       return;
     }
     onSave(form);
   }
+
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -536,13 +463,47 @@ function ProviderEditor({
           <Field label="厂商" required>
             <Input value={form.vendor} onChange={(e) => set("vendor", e.target.value)} placeholder="Twilio / Vonage / Aliyun" />
           </Field>
-          <Field label="覆盖区域" hint="用逗号分隔，如 US, EU, APAC">
-            <Input
-              value={form.regions.join(", ")}
-              onChange={(e) => set("regions", e.target.value.split(",").map((s) => s.trim()).filter(Boolean))}
-              placeholder="全球"
-            />
+          <Field label="覆盖地区" required hint="与短信模板报备的目标地区口径一致">
+            <div className="flex flex-wrap gap-x-4 gap-y-1.5 rounded-md border p-2 max-h-32 overflow-auto">
+              {FILING_REGIONS.map((r) => (
+                <label key={r.key} className="flex items-center gap-1.5 text-xs">
+                  <Checkbox
+                    checked={form.regions.includes(r.key)}
+                    onCheckedChange={() =>
+                      set(
+                        "regions",
+                        form.regions.includes(r.key)
+                          ? form.regions.filter((x) => x !== r.key)
+                          : [...form.regions, r.key],
+                      )
+                    }
+                  />
+                  {r.label}
+                </label>
+              ))}
+            </div>
           </Field>
+          <Field label="承载报备通道" required hint="决定哪些模板报备可由该服务商发出">
+            <div className="flex flex-wrap gap-x-4 gap-y-1.5 rounded-md border p-2 max-h-32 overflow-auto">
+              {FILING_CHANNELS.map((c) => (
+                <label key={c.key} className="flex items-center gap-1.5 text-xs">
+                  <Checkbox
+                    checked={form.filingChannels.includes(c.key)}
+                    onCheckedChange={() =>
+                      set(
+                        "filingChannels",
+                        form.filingChannels.includes(c.key)
+                          ? form.filingChannels.filter((x) => x !== c.key)
+                          : [...form.filingChannels, c.key],
+                      )
+                    }
+                  />
+                  {c.label}
+                </label>
+              ))}
+            </div>
+          </Field>
+
           <Field label="支持渠道" required>
             <div className="flex items-center gap-4 h-9">
               <label className="flex items-center gap-2 text-sm">
@@ -609,13 +570,21 @@ function Field({ label, required, hint, children }: { label: string; required?: 
 }
 
 function makeDraft(editing: Provider | null): Provider {
-  if (editing) return { ...editing, regions: [...editing.regions], channels: [...editing.channels], cost: { ...editing.cost } };
+  if (editing)
+    return {
+      ...editing,
+      regions: [...editing.regions],
+      channels: [...editing.channels],
+      filingChannels: [...editing.filingChannels],
+      cost: { ...editing.cost },
+    };
   return {
     id: `prov-${Date.now().toString(36)}`,
     name: "",
     vendor: "",
-    regions: ["全球"],
+    regions: ["na"],
     channels: ["notification"],
+    filingChannels: ["intl-a2p"],
     enabled: false,
     health: "paused",
     deliveryRate: 0,
@@ -626,6 +595,7 @@ function makeDraft(editing: Provider | null): Provider {
     lastCheck: "刚刚",
   };
 }
+
 
 function RuleCell({ tone, label, rule }: { tone: "ok" | "warn" | "err" | "fatal"; label: string; rule: string }) {
   return (

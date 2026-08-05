@@ -1,17 +1,20 @@
 import { useSyncExternalStore } from "react";
+import { isChannelRegionServiceable } from "./sms-network-store";
+
 
 export type SmsTplStatus = "approved" | "pending" | "rejected";
 export type SmsTplChannel = "marketing" | "otp" | "notification";
 
-/** 外部渠道（运营商 / OTT）——用于报备记录 */
-export type FilingChannel = "cmcc" | "unicom" | "telecom" | "whatsapp" | "twilio";
+/** 报备通道（运营商直连 / 国际 A2P / OTT）——由短信服务商承载 */
+export type FilingChannel = "cmcc" | "unicom" | "telecom" | "whatsapp" | "intl-a2p";
 export const FILING_CHANNELS: { key: FilingChannel; label: string }[] = [
   { key: "cmcc", label: "移动" },
   { key: "unicom", label: "联通" },
   { key: "telecom", label: "电信" },
   { key: "whatsapp", label: "WhatsApp" },
-  { key: "twilio", label: "Twilio" },
+  { key: "intl-a2p", label: "国际 A2P" },
 ];
+
 
 export type FilingStatus = "none" | "submitted" | "approved" | "rejected" | "expired";
 
@@ -78,7 +81,7 @@ export interface SmsTemplate {
 }
 
 const KEY = "boo:sms-templates:v1";
-const KEY_FILINGS = "boo:sms-filings:v2";
+const KEY_FILINGS = "boo:sms-filings:v3";
 const KEY_APPS = "boo:sms-applications:v1";
 
 const SEED: SmsTemplate[] = [
@@ -173,7 +176,7 @@ function write(list: SmsTemplate[]) {
 }
 
 const SEED_FILINGS: TemplateFiling[] = [
-  { templateId: "t1", channel: "twilio", status: "approved", regions: ["na", "eu", "anz"], externalId: "HX8f21…", submittedAt: "2026-06-25", approvedAt: "2026-06-27", expireAt: "2027-06-27", operator: "合规组" },
+  { templateId: "t1", channel: "intl-a2p", status: "approved", regions: ["na", "eu", "anz"], externalId: "HX8f21…", submittedAt: "2026-06-25", approvedAt: "2026-06-27", expireAt: "2027-06-27", operator: "合规组" },
   { templateId: "t1", channel: "whatsapp", status: "submitted", regions: ["sea", "me"], submittedAt: "2026-07-05", operator: "合规组" },
   { templateId: "t2", channel: "cmcc", status: "approved", regions: ["cn"], externalId: "CM202607010881", submittedAt: "2026-06-28", approvedAt: "2026-07-01", expireAt: "2027-07-01", operator: "合规组" },
   { templateId: "t2", channel: "unicom", status: "rejected", regions: ["cn"], submittedAt: "2026-06-28", comment: "话术含金融词，需替换", operator: "合规组" },
@@ -258,6 +261,36 @@ export function getTemplateApprovedRegions(templateId: string): string[] {
   return FILING_REGIONS.filter((r) => set.has(r.key)).map((r) => r.key);
 }
 
+/**
+ * 实际可发地区 = 报备通过的地区 ∩ 当前有可用服务商承载该通道的地区。
+ * 这是用户端选模板时真正生效的范围。
+ */
+export function getTemplateDeliverableRegions(templateId: string): string[] {
+  const set = new Set<string>();
+  filings
+    .filter((f) => f.templateId === templateId && f.status === "approved")
+    .forEach((f) =>
+      (f.regions ?? []).forEach((r) => {
+        if (isChannelRegionServiceable(f.channel, r)) set.add(r);
+      }),
+    );
+  return FILING_REGIONS.filter((r) => set.has(r.key)).map((r) => r.key);
+}
+
+/** 已报备但当前无服务商承载的地区（后台需关注的断链） */
+export function getTemplateBlockedRegions(
+  templateId: string,
+): { channel: FilingChannel; region: string }[] {
+  const out: { channel: FilingChannel; region: string }[] = [];
+  filings
+    .filter((f) => f.templateId === templateId && f.status === "approved")
+    .forEach((f) =>
+      (f.regions ?? []).forEach((r) => {
+        if (!isChannelRegionServiceable(f.channel, r)) out.push({ channel: f.channel, region: r });
+      }),
+    );
+  return out;
+}
 
 
 /** 登记 / 更新一条渠道报备 */

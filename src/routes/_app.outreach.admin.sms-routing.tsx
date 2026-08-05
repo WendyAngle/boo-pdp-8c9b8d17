@@ -12,6 +12,19 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
+import {
+  useRoutingRules,
+  useSmsProviders,
+  toggleRule,
+  removeRule,
+  upsertRule,
+  isProviderRoutable,
+  providerName,
+  type RoutingRule,
+  type SmsProvider,
+} from "@/lib/sms-network-store";
+import { FILING_REGIONS, regionLabel } from "@/lib/sms-templates-store";
+
 
 export const Route = createFileRoute("/_app/outreach/admin/sms-routing")({
   head: () => ({
@@ -26,70 +39,15 @@ export const Route = createFileRoute("/_app/outreach/admin/sms-routing")({
   component: SmsRoutingPage,
 });
 
-interface Rule {
-  id: string;
-  name: string;
-  match: {
-    country: string;
-    channel: "marketing" | "otp" | "notification" | "any";
-  };
-  primary: string;
-  failover: string[];
-  minDeliveryRate: number;
-  respectQuietHours: boolean;
-  enabled: boolean;
-  priority: number;
-}
+type Rule = RoutingRule;
 
-const SEED: Rule[] = [
-  {
-    id: "r1",
-    name: "北美 · 营销",
-    match: { country: "US/CA", channel: "marketing" },
-    primary: "Twilio 主账号",
-    failover: ["Sinch A2P"],
-    minDeliveryRate: 0.95,
-    respectQuietHours: true,
-    enabled: true,
-    priority: 1,
-  },
-  {
-    id: "r2",
-    name: "欧洲 · 通知",
-    match: { country: "EU", channel: "notification" },
-    primary: "Vonage 备用",
-    failover: ["Twilio 主账号"],
-    minDeliveryRate: 0.93,
-    respectQuietHours: true,
-    enabled: true,
-    priority: 2,
-  },
-  {
-    id: "r3",
-    name: "亚太 · 全渠道",
-    match: { country: "APAC", channel: "any" },
-    primary: "阿里云国际站",
-    failover: ["Vonage 备用", "Twilio 主账号"],
-    minDeliveryRate: 0.9,
-    respectQuietHours: true,
-    enabled: true,
-    priority: 3,
-  },
-  {
-    id: "r4",
-    name: "全球 · 验证码 OTP",
-    match: { country: "全球", channel: "otp" },
-    primary: "Infobip",
-    failover: ["Twilio 主账号"],
-    minDeliveryRate: 0.98,
-    respectQuietHours: false,
-    enabled: true,
-    priority: 4,
-  },
+const REGION_OPTIONS: { key: string; label: string }[] = [
+  { key: "any", label: "全球（兜底）" },
+  ...FILING_REGIONS,
 ];
+const regionOptLabel = (k: string) =>
+  k === "any" ? "全球（兜底）" : regionLabel(k);
 
-const PROVIDERS = ["Twilio 主账号", "Sinch A2P", "Vonage 备用", "阿里云国际站", "Infobip"];
-const COUNTRIES = ["US/CA", "EU", "APAC", "LATAM", "MEA", "全球"];
 const CHANNELS: Array<{ value: Rule["match"]["channel"]; label: string }> = [
   { value: "marketing", label: "营销" },
   { value: "notification", label: "通知" },
@@ -97,15 +55,36 @@ const CHANNELS: Array<{ value: Rule["match"]["channel"]; label: string }> = [
   { value: "any", label: "全部渠道" },
 ];
 
+/** 校验规则中的服务商是否真的覆盖匹配条件 */
+function auditRule(r: Rule, providers: SmsProvider[]) {
+  const issues: string[] = [];
+  const chain = [r.primary, ...r.failover];
+  chain.forEach((id) => {
+    const p = providers.find((x) => x.id === id);
+    if (!p) {
+      issues.push(`服务商 ${id} 已不存在`);
+      return;
+    }
+    if (!isProviderRoutable(p)) issues.push(`${p.name} 当前不可参与路由（${p.health}）`);
+    if (r.match.region !== "any" && !p.regions.includes(r.match.region))
+      issues.push(`${p.name} 未覆盖 ${regionLabel(r.match.region)}`);
+    if (r.match.channel !== "any" && !p.channels.includes(r.match.channel))
+      issues.push(`${p.name} 不支持该渠道类型`);
+  });
+  return issues;
+}
+
 function SmsRoutingPage() {
-  const [rules, setRules] = useState<Rule[]>(SEED);
+  const rules = useRoutingRules();
+  const providers = useSmsProviders();
   const [editing, setEditing] = useState<Rule | null>(null);
   const [editorOpen, setEditorOpen] = useState(false);
   const [page, setPage] = useState(1);
   const pageSize = 10;
+  const sorted = useMemo(() => [...rules].sort((a, b) => a.priority - b.priority), [rules]);
   const pageRules = useMemo(
-    () => rules.slice((page - 1) * pageSize, page * pageSize),
-    [rules, page],
+    () => sorted.slice((page - 1) * pageSize, page * pageSize),
+    [sorted, page],
   );
   useEffect(() => {
     const maxPage = Math.max(1, Math.ceil(rules.length / pageSize));
@@ -113,18 +92,18 @@ function SmsRoutingPage() {
   }, [rules.length, page]);
 
   function toggle(id: string) {
-    setRules((s) => s.map((r) => (r.id === id ? { ...r, enabled: !r.enabled } : r)));
+    toggleRule(id);
   }
   function remove(id: string) {
-    setRules((s) => s.filter((r) => r.id !== id));
+    removeRule(id);
     toast.success("已删除规则");
   }
   function openNew() {
     setEditing({
       id: "",
       name: "",
-      match: { country: "US/CA", channel: "marketing" },
-      primary: PROVIDERS[0],
+      match: { region: "na", channel: "marketing" },
+      primary: providers[0]?.id ?? "",
       failover: [],
       minDeliveryRate: 0.95,
       respectQuietHours: true,
@@ -142,20 +121,29 @@ function SmsRoutingPage() {
       toast.error("请填写规则名");
       return;
     }
+    if (!next.primary) {
+      toast.error("请选择主服务商");
+      return;
+    }
     if (next.failover.includes(next.primary)) {
       toast.error("Failover 服务商不能与主服务商相同");
       return;
     }
-    setRules((s) => {
-      if (!next.id) {
-        return [...s, { ...next, id: `r${Date.now()}` }];
-      }
-      return s.map((r) => (r.id === next.id ? next : r));
-    });
+    const primary = providers.find((p) => p.id === next.primary);
+    if (primary && next.match.region !== "any" && !primary.regions.includes(next.match.region)) {
+      toast.error(`主服务商「${primary.name}」未覆盖 ${regionLabel(next.match.region)}，请先在服务商配置中补充`);
+      return;
+    }
+    if (primary && next.match.channel !== "any" && !primary.channels.includes(next.match.channel)) {
+      toast.error(`主服务商「${primary.name}」不支持该渠道类型`);
+      return;
+    }
+    upsertRule(next.id ? next : { ...next, id: `r${Date.now()}` });
     setEditorOpen(false);
     setEditing(null);
     toast.success(next.id ? "规则已更新" : "规则已新增");
   }
+
 
   return (
     <TooltipProvider delayDuration={200}>
@@ -213,7 +201,9 @@ function SmsRoutingPage() {
           </div>
           <div className="col-span-1 text-right">操作</div>
         </div>
-        {pageRules.map((r) => (
+        {pageRules.map((r) => {
+          const issues = auditRule(r, providers);
+          return (
           <div
             key={r.id}
             className="grid grid-cols-12 gap-2 items-center px-4 py-3 border-t"
@@ -225,7 +215,7 @@ function SmsRoutingPage() {
               </div>
               <div className="mt-1 ml-5 flex flex-wrap gap-1">
                 <Badge variant="outline" className="text-[10px]">
-                  {r.match.country}
+                  {regionOptLabel(r.match.region)}
                 </Badge>
                 <Badge variant="outline" className="text-[10px]">
                   {r.match.channel === "any"
@@ -241,18 +231,24 @@ function SmsRoutingPage() {
             <div className="col-span-4">
               <div className="flex items-center gap-1.5 flex-wrap">
                 <Badge className="bg-primary text-primary-foreground text-[11px]">
-                  {r.primary}
+                  {providerName(r.primary)}
                 </Badge>
                 {r.failover.map((f, i) => (
                   <span key={i} className="inline-flex items-center gap-1">
                     <ArrowRight className="h-3 w-3 text-muted-foreground" />
                     <Badge variant="outline" className="text-[11px]">
-                      {f}
+                      {providerName(f)}
                     </Badge>
                   </span>
                 ))}
               </div>
+              {issues.length > 0 && (
+                <div className="mt-1 text-[11px] text-amber-700">
+                  链路告警：{issues.join("；")}
+                </div>
+              )}
             </div>
+
             <div className="col-span-2 text-sm font-mono">
               {(r.minDeliveryRate * 100).toFixed(0)}%
             </div>
@@ -279,7 +275,9 @@ function SmsRoutingPage() {
               </Button>
             </div>
           </div>
-        ))}
+          );
+        })}
+
         {rules.length > 0 && (
           <div className="px-4 py-3 border-t">
             <ListPagination page={page} pageSize={pageSize} total={rules.length} onPageChange={setPage} />
@@ -340,6 +338,8 @@ function RuleEditorInner({
 }) {
   const isNew = !rule.id;
   const [draft, setDraft] = useState<Rule>(rule);
+  const providers = useSmsProviders();
+
 
   function patch(p: Partial<Rule>) {
     setDraft((d) => ({ ...d, ...p }));
@@ -375,11 +375,11 @@ function RuleEditorInner({
 
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-1.5">
-              <Label>目的国家 / 地区</Label>
-              <Select value={draft.match.country} onValueChange={(v) => patch({ match: { ...draft.match, country: v } })}>
+              <Label>目的地区</Label>
+              <Select value={draft.match.region} onValueChange={(v) => patch({ match: { ...draft.match, region: v } })}>
                 <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>
-                  {COUNTRIES.map((c) => <SelectItem key={c} value={c}>{c}</SelectItem>)}
+                  {REGION_OPTIONS.map((c) => <SelectItem key={c.key} value={c.key}>{c.label}</SelectItem>)}
                 </SelectContent>
               </Select>
             </div>
@@ -400,11 +400,25 @@ function RuleEditorInner({
           <div className="space-y-1.5">
             <Label>主服务商</Label>
             <Select value={draft.primary} onValueChange={(v) => patch({ primary: v })}>
-              <SelectTrigger><SelectValue /></SelectTrigger>
+              <SelectTrigger><SelectValue placeholder="选择服务商" /></SelectTrigger>
               <SelectContent>
-                {PROVIDERS.map((p) => <SelectItem key={p} value={p}>{p}</SelectItem>)}
+                {providers.map((p) => {
+                  const fit =
+                    (draft.match.region === "any" || p.regions.includes(draft.match.region)) &&
+                    (draft.match.channel === "any" || p.channels.includes(draft.match.channel));
+                  return (
+                    <SelectItem key={p.id} value={p.id}>
+                      {p.name}
+                      {!fit && " · 不匹配当前条件"}
+                      {!isProviderRoutable(p) && " · 不可用"}
+                    </SelectItem>
+                  );
+                })}
               </SelectContent>
             </Select>
+            <div className="text-[11px] text-muted-foreground">
+              服务商的覆盖地区、支持渠道与承载报备通道在「短信服务商」页面维护。
+            </div>
           </div>
 
           <div className="space-y-1.5">
@@ -413,7 +427,7 @@ function RuleEditorInner({
               <div className="flex items-center gap-1.5 flex-wrap p-2 rounded-md bg-muted/40">
                 {draft.failover.map((f, i) => (
                   <Badge key={f} variant="outline" className="gap-1">
-                    {i + 1}. {f}
+                    {i + 1}. {providerName(f)}
                     <button onClick={() => toggleFailover(f)} className="hover:text-rose-600">
                       <X className="h-3 w-3" />
                     </button>
@@ -422,13 +436,16 @@ function RuleEditorInner({
               </div>
             )}
             <div className="flex flex-wrap gap-1.5">
-              {PROVIDERS.filter((p) => p !== draft.primary && !draft.failover.includes(p)).map((p) => (
-                <Button key={p} size="sm" variant="outline" className="h-7" onClick={() => toggleFailover(p)}>
-                  <Plus className="h-3 w-3" />{p}
-                </Button>
-              ))}
+              {providers
+                .filter((p) => p.id !== draft.primary && !draft.failover.includes(p.id))
+                .map((p) => (
+                  <Button key={p.id} size="sm" variant="outline" className="h-7" onClick={() => toggleFailover(p.id)}>
+                    <Plus className="h-3 w-3" />{p.name}
+                  </Button>
+                ))}
             </div>
           </div>
+
 
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-1.5">
