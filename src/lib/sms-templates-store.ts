@@ -79,7 +79,7 @@ export interface SmsTemplate {
 }
 
 const KEY = "boo:sms-templates:v1";
-const KEY_FILINGS = "boo:sms-filings:v2";
+const KEY_FILINGS = "boo:sms-filings:v3";
 const KEY_APPS = "boo:sms-applications:v1";
 
 const SEED: SmsTemplate[] = [
@@ -174,7 +174,7 @@ function write(list: SmsTemplate[]) {
 }
 
 const SEED_FILINGS: TemplateFiling[] = [
-  { templateId: "t1", channel: "twilio", status: "approved", regions: ["na", "eu", "anz"], externalId: "HX8f21…", submittedAt: "2026-06-25", approvedAt: "2026-06-27", expireAt: "2027-06-27", operator: "合规组" },
+  { templateId: "t1", channel: "intl-a2p", status: "approved", regions: ["na", "eu", "anz"], externalId: "HX8f21…", submittedAt: "2026-06-25", approvedAt: "2026-06-27", expireAt: "2027-06-27", operator: "合规组" },
   { templateId: "t1", channel: "whatsapp", status: "submitted", regions: ["sea", "me"], submittedAt: "2026-07-05", operator: "合规组" },
   { templateId: "t2", channel: "cmcc", status: "approved", regions: ["cn"], externalId: "CM202607010881", submittedAt: "2026-06-28", approvedAt: "2026-07-01", expireAt: "2027-07-01", operator: "合规组" },
   { templateId: "t2", channel: "unicom", status: "rejected", regions: ["cn"], submittedAt: "2026-06-28", comment: "话术含金融词，需替换", operator: "合规组" },
