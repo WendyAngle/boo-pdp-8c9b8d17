@@ -44,6 +44,8 @@ export interface AiCallTarget {
 }
 
 type Scene = "marketing" | "notify" | "revisit" | "other";
+type Pacing = "ramp" | "steady" | "random";
+
 
 const SCENE_OPTIONS: { value: Scene; label: string }[] = [
   { value: "marketing", label: "营销外呼" },
@@ -75,18 +77,19 @@ export function AiVoiceCallDialog({
   const [script, setScript] = useState("");
   const [aiLoading, setAiLoading] = useState(false);
   const [concurrency, setConcurrency] = useState("20");
-  const [dialMode, setDialMode] = useState<"fixed" | "random">("fixed");
+  // step 4 起量方式
   const [startTime, setStartTime] = useState("09:00");
   const [endTime, setEndTime] = useState("20:00");
   const [maxRetry, setMaxRetry] = useState("3");
 
   // step 4
   const [launch, setLaunch] = useState<"now" | "scheduled">("now");
-  const [ramp, setRamp] = useState(true);
+  const [pacing, setPacing] = useState<Pacing>("ramp");
   const [scheduledAt, setScheduledAt] = useState("");
   const [rampInit, setRampInit] = useState("5");
   const [rampStep, setRampStep] = useState("5");
   const [rampInterval, setRampInterval] = useState("30");
+
 
   useEffect(() => {
     if (!open) return;
@@ -96,7 +99,7 @@ export function AiVoiceCallDialog({
     setScene("marketing");
     setScript("");
     setConcurrency("20");
-    setDialMode("fixed");
+    setPacing("ramp");
     setStartTime("09:00");
     setEndTime("20:00");
     setMaxRetry("3");
@@ -160,7 +163,7 @@ export function AiVoiceCallDialog({
   const step1Valid = name.trim().length > 0 && name.length <= 100 && list.length > 0;
   const step2Valid = script.trim().length > 0 && startTime < endTime;
   const rampValid =
-    !ramp ||
+    pacing !== "ramp" ||
     (Number(rampInit) >= 1 &&
       Number(rampInit) <= Number(concurrency) &&
       Number(rampStep) > 0 &&
@@ -181,12 +184,19 @@ export function AiVoiceCallDialog({
       launch === "now"
         ? `外呼任务「${name.trim()}」已启动`
         : `外呼任务「${name.trim()}」已定时`;
+    const pacingText =
+      pacing === "ramp"
+        ? `灰度爬坡 ${rampInit} 路起，每 ${rampInterval} 秒 +${rampStep} 路，上限 ${concurrency} 路`
+        : pacing === "random"
+        ? `随机并发（上限 ${concurrency} 路）`
+        : `恒定并发 ${concurrency} 路`;
     toast.success(launchLabel, {
-      description: `${sceneLabel}｜${list.length} 个号码｜并发 ${concurrency} 路｜${startTime}-${endTime}｜最多重试 ${maxRetry} 次${
+      description: `${sceneLabel}｜${list.length} 个号码｜${pacingText}｜${startTime}-${endTime}｜最多重试 ${maxRetry} 次${
         launch === "scheduled" ? `｜启动时间 ${scheduledAt.replace("T", " ")}` : ""
-      }${ramp ? `｜灰度启动 ${rampInit} 路起，每 ${rampInterval} 秒 +${rampStep} 路` : ""}`,
+      }`,
     });
   };
+
 
 
   return (
@@ -355,42 +365,27 @@ export function AiVoiceCallDialog({
               </div>
 
               <div className="rounded-lg border border-border p-3 space-y-4">
-                <div className="text-sm font-medium">拨打策略</div>
+                <div className="text-sm font-medium">拨打规则</div>
 
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label>并发上限</Label>
-                    <Select value={concurrency} onValueChange={setConcurrency}>
-                      <SelectTrigger>
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {["20", "50", "100"].map((c) => (
-                          <SelectItem key={c} value={c}>
-                            {c} 路
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <div className="space-y-2">
-                    <Label>拨号模式</Label>
-                    <RadioGroup
-                      value={dialMode}
-                      onValueChange={(v) => setDialMode(v as "fixed" | "random")}
-                      className="flex items-center gap-4 pt-2"
-                    >
-                      <label className="flex items-center gap-2 text-sm cursor-pointer">
-                        <RadioGroupItem value="fixed" />
-                        固定并发
-                      </label>
-                      <label className="flex items-center gap-2 text-sm cursor-pointer">
-                        <RadioGroupItem value="random" />
-                        随机并发
-                      </label>
-                    </RadioGroup>
-                  </div>
+                <div className="space-y-2">
+                  <Label>目标并发上限</Label>
+                  <Select value={concurrency} onValueChange={setConcurrency}>
+                    <SelectTrigger className="max-w-xs">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {["20", "50", "100"].map((c) => (
+                        <SelectItem key={c} value={c}>
+                          {c} 路
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <p className="text-xs text-muted-foreground">
+                    任务运行期间的并发天花板；具体起量方式（恒定 / 随机 / 灰度爬坡）在第 4 步「外呼策略」中设置。
+                  </p>
                 </div>
+
 
                 <div className="space-y-2">
                   <Label className="flex items-center gap-1.5">
@@ -445,7 +440,7 @@ export function AiVoiceCallDialog({
                   ["场景类型", sceneLabel],
                   ["目标号码", `${list.length} 个`],
                   ["号码归属地识别", "已开启（当地号码呼出）"],
-                  ["并发上限", `${concurrency} 路（${dialMode === "fixed" ? "固定并发" : "随机并发"}）`],
+                  ["目标并发上限", `${concurrency} 路`],
                   ["拨打时间窗口", `按号码时区自动｜${startTime} ~ ${endTime}`],
                   ["单号码最大重试", `${maxRetry} 次`],
                 ].map(([k, v]) => (
@@ -532,82 +527,115 @@ export function AiVoiceCallDialog({
               </div>
 
               <div className="space-y-3">
-                <Label>外呼策略</Label>
-                <div
-                  className={cn(
-                    "rounded-lg border p-3 transition-colors",
-                    ramp ? "border-primary bg-primary/5" : "border-border",
-                  )}
+                <Label>外呼策略（起量方式）</Label>
+                <p className="text-xs text-muted-foreground -mt-1">
+                  第 2 步已设定目标并发上限 {concurrency} 路，这里决定如何达到该上限。
+                </p>
+                <RadioGroup
+                  value={pacing}
+                  onValueChange={(v) => setPacing(v as Pacing)}
+                  className="grid gap-2"
                 >
-                  <label className="flex items-start gap-3 cursor-pointer">
-                    <Checkbox
-                      checked={ramp}
-                      onCheckedChange={(v) => setRamp(v === true)}
-                      className="mt-1"
-                    />
-                    <div className="min-w-0">
+                  <label
+                    className={cn(
+                      "flex items-start gap-3 rounded-lg border p-3 cursor-pointer transition-colors",
+                      pacing === "ramp" ? "border-primary bg-primary/5" : "border-border hover:bg-muted/40",
+                    )}
+                  >
+                    <RadioGroupItem value="ramp" className="mt-1" />
+                    <div className="min-w-0 flex-1">
                       <div className="text-sm font-medium flex items-center gap-1.5">
                         <TrendingUp className="h-4 w-4 text-primary" />
-                        逐步爬坡至目标并发
+                        灰度爬坡
                         <Badge variant="secondary" className="text-[11px]">
                           推荐
                         </Badge>
                       </div>
                       <div className="text-xs text-muted-foreground mt-0.5">
-                        从较低并发起步逐步提升至并发上限（{concurrency} 路），降低线路风险、提升接通率。
+                        从较低并发起步逐步提升至上限（{concurrency} 路），降低线路风险、提升接通率。
+                      </div>
+                      <div className="mt-3 grid gap-3 sm:grid-cols-2">
+                        <div className="space-y-1.5">
+                          <Label className="text-xs">初始并发</Label>
+                          <div className="flex items-center gap-2">
+                            <Input
+                              type="number"
+                              min={1}
+                              max={Number(concurrency)}
+                              value={rampInit}
+                              disabled={pacing !== "ramp"}
+                              onChange={(e) => setRampInit(e.target.value)}
+                              className="w-24"
+                            />
+                            <span className="text-sm text-muted-foreground">路</span>
+                          </div>
+                        </div>
+                        <div className="space-y-1.5">
+                          <Label className="text-xs">爬坡节奏</Label>
+                          <div className="flex items-center gap-2">
+                            <span className="text-sm text-muted-foreground">每</span>
+                            <Input
+                              type="number"
+                              min={10}
+                              step={10}
+                              value={rampInterval}
+                              disabled={pacing !== "ramp"}
+                              onChange={(e) => setRampInterval(e.target.value)}
+                              className="w-20"
+                            />
+                            <span className="text-sm text-muted-foreground">秒增加</span>
+                            <Input
+                              type="number"
+                              min={1}
+                              value={rampStep}
+                              disabled={pacing !== "ramp"}
+                              onChange={(e) => setRampStep(e.target.value)}
+                              className="w-20"
+                            />
+                            <span className="text-sm text-muted-foreground">路</span>
+                          </div>
+                        </div>
+                        {!rampValid && (
+                          <p className="text-xs text-destructive sm:col-span-2">
+                            初始并发需为 1 ~ {concurrency} 之间，爬坡步长与间隔需大于 0
+                          </p>
+                        )}
                       </div>
                     </div>
                   </label>
 
-                  <div className="mt-3 grid gap-3 sm:grid-cols-2 sm:pl-7">
-                    <div className="space-y-1.5">
-                      <Label className="text-xs">初始并发</Label>
-                      <div className="flex items-center gap-2">
-                        <Input
-                          type="number"
-                          min={1}
-                          max={Number(concurrency)}
-                          value={rampInit}
-                          disabled={!ramp}
-                          onChange={(e) => setRampInit(e.target.value)}
-                          className="w-24"
-                        />
-                        <span className="text-sm text-muted-foreground">路</span>
-                      </div>
-                    </div>
-                    <div className="space-y-1.5">
-                      <Label className="text-xs">爬坡节奏</Label>
-                      <div className="flex items-center gap-2">
-                        <span className="text-sm text-muted-foreground">每</span>
-                        <Input
-                          type="number"
-                          min={10}
-                          step={10}
-                          value={rampInterval}
-                          disabled={!ramp}
-                          onChange={(e) => setRampInterval(e.target.value)}
-                          className="w-20"
-                        />
-                        <span className="text-sm text-muted-foreground">秒增加</span>
-                        <Input
-                          type="number"
-                          min={1}
-                          value={rampStep}
-                          disabled={!ramp}
-                          onChange={(e) => setRampStep(e.target.value)}
-                          className="w-20"
-                        />
-                        <span className="text-sm text-muted-foreground">路</span>
-                      </div>
-                    </div>
-                    {!rampValid && (
-                      <p className="text-xs text-destructive sm:col-span-2">
-                        初始并发需为 1 ~ {concurrency} 之间，爬坡步长与间隔需大于 0
-                      </p>
+                  <label
+                    className={cn(
+                      "flex items-start gap-3 rounded-lg border p-3 cursor-pointer transition-colors",
+                      pacing === "steady" ? "border-primary bg-primary/5" : "border-border hover:bg-muted/40",
                     )}
-                  </div>
-                </div>
+                  >
+                    <RadioGroupItem value="steady" className="mt-1" />
+                    <div>
+                      <div className="text-sm font-medium">恒定并发</div>
+                      <div className="text-xs text-muted-foreground mt-0.5">
+                        启动即以 {concurrency} 路满并发拨打，起量最快，线路风险较高。
+                      </div>
+                    </div>
+                  </label>
+
+                  <label
+                    className={cn(
+                      "flex items-start gap-3 rounded-lg border p-3 cursor-pointer transition-colors",
+                      pacing === "random" ? "border-primary bg-primary/5" : "border-border hover:bg-muted/40",
+                    )}
+                  >
+                    <RadioGroupItem value="random" className="mt-1" />
+                    <div>
+                      <div className="text-sm font-medium">随机并发</div>
+                      <div className="text-xs text-muted-foreground mt-0.5">
+                        在上限内随机浮动（约 50%~100%），拨打节奏更自然，规避号码风控。
+                      </div>
+                    </div>
+                  </label>
+                </RadioGroup>
               </div>
+
             </div>
           )}
 
