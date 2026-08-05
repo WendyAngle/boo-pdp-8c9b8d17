@@ -51,7 +51,7 @@ import {
   duplicateScript,
   updateScript,
   useScripts,
-  useTemplateAsScript,
+  copyTemplateToMyScripts,
   type ScriptScene,
   type VoiceScript,
 } from "@/lib/voice-scripts";
@@ -277,7 +277,7 @@ function VoiceScriptsPage() {
                     size="sm"
                     className="gap-1.5"
                     onClick={() => {
-                      const copy = useTemplateAsScript(t.id);
+                      const copy = copyTemplateToMyScripts(t.id);
                       if (copy) {
                         toast.success("已复制到「我的话术」");
                         navigate({ to: "/outreach/voice-scripts/$scriptId", params: { scriptId: copy.id } });

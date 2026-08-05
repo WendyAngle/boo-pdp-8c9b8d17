@@ -432,7 +432,7 @@ export function duplicateScript(id: string, name?: string): VoiceScript | undefi
 }
 
 /** 模板市场「使用该模板」：复制平台模板为租户话术 */
-export function useTemplateAsScript(templateId: string): VoiceScript | undefined {
+export function copyTemplateToMyScripts(templateId: string): VoiceScript | undefined {
   const src = scripts.find((s) => s.id === templateId);
   if (!src) return;
   const copy: VoiceScript = {
