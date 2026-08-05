@@ -275,7 +275,9 @@ function SmsRoutingPage() {
               </Button>
             </div>
           </div>
-        ))}
+          );
+        })}
+
         {rules.length > 0 && (
           <div className="px-4 py-3 border-t">
             <ListPagination page={page} pageSize={pageSize} total={rules.length} onPageChange={setPage} />
