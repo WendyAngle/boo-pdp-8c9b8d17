@@ -224,19 +224,19 @@ function SmsTemplatesPage() {
               <thead className="bg-muted/30 text-[11px] text-muted-foreground">
                 <tr className="text-left">
                   <th className="px-4 py-2 font-medium w-[16%]">模板名称</th>
-                  <th className="px-3 py-2 font-medium w-[10%]">来源</th>
                   <th className="px-3 py-2 font-medium w-[8%]">模板类型</th>
                   <th className="px-3 py-2 font-medium">模板内容</th>
                   <th className="px-3 py-2 font-medium w-[9%]">内审状态</th>
-                  <th className="px-3 py-2 font-medium w-[22%]">渠道报备</th>
-                  <th className="px-3 py-2 font-medium w-[10%]">创建时间</th>
-                  <th className="px-3 py-2 font-medium w-[14%] text-right">操作</th>
+                  <th className="px-3 py-2 font-medium w-[28%]">渠道 + 目标地区报备</th>
+                  <th className="px-3 py-2 font-medium w-[10%]">更新时间</th>
+                  <th className="px-3 py-2 font-medium w-[12%] text-right">操作</th>
                 </tr>
               </thead>
               <tbody className="divide-y">
                 {filtered.length === 0 && (
                   <tr>
-                    <td colSpan={8} className="p-10 text-center text-sm text-muted-foreground">
+                    <td colSpan={7} className="p-10 text-center text-sm text-muted-foreground">
+
                       无匹配模板
                     </td>
                   </tr>
