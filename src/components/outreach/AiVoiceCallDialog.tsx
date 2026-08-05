@@ -161,7 +161,7 @@ export function AiVoiceCallDialog({
   const step1Valid = name.trim().length > 0 && name.length <= 100 && list.length > 0;
   const step2Valid = script.trim().length > 0 && startTime < endTime;
   const rampValid =
-    !ramp ||
+    pacing !== "ramp" ||
     (Number(rampInit) >= 1 &&
       Number(rampInit) <= Number(concurrency) &&
       Number(rampStep) > 0 &&
@@ -182,12 +182,19 @@ export function AiVoiceCallDialog({
       launch === "now"
         ? `外呼任务「${name.trim()}」已启动`
         : `外呼任务「${name.trim()}」已定时`;
+    const pacingText =
+      pacing === "ramp"
+        ? `灰度爬坡 ${rampInit} 路起，每 ${rampInterval} 秒 +${rampStep} 路，上限 ${concurrency} 路`
+        : pacing === "random"
+        ? `随机并发（上限 ${concurrency} 路）`
+        : `恒定并发 ${concurrency} 路`;
     toast.success(launchLabel, {
-      description: `${sceneLabel}｜${list.length} 个号码｜并发 ${concurrency} 路｜${startTime}-${endTime}｜最多重试 ${maxRetry} 次${
+      description: `${sceneLabel}｜${list.length} 个号码｜${pacingText}｜${startTime}-${endTime}｜最多重试 ${maxRetry} 次${
         launch === "scheduled" ? `｜启动时间 ${scheduledAt.replace("T", " ")}` : ""
-      }${ramp ? `｜灰度启动 ${rampInit} 路起，每 ${rampInterval} 秒 +${rampStep} 路` : ""}`,
+      }`,
     });
   };
+
 
 
   return (
