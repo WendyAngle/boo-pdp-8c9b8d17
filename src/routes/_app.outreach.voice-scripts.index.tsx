@@ -49,11 +49,13 @@ import {
   STEP_TYPES,
   TEMPLATE_INDUSTRY,
   END_TARGET,
+  SCRIPT_REGIONS,
+  regionLabel,
   deleteScript,
   duplicateScript,
   updateScript,
   useScripts,
-  copyTemplateToMyScripts,
+  createScriptFromTemplate,
   type ScriptScene,
   type VoiceScript,
 } from "@/lib/voice-scripts";
@@ -86,14 +88,19 @@ function VoiceScriptsPage() {
   const mine = useScripts("tenant");
   const templates = useScripts("platform");
   const [kw, setKw] = useState("");
-  const [language, setLanguage] = useState("all");
+  const [mineLang, setMineLang] = useState("all");
   const [scene, setScene] = useState<string>("all");
   const [detail, setDetail] = useState<VoiceScript | null>(null);
   const [useTpl, setUseTpl] = useState<VoiceScript | null>(null);
 
   const filteredMine = useMemo(
-    () => mine.filter((s) => (kw ? s.name.includes(kw) : true)),
-    [mine, kw],
+    () =>
+      mine.filter(
+        (s) =>
+          (kw ? s.name.includes(kw) : true) &&
+          (mineLang === "all" ? true : s.language === mineLang),
+      ),
+    [mine, kw, mineLang],
   );
   const market = useMemo(
     () =>
@@ -101,10 +108,9 @@ function VoiceScriptsPage() {
         (t) =>
           t.status === "published" &&
           (kw ? t.name.toLowerCase().includes(kw.toLowerCase()) : true) &&
-          (language === "all" ? true : t.language === language) &&
           (scene === "all" ? true : t.scene === scene),
       ),
-    [templates, kw, language, scene],
+    [templates, kw, scene],
   );
 
   return (
@@ -136,9 +142,18 @@ function VoiceScriptsPage() {
         </TabsList>
 
         <TabsContent value="mine" className="mt-4 space-y-4">
-          <div className="relative max-w-xs">
-            <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-            <Input value={kw} onChange={(e) => setKw(e.target.value)} placeholder="搜索话术名称" className="pl-8" />
+          <div className="flex flex-wrap items-center gap-2">
+            <div className="relative max-w-xs flex-1 min-w-[180px]">
+              <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+              <Input value={kw} onChange={(e) => setKw(e.target.value)} placeholder="搜索话术名称" className="pl-8" />
+            </div>
+            <Select value={mineLang} onValueChange={setMineLang}>
+              <SelectTrigger className="w-36"><SelectValue placeholder="外呼语言" /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">全部语言</SelectItem>
+                {SCRIPT_LANGUAGES.map((l) => <SelectItem key={l.key} value={l.key}>{l.label}</SelectItem>)}
+              </SelectContent>
+            </Select>
           </div>
           <Card className="overflow-hidden">
             <Table>
@@ -146,7 +161,8 @@ function VoiceScriptsPage() {
                 <TableRow>
                   <TableHead>话术名称</TableHead>
                   <TableHead>场景</TableHead>
-                  <TableHead>语言</TableHead>
+                  <TableHead>外呼语言</TableHead>
+                  <TableHead>目标市场</TableHead>
                   <TableHead className="text-right">步骤数</TableHead>
                   <TableHead className="text-right">通话数</TableHead>
                   <TableHead className="text-right">A 类意向</TableHead>
@@ -158,7 +174,7 @@ function VoiceScriptsPage() {
               <TableBody>
                 {filteredMine.length === 0 && (
                   <TableRow>
-                    <TableCell colSpan={9} className="text-center text-sm text-muted-foreground py-10">
+                    <TableCell colSpan={10} className="text-center text-sm text-muted-foreground py-10">
                       暂无话术，点击右上角「新建话术」或前往模板市场复制一份
                     </TableCell>
                   </TableRow>
@@ -175,6 +191,7 @@ function VoiceScriptsPage() {
                     </TableCell>
                     <TableCell>{sceneLabel(s.scene)}</TableCell>
                     <TableCell>{langLabel(s.language)}</TableCell>
+                    <TableCell className="text-muted-foreground">{regionLabel(s.region)}</TableCell>
                     <TableCell className="text-right tabular-nums">{s.steps.length}</TableCell>
                     <TableCell className="text-right tabular-nums">{s.usedCount.toLocaleString()}</TableCell>
                     <TableCell className="text-right tabular-nums">
@@ -228,16 +245,9 @@ function VoiceScriptsPage() {
                 {SCRIPT_SCENES.map((s) => <SelectItem key={s.key} value={s.key}>{s.label}</SelectItem>)}
               </SelectContent>
             </Select>
-            <Select value={language} onValueChange={setLanguage}>
-              <SelectTrigger className="w-32"><SelectValue placeholder="语言" /></SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">全部语言</SelectItem>
-                {SCRIPT_LANGUAGES.map((l) => <SelectItem key={l.key} value={l.key}>{l.label}</SelectItem>)}
-              </SelectContent>
-            </Select>
             <span className="text-xs text-muted-foreground ml-auto flex items-center gap-1">
               <Store className="h-3.5 w-3.5" />
-              模板均为{TEMPLATE_INDUSTRY}，行业差异由变量与企业知识库注入；复制后可自由修改，不影响原模板
+              模板均为{TEMPLATE_INDUSTRY}中文话术，行业差异由变量与企业知识库注入；使用模板创建话术时可选择外呼语言与目标市场，不影响原模板
             </span>
           </div>
 
@@ -258,7 +268,6 @@ function VoiceScriptsPage() {
                 </div>
                 <div className="flex flex-wrap gap-1.5 text-[11px]">
                   <Badge variant="outline">{TEMPLATE_INDUSTRY}</Badge>
-                  <Badge variant="outline">{langLabel(t.language)}</Badge>
                   <Badge variant="outline">{t.steps.length} 个步骤</Badge>
                   {t.avgDuration != null && <Badge variant="outline">约 {t.avgDuration}s</Badge>}
                 </div>
@@ -285,7 +294,7 @@ function VoiceScriptsPage() {
                       onClick={() => setUseTpl(t)}
                     >
                       <Sparkles className="h-3.5 w-3.5" />
-                      使用
+                      使用模板创建
                     </Button>
                   </div>
                 </div>
@@ -308,11 +317,11 @@ function VoiceScriptsPage() {
       <UseTemplateDialog
         template={useTpl}
         onOpenChange={(v) => !v && setUseTpl(null)}
-        onConfirm={(id, name, language) => {
-          const copy = copyTemplateToMyScripts(id, { name, language });
+        onConfirm={(id, name, language, region) => {
+          const copy = createScriptFromTemplate(id, { name, language, region });
           setUseTpl(null);
           if (copy) {
-            toast.success("已复制到「我的话术」");
+            toast.success("已创建到「我的话术」");
             navigate({ to: "/outreach/voice-scripts/$scriptId", params: { scriptId: copy.id } });
           }
         }}
@@ -328,10 +337,11 @@ function UseTemplateDialog({
 }: {
   template: VoiceScript | null;
   onOpenChange: (v: boolean) => void;
-  onConfirm: (id: string, name: string, language: string) => void;
+  onConfirm: (id: string, name: string, language: string, region: string) => void;
 }) {
   const [name, setName] = useState("");
   const [language, setLanguage] = useState("zh");
+  const [region, setRegion] = useState("global");
 
   // 每次打开新模板时重置表单
   const [lastId, setLastId] = useState<string | null>(null);
@@ -339,6 +349,7 @@ function UseTemplateDialog({
     setLastId(template.id);
     setName(template.name);
     setLanguage(template.language);
+    setRegion("global");
   }
 
   if (!template) return null;
@@ -349,7 +360,7 @@ function UseTemplateDialog({
         <DialogHeader>
           <DialogTitle>使用模板创建话术</DialogTitle>
           <DialogDescription>
-            将「{template.name}」复制为我的话术，可先设置名称与外呼语言。
+            基于「{template.name}」创建一份属于我的话术，可先设置名称、外呼语言与目标市场；后续修改不影响原模板。
           </DialogDescription>
         </DialogHeader>
         <div className="space-y-4 py-1">
@@ -368,13 +379,27 @@ function UseTemplateDialog({
               </SelectContent>
             </Select>
             <p className="text-xs text-muted-foreground">
-              该语言即 AI 外呼时与客户对话使用的语言；若与模板原语言不同，请在编排页调整各步骤话术文本。
+              该语言即 AI 外呼时与客户对话使用的语言；模板原文为中文，选择其他语言后可在编排页查看实际外呼话术预览。
+            </p>
+          </div>
+          <div className="space-y-1.5">
+            <Label>目标市场 / 地区</Label>
+            <Select value={region} onValueChange={setRegion}>
+              <SelectTrigger><SelectValue /></SelectTrigger>
+              <SelectContent>
+                {SCRIPT_REGIONS.map((r) => (
+                  <SelectItem key={r.key} value={r.key}>{r.label}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <p className="text-xs text-muted-foreground">
+              用于外呼时段（当地工作时间）、称呼习惯与当地合规提示的适配。
             </p>
           </div>
         </div>
         <DialogFooter>
           <Button variant="outline" onClick={() => onOpenChange(false)}>取消</Button>
-          <Button disabled={!name.trim()} onClick={() => onConfirm(template.id, name, language)}>
+          <Button disabled={!name.trim()} onClick={() => onConfirm(template.id, name, language, region)}>
             创建并编排
           </Button>
         </DialogFooter>
@@ -468,7 +493,7 @@ function TemplateDetailDialog({
           <Button variant="outline" onClick={() => onOpenChange(false)}>关闭</Button>
           <Button className="gap-1.5" onClick={() => onUse(template.id)}>
             <Sparkles className="h-3.5 w-3.5" />
-            使用该模板
+            使用模板创建话术
           </Button>
         </DialogFooter>
       </DialogContent>
