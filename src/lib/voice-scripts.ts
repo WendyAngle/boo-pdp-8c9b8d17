@@ -1,3 +1,4 @@
+import { ALL_LANGUAGES } from "@/lib/languages";
 import { useSyncExternalStore } from "react";
 
 /* ------------------------------------------------------------------ *
@@ -27,13 +28,9 @@ export const SCRIPT_INDUSTRIES = [
 /** 平台模板不区分行业，统一为多行业通用（行业差异由变量与企业知识库注入） */
 export const TEMPLATE_INDUSTRY = "多行业通用";
 
-export const SCRIPT_LANGUAGES: { key: string; label: string }[] = [
-  { key: "zh", label: "中文" },
-  { key: "en", label: "英语" },
-  { key: "es", label: "西班牙语" },
-  { key: "ar", label: "阿拉伯语" },
-  { key: "ru", label: "俄语" },
-];
+export const SCRIPT_LANGUAGES: { key: string; label: string }[] = ALL_LANGUAGES.map(
+  (l) => ({ key: l.code, label: l.zh }),
+);
 
 export type StepType = "opening" | "ai" | "transfer" | "collect" | "ending";
 export const STEP_TYPES: { key: StepType; label: string; desc: string }[] = [
@@ -124,13 +121,9 @@ export const regionLabel = (k?: string) =>
   SCRIPT_REGIONS.find((r) => r.key === k)?.label ?? "全球通用";
 
 /** 语言全称，用于调用翻译引擎 */
-export const LANGUAGE_FULL_NAME: Record<string, string> = {
-  zh: "Chinese (Simplified)",
-  en: "English",
-  es: "Spanish",
-  ar: "Arabic",
-  ru: "Russian",
-};
+export const LANGUAGE_FULL_NAME: Record<string, string> = Object.fromEntries(
+  ALL_LANGUAGES.map((l) => [l.code, l.en]),
+);
 
 /** 预览用示例变量值（实际外呼时由目标客户数据填充） */
 export const PREVIEW_VARS: Record<string, string> = {

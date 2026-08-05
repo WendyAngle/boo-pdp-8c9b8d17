@@ -7,6 +7,7 @@
  * - 判定依据（脚本占比、停用词命中），便于在 UI 上体现「AI 识别」的可解释性
  */
 import type { Thread } from "@/lib/inbox-store";
+import { ALL_LANGUAGES } from "@/lib/languages";
 
 export interface LangOption {
   code: string;
@@ -16,25 +17,7 @@ export interface LangOption {
 }
 
 /** 支持的目标语言（AI 生成回复时可选） */
-export const LANGUAGES: LangOption[] = [
-  { code: "en", zh: "英语", en: "English", flag: "🇬🇧" },
-  { code: "zh", zh: "中文", en: "Chinese (Simplified)", flag: "🇨🇳" },
-  { code: "th", zh: "泰语", en: "Thai", flag: "🇹🇭" },
-  { code: "ja", zh: "日语", en: "Japanese", flag: "🇯🇵" },
-  { code: "ko", zh: "韩语", en: "Korean", flag: "🇰🇷" },
-  { code: "vi", zh: "越南语", en: "Vietnamese", flag: "🇻🇳" },
-  { code: "id", zh: "印尼语", en: "Indonesian", flag: "🇮🇩" },
-  { code: "ms", zh: "马来语", en: "Malay", flag: "🇲🇾" },
-  { code: "es", zh: "西班牙语", en: "Spanish", flag: "🇪🇸" },
-  { code: "pt", zh: "葡萄牙语", en: "Portuguese", flag: "🇵🇹" },
-  { code: "fr", zh: "法语", en: "French", flag: "🇫🇷" },
-  { code: "de", zh: "德语", en: "German", flag: "🇩🇪" },
-  { code: "it", zh: "意大利语", en: "Italian", flag: "🇮🇹" },
-  { code: "ru", zh: "俄语", en: "Russian", flag: "🇷🇺" },
-  { code: "ar", zh: "阿拉伯语", en: "Arabic", flag: "🇸🇦" },
-  { code: "tr", zh: "土耳其语", en: "Turkish", flag: "🇹🇷" },
-  { code: "hi", zh: "印地语", en: "Hindi", flag: "🇮🇳" },
-];
+export const LANGUAGES: LangOption[] = ALL_LANGUAGES;
 
 export function langByCode(code: string): LangOption | undefined {
   return LANGUAGES.find((l) => l.code === code);
@@ -118,7 +101,7 @@ export function detectLanguage(text: string, samples = 1): DetectedLanguage {
 
   if (top && top.ratio > 0.12) {
     const conf = Math.min(99, Math.round(72 + top.ratio * 30));
-    const opt = langByCode(top.code)!;
+    const opt = langByCode(top.code) ?? langByCode("en")!;
     evidence.push(`${top.label}占比 ${Math.round(top.ratio * 100)}%`);
     if (scriptHits.length > 1) evidence.push("检测到多脚本混排（含拉丁字母/英文术语）");
     return {
