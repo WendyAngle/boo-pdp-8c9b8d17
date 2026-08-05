@@ -78,7 +78,7 @@ export interface SmsTemplate {
 }
 
 const KEY = "boo:sms-templates:v1";
-const KEY_FILINGS = "boo:sms-filings:v1";
+const KEY_FILINGS = "boo:sms-filings:v2";
 const KEY_APPS = "boo:sms-applications:v1";
 
 const SEED: SmsTemplate[] = [
