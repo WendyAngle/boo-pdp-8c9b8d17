@@ -19,6 +19,13 @@ export interface Mailbox {
   smtpHost: string;
   smtpPort: number;
   encryption: MailboxEncryption;
+  /** 收信（IMAP）配置 */
+  receiveEnabled: boolean;
+  imapHost: string;
+  imapPort: number;
+  imapEncryption: MailboxEncryption;
+  /** 收信通道连通状态 */
+  receiveStatus: MailboxReceiveStatus;
   username: string;
   password: string;
   signature?: string;
@@ -31,17 +38,68 @@ export interface Mailbox {
 
 }
 
-export const PROVIDER_PRESETS: Record<
-  MailboxProvider,
-  { smtpHost: string; smtpPort: number; encryption: MailboxEncryption }
-> = {
-  Gmail: { smtpHost: "smtp.gmail.com", smtpPort: 465, encryption: "SSL" },
-  Outlook: { smtpHost: "smtp.office365.com", smtpPort: 587, encryption: "STARTTLS" },
-  腾讯企业邮: { smtpHost: "smtp.exmail.qq.com", smtpPort: 465, encryption: "SSL" },
-  阿里企业邮: { smtpHost: "smtp.mxhichina.com", smtpPort: 465, encryption: "SSL" },
-  网易企业邮: { smtpHost: "smtp.qiye.163.com", smtpPort: 994, encryption: "SSL" },
-  自定义SMTP: { smtpHost: "", smtpPort: 465, encryption: "SSL" },
+export type MailboxReceiveStatus = "收信正常" | "未开启收信" | "收信异常" | "未测试";
+
+export interface MailboxPreset {
+  smtpHost: string;
+  smtpPort: number;
+  encryption: MailboxEncryption;
+  imapHost: string;
+  imapPort: number;
+  imapEncryption: MailboxEncryption;
+}
+
+export const PROVIDER_PRESETS: Record<MailboxProvider, MailboxPreset> = {
+  Gmail: {
+    smtpHost: "smtp.gmail.com",
+    smtpPort: 465,
+    encryption: "SSL",
+    imapHost: "imap.gmail.com",
+    imapPort: 993,
+    imapEncryption: "SSL",
+  },
+  Outlook: {
+    smtpHost: "smtp.office365.com",
+    smtpPort: 587,
+    encryption: "STARTTLS",
+    imapHost: "outlook.office365.com",
+    imapPort: 993,
+    imapEncryption: "SSL",
+  },
+  腾讯企业邮: {
+    smtpHost: "smtp.exmail.qq.com",
+    smtpPort: 465,
+    encryption: "SSL",
+    imapHost: "imap.exmail.qq.com",
+    imapPort: 993,
+    imapEncryption: "SSL",
+  },
+  阿里企业邮: {
+    smtpHost: "smtp.mxhichina.com",
+    smtpPort: 465,
+    encryption: "SSL",
+    imapHost: "imap.mxhichina.com",
+    imapPort: 993,
+    imapEncryption: "SSL",
+  },
+  网易企业邮: {
+    smtpHost: "smtp.qiye.163.com",
+    smtpPort: 994,
+    encryption: "SSL",
+    imapHost: "imap.qiye.163.com",
+    imapPort: 993,
+    imapEncryption: "SSL",
+  },
+  自定义SMTP: {
+    smtpHost: "",
+    smtpPort: 465,
+    encryption: "SSL",
+    imapHost: "",
+    imapPort: 993,
+    imapEncryption: "SSL",
+  },
 };
+
 
 const KEY = "boo:mailboxes:v1";
 const SEED_FLAG = "boo:mailboxes:v3:seeded";
