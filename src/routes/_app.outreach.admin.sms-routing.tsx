@@ -201,7 +201,9 @@ function SmsRoutingPage() {
           </div>
           <div className="col-span-1 text-right">操作</div>
         </div>
-        {pageRules.map((r) => (
+        {pageRules.map((r) => {
+          const issues = auditRule(r, providers);
+          return (
           <div
             key={r.id}
             className="grid grid-cols-12 gap-2 items-center px-4 py-3 border-t"
@@ -213,7 +215,7 @@ function SmsRoutingPage() {
               </div>
               <div className="mt-1 ml-5 flex flex-wrap gap-1">
                 <Badge variant="outline" className="text-[10px]">
-                  {r.match.country}
+                  {regionOptLabel(r.match.region)}
                 </Badge>
                 <Badge variant="outline" className="text-[10px]">
                   {r.match.channel === "any"
@@ -229,18 +231,24 @@ function SmsRoutingPage() {
             <div className="col-span-4">
               <div className="flex items-center gap-1.5 flex-wrap">
                 <Badge className="bg-primary text-primary-foreground text-[11px]">
-                  {r.primary}
+                  {providerName(r.primary)}
                 </Badge>
                 {r.failover.map((f, i) => (
                   <span key={i} className="inline-flex items-center gap-1">
                     <ArrowRight className="h-3 w-3 text-muted-foreground" />
                     <Badge variant="outline" className="text-[11px]">
-                      {f}
+                      {providerName(f)}
                     </Badge>
                   </span>
                 ))}
               </div>
+              {issues.length > 0 && (
+                <div className="mt-1 text-[11px] text-amber-700">
+                  链路告警：{issues.join("；")}
+                </div>
+              )}
             </div>
+
             <div className="col-span-2 text-sm font-mono">
               {(r.minDeliveryRate * 100).toFixed(0)}%
             </div>
