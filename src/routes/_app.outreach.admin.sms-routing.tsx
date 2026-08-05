@@ -338,6 +338,8 @@ function RuleEditorInner({
 }) {
   const isNew = !rule.id;
   const [draft, setDraft] = useState<Rule>(rule);
+  const providers = useSmsProviders();
+
 
   function patch(p: Partial<Rule>) {
     setDraft((d) => ({ ...d, ...p }));
