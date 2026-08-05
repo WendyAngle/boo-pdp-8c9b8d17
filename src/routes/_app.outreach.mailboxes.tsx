@@ -965,63 +965,147 @@ function MailboxFormDialog({
                 <div className="text-[11px] leading-relaxed text-foreground/80">
                   {detect
                     ? detect.basis
-                    : "填写邮箱地址后，系统将自动识别服务商并填充 SMTP 服务器、端口、加密方式与登录用户名。"}
+                    : "填写邮箱地址后，系统将自动识别服务商并填充 SMTP（发信）与 IMAP（收信）服务器、端口、加密方式与登录用户名。"}
                 </div>
               </div>
 
-              {manualServer ? (
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-3">
-                  <Field label="登录用户名" required>
-                    <Input
-                      value={form.username}
-                      onChange={(e) => update("username", e.target.value)}
-                      placeholder="多数情况与邮箱地址一致"
-                    />
-                  </Field>
-                  <Field label="SMTP 服务器" required>
-                    <Input
-                      value={form.smtpHost}
-                      onChange={(e) => update("smtpHost", e.target.value)}
-                      placeholder="smtp.example.com"
-                      className="font-mono"
-                    />
-                  </Field>
-                  <div className="grid grid-cols-2 gap-3">
-                    <Field label="端口" required>
+              {/* 发信 SMTP */}
+              <div className="mt-3 rounded-lg border p-3 space-y-3">
+                <div className="text-xs font-medium">发信 · SMTP</div>
+                {manualServer ? (
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <Field label="登录用户名" required>
                       <Input
-                        type="number"
-                        value={form.smtpPort}
-                        onChange={(e) => update("smtpPort", Number(e.target.value))}
+                        value={form.username}
+                        onChange={(e) => update("username", e.target.value)}
+                        placeholder="多数情况与邮箱地址一致"
                       />
                     </Field>
-                    <Field label="加密方式">
-                      <Select
-                        value={form.encryption}
-                        onValueChange={(v) => update("encryption", v as MailboxEncryption)}
-                      >
-                        <SelectTrigger>
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {ENCRYPTIONS.map((e) => (
-                            <SelectItem key={e} value={e}>
-                              {e}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
+                    <Field label="SMTP 服务器" required>
+                      <Input
+                        value={form.smtpHost}
+                        onChange={(e) => update("smtpHost", e.target.value)}
+                        placeholder="smtp.example.com"
+                        className="font-mono"
+                      />
                     </Field>
+                    <div className="grid grid-cols-2 gap-3">
+                      <Field label="端口" required>
+                        <Input
+                          type="number"
+                          value={form.smtpPort}
+                          onChange={(e) => update("smtpPort", Number(e.target.value))}
+                        />
+                      </Field>
+                      <Field label="加密方式">
+                        <Select
+                          value={form.encryption}
+                          onValueChange={(v) => update("encryption", v as MailboxEncryption)}
+                        >
+                          <SelectTrigger>
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {ENCRYPTIONS.map((e) => (
+                              <SelectItem key={e} value={e}>
+                                {e}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </Field>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                    <AutoField label="服务商" value={form.provider} />
+                    <AutoField label="SMTP 服务器" value={form.smtpHost || "—"} mono />
+                    <AutoField label="端口 / 加密" value={`${form.smtpPort} · ${form.encryption}`} mono />
+                    <AutoField label="登录用户名" value={form.username || "—"} mono />
+                  </div>
+                )}
+              </div>
+
+              {/* 收信 IMAP */}
+              <div className="mt-3 rounded-lg border p-3 space-y-3">
+                <div className="flex items-start justify-between gap-3">
+                  <div>
+                    <div className="text-xs font-medium">收信 · IMAP</div>
+                    <div className="text-[11px] text-muted-foreground mt-0.5">
+                      开启后客户回信将自动同步到「客户触达 · 会话」并参与意向真实度分析；关闭则该邮箱仅能发信。
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2 shrink-0">
+                    <Label className="text-[11px] text-muted-foreground">接收客户回复</Label>
+                    <Switch
+                      checked={form.receiveEnabled}
+                      onCheckedChange={(v) => update("receiveEnabled", !!v)}
+                    />
                   </div>
                 </div>
-              ) : (
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mt-3">
-                  <AutoField label="服务商" value={form.provider} />
-                  <AutoField label="SMTP 服务器" value={form.smtpHost || "—"} mono />
-                  <AutoField label="端口 / 加密" value={`${form.smtpPort} · ${form.encryption}`} mono />
-                  <AutoField label="登录用户名" value={form.username || "—"} mono />
-                </div>
-              )}
+
+                {!form.receiveEnabled ? (
+                  <div className="rounded-md border border-amber-200 bg-amber-50/60 p-2.5 flex items-start gap-2">
+                    <AlertCircle className="h-3.5 w-3.5 text-amber-600 mt-0.5 shrink-0" />
+                    <div className="text-[11px] text-foreground/80">
+                      未开启收信：该邮箱在会话模块将标注「仅发信，不同步回复」，客户回信需自行到邮箱查看。
+                    </div>
+                  </div>
+                ) : manualServer ? (
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <Field label="IMAP 服务器" required>
+                      <Input
+                        value={form.imapHost}
+                        onChange={(e) => update("imapHost", e.target.value)}
+                        placeholder="imap.example.com"
+                        className="font-mono"
+                      />
+                    </Field>
+                    <div className="grid grid-cols-2 gap-3">
+                      <Field label="端口" required>
+                        <Input
+                          type="number"
+                          value={form.imapPort}
+                          onChange={(e) => update("imapPort", Number(e.target.value))}
+                        />
+                      </Field>
+                      <Field label="加密方式">
+                        <Select
+                          value={form.imapEncryption}
+                          onValueChange={(v) => update("imapEncryption", v as MailboxEncryption)}
+                        >
+                          <SelectTrigger>
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {ENCRYPTIONS.map((e) => (
+                              <SelectItem key={e} value={e}>
+                                {e}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </Field>
+                    </div>
+                    <div className="md:col-span-2 text-[11px] text-muted-foreground">
+                      收信与发信共用同一份「{guide.credentialName}」，无需额外获取凭证。
+                    </div>
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                    <AutoField label="IMAP 服务器" value={form.imapHost || "—"} mono />
+                    <AutoField
+                      label="端口 / 加密"
+                      value={`${form.imapPort} · ${form.imapEncryption}`}
+                      mono
+                    />
+                    <AutoField label="登录用户名" value={form.username || "—"} mono />
+                    <AutoField label="凭证" value={`同${guide.credentialName}`} />
+                  </div>
+                )}
+              </div>
             </StepBlock>
+
 
             {/* 第 3 步：发信策略 */}
             <StepBlock
