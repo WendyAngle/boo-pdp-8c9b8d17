@@ -887,55 +887,6 @@ export function ComposeSendDialog({
       </DialogContent>
 
 
-      <SubmitTemplateDialog
-        open={submitTplOpen}
-        onOpenChange={setSubmitTplOpen}
-        initialContent={content}
-      />
-
-      <Dialog open={confirmSendOpen} onOpenChange={setConfirmSendOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
-              <ShieldAlert className="h-5 w-5 text-amber-600" />
-              内容未使用已报备模板
-            </DialogTitle>
-            <DialogDescription>
-              当前短信内容不是来自已审核模板，海外营销通道（Twilio 10DLC / 印度 DLT
-              等）可能拦截该消息，甚至导致发送账号被封。
-              <br />
-              <br />
-              建议：优先选择「已报备模板」发送；如为一次性沟通，也可先
-              <button
-                type="button"
-                className="text-primary underline mx-0.5"
-                onClick={() => {
-                  setConfirmSendOpen(false);
-                  setSubmitTplOpen(true);
-                }}
-              >
-                提交为模板送审
-              </button>
-              后再发送。
-            </DialogDescription>
-          </DialogHeader>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setConfirmSendOpen(false)}>
-              返回修改
-            </Button>
-            <Button
-              variant="outline"
-              className="border-amber-300 text-amber-700 hover:bg-amber-50"
-              onClick={() => {
-                setConfirmSendOpen(false);
-                doSend();
-              }}
-            >
-              仍然发送
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
     </Dialog>
   );
 }
