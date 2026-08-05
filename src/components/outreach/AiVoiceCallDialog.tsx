@@ -44,6 +44,8 @@ export interface AiCallTarget {
 }
 
 type Scene = "marketing" | "notify" | "revisit" | "other";
+type Pacing = "ramp" | "steady" | "random";
+
 
 const SCENE_OPTIONS: { value: Scene; label: string }[] = [
   { value: "marketing", label: "营销外呼" },
