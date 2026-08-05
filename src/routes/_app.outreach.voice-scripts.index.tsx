@@ -222,13 +222,6 @@ function VoiceScriptsPage() {
               <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
               <Input value={kw} onChange={(e) => setKw(e.target.value)} placeholder="搜索模板" className="pl-8" />
             </div>
-            <Select value={industry} onValueChange={setIndustry}>
-              <SelectTrigger className="w-40"><SelectValue placeholder="行业" /></SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">全部行业</SelectItem>
-                {SCRIPT_INDUSTRIES.map((i) => <SelectItem key={i} value={i}>{i}</SelectItem>)}
-              </SelectContent>
-            </Select>
             <Select value={scene} onValueChange={setScene}>
               <SelectTrigger className="w-36"><SelectValue placeholder="场景" /></SelectTrigger>
               <SelectContent>
@@ -236,9 +229,16 @@ function VoiceScriptsPage() {
                 {SCRIPT_SCENES.map((s) => <SelectItem key={s.key} value={s.key}>{s.label}</SelectItem>)}
               </SelectContent>
             </Select>
+            <Select value={language} onValueChange={setLanguage}>
+              <SelectTrigger className="w-32"><SelectValue placeholder="语言" /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">全部语言</SelectItem>
+                {SCRIPT_LANGUAGES.map((l) => <SelectItem key={l.key} value={l.key}>{l.label}</SelectItem>)}
+              </SelectContent>
+            </Select>
             <span className="text-xs text-muted-foreground ml-auto flex items-center gap-1">
               <Store className="h-3.5 w-3.5" />
-              模板由平台运营维护，复制后可自由修改，不影响原模板
+              模板均为{TEMPLATE_INDUSTRY}，行业差异由变量与企业知识库注入；复制后可自由修改，不影响原模板
             </span>
           </div>
 
@@ -249,19 +249,21 @@ function VoiceScriptsPage() {
               </Card>
             )}
             {market.map((t) => (
-              <Card key={t.id} className="p-5 space-y-3 hover:shadow-md transition-shadow">
+              <Card key={t.id} className="p-5 space-y-3 hover:shadow-md transition-shadow flex flex-col">
                 <div className="flex items-start justify-between gap-2">
                   <div className="font-medium flex items-center gap-1.5">
-                    {t.recommended && <Star className="h-4 w-4 text-amber-500 fill-amber-500" />}
+                    {t.recommended && <Star className="h-4 w-4 text-amber-500 fill-amber-500 shrink-0" />}
                     {t.name}
                   </div>
-                  <Badge variant="secondary">{t.industry}</Badge>
+                  <Badge variant="secondary" className="shrink-0">{sceneLabel(t.scene)}</Badge>
                 </div>
                 <div className="flex flex-wrap gap-1.5 text-[11px]">
-                  <Badge variant="outline">{sceneLabel(t.scene)}</Badge>
+                  <Badge variant="outline">{TEMPLATE_INDUSTRY}</Badge>
                   <Badge variant="outline">{langLabel(t.language)}</Badge>
                   <Badge variant="outline">{t.steps.length} 个步骤</Badge>
+                  {t.avgDuration != null && <Badge variant="outline">约 {t.avgDuration}s</Badge>}
                 </div>
+                {t.desc && <p className="text-xs text-muted-foreground line-clamp-3">{t.desc}</p>}
                 <ol className="text-xs text-muted-foreground space-y-1">
                   {t.steps.slice(0, 4).map((s, i) => (
                     <li key={s.id} className="truncate">
@@ -271,27 +273,47 @@ function VoiceScriptsPage() {
                   ))}
                   {t.steps.length > 4 && <li>…</li>}
                 </ol>
-                <div className="flex items-center justify-between pt-1">
-                  <span className="text-xs text-muted-foreground">已被使用 {t.usedCount} 次</span>
-                  <Button
-                    size="sm"
-                    className="gap-1.5"
-                    onClick={() => {
-                      const copy = copyTemplateToMyScripts(t.id);
-                      if (copy) {
-                        toast.success("已复制到「我的话术」");
-                        navigate({ to: "/outreach/voice-scripts/$scriptId", params: { scriptId: copy.id } });
-                      }
-                    }}
-                  >
-                    <Sparkles className="h-3.5 w-3.5" />
-                    使用该模板
-                  </Button>
+                <div className="flex items-center justify-between pt-1 mt-auto gap-2">
+                  <span className="text-xs text-muted-foreground">已被使用 {t.usedCount.toLocaleString()} 次</span>
+                  <div className="flex items-center gap-1.5">
+                    <Button size="sm" variant="outline" className="gap-1.5" onClick={() => setDetail(t)}>
+                      <Eye className="h-3.5 w-3.5" />
+                      查看详情
+                    </Button>
+                    <Button
+                      size="sm"
+                      className="gap-1.5"
+                      onClick={() => {
+                        const copy = copyTemplateToMyScripts(t.id);
+                        if (copy) {
+                          toast.success("已复制到「我的话术」");
+                          navigate({ to: "/outreach/voice-scripts/$scriptId", params: { scriptId: copy.id } });
+                        }
+                      }}
+                    >
+                      <Sparkles className="h-3.5 w-3.5" />
+                      使用
+                    </Button>
+                  </div>
                 </div>
               </Card>
             ))}
           </div>
         </TabsContent>
+      </Tabs>
+
+      <TemplateDetailDialog
+        template={detail}
+        onOpenChange={(v) => !v && setDetail(null)}
+        onUse={(id) => {
+          const copy = copyTemplateToMyScripts(id);
+          setDetail(null);
+          if (copy) {
+            toast.success("已复制到「我的话术」");
+            navigate({ to: "/outreach/voice-scripts/$scriptId", params: { scriptId: copy.id } });
+          }
+        }}
+      />
       </Tabs>
 
       <CreateScriptDialog open={createOpen} onOpenChange={setCreateOpen} />
