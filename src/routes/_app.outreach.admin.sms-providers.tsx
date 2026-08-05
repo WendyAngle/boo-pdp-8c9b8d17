@@ -431,12 +431,21 @@ function ProviderEditor({
       toast.error("至少选择一种支持渠道");
       return;
     }
+    if (form.regions.length === 0) {
+      toast.error("至少选择一个覆盖地区");
+      return;
+    }
+    if (form.filingChannels.length === 0) {
+      toast.error("至少选择一个承载报备通道");
+      return;
+    }
     if (form.tps <= 0) {
       toast.error("TPS 需大于 0");
       return;
     }
     onSave(form);
   }
+
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
