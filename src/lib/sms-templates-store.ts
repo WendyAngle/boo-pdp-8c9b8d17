@@ -249,6 +249,17 @@ export function getFilingsByTemplate(templateId: string): Record<FilingChannel, 
   return m as Record<FilingChannel, TemplateFiling | undefined>;
 }
 
+/** 某模板已通过报备覆盖的目标地区（用户端展示可用范围） */
+export function getTemplateApprovedRegions(templateId: string): string[] {
+  const set = new Set<string>();
+  filings
+    .filter((f) => f.templateId === templateId && f.status === "approved")
+    .forEach((f) => (f.regions ?? []).forEach((r) => set.add(r)));
+  return FILING_REGIONS.filter((r) => set.has(r.key)).map((r) => r.key);
+}
+
+
+
 /** 登记 / 更新一条渠道报备 */
 export function upsertFiling(rec: TemplateFiling) {
   const idx = filings.findIndex((f) => f.templateId === rec.templateId && f.channel === rec.channel);
