@@ -227,22 +227,10 @@ function AgentsPage() {
             </div>
             <div className="space-y-2">
               <Label>可服务语言</Label>
-              <div className="flex flex-wrap gap-3">
-                {SCRIPT_LANGUAGES.map((l) => (
-                  <label key={l.key} className="flex items-center gap-1.5 text-sm cursor-pointer">
-                    <Checkbox
-                      checked={form.languages.includes(l.key)}
-                      onCheckedChange={(c) =>
-                        setForm({
-                          ...form,
-                          languages: c ? [...form.languages, l.key] : form.languages.filter((x) => x !== l.key),
-                        })
-                      }
-                    />
-                    {l.label}
-                  </label>
-                ))}
-              </div>
+              <LanguageMultiSelect
+                value={form.languages}
+                onChange={(v) => setForm({ ...form, languages: v })}
+              />
             </div>
             <div className="grid gap-4 sm:grid-cols-2">
               <div className="space-y-2">
