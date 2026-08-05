@@ -373,11 +373,11 @@ function RuleEditorInner({
 
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-1.5">
-              <Label>目的国家 / 地区</Label>
-              <Select value={draft.match.country} onValueChange={(v) => patch({ match: { ...draft.match, country: v } })}>
+              <Label>目的地区</Label>
+              <Select value={draft.match.region} onValueChange={(v) => patch({ match: { ...draft.match, region: v } })}>
                 <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>
-                  {COUNTRIES.map((c) => <SelectItem key={c} value={c}>{c}</SelectItem>)}
+                  {REGION_OPTIONS.map((c) => <SelectItem key={c.key} value={c.key}>{c.label}</SelectItem>)}
                 </SelectContent>
               </Select>
             </div>
@@ -398,11 +398,25 @@ function RuleEditorInner({
           <div className="space-y-1.5">
             <Label>主服务商</Label>
             <Select value={draft.primary} onValueChange={(v) => patch({ primary: v })}>
-              <SelectTrigger><SelectValue /></SelectTrigger>
+              <SelectTrigger><SelectValue placeholder="选择服务商" /></SelectTrigger>
               <SelectContent>
-                {PROVIDERS.map((p) => <SelectItem key={p} value={p}>{p}</SelectItem>)}
+                {providers.map((p) => {
+                  const fit =
+                    (draft.match.region === "any" || p.regions.includes(draft.match.region)) &&
+                    (draft.match.channel === "any" || p.channels.includes(draft.match.channel));
+                  return (
+                    <SelectItem key={p.id} value={p.id}>
+                      {p.name}
+                      {!fit && " · 不匹配当前条件"}
+                      {!isProviderRoutable(p) && " · 不可用"}
+                    </SelectItem>
+                  );
+                })}
               </SelectContent>
             </Select>
+            <div className="text-[11px] text-muted-foreground">
+              服务商的覆盖地区、支持渠道与承载报备通道在「短信服务商」页面维护。
+            </div>
           </div>
 
           <div className="space-y-1.5">
@@ -411,7 +425,7 @@ function RuleEditorInner({
               <div className="flex items-center gap-1.5 flex-wrap p-2 rounded-md bg-muted/40">
                 {draft.failover.map((f, i) => (
                   <Badge key={f} variant="outline" className="gap-1">
-                    {i + 1}. {f}
+                    {i + 1}. {providerName(f)}
                     <button onClick={() => toggleFailover(f)} className="hover:text-rose-600">
                       <X className="h-3 w-3" />
                     </button>
@@ -420,13 +434,16 @@ function RuleEditorInner({
               </div>
             )}
             <div className="flex flex-wrap gap-1.5">
-              {PROVIDERS.filter((p) => p !== draft.primary && !draft.failover.includes(p)).map((p) => (
-                <Button key={p} size="sm" variant="outline" className="h-7" onClick={() => toggleFailover(p)}>
-                  <Plus className="h-3 w-3" />{p}
-                </Button>
-              ))}
+              {providers
+                .filter((p) => p.id !== draft.primary && !draft.failover.includes(p.id))
+                .map((p) => (
+                  <Button key={p.id} size="sm" variant="outline" className="h-7" onClick={() => toggleFailover(p.id)}>
+                    <Plus className="h-3 w-3" />{p.name}
+                  </Button>
+                ))}
             </div>
           </div>
+
 
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-1.5">
