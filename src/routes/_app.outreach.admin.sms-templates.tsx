@@ -836,16 +836,17 @@ function _processGuideInner() {
       >
         <span className="flex items-center gap-2 font-medium">
           <ShieldCheck className="h-4 w-4 text-primary" />
-          流程指引：新建 / 通过申请 → 渠道报备 → 用户可用
+          流程指引：平台新建 → 内审通过 → 渠道 + 地区报备 → 用户可选用
         </span>
         {open ? <ChevronUp className="h-4 w-4 text-muted-foreground" /> : <ChevronDown className="h-4 w-4 text-muted-foreground" />}
       </button>
       {open && (
         <div className="mt-3 grid grid-cols-1 md:grid-cols-3 gap-2 text-[12px]">
           {[
-            { n: 1, title: "创建 / 入库", desc: "系统内置由平台运营新建；用户创建来自终端提交，两者入库后统一进入『待审核』。" },
-            { n: 2, title: "内审 · 报备", desc: "在操作列点击『审核』确认通过或驳回；同时可在『报备』中为各渠道分别登记外部审核结果。" },
-            { n: 3, title: "用户可用", desc: "内审已通过 + 对应渠道报备通过后，终端用户即可选用群发；系统内置模板允许后续修改，用户创建的仅限查看。" },
+            { n: 1, title: "平台新建", desc: "所有短信模板均由平台运营在后台新建与维护，入库后进入『待审核』。" },
+            { n: 2, title: "内审 · 报备", desc: "操作列点击『审核』确认通过或驳回；再在『报备』中按渠道 + 目标地区分别登记外部审核结果。" },
+            { n: 3, title: "用户可用", desc: "内审通过 + 对应渠道地区报备通过后，终端用户在批量发短信时即可按覆盖地区选用该模板。" },
+
           ].map((s) => (
             <div key={s.n} className="rounded-md border bg-muted/30 p-2">
               <div className="flex items-center gap-1.5 font-medium text-foreground">
