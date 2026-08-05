@@ -313,66 +313,6 @@ function VoiceScriptsPage() {
 }
 
 
-  return (
-    <Dialog open={open} onOpenChange={(v) => { onOpenChange(v); if (!v) setName(""); }}>
-      <DialogContent>
-        <DialogHeader>
-          <DialogTitle>新建话术</DialogTitle>
-          <DialogDescription>创建后进入话术设计器，按线性步骤编排开场白、AI 对话、转人工与结束语。</DialogDescription>
-        </DialogHeader>
-        <div className="space-y-4">
-          <div className="space-y-2">
-            <Label>话术名称 <span className="text-destructive">*</span></Label>
-            <Input value={name} onChange={(e) => setName(e.target.value)} placeholder="如：北美新客首轮触达" maxLength={60} />
-          </div>
-          <div className="grid gap-4 sm:grid-cols-3">
-            <div className="space-y-2">
-              <Label>场景</Label>
-              <Select value={scene} onValueChange={(v) => setScene(v as ScriptScene)}>
-                <SelectTrigger><SelectValue /></SelectTrigger>
-                <SelectContent>
-                  {SCRIPT_SCENES.map((s) => <SelectItem key={s.key} value={s.key}>{s.label}</SelectItem>)}
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="space-y-2">
-              <Label>行业</Label>
-              <Select value={industry} onValueChange={setIndustry}>
-                <SelectTrigger><SelectValue /></SelectTrigger>
-                <SelectContent>
-                  {SCRIPT_INDUSTRIES.map((i) => <SelectItem key={i} value={i}>{i}</SelectItem>)}
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="space-y-2">
-              <Label>语言</Label>
-              <Select value={language} onValueChange={setLanguage}>
-                <SelectTrigger><SelectValue /></SelectTrigger>
-                <SelectContent>
-                  {SCRIPT_LANGUAGES.map((l) => <SelectItem key={l.key} value={l.key}>{l.label}</SelectItem>)}
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
-        </div>
-        <DialogFooter>
-          <Button variant="outline" onClick={() => onOpenChange(false)}>取消</Button>
-          <Button
-            disabled={!name.trim()}
-            onClick={() => {
-              const s = createScript({ name: name.trim(), scene, industry, language, owner: "tenant" });
-              onOpenChange(false);
-              setName("");
-              navigate({ to: "/outreach/voice-scripts/$scriptId", params: { scriptId: s.id } });
-            }}
-          >
-            创建并编辑
-          </Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
-  );
-}
 
 function TemplateDetailDialog({
   template,
