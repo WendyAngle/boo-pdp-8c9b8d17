@@ -174,8 +174,11 @@ function MailboxesPage() {
     setTestingId(m.id);
     const r = await testMailbox(m.id);
     setTestingId(null);
-    if (r.ok) toast.success(r.message);
-    else toast.error(r.message);
+    if (r.smtp.ok) toast.success(r.smtp.message);
+    else toast.error(r.smtp.message);
+    if (r.imap.skipped) toast.info(r.imap.message);
+    else if (r.imap.ok) toast.success(r.imap.message);
+    else toast.error(r.imap.message);
   };
 
   const onToggleStatus = (m: Mailbox) => {
@@ -653,6 +656,10 @@ interface FormState {
   smtpHost: string;
   smtpPort: number;
   encryption: MailboxEncryption;
+  receiveEnabled: boolean;
+  imapHost: string;
+  imapPort: number;
+  imapEncryption: MailboxEncryption;
   username: string;
   password: string;
   signature: string;
@@ -667,6 +674,7 @@ function emptyForm(): FormState {
     displayName: "",
     provider: "腾讯企业邮",
     ...PROVIDER_PRESETS["腾讯企业邮"],
+    receiveEnabled: true,
     username: "",
     password: "",
     signature: "",
@@ -711,6 +719,10 @@ function MailboxFormDialog({
             smtpHost: editing.smtpHost,
             smtpPort: editing.smtpPort,
             encryption: editing.encryption,
+            receiveEnabled: editing.receiveEnabled,
+            imapHost: editing.imapHost,
+            imapPort: editing.imapPort,
+            imapEncryption: editing.imapEncryption,
             username: editing.username,
             password: editing.password,
             signature: editing.signature ?? "",
@@ -734,6 +746,9 @@ function MailboxFormDialog({
       smtpHost: manualServer ? s.smtpHost : preset.smtpHost || s.smtpHost,
       smtpPort: manualServer ? s.smtpPort : preset.smtpPort,
       encryption: manualServer ? s.encryption : preset.encryption,
+      imapHost: manualServer ? s.imapHost : preset.imapHost || s.imapHost,
+      imapPort: manualServer ? s.imapPort : preset.imapPort,
+      imapEncryption: manualServer ? s.imapEncryption : preset.imapEncryption,
       username: manualServer ? s.username : email || s.username,
       dailyLimit: editing ? s.dailyLimit : PROVIDER_DAILY_LIMIT[p],
     }));
@@ -775,6 +790,10 @@ function MailboxFormDialog({
     if (!form.displayName.trim()) return "请输入显示名称";
     if (!form.smtpHost.trim()) return "请填写 SMTP 服务器地址";
     if (!(form.smtpPort > 0 && form.smtpPort < 65536)) return "SMTP 端口无效";
+    if (form.receiveEnabled) {
+      if (!form.imapHost.trim()) return "已开启收信，请填写 IMAP 服务器地址";
+      if (!(form.imapPort > 0 && form.imapPort < 65536)) return "IMAP 端口无效";
+    }
     if (!form.username.trim()) return "请输入登录用户名";
     if (!form.password.trim()) return `请输入${guide.credentialName}`;
     if (form.dailyLimit < 1) return "日发上限至少为 1";
@@ -796,6 +815,11 @@ function MailboxFormDialog({
         smtpHost: form.smtpHost,
         smtpPort: form.smtpPort,
         encryption: form.encryption,
+        receiveEnabled: form.receiveEnabled,
+        imapHost: form.receiveEnabled ? form.imapHost : "",
+        imapPort: form.imapPort,
+        imapEncryption: form.imapEncryption,
+        receiveStatus: form.receiveEnabled ? "未测试" : "未开启收信",
         username: form.username,
         password: form.password,
         signature: form.signature,
@@ -812,6 +836,11 @@ function MailboxFormDialog({
         smtpHost: form.smtpHost,
         smtpPort: form.smtpPort,
         encryption: form.encryption,
+        receiveEnabled: form.receiveEnabled,
+        imapHost: form.receiveEnabled ? form.imapHost : "",
+        imapPort: form.imapPort,
+        imapEncryption: form.imapEncryption,
+        receiveStatus: form.receiveEnabled ? "未测试" : "未开启收信",
         username: form.username,
         password: form.password,
         signature: form.signature,
@@ -826,8 +855,11 @@ function MailboxFormDialog({
       setTesting(true);
       const r = await testMailbox(id);
       setTesting(false);
-      if (r.ok) toast.success(r.message);
-      else toast.error(r.message);
+      if (r.smtp.ok) toast.success(r.smtp.message);
+      else toast.error(r.smtp.message);
+      if (r.imap.skipped) toast.info(r.imap.message);
+      else if (r.imap.ok) toast.success(r.imap.message);
+      else toast.error(r.imap.message);
     }
     onOpenChange(false);
   };
