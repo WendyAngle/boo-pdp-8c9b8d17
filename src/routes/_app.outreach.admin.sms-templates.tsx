@@ -1139,9 +1139,16 @@ function FilingsPanel({ filings, templates, onEdit }: {
   const tplMap = useMemo(() => Object.fromEntries(templates.map((t) => [t.id, t])), [templates]);
   const [ch, setCh] = useState<FilingChannel | "all">("all");
   const [st, setSt] = useState<FilingStatus | "all">("all");
+  const [rg, setRg] = useState<string>("all");
   const rows = filings
-    .filter((f) => (ch === "all" || f.channel === ch) && (st === "all" || f.status === st))
+    .filter(
+      (f) =>
+        (ch === "all" || f.channel === ch) &&
+        (st === "all" || f.status === st) &&
+        (rg === "all" || (f.regions ?? []).includes(rg)),
+    )
     .sort((a, b) => (b.submittedAt ?? "").localeCompare(a.submittedAt ?? ""));
+
   return (
     <Card className="p-0 overflow-hidden">
       <div className="flex items-center gap-3 border-b bg-muted/40 px-4 py-2">
