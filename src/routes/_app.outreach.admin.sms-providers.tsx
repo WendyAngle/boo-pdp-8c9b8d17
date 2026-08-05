@@ -133,13 +133,11 @@ function SmsProvidersPage() {
     setEditorOpen(true);
   }
   function handleSave(next: Provider) {
-    setList((s) => {
-      const exists = s.some((x) => x.id === next.id);
-      return exists ? s.map((x) => (x.id === next.id ? next : x)) : [...s, next];
-    });
+    upsertProvider(next);
     setEditorOpen(false);
     toast.success(editing ? "已更新服务商配置" : "已新增服务商，默认置为观察态");
   }
+
 
   return (
     <TooltipProvider delayDuration={200}>
