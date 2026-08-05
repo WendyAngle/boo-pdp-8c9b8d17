@@ -15,10 +15,28 @@ export const FILING_CHANNELS: { key: FilingChannel; label: string }[] = [
 
 export type FilingStatus = "none" | "submitted" | "approved" | "rejected" | "expired";
 
+/** 报备目标地区（运营商 / OTT 报备均按地区生效） */
+export const FILING_REGIONS: { key: string; label: string }[] = [
+  { key: "cn", label: "中国大陆" },
+  { key: "hk-tw", label: "中国港澳台" },
+  { key: "sea", label: "东南亚" },
+  { key: "in", label: "印度" },
+  { key: "me", label: "中东" },
+  { key: "eu", label: "欧洲（GDPR）" },
+  { key: "na", label: "北美" },
+  { key: "latam", label: "拉美" },
+  { key: "af", label: "非洲" },
+  { key: "anz", label: "澳新" },
+];
+export const regionLabel = (k: string) =>
+  FILING_REGIONS.find((r) => r.key === k)?.label ?? k;
+
 export interface TemplateFiling {
   templateId: string;
   channel: FilingChannel;
   status: FilingStatus;
+  /** 目标地区（报备生效范围），至少 1 个 */
+  regions: string[];
   externalId?: string;    // 运营商回执号
   submittedAt?: string;
   approvedAt?: string;
@@ -26,6 +44,7 @@ export interface TemplateFiling {
   comment?: string;       // 拒因 / 备注
   operator?: string;      // 登记人
 }
+
 
 /** 终端用户提交的自定义模板申请（内部运营审核） */
 export type AppStatus = "submitted" | "approved" | "rejected";
