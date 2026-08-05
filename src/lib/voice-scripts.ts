@@ -82,6 +82,8 @@ export interface VoiceScript {
   scene: ScriptScene;
   industry: string;
   language: string;
+  /** 目标市场 / 地区（SCRIPT_REGIONS.key） */
+  region?: string;
   /** platform = 平台运营维护的模板；tenant = 租户自有话术 */
   owner: "platform" | "tenant";
   status: ScriptStatus;
@@ -104,6 +106,46 @@ export interface VoiceScript {
 }
 
 export const SCRIPT_VARIABLES = ["企业名", "联系人名", "行业", "我的公司", "我的姓名", "活动主题"];
+
+/** 目标市场 / 地区（创建话术时选择，用于外呼时段、称呼与合规提示的本地化） */
+export const SCRIPT_REGIONS: { key: string; label: string }[] = [
+  { key: "global", label: "全球通用" },
+  { key: "na", label: "北美（美国 / 加拿大）" },
+  { key: "eu", label: "欧洲（西欧 / 北欧）" },
+  { key: "sea", label: "东南亚" },
+  { key: "me", label: "中东" },
+  { key: "latam", label: "拉美" },
+  { key: "africa", label: "非洲" },
+  { key: "jpkr", label: "日韩" },
+  { key: "cn", label: "中国大陆" },
+];
+
+export const regionLabel = (k?: string) =>
+  SCRIPT_REGIONS.find((r) => r.key === k)?.label ?? "全球通用";
+
+/** 语言全称，用于调用翻译引擎 */
+export const LANGUAGE_FULL_NAME: Record<string, string> = {
+  zh: "Chinese (Simplified)",
+  en: "English",
+  es: "Spanish",
+  ar: "Arabic",
+  ru: "Russian",
+};
+
+/** 预览用示例变量值（实际外呼时由目标客户数据填充） */
+export const PREVIEW_VARS: Record<string, string> = {
+  企业名: "Nordic Trade AB",
+  联系人名: "Mr. Andersson",
+  行业: "机械设备",
+  我的公司: "宁波智造机械",
+  我的姓名: "李明",
+  活动主题: "2026 汉诺威工业展",
+};
+
+/** 用示例值填充变量占位符，得到贴近真实播报的文本 */
+export function fillPreviewVars(text: string): string {
+  return text.replace(/\{([^}]+)\}/g, (m, k: string) => PREVIEW_VARS[k] ?? m);
+}
 
 export const RECORDING_NOTICE = "为保证服务质量，本次通话可能会被录音。";
 
@@ -379,19 +421,19 @@ let scripts: VoiceScript[] = [
   },
   {
     id: "tpl-002",
-    name: "New Buyer Cold Call (EN)",
+    name: "海外买家陌拜 · 快速筛需求",
     scene: "marketing",
     industry: T,
-    language: "en",
+    language: "zh",
     owner: "platform",
     status: "published",
-    steps: marketingSteps(true),
+    steps: marketingSteps(),
     updatedAt: day(8),
-    updatedBy: "平台运营 · Wang",
+    updatedBy: "平台运营 · 王琳",
     usedCount: 947,
     avgDuration: 88,
-    desc: "英文陌拜版本，适用于欧美与东南亚英语区买家，语气简洁直接，价格问题统一引导至报价单。",
-    tags: ["English", "Cold Call", "Quotation"],
+    desc: "面向海外买家的陌拜版本，语气简洁直接，30 秒内说明来意，价格问题统一引导至报价单；创建话术时可切换外呼语言。",
+    tags: ["陌拜", "快速筛需求", "报价引导"],
   },
 
   /* ---------- 语音通知 ---------- */
@@ -482,19 +524,19 @@ let scripts: VoiceScript[] = [
   },
   {
     id: "tpl-008",
-    name: "Webinar / New Product Launch Invite (EN)",
+    name: "线上发布会 / 直播邀约",
     scene: "invite",
     industry: T,
-    language: "en",
+    language: "zh",
     owner: "platform",
     status: "published",
-    steps: inviteSteps(true),
+    steps: inviteSteps(),
     updatedAt: day(9),
-    updatedBy: "平台运营 · Wang",
+    updatedBy: "平台运营 · 王琳",
     usedCount: 301,
     avgDuration: 70,
-    desc: "英文线上活动邀约，适用于新品发布会与行业 Webinar，确认参会后发送日程与会议链接。",
-    tags: ["English", "Webinar", "线上活动"],
+    desc: "线上活动邀约，适用于新品发布会与行业直播，确认参会后发送日程与会议链接。",
+    tags: ["线上活动", "新品发布", "参会确认"],
   },
 
   /* ---------- 其他 ---------- */
@@ -558,6 +600,7 @@ let scripts: VoiceScript[] = [
     status: "published",
     steps: revisitSteps("csat"),
     updatedAt: day(1),
+    region: "eu",
     updatedBy: "张明",
     usedCount: 1240,
     intentRateA: 18,
@@ -573,6 +616,7 @@ let scripts: VoiceScript[] = [
     status: "draft",
     steps: marketingSteps(),
     updatedAt: day(4),
+    region: "sea",
     updatedBy: "王倩",
     usedCount: 0,
     fromTemplateId: "tpl-001",
@@ -773,10 +817,10 @@ export function duplicateScript(id: string, name?: string): VoiceScript | undefi
   return copy;
 }
 
-/** 模板市场「使用该模板」：复制平台模板为租户话术 */
-export function copyTemplateToMyScripts(
+/** 模板市场「使用模板创建话术」：基于平台模板生成一份租户话术 */
+export function createScriptFromTemplate(
   templateId: string,
-  overrides?: { name?: string; language?: string },
+  overrides?: { name?: string; language?: string; region?: string },
 ): VoiceScript | undefined {
   const src = scripts.find((s) => s.id === templateId);
   if (!src) return;
@@ -786,6 +830,7 @@ export function copyTemplateToMyScripts(
     owner: "tenant",
     name: overrides?.name?.trim() || src.name,
     language: overrides?.language || src.language,
+    region: overrides?.region || "global",
     steps: JSON.parse(JSON.stringify(src.steps)) as ScriptStep[],
     status: "draft",
     fromTemplateId: src.id,

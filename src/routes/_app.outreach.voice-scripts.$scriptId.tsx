@@ -49,12 +49,15 @@ import {
 } from "@/components/ui/select";
 import { cn } from "@/lib/utils";
 import { generateAiContent } from "@/lib/api/ai-compose.functions";
+import { ScriptSpeechPreview } from "@/components/outreach/ScriptSpeechPreview";
 import {
   END_TARGET,
   RECORDING_NOTICE,
   SCRIPT_SCENES,
   SCRIPT_LANGUAGES,
   SCRIPT_VARIABLES,
+  SCRIPT_REGIONS,
+  regionLabel,
   STEP_TYPES,
   newStep,
   updateScript,
@@ -187,7 +190,7 @@ function ScriptEditorPage() {
             )}
           </h1>
           <p className="text-sm text-muted-foreground mt-1">
-            {SCRIPT_SCENES.find((s) => s.key === script.scene)?.label} · {script.industry} · 最近更新 {script.updatedAt}（{script.updatedBy}）
+            {SCRIPT_SCENES.find((s) => s.key === script.scene)?.label} · 目标市场：{regionLabel(script.region)} · 最近更新 {script.updatedAt}（{script.updatedBy}）
           </p>
         </div>
         <div className="flex items-center gap-2">
@@ -197,6 +200,15 @@ function ScriptEditorPage() {
               <SelectTrigger className="w-[130px]"><SelectValue /></SelectTrigger>
               <SelectContent>
                 {SCRIPT_LANGUAGES.map((l) => <SelectItem key={l.key} value={l.key}>{l.label}</SelectItem>)}
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="flex items-center gap-1.5">
+            <span className="text-sm text-muted-foreground whitespace-nowrap">目标市场</span>
+            <Select value={script.region ?? "global"} onValueChange={(v) => { updateScript(script.id, { region: v }); toast.success("目标市场已更新"); }}>
+              <SelectTrigger className="w-[190px]"><SelectValue /></SelectTrigger>
+              <SelectContent>
+                {SCRIPT_REGIONS.map((r) => <SelectItem key={r.key} value={r.key}>{r.label}</SelectItem>)}
               </SelectContent>
             </Select>
           </div>
@@ -320,6 +332,9 @@ function ScriptEditorPage() {
                       缺少录音告知语（合规要求），点击插入「{RECORDING_NOTICE}」
                     </button>
                   )}
+                  {s.type !== "ai" && (
+                    <ScriptSpeechPreview text={s.content} language={script.language} />
+                  )}
                 </div>
 
                 {s.type === "ai" && (
@@ -396,6 +411,11 @@ function ScriptEditorPage() {
                     <div className="space-y-1.5">
                       <Label className="text-xs">转接失败兜底话术</Label>
                       <Textarea rows={2} value={s.fallback ?? ""} onChange={(e) => patchStep(s.id, { fallback: e.target.value })} />
+                      <ScriptSpeechPreview
+                        text={s.fallback ?? ""}
+                        language={script.language}
+                        label="转接失败兜底话术 · 实际外呼话术预览"
+                      />
                       <p className="text-xs text-muted-foreground">
                         转接失败或非坐席工作时间：播放兜底话术 → 记录留言 → 打「需人工跟进」标签 → 结束通话。
                       </p>
