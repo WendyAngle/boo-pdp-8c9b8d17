@@ -105,6 +105,46 @@ export interface VoiceScript {
 
 export const SCRIPT_VARIABLES = ["企业名", "联系人名", "行业", "我的公司", "我的姓名", "活动主题"];
 
+/** 目标市场 / 地区（创建话术时选择，用于外呼时段、称呼与合规提示的本地化） */
+export const SCRIPT_REGIONS: { key: string; label: string }[] = [
+  { key: "global", label: "全球通用" },
+  { key: "na", label: "北美（美国 / 加拿大）" },
+  { key: "eu", label: "欧洲（西欧 / 北欧）" },
+  { key: "sea", label: "东南亚" },
+  { key: "me", label: "中东" },
+  { key: "latam", label: "拉美" },
+  { key: "africa", label: "非洲" },
+  { key: "jpkr", label: "日韩" },
+  { key: "cn", label: "中国大陆" },
+];
+
+export const regionLabel = (k?: string) =>
+  SCRIPT_REGIONS.find((r) => r.key === k)?.label ?? "全球通用";
+
+/** 语言全称，用于调用翻译引擎 */
+export const LANGUAGE_FULL_NAME: Record<string, string> = {
+  zh: "Chinese (Simplified)",
+  en: "English",
+  es: "Spanish",
+  ar: "Arabic",
+  ru: "Russian",
+};
+
+/** 预览用示例变量值（实际外呼时由目标客户数据填充） */
+export const PREVIEW_VARS: Record<string, string> = {
+  企业名: "Nordic Trade AB",
+  联系人名: "Mr. Andersson",
+  行业: "机械设备",
+  我的公司: "宁波智造机械",
+  我的姓名: "李明",
+  活动主题: "2026 汉诺威工业展",
+};
+
+/** 用示例值填充变量占位符，得到贴近真实播报的文本 */
+export function fillPreviewVars(text: string): string {
+  return text.replace(/\{([^}]+)\}/g, (m, k: string) => PREVIEW_VARS[k] ?? m);
+}
+
 export const RECORDING_NOTICE = "为保证服务质量，本次通话可能会被录音。";
 
 const uid = (p: string) => `${p}-${Math.random().toString(36).slice(2, 8)}`;
