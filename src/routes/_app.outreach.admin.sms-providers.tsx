@@ -61,105 +61,11 @@ export const Route = createFileRoute("/_app/outreach/admin/sms-providers")({
   component: SmsProvidersPage,
 });
 
-type Health = "healthy" | "degraded" | "down" | "paused";
+type Health = ProviderHealth;
+type Provider = SmsProvider;
 
 // USD 记账口径，其他币种保留原始展示。汇率写死为演示值。
 const FX_TO_USD: Record<string, number> = { USD: 1, CNY: 0.14 };
-
-interface Provider {
-  id: string;
-  name: string;
-  vendor: string;
-  regions: string[];
-  channels: Array<"marketing" | "otp" | "notification">;
-  enabled: boolean;
-  health: Health;
-  deliveryRate: number; // 0-1
-  respMs: number; // 平均响应耗时
-  tps: number;
-  quotaUsed: number; // 0-1
-  /** 原始计价 */
-  cost: { currency: "USD" | "CNY"; perSegment: number };
-  lastCheck: string;
-}
-
-const SEED: Provider[] = [
-  {
-    id: "twilio",
-    name: "Twilio 主账号",
-    vendor: "Twilio",
-    regions: ["全球", "US", "EU"],
-    channels: ["marketing", "otp", "notification"],
-    enabled: true,
-    health: "healthy",
-    deliveryRate: 0.973,
-    respMs: 1800,
-    tps: 100,
-    quotaUsed: 0.42,
-    cost: { currency: "USD", perSegment: 0.0075 },
-    lastCheck: "1 分钟前",
-  },
-  {
-    id: "vonage",
-    name: "Vonage 备用",
-    vendor: "Vonage",
-    regions: ["EU", "APAC"],
-    channels: ["marketing", "notification"],
-    enabled: true,
-    health: "healthy",
-    deliveryRate: 0.951,
-    respMs: 2300,
-    tps: 60,
-    quotaUsed: 0.28,
-    cost: { currency: "USD", perSegment: 0.0068 },
-    lastCheck: "刚刚",
-  },
-  {
-    id: "aliyun-intl",
-    name: "阿里云国际站",
-    vendor: "Aliyun",
-    regions: ["APAC", "CN"],
-    channels: ["marketing", "notification"],
-    enabled: true,
-    health: "degraded",
-    deliveryRate: 0.881,
-    respMs: 6200,
-    tps: 200,
-    quotaUsed: 0.76,
-    cost: { currency: "CNY", perSegment: 0.045 },
-    lastCheck: "3 分钟前",
-  },
-  {
-    id: "infobip",
-    name: "Infobip",
-    vendor: "Infobip",
-    regions: ["全球"],
-    channels: ["otp"],
-    enabled: true,
-    health: "healthy",
-    deliveryRate: 0.988,
-    respMs: 900,
-    tps: 300,
-    quotaUsed: 0.15,
-    cost: { currency: "USD", perSegment: 0.010 },
-    lastCheck: "刚刚",
-  },
-  {
-    id: "sinch",
-    name: "Sinch A2P",
-    vendor: "Sinch",
-    regions: ["US", "LATAM"],
-    channels: ["marketing"],
-    enabled: false,
-    health: "down",
-    deliveryRate: 0.62,
-    respMs: 15200,
-    tps: 80,
-    quotaUsed: 0,
-    cost: { currency: "USD", perSegment: 0.008 },
-    lastCheck: "12 分钟前",
-  },
-];
 
 /** 统一转 USD 显示，tooltip 展示原币值 */
 function formatCostUSD(cost: Provider["cost"]) {
@@ -170,6 +76,7 @@ function formatCostOriginal(cost: Provider["cost"]) {
   const sym = cost.currency === "USD" ? "$" : "¥";
   return `${sym}${cost.perSegment.toFixed(4)}/段（${cost.currency}）`;
 }
+
 
 function SmsProvidersPage() {
   const [list, setList] = useState<Provider[]>(SEED);
