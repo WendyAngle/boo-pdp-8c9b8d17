@@ -216,8 +216,10 @@ function SmsProvidersPage() {
           <TableHeader>
             <TableRow>
               <TableHead>服务商</TableHead>
-              <TableHead>覆盖区域</TableHead>
+              <TableHead>覆盖地区</TableHead>
+              <TableHead>承载报备通道</TableHead>
               <TableHead>支持渠道</TableHead>
+
               <TableHead>健康度</TableHead>
               <TableHead>送达率</TableHead>
               <TableHead>
