@@ -8,7 +8,6 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
-import { Checkbox } from "@/components/ui/checkbox";
 import {
   Dialog,
   DialogContent,
@@ -32,6 +31,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { LanguageMultiSelect } from "@/components/LanguageMultiSelect";
 import {
   SCRIPT_LANGUAGES,
   TRANSFER_STRATEGIES,
@@ -227,22 +227,10 @@ function AgentsPage() {
             </div>
             <div className="space-y-2">
               <Label>可服务语言</Label>
-              <div className="flex flex-wrap gap-3">
-                {SCRIPT_LANGUAGES.map((l) => (
-                  <label key={l.key} className="flex items-center gap-1.5 text-sm cursor-pointer">
-                    <Checkbox
-                      checked={form.languages.includes(l.key)}
-                      onCheckedChange={(c) =>
-                        setForm({
-                          ...form,
-                          languages: c ? [...form.languages, l.key] : form.languages.filter((x) => x !== l.key),
-                        })
-                      }
-                    />
-                    {l.label}
-                  </label>
-                ))}
-              </div>
+              <LanguageMultiSelect
+                value={form.languages}
+                onChange={(v: string[]) => setForm({ ...form, languages: v })}
+              />
             </div>
             <div className="grid gap-4 sm:grid-cols-2">
               <div className="space-y-2">

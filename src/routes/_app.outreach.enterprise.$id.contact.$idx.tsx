@@ -57,7 +57,14 @@ interface ContactDetail {
 
 const DEPARTMENTS = ["采购部", "供应链中心", "战略采购部", "进出口业务部", "运营管理部", "合规与风控部"];
 const SENIORITIES = ["Director", "Senior Manager", "Manager", "Lead", "Head"];
-const LANGUAGES = ["英语 / 中文", "英语 / 西班牙语", "英语 / 日语", "英语 / 德语", "英语 / 法语", "英语 / 意大利语"];
+const LANGUAGES = [
+  "英语 / 中文普通话",
+  "英语 / 西班牙语",
+  "英语 / 日语",
+  "英语 / 德语",
+  "英语 / 法语",
+  "英语 / 意大利语",
+];
 const TIMEZONES = ["GMT-5 (EST)", "GMT+8 (CST)", "GMT+9 (JST)", "GMT+1 (CET)", "GMT+0 (UTC)", "GMT-6 (CST)"];
 const TAG_POOL = ["关键决策人", "高频联系人", "采购口径", "可触达", "近期活跃", "已建立沟通", "邮件回复率高"];
 
