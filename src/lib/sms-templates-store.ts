@@ -3,15 +3,16 @@ import { useSyncExternalStore } from "react";
 export type SmsTplStatus = "approved" | "pending" | "rejected";
 export type SmsTplChannel = "marketing" | "otp" | "notification";
 
-/** 外部渠道（运营商 / OTT）——用于报备记录 */
-export type FilingChannel = "cmcc" | "unicom" | "telecom" | "whatsapp" | "twilio";
+/** 报备通道（运营商直连 / 国际 A2P / OTT）——由短信服务商承载 */
+export type FilingChannel = "cmcc" | "unicom" | "telecom" | "whatsapp" | "intl-a2p";
 export const FILING_CHANNELS: { key: FilingChannel; label: string }[] = [
   { key: "cmcc", label: "移动" },
   { key: "unicom", label: "联通" },
   { key: "telecom", label: "电信" },
   { key: "whatsapp", label: "WhatsApp" },
-  { key: "twilio", label: "Twilio" },
+  { key: "intl-a2p", label: "国际 A2P" },
 ];
+
 
 export type FilingStatus = "none" | "submitted" | "approved" | "rejected" | "expired";
 
