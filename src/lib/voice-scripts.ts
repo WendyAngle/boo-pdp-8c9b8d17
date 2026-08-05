@@ -815,10 +815,10 @@ export function duplicateScript(id: string, name?: string): VoiceScript | undefi
   return copy;
 }
 
-/** 模板市场「使用该模板」：复制平台模板为租户话术 */
-export function copyTemplateToMyScripts(
+/** 模板市场「使用模板创建话术」：基于平台模板生成一份租户话术 */
+export function createScriptFromTemplate(
   templateId: string,
-  overrides?: { name?: string; language?: string },
+  overrides?: { name?: string; language?: string; region?: string },
 ): VoiceScript | undefined {
   const src = scripts.find((s) => s.id === templateId);
   if (!src) return;
@@ -828,6 +828,7 @@ export function copyTemplateToMyScripts(
     owner: "tenant",
     name: overrides?.name?.trim() || src.name,
     language: overrides?.language || src.language,
+    region: overrides?.region || "global",
     steps: JSON.parse(JSON.stringify(src.steps)) as ScriptStep[],
     status: "draft",
     fromTemplateId: src.id,
