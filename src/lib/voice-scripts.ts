@@ -95,6 +95,12 @@ export interface VoiceScript {
   /** 由哪个平台模板复制而来 */
   fromTemplateId?: string;
   recommended?: boolean;
+  /** 模板简介（模板市场展示） */
+  desc?: string;
+  /** 适用场景标签 */
+  tags?: string[];
+  /** 预计通话时长（秒） */
+  avgDuration?: number;
 }
 
 export const SCRIPT_VARIABLES = ["企业名", "联系人名", "行业", "我的公司", "我的姓名", "活动主题"];
