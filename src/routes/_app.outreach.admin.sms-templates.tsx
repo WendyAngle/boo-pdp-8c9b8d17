@@ -1276,6 +1276,39 @@ function FilingDialog({ ctx, onOpenChange }: {
             </Select>
           </div>
           <div className="col-span-2">
+            <label className="text-xs text-muted-foreground">
+              目标地区 * <span className="text-[11px]">（该报备生效的发送地区，用户端按此范围选用模板）</span>
+            </label>
+            <div className="mt-1.5 flex flex-wrap gap-1.5">
+              {FILING_REGIONS.map((r) => {
+                const on = regions.includes(r.key);
+                return (
+                  <button
+                    key={r.key}
+                    type="button"
+                    onClick={() =>
+                      setRegions((prev) =>
+                        prev.includes(r.key) ? prev.filter((x) => x !== r.key) : [...prev, r.key],
+                      )
+                    }
+                    className={cn(
+                      "rounded-full border px-2.5 py-1 text-xs transition-colors",
+                      on
+                        ? "border-primary bg-primary/10 text-primary font-medium"
+                        : "border-muted bg-background text-muted-foreground hover:bg-muted",
+                    )}
+                  >
+                    {on ? "✓ " : ""}{r.label}
+                  </button>
+                );
+              })}
+            </div>
+            {regions.length === 0 && (
+              <div className="mt-1 text-[11px] text-amber-600">请至少选择一个目标地区</div>
+            )}
+          </div>
+
+          <div className="col-span-2">
             <label className="text-xs text-muted-foreground">外部回执号 / 模板ID</label>
             <Input value={externalId} onChange={(e) => setExternalId(e.target.value)} className="mt-1" placeholder="如 CM202607010881 / HXxxxxx" />
           </div>
