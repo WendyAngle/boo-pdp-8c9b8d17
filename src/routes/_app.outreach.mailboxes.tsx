@@ -1230,6 +1230,30 @@ function MailboxFormDialog({
                 </div>
               ))}
             </div>
+
+            <div className="rounded-md border bg-background p-3 space-y-2">
+              <div className="text-xs font-semibold">开启收信（IMAP）</div>
+              <div className="text-[11px] text-muted-foreground">
+                需要同步客户回复时，请确认该邮箱已开启 IMAP 服务。
+              </div>
+              <ol className="space-y-2">
+                {guide.imapSteps.map((s, i) => (
+                  <li key={i} className="flex gap-2 text-[12px] leading-relaxed">
+                    <span className="h-4 w-4 shrink-0 rounded-full bg-primary/10 text-primary text-[10px] flex items-center justify-center mt-0.5">
+                      {i + 1}
+                    </span>
+                    <span>{s}</span>
+                  </li>
+                ))}
+              </ol>
+              {guide.imapNotes.map((n, i) => (
+                <div key={i} className="flex gap-1.5 text-[11px] text-muted-foreground">
+                  <AlertCircle className="h-3 w-3 mt-0.5 shrink-0 text-amber-500" />
+                  <span>{n}</span>
+                </div>
+              ))}
+            </div>
+
           </aside>
         </div>
 
