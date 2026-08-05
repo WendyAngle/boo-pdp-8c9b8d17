@@ -24,6 +24,9 @@ export const SCRIPT_INDUSTRIES = [
   "通用",
 ];
 
+/** 平台模板不区分行业，统一为多行业通用（行业差异由变量与企业知识库注入） */
+export const TEMPLATE_INDUSTRY = "多行业通用";
+
 export const SCRIPT_LANGUAGES: { key: string; label: string }[] = [
   { key: "zh", label: "中文" },
   { key: "en", label: "英语" },
