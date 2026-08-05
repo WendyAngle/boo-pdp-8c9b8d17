@@ -75,10 +75,10 @@ export const PROVIDER_PRESETS: Record<MailboxProvider, MailboxPreset> = {
     imapEncryption: "SSL",
   },
   阿里企业邮: {
-    smtpHost: "smtp.mxhichina.com",
+    smtpHost: "smtp.qiye.aliyun.com",
     smtpPort: 465,
     encryption: "SSL",
-    imapHost: "imap.mxhichina.com",
+    imapHost: "imap.qiye.aliyun.com",
     imapPort: 993,
     imapEncryption: "SSL",
   },

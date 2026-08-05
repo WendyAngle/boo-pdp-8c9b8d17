@@ -160,7 +160,11 @@ export const PROVIDER_GUIDES: Record<MailboxProvider, ProviderGuide> = {
       "将密码粘贴到「授权密码」",
     ],
     docHint: "阿里企业邮 → 设置 → 账户与安全 → 客户端设置",
-    notes: ["部分企业限制外网客户端登录，需管理员在安全策略中放行"],
+    notes: [
+      "SMTP 服务器：smtp.qiye.aliyun.com，端口 465（SSL）",
+      "旧版地址 smtp.mxhichina.com 仍可用，官方建议改用新版 qiye.aliyun.com",
+      "部分企业限制外网客户端登录，需管理员在安全策略中放行",
+    ],
     imapSteps: [
       "登录 qiye.aliyun.com → 设置 → 账户与安全 → 客户端设置",
       "开启「IMAP 服务」（与 SMTP 为独立开关，需分别确认）",
@@ -168,7 +172,7 @@ export const PROVIDER_GUIDES: Record<MailboxProvider, ProviderGuide> = {
     ],
     imapNotes: [
       "阿里企业邮 IMAP 与 SMTP 开关相互独立，只开 SMTP 会导致收信测试失败",
-      "IMAP 服务器：imap.mxhichina.com，端口 993（SSL）",
+      "IMAP 服务器：imap.qiye.aliyun.com，端口 993（SSL）；旧版 imap.mxhichina.com 仍有效",
     ]
   },
   网易企业邮: {
