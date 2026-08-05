@@ -314,7 +314,6 @@ function VoiceScriptsPage() {
           }
         }}
       />
-      </Tabs>
 
       <CreateScriptDialog open={createOpen} onOpenChange={setCreateOpen} />
     </div>
