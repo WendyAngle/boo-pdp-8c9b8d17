@@ -160,15 +160,13 @@ export function AiVoiceCallDialog({
   const step1Valid = name.trim().length > 0 && name.length <= 100 && list.length > 0;
   const step2Valid = script.trim().length > 0 && startTime < endTime;
   const rampValid =
-    launch !== "ramp" ||
+    !ramp ||
     (Number(rampInit) >= 1 &&
       Number(rampInit) <= Number(concurrency) &&
       Number(rampStep) > 0 &&
       Number(rampInterval) > 0);
   const step4Valid =
-    launch === "now" ||
-    (launch === "scheduled" && scheduledAt.length > 0) ||
-    (launch === "ramp" && rampValid);
+    (launch === "now" || (launch === "scheduled" && scheduledAt.length > 0)) && rampValid;
 
   const canNext = useMemo(() => {
     if (step === 0) return step1Valid;
@@ -182,15 +180,14 @@ export function AiVoiceCallDialog({
     const launchLabel =
       launch === "now"
         ? `外呼任务「${name.trim()}」已启动`
-        : launch === "scheduled"
-          ? `外呼任务「${name.trim()}」已定时`
-          : `外呼任务「${name.trim()}」已灰度启动`;
+        : `外呼任务「${name.trim()}」已定时`;
     toast.success(launchLabel, {
       description: `${sceneLabel}｜${list.length} 个号码｜并发 ${concurrency} 路｜${startTime}-${endTime}｜最多重试 ${maxRetry} 次${
-        launch === "ramp" ? `｜灰度启动 ${rampInit} 路起，每 ${rampInterval} 秒 +${rampStep} 路` : ""
-      }${launch === "scheduled" ? `｜启动时间 ${scheduledAt.replace("T", " ")}` : ""}`,
+        launch === "scheduled" ? `｜启动时间 ${scheduledAt.replace("T", " ")}` : ""
+      }${ramp ? `｜灰度启动 ${rampInit} 路起，每 ${rampInterval} 秒 +${rampStep} 路` : ""}`,
     });
   };
+
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
