@@ -301,11 +301,10 @@ function SmsTemplatesPage() {
                           }}>
                             <Copy className="h-3.5 w-3.5" />
                           </IconAction>
-                          {system && (
-                            <IconAction title="编辑" onClick={() => setEditing(t)}>
-                              <Pencil className="h-3.5 w-3.5" />
-                            </IconAction>
-                          )}
+                          <IconAction title="编辑" onClick={() => setEditing(t)}>
+                            <Pencil className="h-3.5 w-3.5" />
+                          </IconAction>
+
                           <IconAction title="预览" onClick={() => setPreviewing(t)}>
                             <Eye className="h-3.5 w-3.5" />
                           </IconAction>
