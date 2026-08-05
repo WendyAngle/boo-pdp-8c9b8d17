@@ -82,6 +82,8 @@ export interface VoiceScript {
   scene: ScriptScene;
   industry: string;
   language: string;
+  /** 目标市场 / 地区（SCRIPT_REGIONS.key） */
+  region?: string;
   /** platform = 平台运营维护的模板；tenant = 租户自有话术 */
   owner: "platform" | "tenant";
   status: ScriptStatus;
