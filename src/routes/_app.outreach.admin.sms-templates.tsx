@@ -41,6 +41,7 @@ import {
   approveApplication,
   rejectApplication,
   getFilingsByTemplate,
+  getTemplateApprovedRegions,
   getFilingSummary,
   renewFiling,
   FILING_CHANNELS,
