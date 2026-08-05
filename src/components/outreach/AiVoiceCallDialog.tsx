@@ -75,7 +75,7 @@ export function AiVoiceCallDialog({
   const [script, setScript] = useState("");
   const [aiLoading, setAiLoading] = useState(false);
   const [concurrency, setConcurrency] = useState("20");
-  const [dialMode, setDialMode] = useState<"fixed" | "random">("fixed");
+  // step 4 起量方式
   const [startTime, setStartTime] = useState("09:00");
   const [endTime, setEndTime] = useState("20:00");
   const [maxRetry, setMaxRetry] = useState("3");
