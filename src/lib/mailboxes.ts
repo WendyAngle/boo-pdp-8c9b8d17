@@ -19,6 +19,13 @@ export interface Mailbox {
   smtpHost: string;
   smtpPort: number;
   encryption: MailboxEncryption;
+  /** 收信（IMAP）配置 */
+  receiveEnabled: boolean;
+  imapHost: string;
+  imapPort: number;
+  imapEncryption: MailboxEncryption;
+  /** 收信通道连通状态 */
+  receiveStatus: MailboxReceiveStatus;
   username: string;
   password: string;
   signature?: string;
@@ -31,20 +38,87 @@ export interface Mailbox {
 
 }
 
-export const PROVIDER_PRESETS: Record<
-  MailboxProvider,
-  { smtpHost: string; smtpPort: number; encryption: MailboxEncryption }
-> = {
-  Gmail: { smtpHost: "smtp.gmail.com", smtpPort: 465, encryption: "SSL" },
-  Outlook: { smtpHost: "smtp.office365.com", smtpPort: 587, encryption: "STARTTLS" },
-  腾讯企业邮: { smtpHost: "smtp.exmail.qq.com", smtpPort: 465, encryption: "SSL" },
-  阿里企业邮: { smtpHost: "smtp.mxhichina.com", smtpPort: 465, encryption: "SSL" },
-  网易企业邮: { smtpHost: "smtp.qiye.163.com", smtpPort: 994, encryption: "SSL" },
-  自定义SMTP: { smtpHost: "", smtpPort: 465, encryption: "SSL" },
+export type MailboxReceiveStatus = "收信正常" | "未开启收信" | "收信异常" | "未测试";
+
+export interface MailboxPreset {
+  smtpHost: string;
+  smtpPort: number;
+  encryption: MailboxEncryption;
+  imapHost: string;
+  imapPort: number;
+  imapEncryption: MailboxEncryption;
+}
+
+export const PROVIDER_PRESETS: Record<MailboxProvider, MailboxPreset> = {
+  Gmail: {
+    smtpHost: "smtp.gmail.com",
+    smtpPort: 465,
+    encryption: "SSL",
+    imapHost: "imap.gmail.com",
+    imapPort: 993,
+    imapEncryption: "SSL",
+  },
+  Outlook: {
+    smtpHost: "smtp.office365.com",
+    smtpPort: 587,
+    encryption: "STARTTLS",
+    imapHost: "outlook.office365.com",
+    imapPort: 993,
+    imapEncryption: "SSL",
+  },
+  腾讯企业邮: {
+    smtpHost: "smtp.exmail.qq.com",
+    smtpPort: 465,
+    encryption: "SSL",
+    imapHost: "imap.exmail.qq.com",
+    imapPort: 993,
+    imapEncryption: "SSL",
+  },
+  阿里企业邮: {
+    smtpHost: "smtp.mxhichina.com",
+    smtpPort: 465,
+    encryption: "SSL",
+    imapHost: "imap.mxhichina.com",
+    imapPort: 993,
+    imapEncryption: "SSL",
+  },
+  网易企业邮: {
+    smtpHost: "smtp.qiye.163.com",
+    smtpPort: 994,
+    encryption: "SSL",
+    imapHost: "imap.qiye.163.com",
+    imapPort: 993,
+    imapEncryption: "SSL",
+  },
+  自定义SMTP: {
+    smtpHost: "",
+    smtpPort: 465,
+    encryption: "SSL",
+    imapHost: "",
+    imapPort: 993,
+    imapEncryption: "SSL",
+  },
 };
 
+
 const KEY = "boo:mailboxes:v1";
-const SEED_FLAG = "boo:mailboxes:v3:seeded";
+const SEED_FLAG = "boo:mailboxes:v4:seeded";
+
+/** 历史数据迁移：补齐收信（IMAP）相关字段 */
+function withReceiveDefaults(m: Record<string, unknown>): Mailbox {
+  const provider = (m["provider"] as MailboxProvider) ?? "自定义SMTP";
+  const preset = PROVIDER_PRESETS[provider] ?? PROVIDER_PRESETS["自定义SMTP"];
+  return {
+    ...(m as unknown as Mailbox),
+    receiveEnabled: (m["receiveEnabled"] as boolean) ?? true,
+    imapHost: (m["imapHost"] as string) ?? preset.imapHost,
+    imapPort: (m["imapPort"] as number) ?? preset.imapPort,
+    imapEncryption: (m["imapEncryption"] as MailboxEncryption) ?? preset.imapEncryption,
+    receiveStatus:
+      (m["receiveStatus"] as MailboxReceiveStatus) ??
+      ((m["receiveEnabled"] as boolean) === false ? "未开启收信" : "未测试"),
+  };
+}
 
 function read(): Mailbox[] {
   if (typeof window === "undefined") return [];
@@ -56,12 +130,13 @@ function read(): Mailbox[] {
       // 历史数据迁移：不再区分团队 / 个人，统一为企业邮箱
       return arr.map((m: Record<string, unknown>) => {
         const { scope: _s, ownerId: _o, ...rest } = m;
-        return rest as unknown as Mailbox;
+        return withReceiveDefaults(rest);
       });
     }
   } catch {}
   return [];
 }
+
 
 function write(arr: Mailbox[]) {
   if (typeof window === "undefined") return;
@@ -86,6 +161,8 @@ function seed() {
       signature: "—\nByteTech Global Business\nhttps://bytetech.cn",
       dailyLimit: 200,
       sentToday: 27,
+      receiveEnabled: true,
+      receiveStatus: "收信正常",
       status: "正常",
       isDefault: true,
       createdAt: now,
@@ -102,6 +179,8 @@ function seed() {
       signature: "",
       dailyLimit: 100,
       sentToday: 0,
+      receiveEnabled: false,
+      receiveStatus: "未开启收信",
       status: "停用",
       isDefault: false,
       createdAt: now,
@@ -117,6 +196,8 @@ function seed() {
       signature: "",
       dailyLimit: 80,
       sentToday: 8,
+      receiveEnabled: true,
+      receiveStatus: "收信异常",
       status: "正常",
       isDefault: false,
       createdAt: now,
@@ -233,18 +314,50 @@ export function setMailboxStatus(id: string, status: MailboxStatus) {
   commit(list);
 }
 
-/** 模拟测试连接：1.2s，90% 成功 */
-export function testMailbox(id: string): Promise<{ ok: boolean; message: string }> {
+export interface MailboxTestResult {
+  ok: boolean;
+  message: string;
+  smtp: { ok: boolean; message: string };
+  imap: { ok: boolean; message: string; skipped?: boolean };
+}
+
+/** 模拟测试连接：1.2s，分别校验发信（SMTP）与收信（IMAP） */
+export function testMailbox(id: string): Promise<MailboxTestResult> {
   return new Promise((resolve) => {
     setTimeout(() => {
-      const ok = Math.random() > 0.1;
+      const target = cache.find((m) => m.id === id);
+      const smtpOk = Math.random() > 0.1;
+      const receiveEnabled = target?.receiveEnabled ?? false;
+      const imapOk = receiveEnabled ? Math.random() > 0.15 : false;
+
+      const receiveStatus: MailboxReceiveStatus = !receiveEnabled
+        ? "未开启收信"
+        : imapOk
+          ? "收信正常"
+          : "收信异常";
+
       updateMailbox(id, {
         lastTestedAt: new Date().toISOString(),
-        status: ok ? "正常" : "异常",
+        status: smtpOk ? "正常" : "异常",
+        receiveStatus,
       });
+
+      const smtp = {
+        ok: smtpOk,
+        message: smtpOk ? "SMTP 连接成功" : "SMTP 连接失败：认证失败或服务器无响应",
+      };
+      const imap = receiveEnabled
+        ? {
+            ok: imapOk,
+            message: imapOk ? "IMAP 连接成功" : "IMAP 连接失败：请确认已开启 IMAP 服务",
+          }
+        : { ok: true, skipped: true, message: "未开启收信，已跳过 IMAP 测试" };
+
       resolve({
-        ok,
-        message: ok ? "SMTP 连接测试成功" : "SMTP 连接失败：认证失败或服务器无响应",
+        ok: smtp.ok && imap.ok,
+        message: `${smtp.message}；${imap.message}`,
+        smtp,
+        imap,
       });
     }, 1200);
   });
