@@ -26,70 +26,15 @@ export const Route = createFileRoute("/_app/outreach/admin/sms-routing")({
   component: SmsRoutingPage,
 });
 
-interface Rule {
-  id: string;
-  name: string;
-  match: {
-    country: string;
-    channel: "marketing" | "otp" | "notification" | "any";
-  };
-  primary: string;
-  failover: string[];
-  minDeliveryRate: number;
-  respectQuietHours: boolean;
-  enabled: boolean;
-  priority: number;
-}
+type Rule = RoutingRule;
 
-const SEED: Rule[] = [
-  {
-    id: "r1",
-    name: "北美 · 营销",
-    match: { country: "US/CA", channel: "marketing" },
-    primary: "Twilio 主账号",
-    failover: ["Sinch A2P"],
-    minDeliveryRate: 0.95,
-    respectQuietHours: true,
-    enabled: true,
-    priority: 1,
-  },
-  {
-    id: "r2",
-    name: "欧洲 · 通知",
-    match: { country: "EU", channel: "notification" },
-    primary: "Vonage 备用",
-    failover: ["Twilio 主账号"],
-    minDeliveryRate: 0.93,
-    respectQuietHours: true,
-    enabled: true,
-    priority: 2,
-  },
-  {
-    id: "r3",
-    name: "亚太 · 全渠道",
-    match: { country: "APAC", channel: "any" },
-    primary: "阿里云国际站",
-    failover: ["Vonage 备用", "Twilio 主账号"],
-    minDeliveryRate: 0.9,
-    respectQuietHours: true,
-    enabled: true,
-    priority: 3,
-  },
-  {
-    id: "r4",
-    name: "全球 · 验证码 OTP",
-    match: { country: "全球", channel: "otp" },
-    primary: "Infobip",
-    failover: ["Twilio 主账号"],
-    minDeliveryRate: 0.98,
-    respectQuietHours: false,
-    enabled: true,
-    priority: 4,
-  },
+const REGION_OPTIONS: { key: string; label: string }[] = [
+  { key: "any", label: "全球（兜底）" },
+  ...FILING_REGIONS,
 ];
+const regionOptLabel = (k: string) =>
+  k === "any" ? "全球（兜底）" : regionLabel(k);
 
-const PROVIDERS = ["Twilio 主账号", "Sinch A2P", "Vonage 备用", "阿里云国际站", "Infobip"];
-const COUNTRIES = ["US/CA", "EU", "APAC", "LATAM", "MEA", "全球"];
 const CHANNELS: Array<{ value: Rule["match"]["channel"]; label: string }> = [
   { value: "marketing", label: "营销" },
   { value: "notification", label: "通知" },
@@ -97,15 +42,36 @@ const CHANNELS: Array<{ value: Rule["match"]["channel"]; label: string }> = [
   { value: "any", label: "全部渠道" },
 ];
 
+/** 校验规则中的服务商是否真的覆盖匹配条件 */
+function auditRule(r: Rule, providers: SmsProvider[]) {
+  const issues: string[] = [];
+  const chain = [r.primary, ...r.failover];
+  chain.forEach((id) => {
+    const p = providers.find((x) => x.id === id);
+    if (!p) {
+      issues.push(`服务商 ${id} 已不存在`);
+      return;
+    }
+    if (!isProviderRoutable(p)) issues.push(`${p.name} 当前不可参与路由（${p.health}）`);
+    if (r.match.region !== "any" && !p.regions.includes(r.match.region))
+      issues.push(`${p.name} 未覆盖 ${regionLabel(r.match.region)}`);
+    if (r.match.channel !== "any" && !p.channels.includes(r.match.channel))
+      issues.push(`${p.name} 不支持该渠道类型`);
+  });
+  return issues;
+}
+
 function SmsRoutingPage() {
-  const [rules, setRules] = useState<Rule[]>(SEED);
+  const rules = useRoutingRules();
+  const providers = useSmsProviders();
   const [editing, setEditing] = useState<Rule | null>(null);
   const [editorOpen, setEditorOpen] = useState(false);
   const [page, setPage] = useState(1);
   const pageSize = 10;
+  const sorted = useMemo(() => [...rules].sort((a, b) => a.priority - b.priority), [rules]);
   const pageRules = useMemo(
-    () => rules.slice((page - 1) * pageSize, page * pageSize),
-    [rules, page],
+    () => sorted.slice((page - 1) * pageSize, page * pageSize),
+    [sorted, page],
   );
   useEffect(() => {
     const maxPage = Math.max(1, Math.ceil(rules.length / pageSize));
@@ -113,18 +79,18 @@ function SmsRoutingPage() {
   }, [rules.length, page]);
 
   function toggle(id: string) {
-    setRules((s) => s.map((r) => (r.id === id ? { ...r, enabled: !r.enabled } : r)));
+    toggleRule(id);
   }
   function remove(id: string) {
-    setRules((s) => s.filter((r) => r.id !== id));
+    removeRule(id);
     toast.success("已删除规则");
   }
   function openNew() {
     setEditing({
       id: "",
       name: "",
-      match: { country: "US/CA", channel: "marketing" },
-      primary: PROVIDERS[0],
+      match: { region: "na", channel: "marketing" },
+      primary: providers[0]?.id ?? "",
       failover: [],
       minDeliveryRate: 0.95,
       respectQuietHours: true,
@@ -142,20 +108,29 @@ function SmsRoutingPage() {
       toast.error("请填写规则名");
       return;
     }
+    if (!next.primary) {
+      toast.error("请选择主服务商");
+      return;
+    }
     if (next.failover.includes(next.primary)) {
       toast.error("Failover 服务商不能与主服务商相同");
       return;
     }
-    setRules((s) => {
-      if (!next.id) {
-        return [...s, { ...next, id: `r${Date.now()}` }];
-      }
-      return s.map((r) => (r.id === next.id ? next : r));
-    });
+    const primary = providers.find((p) => p.id === next.primary);
+    if (primary && next.match.region !== "any" && !primary.regions.includes(next.match.region)) {
+      toast.error(`主服务商「${primary.name}」未覆盖 ${regionLabel(next.match.region)}，请先在服务商配置中补充`);
+      return;
+    }
+    if (primary && next.match.channel !== "any" && !primary.channels.includes(next.match.channel)) {
+      toast.error(`主服务商「${primary.name}」不支持该渠道类型`);
+      return;
+    }
+    upsertRule(next.id ? next : { ...next, id: `r${Date.now()}` });
     setEditorOpen(false);
     setEditing(null);
     toast.success(next.id ? "规则已更新" : "规则已新增");
   }
+
 
   return (
     <TooltipProvider delayDuration={200}>
