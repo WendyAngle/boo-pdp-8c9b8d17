@@ -82,11 +82,12 @@ export function AiVoiceCallDialog({
 
   // step 4
   const [launch, setLaunch] = useState<"now" | "scheduled">("now");
-  const [ramp, setRamp] = useState(true);
+  const [pacing, setPacing] = useState<Pacing>("ramp");
   const [scheduledAt, setScheduledAt] = useState("");
   const [rampInit, setRampInit] = useState("5");
   const [rampStep, setRampStep] = useState("5");
   const [rampInterval, setRampInterval] = useState("30");
+
 
   useEffect(() => {
     if (!open) return;
