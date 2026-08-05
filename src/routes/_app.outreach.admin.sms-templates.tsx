@@ -44,11 +44,21 @@ import {
   getFilingSummary,
   renewFiling,
   FILING_CHANNELS,
+  FILING_REGIONS,
+  regionLabel,
   type FilingChannel,
   type FilingStatus,
   type TemplateFiling,
   type TemplateApplication,
 } from "@/lib/sms-templates-store";
+
+/** 按渠道给出默认目标地区建议 */
+function defaultRegionsForChannel(ch: FilingChannel): string[] {
+  if (ch === "cmcc" || ch === "unicom" || ch === "telecom") return ["cn"];
+  if (ch === "twilio") return ["na"];
+  return [];
+}
+
 
 export const Route = createFileRoute("/_app/outreach/admin/sms-templates")({
   head: () => ({
