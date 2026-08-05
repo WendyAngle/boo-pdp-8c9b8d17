@@ -80,6 +80,10 @@ export interface ProviderGuide {
   docHint: string;
   /** 常见坑 */
   notes: string[];
+  /** 开启收信（IMAP）的步骤 */
+  imapSteps: string[];
+  /** 收信相关注意事项 */
+  imapNotes: string[];
 }
 
 export const PROVIDER_GUIDES: Record<MailboxProvider, ProviderGuide> = {
@@ -95,7 +99,17 @@ export const PROVIDER_GUIDES: Record<MailboxProvider, ProviderGuide> = {
     notes: [
       "普通登录密码无法用于 SMTP，必须使用应用专用密码",
       "未开启两步验证时看不到应用专用密码入口",
+    ],,
+    imapSteps: [
+      "登录 Gmail → 设置（齿轮）→ 查看所有设置",
+      "进入「转发和 POP/IMAP」标签页",
+      "在「IMAP 访问权限」中选择「启用 IMAP」并保存更改",
+      "收信与发信共用同一个应用专用密码，无需另外获取",
     ],
+    imapNotes: [
+      "Google Workspace 企业账号需管理员在管理控制台 → 应用 → Gmail → 最终用户访问权限中允许 IMAP",
+      "IMAP 服务器：imap.gmail.com，端口 993（SSL）",
+    ]
   },
   Outlook: {
     credentialName: "应用密码（App Password）",
@@ -106,7 +120,16 @@ export const PROVIDER_GUIDES: Record<MailboxProvider, ProviderGuide> = {
       "复制应用密码，粘贴到「授权密码」",
     ],
     docHint: "Microsoft 账号 → 安全信息 → 应用密码",
-    notes: ["Microsoft 365 企业版默认关闭 SMTP AUTH，需管理员为该邮箱单独开启"],
+    notes: ["Microsoft 365 企业版默认关闭 SMTP AUTH，需管理员为该邮箱单独开启"],,
+    imapSteps: [
+      "个人账号：登录 Outlook.com → 设置 → 邮件 → 同步电子邮件，确认已开启 POP/IMAP 访问",
+      "企业账号：管理员在 Microsoft 365 管理中心 → 用户 → 邮箱应用中勾选「IMAP」",
+      "收信使用与发信相同的应用密码",
+    ],
+    imapNotes: [
+      "Microsoft 365 已停用基本身份验证的租户需管理员为该邮箱单独开启 IMAP 认证",
+      "IMAP 服务器：outlook.office365.com，端口 993（SSL）",
+    ]
   },
   腾讯企业邮: {
     credentialName: "客户端专用密码",
@@ -117,7 +140,16 @@ export const PROVIDER_GUIDES: Record<MailboxProvider, ProviderGuide> = {
       "复制专用密码，粘贴到「授权密码」",
     ],
     docHint: "腾讯企业邮 → 设置 → 收发信设置 → 客户端专用密码",
-    notes: ["若管理员开启了「安全登录」，需先在企业管理后台放开客户端登录"],
+    notes: ["若管理员开启了「安全登录」，需先在企业管理后台放开客户端登录"],,
+    imapSteps: [
+      "登录 exmail.qq.com → 设置 → 收发信设置",
+      "确认「IMAP/SMTP 服务」已开启（与发信为同一开关）",
+      "收信使用同一个客户端专用密码",
+    ],
+    imapNotes: [
+      "若仅开启了 POP 而未开启 IMAP，将无法同步已读状态与文件夹",
+      "IMAP 服务器：imap.exmail.qq.com，端口 993（SSL）",
+    ]
   },
   阿里企业邮: {
     credentialName: "邮箱登录密码 / 客户端密码",
@@ -128,7 +160,16 @@ export const PROVIDER_GUIDES: Record<MailboxProvider, ProviderGuide> = {
       "将密码粘贴到「授权密码」",
     ],
     docHint: "阿里企业邮 → 设置 → 账户与安全 → 客户端设置",
-    notes: ["部分企业限制外网客户端登录，需管理员在安全策略中放行"],
+    notes: ["部分企业限制外网客户端登录，需管理员在安全策略中放行"],,
+    imapSteps: [
+      "登录 qiye.aliyun.com → 设置 → 账户与安全 → 客户端设置",
+      "开启「IMAP 服务」（与 SMTP 为独立开关，需分别确认）",
+      "收信使用同一个邮箱/客户端密码",
+    ],
+    imapNotes: [
+      "阿里企业邮 IMAP 与 SMTP 开关相互独立，只开 SMTP 会导致收信测试失败",
+      "IMAP 服务器：imap.mxhichina.com，端口 993（SSL）",
+    ]
   },
   网易企业邮: {
     credentialName: "客户端授权码",
@@ -138,7 +179,16 @@ export const PROVIDER_GUIDES: Record<MailboxProvider, ProviderGuide> = {
       "复制授权码，粘贴到「授权密码」",
     ],
     docHint: "网易企业邮 → 设置 → 客户端设置 → 授权码",
-    notes: ["网易企业邮 SMTP SSL 端口为 994（部分企业为 465），以后台展示为准"],
+    notes: ["网易企业邮 SMTP SSL 端口为 994（部分企业为 465），以后台展示为准"],,
+    imapSteps: [
+      "登录 qiye.163.com → 设置 → 客户端设置",
+      "开启「IMAP 服务」并确认授权码可用",
+      "收信使用同一个客户端授权码",
+    ],
+    imapNotes: [
+      "网易企业邮部分企业默认仅开启 POP3，需手动勾选 IMAP",
+      "IMAP 服务器：imap.qiye.163.com，端口 993（SSL）",
+    ]
   },
   自定义SMTP: {
     credentialName: "SMTP 认证密码",
@@ -152,7 +202,17 @@ export const PROVIDER_GUIDES: Record<MailboxProvider, ProviderGuide> = {
     notes: [
       "常用端口：465（SSL）、587（STARTTLS）、25（不加密，多数云厂商已封禁）",
       "服务器需允许平台出口 IP 访问，否则测试会超时",
+    ],,
+    imapSteps: [
+      "向企业邮件管理员确认是否提供 IMAP 收信服务",
+      "索取 IMAP 服务器地址、端口与加密方式",
+      "确认该邮箱账号具备 IMAP 登录权限",
+      "填写后使用「保存并测试」验证收信通道",
     ],
+    imapNotes: [
+      "常用 IMAP 端口：993（SSL）、143（STARTTLS）",
+      "部分企业仅开放 POP3，此时无法同步客户回复，建议联系管理员开通 IMAP",
+    ]
   },
 };
 
