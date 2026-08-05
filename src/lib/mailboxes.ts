@@ -52,8 +52,8 @@ export interface MailboxPreset {
 export const PROVIDER_PRESETS: Record<MailboxProvider, MailboxPreset> = {
   Gmail: {
     smtpHost: "smtp.gmail.com",
-    smtpPort: 465,
-    encryption: "SSL",
+    smtpPort: 587,
+    encryption: "STARTTLS",
     imapHost: "imap.gmail.com",
     imapPort: 993,
     imapEncryption: "SSL",
@@ -84,7 +84,7 @@ export const PROVIDER_PRESETS: Record<MailboxProvider, MailboxPreset> = {
   },
   网易企业邮: {
     smtpHost: "smtp.qiye.163.com",
-    smtpPort: 994,
+    smtpPort: 465,
     encryption: "SSL",
     imapHost: "imap.qiye.163.com",
     imapPort: 993,
