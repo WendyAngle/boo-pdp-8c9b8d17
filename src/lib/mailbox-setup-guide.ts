@@ -179,7 +179,7 @@ export const PROVIDER_GUIDES: Record<MailboxProvider, ProviderGuide> = {
       "复制授权码，粘贴到「授权密码」",
     ],
     docHint: "网易企业邮 → 设置 → 客户端设置 → 授权码",
-    notes: ["网易企业邮 SMTP SSL 端口为 994（部分企业为 465），以后台展示为准"],
+    notes: ["网易企业邮 SMTP SSL 端口为 465（部分企业为 994），以后台展示为准"],
     imapSteps: [
       "登录 qiye.163.com → 设置 → 客户端设置",
       "开启「IMAP 服务」并确认授权码可用",
