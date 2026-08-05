@@ -3,7 +3,6 @@ import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { toast } from "sonner";
 import {
   ChevronRight,
-  Plus,
   Search,
   Sparkles,
   Copy,
@@ -19,8 +18,6 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { Label } from "@/components/ui/label";
-import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import {
   Dialog,
   DialogContent,
@@ -46,12 +43,10 @@ import {
 } from "@/components/ui/table";
 import {
   SCRIPT_SCENES,
-  SCRIPT_INDUSTRIES,
   SCRIPT_LANGUAGES,
   STEP_TYPES,
   TEMPLATE_INDUSTRY,
   END_TARGET,
-  createScript,
   deleteScript,
   duplicateScript,
   updateScript,
@@ -60,6 +55,7 @@ import {
   type ScriptScene,
   type VoiceScript,
 } from "@/lib/voice-scripts";
+
 
 export const Route = createFileRoute("/_app/outreach/voice-scripts/")({
   head: () => ({
@@ -89,15 +85,16 @@ function VoiceScriptsPage() {
   const mine = useScripts("tenant");
   const templates = useScripts("platform");
   const [kw, setKw] = useState("");
+  const [mineKw, setMineKw] = useState("");
   const [language, setLanguage] = useState("all");
   const [scene, setScene] = useState<string>("all");
-  const [createOpen, setCreateOpen] = useState(false);
   const [detail, setDetail] = useState<VoiceScript | null>(null);
 
   const filteredMine = useMemo(
-    () => mine.filter((s) => (kw ? s.name.includes(kw) : true)),
-    [mine, kw],
+    () => mine.filter((s) => (mineKw ? s.name.includes(mineKw) : true)),
+    [mine, mineKw],
   );
+
   const market = useMemo(
     () =>
       templates.filter(
@@ -130,23 +127,26 @@ function VoiceScriptsPage() {
             AI 智能外呼使用的对话内容。可从平台模板市场一键复制，再按线性步骤编排多轮对话与意向判定。
           </p>
         </div>
-        <Button className="gap-1.5" onClick={() => setCreateOpen(true)}>
-          <Plus className="h-4 w-4" />
-          新建话术
+        <Button
+          className="gap-1.5"
+          onClick={() => document.getElementById("template-market")?.scrollIntoView({ behavior: "smooth" })}
+        >
+          <Sparkles className="h-4 w-4" />
+          从模板创建
         </Button>
       </div>
 
-      <Tabs defaultValue="mine">
-        <TabsList>
-          <TabsTrigger value="mine">我的话术</TabsTrigger>
-          <TabsTrigger value="market">模板市场</TabsTrigger>
-        </TabsList>
-
-        <TabsContent value="mine" className="mt-4 space-y-4">
-          <div className="relative max-w-xs">
-            <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-            <Input value={kw} onChange={(e) => setKw(e.target.value)} placeholder="搜索话术名称" className="pl-8" />
+      <section className="space-y-4">
+        <div className="flex items-end justify-between gap-4 flex-wrap">
+          <div>
+            <h2 className="text-lg font-semibold">我的话术</h2>
+            <p className="text-sm text-muted-foreground mt-0.5">复制自模板的话术，可自由改写、发布后用于 AI 智能外呼。</p>
           </div>
+          <div className="relative max-w-xs w-56">
+            <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+            <Input value={mineKw} onChange={(e) => setMineKw(e.target.value)} placeholder="搜索话术名称" className="pl-8" />
+          </div>
+        </div>
           <Card className="overflow-hidden">
             <Table>
               <TableHeader>
@@ -166,10 +166,11 @@ function VoiceScriptsPage() {
                 {filteredMine.length === 0 && (
                   <TableRow>
                     <TableCell colSpan={9} className="text-center text-sm text-muted-foreground py-10">
-                      暂无话术，点击右上角「新建话术」或前往模板市场复制一份
+                      暂无话术，请在下方「模板市场」选择模板并点击「使用」创建
                     </TableCell>
                   </TableRow>
                 )}
+
                 {filteredMine.map((s) => (
                   <TableRow key={s.id}>
                     <TableCell className="font-medium">
@@ -220,10 +221,20 @@ function VoiceScriptsPage() {
               </TableBody>
             </Table>
           </Card>
-        </TabsContent>
+      </section>
 
-        <TabsContent value="market" className="mt-4 space-y-4">
+      <section id="template-market" className="space-y-4 scroll-mt-6">
+        <div>
+          <h2 className="text-lg font-semibold flex items-center gap-2">
+            <Store className="h-5 w-5 text-primary" />
+            模板市场
+          </h2>
+          <p className="text-sm text-muted-foreground mt-0.5">
+            平台运营维护的官方话术模板，点击「使用」即复制到我的话术并进入编排。
+          </p>
+        </div>
           <div className="flex flex-wrap items-center gap-2">
+
             <div className="relative max-w-xs flex-1 min-w-[180px]">
               <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
               <Input value={kw} onChange={(e) => setKw(e.target.value)} placeholder="搜索模板" className="pl-8" />
@@ -305,8 +316,7 @@ function VoiceScriptsPage() {
               </Card>
             ))}
           </div>
-        </TabsContent>
-      </Tabs>
+      </section>
 
       <TemplateDetailDialog
         template={detail}
@@ -321,78 +331,10 @@ function VoiceScriptsPage() {
         }}
       />
 
-      <CreateScriptDialog open={createOpen} onOpenChange={setCreateOpen} />
     </div>
   );
 }
 
-function CreateScriptDialog({ open, onOpenChange }: { open: boolean; onOpenChange: (v: boolean) => void }) {
-  const navigate = useNavigate();
-  const [name, setName] = useState("");
-  const [scene, setScene] = useState<ScriptScene>("marketing");
-  const [industry, setIndustry] = useState("通用");
-  const [language, setLanguage] = useState("zh");
-
-  return (
-    <Dialog open={open} onOpenChange={(v) => { onOpenChange(v); if (!v) setName(""); }}>
-      <DialogContent>
-        <DialogHeader>
-          <DialogTitle>新建话术</DialogTitle>
-          <DialogDescription>创建后进入话术设计器，按线性步骤编排开场白、AI 对话、转人工与结束语。</DialogDescription>
-        </DialogHeader>
-        <div className="space-y-4">
-          <div className="space-y-2">
-            <Label>话术名称 <span className="text-destructive">*</span></Label>
-            <Input value={name} onChange={(e) => setName(e.target.value)} placeholder="如：北美新客首轮触达" maxLength={60} />
-          </div>
-          <div className="grid gap-4 sm:grid-cols-3">
-            <div className="space-y-2">
-              <Label>场景</Label>
-              <Select value={scene} onValueChange={(v) => setScene(v as ScriptScene)}>
-                <SelectTrigger><SelectValue /></SelectTrigger>
-                <SelectContent>
-                  {SCRIPT_SCENES.map((s) => <SelectItem key={s.key} value={s.key}>{s.label}</SelectItem>)}
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="space-y-2">
-              <Label>行业</Label>
-              <Select value={industry} onValueChange={setIndustry}>
-                <SelectTrigger><SelectValue /></SelectTrigger>
-                <SelectContent>
-                  {SCRIPT_INDUSTRIES.map((i) => <SelectItem key={i} value={i}>{i}</SelectItem>)}
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="space-y-2">
-              <Label>语言</Label>
-              <Select value={language} onValueChange={setLanguage}>
-                <SelectTrigger><SelectValue /></SelectTrigger>
-                <SelectContent>
-                  {SCRIPT_LANGUAGES.map((l) => <SelectItem key={l.key} value={l.key}>{l.label}</SelectItem>)}
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
-        </div>
-        <DialogFooter>
-          <Button variant="outline" onClick={() => onOpenChange(false)}>取消</Button>
-          <Button
-            disabled={!name.trim()}
-            onClick={() => {
-              const s = createScript({ name: name.trim(), scene, industry, language, owner: "tenant" });
-              onOpenChange(false);
-              setName("");
-              navigate({ to: "/outreach/voice-scripts/$scriptId", params: { scriptId: s.id } });
-            }}
-          >
-            创建并编辑
-          </Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
-  );
-}
 
 function TemplateDetailDialog({
   template,
