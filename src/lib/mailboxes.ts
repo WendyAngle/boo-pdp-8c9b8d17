@@ -102,7 +102,23 @@ export const PROVIDER_PRESETS: Record<MailboxProvider, MailboxPreset> = {
 
 
 const KEY = "boo:mailboxes:v1";
-const SEED_FLAG = "boo:mailboxes:v3:seeded";
+const SEED_FLAG = "boo:mailboxes:v4:seeded";
+
+/** 历史数据迁移：补齐收信（IMAP）相关字段 */
+function withReceiveDefaults(m: Record<string, unknown>): Mailbox {
+  const provider = (m["provider"] as MailboxProvider) ?? "自定义SMTP";
+  const preset = PROVIDER_PRESETS[provider] ?? PROVIDER_PRESETS["自定义SMTP"];
+  return {
+    ...(m as unknown as Mailbox),
+    receiveEnabled: (m["receiveEnabled"] as boolean) ?? true,
+    imapHost: (m["imapHost"] as string) ?? preset.imapHost,
+    imapPort: (m["imapPort"] as number) ?? preset.imapPort,
+    imapEncryption: (m["imapEncryption"] as MailboxEncryption) ?? preset.imapEncryption,
+    receiveStatus:
+      (m["receiveStatus"] as MailboxReceiveStatus) ??
+      ((m["receiveEnabled"] as boolean) === false ? "未开启收信" : "未测试"),
+  };
+}
 
 function read(): Mailbox[] {
   if (typeof window === "undefined") return [];
@@ -114,12 +130,13 @@ function read(): Mailbox[] {
       // 历史数据迁移：不再区分团队 / 个人，统一为企业邮箱
       return arr.map((m: Record<string, unknown>) => {
         const { scope: _s, ownerId: _o, ...rest } = m;
-        return rest as unknown as Mailbox;
+        return withReceiveDefaults(rest);
       });
     }
   } catch {}
   return [];
 }
+
 
 function write(arr: Mailbox[]) {
   if (typeof window === "undefined") return;
