@@ -247,14 +247,25 @@ function SmsProvidersPage() {
                   </div>
                 </TableCell>
                 <TableCell>
-                  <div className="flex flex-wrap gap-1">
+                  <div className="flex flex-wrap gap-1 max-w-[220px]">
                     {p.regions.map((r) => (
                       <Badge key={r} variant="outline" className="text-[10px]">
-                        {r}
+                        {regionLabel(r)}
                       </Badge>
                     ))}
                   </div>
                 </TableCell>
+                <TableCell>
+                  <div className="flex flex-wrap gap-1 max-w-[180px]">
+                    {p.filingChannels.map((fc) => (
+                      <Badge key={fc} variant="secondary" className="text-[10px]">
+                        {FILING_CHANNELS.find((c) => c.key === fc)?.label ?? fc}
+                      </Badge>
+                    ))}
+                  </div>
+                </TableCell>
+                <TableCell>
+
                 <TableCell>
                   <div className="flex flex-wrap gap-1">
                     {p.channels.map((c) => (
