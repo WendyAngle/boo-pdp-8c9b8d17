@@ -393,3 +393,94 @@ function CreateScriptDialog({ open, onOpenChange }: { open: boolean; onOpenChang
     </Dialog>
   );
 }
+
+function TemplateDetailDialog({
+  template,
+  onOpenChange,
+  onUse,
+}: {
+  template: VoiceScript | null;
+  onOpenChange: (v: boolean) => void;
+  onUse: (id: string) => void;
+}) {
+  if (!template) return null;
+  const stepName = (id: string) =>
+    id === END_TARGET ? "结束通话" : template.steps.find((s) => s.id === id)?.title ?? "未指定";
+
+  return (
+    <Dialog open onOpenChange={onOpenChange}>
+      <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto">
+        <DialogHeader>
+          <DialogTitle className="flex items-center gap-1.5">
+            {template.recommended && <Star className="h-4 w-4 text-amber-500 fill-amber-500" />}
+            {template.name}
+          </DialogTitle>
+          <DialogDescription>{template.desc ?? "平台运营维护的通用外呼话术模板。"}</DialogDescription>
+        </DialogHeader>
+
+        <div className="flex flex-wrap gap-1.5 text-[11px]">
+          <Badge variant="secondary">{sceneLabel(template.scene)}</Badge>
+          <Badge variant="outline">{TEMPLATE_INDUSTRY}</Badge>
+          <Badge variant="outline">{langLabel(template.language)}</Badge>
+          <Badge variant="outline">{template.steps.length} 个步骤</Badge>
+          {template.avgDuration != null && <Badge variant="outline">平均通话约 {template.avgDuration}s</Badge>}
+          <Badge variant="outline">已被使用 {template.usedCount.toLocaleString()} 次</Badge>
+        </div>
+
+        {template.tags && template.tags.length > 0 && (
+          <div className="flex flex-wrap gap-1.5">
+            {template.tags.map((t) => (
+              <Badge key={t} variant="secondary" className="text-[11px] font-normal">#{t}</Badge>
+            ))}
+          </div>
+        )}
+
+        <div className="space-y-3">
+          <div className="text-sm font-medium">对话流</div>
+          {template.steps.map((s, i) => (
+            <Card key={s.id} className="p-4 space-y-2">
+              <div className="flex items-center gap-2">
+                <span className="flex h-5 w-5 items-center justify-center rounded-full bg-primary/10 text-[11px] text-primary tabular-nums">
+                  {i + 1}
+                </span>
+                <span className="text-sm font-medium">{s.title}</span>
+                <Badge variant="outline" className="text-[10px]">
+                  {STEP_TYPES.find((t) => t.key === s.type)?.label}
+                </Badge>
+                {s.type === "ai" && s.maxTurns != null && (
+                  <span className="text-[11px] text-muted-foreground">最多 {s.maxTurns} 轮</span>
+                )}
+                {s.type === "transfer" && s.agentGroup && (
+                  <span className="text-[11px] text-muted-foreground">坐席组：{s.agentGroup}</span>
+                )}
+              </div>
+              <p className="text-xs text-muted-foreground whitespace-pre-wrap leading-relaxed">{s.content}</p>
+              {s.type === "transfer" && s.fallback && (
+                <p className="text-[11px] text-muted-foreground">兜底话术：{s.fallback}</p>
+              )}
+              {s.branches.length > 0 && (
+                <div className="space-y-1 pt-1">
+                  {s.branches.map((b) => (
+                    <div key={b.id} className="flex items-center gap-1.5 text-[11px] text-muted-foreground">
+                      <CornerDownRight className="h-3 w-3" />
+                      <span className="text-foreground">{b.label}</span>
+                      <span>→ {stepName(b.to)}</span>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </Card>
+          ))}
+        </div>
+
+        <DialogFooter>
+          <Button variant="outline" onClick={() => onOpenChange(false)}>关闭</Button>
+          <Button className="gap-1.5" onClick={() => onUse(template.id)}>
+            <Sparkles className="h-3.5 w-3.5" />
+            使用该模板
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
