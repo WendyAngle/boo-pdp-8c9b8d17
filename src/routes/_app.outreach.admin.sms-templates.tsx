@@ -1015,36 +1015,57 @@ const FILING_STATUS_CLASS: Record<FilingStatus, string> = {
 
 function FilingMatrix({ template, onPick }: { template: Tpl; onPick: (ch: FilingChannel) => void }) {
   const map = getFilingsByTemplate(template.id);
+  const recs = FILING_CHANNELS.map((c) => ({ c, rec: map[c.key] })).filter((x) => !!x.rec);
+  const missing = FILING_CHANNELS.filter((c) => !map[c.key]);
   return (
-    <div className="mt-2 flex items-center gap-1.5 flex-wrap">
-      <span className="text-[11px] text-muted-foreground flex items-center gap-1">
-        <Radio className="h-3 w-3" /> 渠道报备：
-      </span>
-      {FILING_CHANNELS.map((c) => {
-        const rec = map[c.key];
-        const st: FilingStatus = rec?.status ?? "none";
-        const isExpiring = rec?.status === "approved" && rec.expireAt && daysUntil(rec.expireAt) <= 30;
-        return (
-          <button
-            key={c.key}
-            onClick={() => onPick(c.key)}
-            className={cn(
-              "px-2 py-0.5 rounded-md border text-[10px] leading-none flex items-center gap-1 hover:opacity-80 transition-opacity",
-              FILING_STATUS_CLASS[st],
-              isExpiring && "ring-1 ring-orange-300",
-            )}
-            title={rec?.comment || FILING_STATUS_LABEL[st]}
-          >
-            <span>{c.label}</span>
-            <span className="opacity-70">·</span>
-            <span>{FILING_STATUS_LABEL[st]}</span>
-            {isExpiring && <AlertTriangle className="h-2.5 w-2.5" />}
-          </button>
-        );
-      })}
+    <div className="flex flex-col gap-1.5">
+      {recs.length === 0 && (
+        <span className="text-[11px] text-muted-foreground">尚未登记任何渠道报备</span>
+      )}
+      <div className="flex flex-wrap gap-1.5">
+        {recs.map(({ c, rec }) => {
+          const st: FilingStatus = rec!.status;
+          const isExpiring = st === "approved" && rec!.expireAt && daysUntil(rec!.expireAt!) <= 30;
+          const regions = rec!.regions ?? [];
+          return (
+            <button
+              key={c.key}
+              onClick={() => onPick(c.key)}
+              className={cn(
+                "px-2 py-0.5 rounded-md border text-[10px] leading-tight flex items-center gap-1 hover:opacity-80 transition-opacity text-left",
+                FILING_STATUS_CLASS[st],
+                isExpiring && "ring-1 ring-orange-300",
+              )}
+              title={rec!.comment || FILING_STATUS_LABEL[st]}
+            >
+              <span className="font-medium">{c.label}</span>
+              <span className="opacity-60">·</span>
+              <span>{regions.length ? regions.map(regionLabel).join(" / ") : "未设地区"}</span>
+              <span className="opacity-60">·</span>
+              <span>{FILING_STATUS_LABEL[st]}</span>
+              {isExpiring && <AlertTriangle className="h-2.5 w-2.5" />}
+            </button>
+          );
+        })}
+      </div>
+      {missing.length > 0 && (
+        <div className="flex flex-wrap items-center gap-1 text-[10px] text-muted-foreground">
+          <span>未报备：</span>
+          {missing.map((c) => (
+            <button
+              key={c.key}
+              onClick={() => onPick(c.key)}
+              className="px-1.5 py-0.5 rounded border border-dashed hover:bg-muted"
+            >
+              {c.label}
+            </button>
+          ))}
+        </div>
+      )}
     </div>
   );
 }
+
 
 function ApplicationsPanel({ apps, onReview }: { apps: TemplateApplication[]; onReview: (a: TemplateApplication) => void }) {
   const [tab, setTab] = useState<"submitted" | "approved" | "rejected" | "all">("submitted");
