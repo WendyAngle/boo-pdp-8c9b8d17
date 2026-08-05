@@ -242,30 +242,20 @@ function SmsTemplatesPage() {
                   </tr>
                 )}
                 {pageData.map((t) => {
-                  const system = isSystem(t);
                   return (
                     <tr key={t.id} className="align-top hover:bg-muted/20">
                       <td className="px-4 py-3">
                         <div className="font-medium">{t.name}</div>
-                      </td>
-                      <td className="px-3 py-3">
-                        <Badge
-                          variant="outline"
-                          className={cn(
-                            "text-[10px]",
-                            system
-                              ? "bg-sky-50 text-sky-700 border-sky-200"
-                              : "bg-violet-50 text-violet-700 border-violet-200",
-                          )}
-                        >
-                          {system ? "系统内置" : "用户创建"}
-                        </Badge>
+                        <div className="mt-1 text-[11px] text-muted-foreground">
+                          语言：{t.locale}
+                        </div>
                       </td>
                       <td className="px-3 py-3">
                         <Badge variant="outline" className="text-[10px]">
                           {t.channel === "otp" ? "验证码" : t.channel === "marketing" ? "营销" : "通知"}
                         </Badge>
                       </td>
+
                       <td className="px-3 py-3">
                         <Tooltip>
                           <TooltipTrigger asChild>
