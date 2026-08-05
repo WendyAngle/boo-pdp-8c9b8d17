@@ -3,7 +3,6 @@ import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { toast } from "sonner";
 import {
   ChevronRight,
-  Plus,
   Search,
   Sparkles,
   Copy,
@@ -46,12 +45,10 @@ import {
 } from "@/components/ui/table";
 import {
   SCRIPT_SCENES,
-  SCRIPT_INDUSTRIES,
   SCRIPT_LANGUAGES,
   STEP_TYPES,
   TEMPLATE_INDUSTRY,
   END_TARGET,
-  createScript,
   deleteScript,
   duplicateScript,
   updateScript,
@@ -91,7 +88,6 @@ function VoiceScriptsPage() {
   const [kw, setKw] = useState("");
   const [language, setLanguage] = useState("all");
   const [scene, setScene] = useState<string>("all");
-  const [createOpen, setCreateOpen] = useState(false);
   const [detail, setDetail] = useState<VoiceScript | null>(null);
 
   const filteredMine = useMemo(
@@ -130,16 +126,12 @@ function VoiceScriptsPage() {
             AI 智能外呼使用的对话内容。可从平台模板市场一键复制，再按线性步骤编排多轮对话与意向判定。
           </p>
         </div>
-        <Button className="gap-1.5" onClick={() => setCreateOpen(true)}>
-          <Plus className="h-4 w-4" />
-          新建话术
-        </Button>
       </div>
 
-      <Tabs defaultValue="mine">
+      <Tabs defaultValue="market">
         <TabsList>
-          <TabsTrigger value="mine">我的话术</TabsTrigger>
           <TabsTrigger value="market">模板市场</TabsTrigger>
+          <TabsTrigger value="mine">我的话术</TabsTrigger>
         </TabsList>
 
         <TabsContent value="mine" className="mt-4 space-y-4">
@@ -320,79 +312,11 @@ function VoiceScriptsPage() {
           }
         }}
       />
-
-      <CreateScriptDialog open={createOpen} onOpenChange={setCreateOpen} />
     </div>
   );
 }
 
-function CreateScriptDialog({ open, onOpenChange }: { open: boolean; onOpenChange: (v: boolean) => void }) {
-  const navigate = useNavigate();
-  const [name, setName] = useState("");
-  const [scene, setScene] = useState<ScriptScene>("marketing");
-  const [industry, setIndustry] = useState("通用");
-  const [language, setLanguage] = useState("zh");
 
-  return (
-    <Dialog open={open} onOpenChange={(v) => { onOpenChange(v); if (!v) setName(""); }}>
-      <DialogContent>
-        <DialogHeader>
-          <DialogTitle>新建话术</DialogTitle>
-          <DialogDescription>创建后进入话术设计器，按线性步骤编排开场白、AI 对话、转人工与结束语。</DialogDescription>
-        </DialogHeader>
-        <div className="space-y-4">
-          <div className="space-y-2">
-            <Label>话术名称 <span className="text-destructive">*</span></Label>
-            <Input value={name} onChange={(e) => setName(e.target.value)} placeholder="如：北美新客首轮触达" maxLength={60} />
-          </div>
-          <div className="grid gap-4 sm:grid-cols-3">
-            <div className="space-y-2">
-              <Label>场景</Label>
-              <Select value={scene} onValueChange={(v) => setScene(v as ScriptScene)}>
-                <SelectTrigger><SelectValue /></SelectTrigger>
-                <SelectContent>
-                  {SCRIPT_SCENES.map((s) => <SelectItem key={s.key} value={s.key}>{s.label}</SelectItem>)}
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="space-y-2">
-              <Label>行业</Label>
-              <Select value={industry} onValueChange={setIndustry}>
-                <SelectTrigger><SelectValue /></SelectTrigger>
-                <SelectContent>
-                  {SCRIPT_INDUSTRIES.map((i) => <SelectItem key={i} value={i}>{i}</SelectItem>)}
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="space-y-2">
-              <Label>语言</Label>
-              <Select value={language} onValueChange={setLanguage}>
-                <SelectTrigger><SelectValue /></SelectTrigger>
-                <SelectContent>
-                  {SCRIPT_LANGUAGES.map((l) => <SelectItem key={l.key} value={l.key}>{l.label}</SelectItem>)}
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
-        </div>
-        <DialogFooter>
-          <Button variant="outline" onClick={() => onOpenChange(false)}>取消</Button>
-          <Button
-            disabled={!name.trim()}
-            onClick={() => {
-              const s = createScript({ name: name.trim(), scene, industry, language, owner: "tenant" });
-              onOpenChange(false);
-              setName("");
-              navigate({ to: "/outreach/voice-scripts/$scriptId", params: { scriptId: s.id } });
-            }}
-          >
-            创建并编辑
-          </Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
-  );
-}
 
 function TemplateDetailDialog({
   template,
