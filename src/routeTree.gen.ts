@@ -44,6 +44,7 @@ import { Route as AppOutreachSocialDmRouteImport } from './routes/_app.outreach.
 import { Route as AppOutreachSocialAccountsRouteImport } from './routes/_app.outreach.social.accounts'
 import { Route as AppOutreachProductsHsRouteImport } from './routes/_app.outreach.products.$hs'
 import { Route as AppOutreachEnterpriseIdRouteImport } from './routes/_app.outreach.enterprise.$id'
+import { Route as AppOutreachAdminVoiceTemplatesRouteImport } from './routes/_app.outreach.admin.voice-templates'
 import { Route as AppOutreachAdminSmsTemplatesRouteImport } from './routes/_app.outreach.admin.sms-templates'
 import { Route as AppOutreachAdminSmsRoutingRouteImport } from './routes/_app.outreach.admin.sms-routing'
 import { Route as AppOutreachAdminSmsProvidersRouteImport } from './routes/_app.outreach.admin.sms-providers'
@@ -246,6 +247,12 @@ const AppOutreachEnterpriseIdRoute = AppOutreachEnterpriseIdRouteImport.update({
   path: '/$id',
   getParentRoute: () => AppOutreachEnterpriseRoute,
 } as any)
+const AppOutreachAdminVoiceTemplatesRoute =
+  AppOutreachAdminVoiceTemplatesRouteImport.update({
+    id: '/outreach/admin/voice-templates',
+    path: '/outreach/admin/voice-templates',
+    getParentRoute: () => AppRoute,
+  } as any)
 const AppOutreachAdminSmsTemplatesRoute =
   AppOutreachAdminSmsTemplatesRouteImport.update({
     id: '/outreach/admin/sms-templates',
@@ -381,6 +388,7 @@ export interface FileRoutesByFullPath {
   '/outreach/admin/sms-providers': typeof AppOutreachAdminSmsProvidersRoute
   '/outreach/admin/sms-routing': typeof AppOutreachAdminSmsRoutingRoute
   '/outreach/admin/sms-templates': typeof AppOutreachAdminSmsTemplatesRoute
+  '/outreach/admin/voice-templates': typeof AppOutreachAdminVoiceTemplatesRoute
   '/outreach/enterprise/$id': typeof AppOutreachEnterpriseIdRouteWithChildren
   '/outreach/products/$hs': typeof AppOutreachProductsHsRoute
   '/outreach/social/accounts': typeof AppOutreachSocialAccountsRoute
@@ -432,6 +440,7 @@ export interface FileRoutesByTo {
   '/outreach/admin/sms-providers': typeof AppOutreachAdminSmsProvidersRoute
   '/outreach/admin/sms-routing': typeof AppOutreachAdminSmsRoutingRoute
   '/outreach/admin/sms-templates': typeof AppOutreachAdminSmsTemplatesRoute
+  '/outreach/admin/voice-templates': typeof AppOutreachAdminVoiceTemplatesRoute
   '/outreach/products/$hs': typeof AppOutreachProductsHsRoute
   '/outreach/social/accounts': typeof AppOutreachSocialAccountsRoute
   '/outreach/social/dm': typeof AppOutreachSocialDmRoute
@@ -485,6 +494,7 @@ export interface FileRoutesById {
   '/_app/outreach/admin/sms-providers': typeof AppOutreachAdminSmsProvidersRoute
   '/_app/outreach/admin/sms-routing': typeof AppOutreachAdminSmsRoutingRoute
   '/_app/outreach/admin/sms-templates': typeof AppOutreachAdminSmsTemplatesRoute
+  '/_app/outreach/admin/voice-templates': typeof AppOutreachAdminVoiceTemplatesRoute
   '/_app/outreach/enterprise/$id': typeof AppOutreachEnterpriseIdRouteWithChildren
   '/_app/outreach/products/$hs': typeof AppOutreachProductsHsRoute
   '/_app/outreach/social/accounts': typeof AppOutreachSocialAccountsRoute
@@ -540,6 +550,7 @@ export interface FileRouteTypes {
     | '/outreach/admin/sms-providers'
     | '/outreach/admin/sms-routing'
     | '/outreach/admin/sms-templates'
+    | '/outreach/admin/voice-templates'
     | '/outreach/enterprise/$id'
     | '/outreach/products/$hs'
     | '/outreach/social/accounts'
@@ -591,6 +602,7 @@ export interface FileRouteTypes {
     | '/outreach/admin/sms-providers'
     | '/outreach/admin/sms-routing'
     | '/outreach/admin/sms-templates'
+    | '/outreach/admin/voice-templates'
     | '/outreach/products/$hs'
     | '/outreach/social/accounts'
     | '/outreach/social/dm'
@@ -643,6 +655,7 @@ export interface FileRouteTypes {
     | '/_app/outreach/admin/sms-providers'
     | '/_app/outreach/admin/sms-routing'
     | '/_app/outreach/admin/sms-templates'
+    | '/_app/outreach/admin/voice-templates'
     | '/_app/outreach/enterprise/$id'
     | '/_app/outreach/products/$hs'
     | '/_app/outreach/social/accounts'
@@ -916,6 +929,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppOutreachEnterpriseIdRouteImport
       parentRoute: typeof AppOutreachEnterpriseRoute
     }
+    '/_app/outreach/admin/voice-templates': {
+      id: '/_app/outreach/admin/voice-templates'
+      path: '/outreach/admin/voice-templates'
+      fullPath: '/outreach/admin/voice-templates'
+      preLoaderRoute: typeof AppOutreachAdminVoiceTemplatesRouteImport
+      parentRoute: typeof AppRoute
+    }
     '/_app/outreach/admin/sms-templates': {
       id: '/_app/outreach/admin/sms-templates'
       path: '/outreach/admin/sms-templates'
@@ -1142,6 +1162,7 @@ interface AppRouteChildren {
   AppOutreachAdminSmsProvidersRoute: typeof AppOutreachAdminSmsProvidersRoute
   AppOutreachAdminSmsRoutingRoute: typeof AppOutreachAdminSmsRoutingRoute
   AppOutreachAdminSmsTemplatesRoute: typeof AppOutreachAdminSmsTemplatesRoute
+  AppOutreachAdminVoiceTemplatesRoute: typeof AppOutreachAdminVoiceTemplatesRoute
   AppOutreachProductsHsRoute: typeof AppOutreachProductsHsRoute
   AppOutreachSocialAccountsRoute: typeof AppOutreachSocialAccountsRoute
   AppOutreachSocialDmRoute: typeof AppOutreachSocialDmRoute
@@ -1187,6 +1208,7 @@ const AppRouteChildren: AppRouteChildren = {
   AppOutreachAdminSmsProvidersRoute: AppOutreachAdminSmsProvidersRoute,
   AppOutreachAdminSmsRoutingRoute: AppOutreachAdminSmsRoutingRoute,
   AppOutreachAdminSmsTemplatesRoute: AppOutreachAdminSmsTemplatesRoute,
+  AppOutreachAdminVoiceTemplatesRoute: AppOutreachAdminVoiceTemplatesRoute,
   AppOutreachProductsHsRoute: AppOutreachProductsHsRoute,
   AppOutreachSocialAccountsRoute: AppOutreachSocialAccountsRoute,
   AppOutreachSocialDmRoute: AppOutreachSocialDmRoute,
