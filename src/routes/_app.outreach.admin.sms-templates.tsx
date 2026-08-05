@@ -56,7 +56,7 @@ import {
 /** 按渠道给出默认目标地区建议 */
 function defaultRegionsForChannel(ch: FilingChannel): string[] {
   if (ch === "cmcc" || ch === "unicom" || ch === "telecom") return ["cn"];
-  if (ch === "twilio") return ["na"];
+  if (ch === "intl-a2p") return ["na", "eu"];
   return [];
 }
 
