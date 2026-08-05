@@ -34,6 +34,7 @@ import { Route as AppOutreachConversationsRouteImport } from './routes/_app.outr
 import { Route as AppOutreachBillsRouteImport } from './routes/_app.outreach.bills'
 import { Route as AppOutreachBillingEmptyRouteImport } from './routes/_app.outreach.billing-empty'
 import { Route as AppOutreachBillingRouteImport } from './routes/_app.outreach.billing'
+import { Route as AppOutreachVoiceScriptsIndexRouteImport } from './routes/_app.outreach.voice-scripts.index'
 import { Route as AppOutreachProductsIndexRouteImport } from './routes/_app.outreach.products.index'
 import { Route as AppOutreachEnterpriseIndexRouteImport } from './routes/_app.outreach.enterprise.index'
 import { Route as AppOutreachSocialReachRouteImport } from './routes/_app.outreach.social.reach'
@@ -188,6 +189,12 @@ const AppOutreachBillingRoute = AppOutreachBillingRouteImport.update({
   path: '/outreach/billing',
   getParentRoute: () => AppRoute,
 } as any)
+const AppOutreachVoiceScriptsIndexRoute =
+  AppOutreachVoiceScriptsIndexRouteImport.update({
+    id: '/outreach/voice-scripts/',
+    path: '/outreach/voice-scripts/',
+    getParentRoute: () => AppRoute,
+  } as any)
 const AppOutreachProductsIndexRoute =
   AppOutreachProductsIndexRouteImport.update({
     id: '/outreach/products/',
@@ -375,6 +382,7 @@ export interface FileRoutesByFullPath {
   '/outreach/social/reach': typeof AppOutreachSocialReachRouteWithChildren
   '/outreach/enterprise/': typeof AppOutreachEnterpriseIndexRoute
   '/outreach/products/': typeof AppOutreachProductsIndexRoute
+  '/outreach/voice-scripts/': typeof AppOutreachVoiceScriptsIndexRoute
   '/outreach/admin/managed-email/$orderId': typeof AppOutreachAdminManagedEmailOrderIdRoute
   '/outreach/social/prospecting/$taskId': typeof AppOutreachSocialProspectingTaskIdRoute
   '/outreach/social/reach/dm': typeof AppOutreachSocialReachDmRoute
@@ -422,6 +430,7 @@ export interface FileRoutesByTo {
   '/outreach/social/friends': typeof AppOutreachSocialFriendsRoute
   '/outreach/enterprise': typeof AppOutreachEnterpriseIndexRoute
   '/outreach/products': typeof AppOutreachProductsIndexRoute
+  '/outreach/voice-scripts': typeof AppOutreachVoiceScriptsIndexRoute
   '/outreach/admin/managed-email/$orderId': typeof AppOutreachAdminManagedEmailOrderIdRoute
   '/outreach/social/prospecting/$taskId': typeof AppOutreachSocialProspectingTaskIdRoute
   '/outreach/social/reach/dm': typeof AppOutreachSocialReachDmRoute
@@ -475,6 +484,7 @@ export interface FileRoutesById {
   '/_app/outreach/social/reach': typeof AppOutreachSocialReachRouteWithChildren
   '/_app/outreach/enterprise/': typeof AppOutreachEnterpriseIndexRoute
   '/_app/outreach/products/': typeof AppOutreachProductsIndexRoute
+  '/_app/outreach/voice-scripts/': typeof AppOutreachVoiceScriptsIndexRoute
   '/_app/outreach/admin/managed-email/$orderId': typeof AppOutreachAdminManagedEmailOrderIdRoute
   '/_app/outreach/social/prospecting/$taskId': typeof AppOutreachSocialProspectingTaskIdRoute
   '/_app/outreach/social/reach/dm': typeof AppOutreachSocialReachDmRoute
@@ -528,6 +538,7 @@ export interface FileRouteTypes {
     | '/outreach/social/reach'
     | '/outreach/enterprise/'
     | '/outreach/products/'
+    | '/outreach/voice-scripts/'
     | '/outreach/admin/managed-email/$orderId'
     | '/outreach/social/prospecting/$taskId'
     | '/outreach/social/reach/dm'
@@ -575,6 +586,7 @@ export interface FileRouteTypes {
     | '/outreach/social/friends'
     | '/outreach/enterprise'
     | '/outreach/products'
+    | '/outreach/voice-scripts'
     | '/outreach/admin/managed-email/$orderId'
     | '/outreach/social/prospecting/$taskId'
     | '/outreach/social/reach/dm'
@@ -627,6 +639,7 @@ export interface FileRouteTypes {
     | '/_app/outreach/social/reach'
     | '/_app/outreach/enterprise/'
     | '/_app/outreach/products/'
+    | '/_app/outreach/voice-scripts/'
     | '/_app/outreach/admin/managed-email/$orderId'
     | '/_app/outreach/social/prospecting/$taskId'
     | '/_app/outreach/social/reach/dm'
@@ -818,6 +831,13 @@ declare module '@tanstack/react-router' {
       path: '/outreach/billing'
       fullPath: '/outreach/billing'
       preLoaderRoute: typeof AppOutreachBillingRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/outreach/voice-scripts/': {
+      id: '/_app/outreach/voice-scripts/'
+      path: '/outreach/voice-scripts'
+      fullPath: '/outreach/voice-scripts/'
+      preLoaderRoute: typeof AppOutreachVoiceScriptsIndexRouteImport
       parentRoute: typeof AppRoute
     }
     '/_app/outreach/products/': {
@@ -1108,6 +1128,7 @@ interface AppRouteChildren {
   AppOutreachSocialFriendsRoute: typeof AppOutreachSocialFriendsRoute
   AppOutreachSocialReachRoute: typeof AppOutreachSocialReachRouteWithChildren
   AppOutreachProductsIndexRoute: typeof AppOutreachProductsIndexRoute
+  AppOutreachVoiceScriptsIndexRoute: typeof AppOutreachVoiceScriptsIndexRoute
   AppOutreachSocialProspectingTaskIdRoute: typeof AppOutreachSocialProspectingTaskIdRoute
   AppOutreachSocialProspectingIndexRoute: typeof AppOutreachSocialProspectingIndexRoute
 }
@@ -1151,6 +1172,7 @@ const AppRouteChildren: AppRouteChildren = {
   AppOutreachSocialFriendsRoute: AppOutreachSocialFriendsRoute,
   AppOutreachSocialReachRoute: AppOutreachSocialReachRouteWithChildren,
   AppOutreachProductsIndexRoute: AppOutreachProductsIndexRoute,
+  AppOutreachVoiceScriptsIndexRoute: AppOutreachVoiceScriptsIndexRoute,
   AppOutreachSocialProspectingTaskIdRoute:
     AppOutreachSocialProspectingTaskIdRoute,
   AppOutreachSocialProspectingIndexRoute:
@@ -1165,13 +1187,3 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}
