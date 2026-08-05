@@ -31,7 +31,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import {
-  SCRIPT_INDUSTRIES,
+  TEMPLATE_INDUSTRY,
   SCRIPT_LANGUAGES,
   SCRIPT_SCENES,
   createScript,
@@ -64,7 +64,6 @@ function AdminVoiceTemplatesPage() {
 
   const [name, setName] = useState("");
   const [scene, setScene] = useState<ScriptScene>("marketing");
-  const [industry, setIndustry] = useState("通用");
   const [language, setLanguage] = useState("zh");
 
   const rows = useMemo(
@@ -122,7 +121,6 @@ function AdminVoiceTemplatesPage() {
           <TableHeader>
             <TableRow>
               <TableHead>模板名称</TableHead>
-              <TableHead>行业</TableHead>
               <TableHead>场景</TableHead>
               <TableHead>语言</TableHead>
               <TableHead className="text-right">步骤数</TableHead>
@@ -135,7 +133,7 @@ function AdminVoiceTemplatesPage() {
           <TableBody>
             {rows.length === 0 && (
               <TableRow>
-                <TableCell colSpan={9} className="text-center text-sm text-muted-foreground py-10">暂无模板</TableCell>
+                <TableCell colSpan={8} className="text-center text-sm text-muted-foreground py-10">暂无模板</TableCell>
               </TableRow>
             )}
             {rows.map((t) => (
@@ -146,7 +144,6 @@ function AdminVoiceTemplatesPage() {
                     {t.name}
                   </span>
                 </TableCell>
-                <TableCell>{t.industry}</TableCell>
                 <TableCell>{SCRIPT_SCENES.find((s) => s.key === t.scene)?.label}</TableCell>
                 <TableCell>{SCRIPT_LANGUAGES.find((l) => l.key === t.language)?.label}</TableCell>
                 <TableCell className="text-right tabular-nums">{t.steps.length}</TableCell>
@@ -202,29 +199,20 @@ function AdminVoiceTemplatesPage() {
         <DialogContent>
           <DialogHeader>
             <DialogTitle>新建话术模板</DialogTitle>
-            <DialogDescription>创建后进入话术设计器编排步骤，编排完成再上架到模板市场。</DialogDescription>
+            <DialogDescription>模板不区分行业，统一为多行业通用；创建后进入话术设计器编排步骤，编排完成再上架到模板市场。</DialogDescription>
           </DialogHeader>
           <div className="space-y-4">
             <div className="space-y-2">
               <Label>模板名称 <span className="text-destructive">*</span></Label>
               <Input value={name} onChange={(e) => setName(e.target.value)} placeholder="如：新能源 · 海外经销商开发" maxLength={60} />
             </div>
-            <div className="grid gap-4 sm:grid-cols-3">
+            <div className="grid gap-4 sm:grid-cols-2">
               <div className="space-y-2">
                 <Label>场景</Label>
                 <Select value={scene} onValueChange={(v) => setScene(v as ScriptScene)}>
                   <SelectTrigger><SelectValue /></SelectTrigger>
                   <SelectContent>
                     {SCRIPT_SCENES.map((s) => <SelectItem key={s.key} value={s.key}>{s.label}</SelectItem>)}
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="space-y-2">
-                <Label>行业</Label>
-                <Select value={industry} onValueChange={setIndustry}>
-                  <SelectTrigger><SelectValue /></SelectTrigger>
-                  <SelectContent>
-                    {SCRIPT_INDUSTRIES.map((i) => <SelectItem key={i} value={i}>{i}</SelectItem>)}
                   </SelectContent>
                 </Select>
               </div>
@@ -244,7 +232,7 @@ function AdminVoiceTemplatesPage() {
             <Button
               disabled={!name.trim()}
               onClick={() => {
-                const s = createScript({ name: name.trim(), scene, industry, language, owner: "platform" });
+                const s = createScript({ name: name.trim(), scene, industry: TEMPLATE_INDUSTRY, language, owner: "platform" });
                 setOpen(false);
                 setName("");
                 navigate({ to: "/outreach/voice-scripts/$scriptId", params: { scriptId: s.id } });
