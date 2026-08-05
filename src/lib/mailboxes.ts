@@ -314,18 +314,50 @@ export function setMailboxStatus(id: string, status: MailboxStatus) {
   commit(list);
 }
 
-/** 模拟测试连接：1.2s，90% 成功 */
-export function testMailbox(id: string): Promise<{ ok: boolean; message: string }> {
+export interface MailboxTestResult {
+  ok: boolean;
+  message: string;
+  smtp: { ok: boolean; message: string };
+  imap: { ok: boolean; message: string; skipped?: boolean };
+}
+
+/** 模拟测试连接：1.2s，分别校验发信（SMTP）与收信（IMAP） */
+export function testMailbox(id: string): Promise<MailboxTestResult> {
   return new Promise((resolve) => {
     setTimeout(() => {
-      const ok = Math.random() > 0.1;
+      const target = cache.find((m) => m.id === id);
+      const smtpOk = Math.random() > 0.1;
+      const receiveEnabled = target?.receiveEnabled ?? false;
+      const imapOk = receiveEnabled ? Math.random() > 0.15 : false;
+
+      const receiveStatus: MailboxReceiveStatus = !receiveEnabled
+        ? "未开启收信"
+        : imapOk
+          ? "收信正常"
+          : "收信异常";
+
       updateMailbox(id, {
         lastTestedAt: new Date().toISOString(),
-        status: ok ? "正常" : "异常",
+        status: smtpOk ? "正常" : "异常",
+        receiveStatus,
       });
+
+      const smtp = {
+        ok: smtpOk,
+        message: smtpOk ? "SMTP 连接成功" : "SMTP 连接失败：认证失败或服务器无响应",
+      };
+      const imap = receiveEnabled
+        ? {
+            ok: imapOk,
+            message: imapOk ? "IMAP 连接成功" : "IMAP 连接失败：请确认已开启 IMAP 服务",
+          }
+        : { ok: true, skipped: true, message: "未开启收信，已跳过 IMAP 测试" };
+
       resolve({
-        ok,
-        message: ok ? "SMTP 连接测试成功" : "SMTP 连接失败：认证失败或服务器无响应",
+        ok: smtp.ok && imap.ok,
+        message: `${smtp.message}；${imap.message}`,
+        smtp,
+        imap,
       });
     }, 1200);
   });
