@@ -38,10 +38,9 @@ import { isSuppressed } from "@/lib/suppressions-store";
 import {
   useSmsTemplates,
   toComposeSyntax,
-  addSmsTemplate,
-  type SmsTplChannel,
+  getTemplateApprovedRegions,
+  regionLabel,
 } from "@/lib/sms-templates-store";
-import { Link } from "@tanstack/react-router";
 import { FileText, ShieldCheck, ShieldAlert } from "lucide-react";
 
 import {
@@ -134,8 +133,6 @@ export function ComposeSendDialog({
   // 短信合规追踪：内容是否来自已报备模板
   const [smsTemplateId, setSmsTemplateId] = useState<string | null>(null);
   const [smsTemplateName, setSmsTemplateName] = useState<string | null>(null);
-  const [submitTplOpen, setSubmitTplOpen] = useState(false);
-  const [confirmSendOpen, setConfirmSendOpen] = useState(false);
 
   /** 手动添加收件人输入框 */
   const [manualInput, setManualInput] = useState("");
@@ -311,6 +308,7 @@ export function ComposeSendDialog({
     (!isEmail || !!sender) &&
     (!isEmail || subject.trim().length > 0) &&
     content.trim().length > 0 &&
+    (isEmail || !!smsTemplateId) &&
     !overLimit;
 
   function doSend() {
@@ -379,11 +377,6 @@ export function ComposeSendDialog({
 
   function handleSend() {
     if (!canSend) return;
-    // 短信合规软性拦截：未套用已报备模板时二次确认
-    if (!isEmail && !smsTemplateId) {
-      setConfirmSendOpen(true);
-      return;
-    }
     doSend();
   }
 
@@ -642,7 +635,7 @@ export function ComposeSendDialog({
                   </Badge>
                 )}
               </Label>
-              <div className="flex items-center gap-2">
+              <div className={cn("flex items-center gap-2", !isEmail && "hidden")}>
                 <Button
                   type="button"
                   size="sm"
@@ -672,9 +665,9 @@ export function ComposeSendDialog({
               <div className="rounded-md border border-primary/30 bg-primary/5 p-2.5 space-y-1.5">
                 <div className="flex items-center gap-1.5 text-xs font-medium">
                   <ShieldCheck className="h-3.5 w-3.5 text-primary" />
-                  推荐使用已报备模板
+                  选择已报备短信模板 *
                   <span className="text-muted-foreground font-normal">
-                    海外营销短信须使用运营商预审模板，直发自由文本可能被拦截或封号
+                    模板由平台在「管理后台 · 短信模板」统一维护与报备，此处仅可选择使用
                   </span>
                 </div>
                 <SmsTemplatePicker
@@ -690,7 +683,7 @@ export function ComposeSendDialog({
             )}
 
             {/* 变量插入 */}
-            <div className="flex flex-wrap items-center gap-1.5">
+            <div className={cn("flex flex-wrap items-center gap-1.5", !isEmail && "hidden")}>
               <span className="text-xs text-muted-foreground">
                 插入变量（光标处插入到{focusField === "subject" ? "主题" : "正文"}）：
               </span>
@@ -722,18 +715,16 @@ export function ComposeSendDialog({
 
             <div className="space-y-1">
               <Label className="text-xs text-muted-foreground">
-                {isEmail ? "正文 *" : "短信内容 *"}
+                {isEmail ? "正文 *" : "短信内容 *（模板内容不可编辑）"}
               </Label>
               <Textarea
                 ref={contentRef}
                 value={content}
+                readOnly={!isEmail}
+                className={cn(!isEmail && "bg-muted/40 cursor-not-allowed")}
                 onChange={(e) => {
+                  if (!isEmail) return;
                   setContent(e.target.value);
-                  // 手动改动 → 视为脱离已报备模板
-                  if (smsTemplateId) {
-                    setSmsTemplateId(null);
-                    setSmsTemplateName(null);
-                  }
                 }}
                 onFocus={() => setFocusField("content")}
                 rows={isEmail ? 8 : 5}
@@ -760,10 +751,7 @@ export function ComposeSendDialog({
                 )}
               </div>
               {!isEmail && content.trim().length > 0 && (
-                <ComplianceStrip
-                  templateName={smsTemplateName}
-                  onSubmitAsTemplate={() => setSubmitTplOpen(true)}
-                />
+                <ComplianceStrip templateName={smsTemplateName} />
               )}
             </div>
           </section>
@@ -917,7 +905,7 @@ function SmsTemplatePicker({
       >
         <SelectTrigger className="h-8 flex-1 text-xs bg-background">
           <FileText className="h-3.5 w-3.5 text-primary mr-1" />
-          <SelectValue placeholder="选择一个已报备模板套用…" />
+          <SelectValue placeholder="选择一个已报备模板（必选）…" />
         </SelectTrigger>
         <SelectContent>
           {approved.length === 0 ? (
@@ -939,32 +927,24 @@ function SmsTemplatePicker({
                   <span className="text-[10px] text-muted-foreground">
                     {t.locale}
                   </span>
+                  <span className="text-[10px] text-muted-foreground">
+                    {getTemplateApprovedRegions(t.id).length > 0
+                      ? getTemplateApprovedRegions(t.id).map(regionLabel).join(" / ")
+                      : "未报备地区"}
+                  </span>
                 </div>
               </SelectItem>
             ))
           )}
         </SelectContent>
       </Select>
-      <Link
-        to="/outreach/admin/sms-templates"
-        target="_blank"
-        className="text-primary hover:underline whitespace-nowrap"
-      >
-        管理模板 →
-      </Link>
     </div>
   );
 }
 
 /* -------------------- 合规状态条 -------------------- */
 
-function ComplianceStrip({
-  templateName,
-  onSubmitAsTemplate,
-}: {
-  templateName: string | null;
-  onSubmitAsTemplate: () => void;
-}) {
+function ComplianceStrip({ templateName }: { templateName: string | null }) {
   if (templateName) {
     return (
       <div className="flex items-center gap-1.5 text-[11px] text-emerald-700 dark:text-emerald-400 pt-1">
@@ -976,14 +956,7 @@ function ComplianceStrip({
   return (
     <div className="flex items-center gap-2 text-[11px] text-amber-700 dark:text-amber-400 pt-1">
       <ShieldAlert className="h-3.5 w-3.5" />
-      <span>当前内容未报备，海外营销发送可能被拦截。</span>
-      <button
-        type="button"
-        onClick={onSubmitAsTemplate}
-        className="underline font-medium hover:text-amber-800"
-      >
-        提交为模板送审
-      </button>
+      <span>请先在上方选择一个已报备模板后再发送。</span>
     </div>
   );
 }
