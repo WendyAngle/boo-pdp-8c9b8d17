@@ -1168,7 +1168,15 @@ function FilingsPanel({ filings, templates, onEdit }: {
             ))}
           </SelectContent>
         </Select>
+        <Select value={rg} onValueChange={setRg}>
+          <SelectTrigger className="h-8 w-44"><SelectValue placeholder="目标地区" /></SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">全部地区</SelectItem>
+            {FILING_REGIONS.map((r) => <SelectItem key={r.key} value={r.key}>{r.label}</SelectItem>)}
+          </SelectContent>
+        </Select>
         <span className="text-xs text-muted-foreground ml-auto">共 {rows.length} 条</span>
+
       </div>
       <div className="divide-y">
         {rows.length === 0 && (
