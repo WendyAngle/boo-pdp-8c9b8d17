@@ -11,6 +11,7 @@ import {
   Rocket,
   CalendarClock,
   TrendingUp,
+  ExternalLink,
 } from "lucide-react";
 import {
   Dialog,
@@ -36,6 +37,7 @@ import {
 } from "@/components/ui/select";
 import { cn } from "@/lib/utils";
 import { generateAiContent } from "@/lib/api/ai-compose.functions";
+import { usePublishedScripts } from "@/lib/voice-scripts";
 
 export interface AiCallTarget {
   key: string;
@@ -74,6 +76,8 @@ export function AiVoiceCallDialog({
   const [scene, setScene] = useState<Scene>("marketing");
 
   // step 2
+  const scriptOptions = usePublishedScripts();
+  const [scriptId, setScriptId] = useState("");
   const [script, setScript] = useState("");
   const [aiLoading, setAiLoading] = useState(false);
   const [concurrency, setConcurrency] = useState("20");
@@ -98,6 +102,7 @@ export function AiVoiceCallDialog({
     setManual("");
     setScene("marketing");
     setScript("");
+    setScriptId("");
     setConcurrency("20");
     setPacing("ramp");
     setStartTime("09:00");
@@ -112,6 +117,7 @@ export function AiVoiceCallDialog({
   }, [open, targets]);
 
   const sceneLabel = SCENE_OPTIONS.find((s) => s.value === scene)!.label;
+  const selectedScript = scriptOptions.find((s) => s.id === scriptId);
 
   const addManual = () => {
     const raw = manual.trim();
@@ -161,7 +167,7 @@ export function AiVoiceCallDialog({
   };
 
   const step1Valid = name.trim().length > 0 && name.length <= 100 && list.length > 0;
-  const step2Valid = script.trim().length > 0 && startTime < endTime;
+  const step2Valid = scriptId.length > 0 && startTime < endTime;
   const rampValid =
     pacing !== "ramp" ||
     (Number(rampInit) >= 1 &&
@@ -191,7 +197,7 @@ export function AiVoiceCallDialog({
         ? `随机并发（上限 ${concurrency} 路）`
         : `恒定并发 ${concurrency} 路`;
     toast.success(launchLabel, {
-      description: `${sceneLabel}｜${list.length} 个号码｜${pacingText}｜${startTime}-${endTime}｜最多重试 ${maxRetry} 次${
+      description: `${sceneLabel}｜话术「${selectedScript?.name ?? ""}」｜${list.length} 个号码｜${pacingText}｜${startTime}-${endTime}｜最多重试 ${maxRetry} 次${
         launch === "scheduled" ? `｜启动时间 ${scheduledAt.replace("T", " ")}` : ""
       }`,
     });
@@ -334,9 +340,64 @@ export function AiVoiceCallDialog({
             <>
               <div className="space-y-2">
                 <div className="flex items-center justify-between">
-                  <Label htmlFor="call-script">
-                    外呼话术内容 <span className="text-destructive">*</span>
+                  <Label>
+                    外呼话术 <span className="text-destructive">*</span>
                   </Label>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="gap-1.5"
+                    onClick={() => window.open("/outreach/voice-scripts", "_blank")}
+                  >
+                    <ExternalLink className="h-3.5 w-3.5" />
+                    新建 / 管理话术
+                  </Button>
+                </div>
+                <Select value={scriptId} onValueChange={setScriptId}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="选择一个已发布的话术" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {scriptOptions.length === 0 ? (
+                      <div className="px-3 py-2 text-sm text-muted-foreground">
+                        暂无已发布话术，请先前往「客户运营 → 外呼话术」创建并发布
+                      </div>
+                    ) : (
+                      scriptOptions.map((s) => (
+                        <SelectItem key={s.id} value={s.id}>
+                          {s.name}（{s.steps.length} 个步骤）
+                        </SelectItem>
+                      ))
+                    )}
+                  </SelectContent>
+                </Select>
+
+                {selectedScript && (
+                  <div className="rounded-lg border border-border bg-muted/30 p-3 space-y-1.5">
+                    <div className="text-xs font-medium text-muted-foreground">对话流预览</div>
+                    <ol className="space-y-1 text-xs">
+                      {selectedScript.steps.map((s, i) => (
+                        <li key={s.id} className="flex items-start gap-2">
+                          <span className="tabular-nums text-muted-foreground">{i + 1}.</span>
+                          <span className="min-w-0">
+                            <span className="font-medium">{s.title}</span>
+                            {s.branches.length > 0 && (
+                              <span className="text-muted-foreground">
+                                {" "}
+                                · 分支：{s.branches.map((b) => b.label).join(" / ")}
+                              </span>
+                            )}
+                          </span>
+                        </li>
+                      ))}
+                    </ol>
+                  </div>
+                )}
+              </div>
+
+              <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <Label htmlFor="call-script">开场白覆写（选填）</Label>
                   <Button
                     variant="outline"
                     size="sm"
@@ -349,20 +410,21 @@ export function AiVoiceCallDialog({
                     ) : (
                       <Sparkles className="h-3.5 w-3.5" />
                     )}
-                    AI 生成话术
+                    AI 生成开场白
                   </Button>
                 </div>
                 <Textarea
                   id="call-script"
-                  rows={6}
+                  rows={4}
                   value={script}
                   onChange={(e) => setScript(e.target.value)}
-                  placeholder="AI 机器人开场白与主要话术，支持变量 {企业名} {联系人名} {我的公司} {我的姓名}"
+                  placeholder="留空则使用所选话术的开场白；填写后仅覆盖本次任务的开场白，不修改原话术"
                 />
                 <p className="text-xs text-muted-foreground">
                   支持变量：{"{企业名}"} {"{联系人名}"} {"{行业}"} {"{我的公司}"} {"{我的姓名}"}
                 </p>
               </div>
+
 
               <div className="rounded-lg border border-border p-3 space-y-4">
                 <div className="text-sm font-medium">拨打规则</div>
@@ -438,6 +500,7 @@ export function AiVoiceCallDialog({
                 {[
                   ["任务名称", name.trim()],
                   ["场景类型", sceneLabel],
+                  ["外呼话术", selectedScript ? `${selectedScript.name}（${selectedScript.steps.length} 个步骤）` : "—"],
                   ["目标号码", `${list.length} 个`],
                   ["号码归属地识别", "已开启（当地号码呼出）"],
                   ["目标并发上限", `${concurrency} 路`],
@@ -451,9 +514,9 @@ export function AiVoiceCallDialog({
                 ))}
               </div>
               <div className="space-y-1.5">
-                <Label>话术内容</Label>
+                <Label>{script.trim() ? "开场白（本次覆写）" : "开场白"}</Label>
                 <div className="rounded-lg border border-border bg-muted/30 p-3 text-sm whitespace-pre-wrap">
-                  {script.trim()}
+                  {script.trim() || selectedScript?.steps[0]?.content || "—"}
                 </div>
               </div>
               <div className="flex flex-wrap gap-1.5">
