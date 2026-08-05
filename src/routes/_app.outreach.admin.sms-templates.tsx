@@ -1066,6 +1066,8 @@ function FilingMatrix({ template, onPick }: { template: Tpl; onPick: (ch: Filing
           );
         })}
       </div>
+      <CarrierLine templateId={template.id} />
+
       {missing.length > 0 && (
         <div className="flex flex-wrap items-center gap-1 text-[10px] text-muted-foreground">
           <span>未报备：</span>
