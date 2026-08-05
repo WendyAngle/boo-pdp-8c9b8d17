@@ -109,12 +109,10 @@ function SmsTemplatesPage() {
     expiring: filings.filter((f) => f.status === "approved" && f.expireAt && daysUntil(f.expireAt) <= 30).length,
   };
 
-  const isSystem = (t: Tpl) => t.submittedBy === "SysM" || t.submittedBy === "系统";
   const filtered = list.filter((t) => {
     if (libStatus !== "all" && t.status !== libStatus) return false;
     if (libChannel !== "all" && t.channel !== libChannel) return false;
-    if (libSource === "system" && !isSystem(t)) return false;
-    if (libSource === "user" && isSystem(t)) return false;
+    if (libRegion !== "all" && !getTemplateApprovedRegions(t.id).includes(libRegion)) return false;
     if (libSearch.trim()) {
       const q = libSearch.trim().toLowerCase();
       if (!t.name.toLowerCase().includes(q) && !t.content.toLowerCase().includes(q)) return false;
@@ -124,7 +122,8 @@ function SmsTemplatesPage() {
 
   useEffect(() => {
     setPage(1);
-  }, [libStatus, libChannel, libSource, libSearch]);
+  }, [libStatus, libChannel, libRegion, libSearch]);
+
 
   const pageData = useMemo(
     () => filtered.slice((page - 1) * pageSize, page * pageSize),
