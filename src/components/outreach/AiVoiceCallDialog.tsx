@@ -355,42 +355,27 @@ export function AiVoiceCallDialog({
               </div>
 
               <div className="rounded-lg border border-border p-3 space-y-4">
-                <div className="text-sm font-medium">拨打策略</div>
+                <div className="text-sm font-medium">拨打规则</div>
 
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label>并发上限</Label>
-                    <Select value={concurrency} onValueChange={setConcurrency}>
-                      <SelectTrigger>
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {["20", "50", "100"].map((c) => (
-                          <SelectItem key={c} value={c}>
-                            {c} 路
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <div className="space-y-2">
-                    <Label>拨号模式</Label>
-                    <RadioGroup
-                      value={dialMode}
-                      onValueChange={(v) => setDialMode(v as "fixed" | "random")}
-                      className="flex items-center gap-4 pt-2"
-                    >
-                      <label className="flex items-center gap-2 text-sm cursor-pointer">
-                        <RadioGroupItem value="fixed" />
-                        固定并发
-                      </label>
-                      <label className="flex items-center gap-2 text-sm cursor-pointer">
-                        <RadioGroupItem value="random" />
-                        随机并发
-                      </label>
-                    </RadioGroup>
-                  </div>
+                <div className="space-y-2">
+                  <Label>目标并发上限</Label>
+                  <Select value={concurrency} onValueChange={setConcurrency}>
+                    <SelectTrigger className="max-w-xs">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {["20", "50", "100"].map((c) => (
+                        <SelectItem key={c} value={c}>
+                          {c} 路
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <p className="text-xs text-muted-foreground">
+                    任务运行期间的并发天花板；具体起量方式（恒定 / 随机 / 灰度爬坡）在第 4 步「外呼策略」中设置。
+                  </p>
                 </div>
+
 
                 <div className="space-y-2">
                   <Label className="flex items-center gap-1.5">
