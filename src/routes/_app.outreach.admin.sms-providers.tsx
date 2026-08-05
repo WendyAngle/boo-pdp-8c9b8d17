@@ -266,7 +266,6 @@ function SmsProvidersPage() {
                 </TableCell>
                 <TableCell>
 
-                <TableCell>
                   <div className="flex flex-wrap gap-1">
                     {p.channels.map((c) => (
                       <Badge
