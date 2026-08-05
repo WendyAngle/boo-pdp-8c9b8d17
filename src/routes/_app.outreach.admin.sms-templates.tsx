@@ -1031,7 +1031,46 @@ const FILING_STATUS_CLASS: Record<FilingStatus, string> = {
   expired: "bg-orange-50 text-orange-700 border-orange-200",
 };
 
+/** 展示该模板的报备通道由哪些服务商承载，以及是否存在断链地区 */
+function CarrierLine({ templateId }: { templateId: string }) {
+  useSmsProviders();
+  const map = getFilingsByTemplate(templateId);
+  const approved = FILING_CHANNELS.map((c) => map[c.key]).filter(
+    (f): f is NonNullable<typeof f> => !!f && f.status === "approved",
+  );
+  if (approved.length === 0) return null;
+  const carriers = new Set<string>();
+  approved.forEach((f) =>
+    (f.regions ?? []).forEach((r) =>
+      carriersFor(f.channel, r)
+        .filter(isProviderRoutable)
+        .forEach((p) => carriers.add(p.name)),
+    ),
+  );
+  const blocked = getTemplateBlockedRegions(templateId);
+  return (
+    <div className="space-y-0.5">
+      <div className="text-[10px] text-muted-foreground">
+        承载服务商：{carriers.size ? [...carriers].join("、") : "无可用服务商"}
+      </div>
+      {blocked.length > 0 && (
+        <div className="text-[10px] text-amber-700">
+          断链：
+          {blocked
+            .map(
+              (b) =>
+                `${FILING_CHANNELS.find((c) => c.key === b.channel)?.label ?? b.channel}·${regionLabel(b.region)}`,
+            )
+            .join("、")}
+          （无服务商承载，实际不可发）
+        </div>
+      )}
+    </div>
+  );
+}
+
 function FilingMatrix({ template, onPick }: { template: Tpl; onPick: (ch: FilingChannel) => void }) {
+
   const map = getFilingsByTemplate(template.id);
   const recs = FILING_CHANNELS.map((c) => ({ c, rec: map[c.key] })).filter((x) => !!x.rec);
   const missing = FILING_CHANNELS.filter((c) => !map[c.key]);
