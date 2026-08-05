@@ -34,6 +34,7 @@ import { Route as AppOutreachConversationsRouteImport } from './routes/_app.outr
 import { Route as AppOutreachBillsRouteImport } from './routes/_app.outreach.bills'
 import { Route as AppOutreachBillingEmptyRouteImport } from './routes/_app.outreach.billing-empty'
 import { Route as AppOutreachBillingRouteImport } from './routes/_app.outreach.billing'
+import { Route as AppOutreachAgentsRouteImport } from './routes/_app.outreach.agents'
 import { Route as AppOutreachVoiceScriptsIndexRouteImport } from './routes/_app.outreach.voice-scripts.index'
 import { Route as AppOutreachProductsIndexRouteImport } from './routes/_app.outreach.products.index'
 import { Route as AppOutreachEnterpriseIndexRouteImport } from './routes/_app.outreach.enterprise.index'
@@ -189,6 +190,11 @@ const AppOutreachBillingEmptyRoute = AppOutreachBillingEmptyRouteImport.update({
 const AppOutreachBillingRoute = AppOutreachBillingRouteImport.update({
   id: '/outreach/billing',
   path: '/outreach/billing',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppOutreachAgentsRoute = AppOutreachAgentsRouteImport.update({
+  id: '/outreach/agents',
+  path: '/outreach/agents',
   getParentRoute: () => AppRoute,
 } as any)
 const AppOutreachVoiceScriptsIndexRoute =
@@ -358,6 +364,7 @@ const AppOutreachEnterpriseIdContactIdxRoute =
 
 export interface FileRoutesByFullPath {
   '/': typeof AppIndexRoute
+  '/outreach/agents': typeof AppOutreachAgentsRoute
   '/outreach/billing': typeof AppOutreachBillingRoute
   '/outreach/billing-empty': typeof AppOutreachBillingEmptyRoute
   '/outreach/bills': typeof AppOutreachBillsRoute
@@ -412,6 +419,7 @@ export interface FileRoutesByFullPath {
 }
 export interface FileRoutesByTo {
   '/': typeof AppIndexRoute
+  '/outreach/agents': typeof AppOutreachAgentsRoute
   '/outreach/billing': typeof AppOutreachBillingRoute
   '/outreach/billing-empty': typeof AppOutreachBillingEmptyRoute
   '/outreach/bills': typeof AppOutreachBillsRoute
@@ -464,6 +472,7 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/_app': typeof AppRouteWithChildren
   '/_app/': typeof AppIndexRoute
+  '/_app/outreach/agents': typeof AppOutreachAgentsRoute
   '/_app/outreach/billing': typeof AppOutreachBillingRoute
   '/_app/outreach/billing-empty': typeof AppOutreachBillingEmptyRoute
   '/_app/outreach/bills': typeof AppOutreachBillsRoute
@@ -520,6 +529,7 @@ export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
+    | '/outreach/agents'
     | '/outreach/billing'
     | '/outreach/billing-empty'
     | '/outreach/bills'
@@ -574,6 +584,7 @@ export interface FileRouteTypes {
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
+    | '/outreach/agents'
     | '/outreach/billing'
     | '/outreach/billing-empty'
     | '/outreach/bills'
@@ -625,6 +636,7 @@ export interface FileRouteTypes {
     | '__root__'
     | '/_app'
     | '/_app/'
+    | '/_app/outreach/agents'
     | '/_app/outreach/billing'
     | '/_app/outreach/billing-empty'
     | '/_app/outreach/bills'
@@ -857,6 +869,13 @@ declare module '@tanstack/react-router' {
       path: '/outreach/billing'
       fullPath: '/outreach/billing'
       preLoaderRoute: typeof AppOutreachBillingRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/outreach/agents': {
+      id: '/_app/outreach/agents'
+      path: '/outreach/agents'
+      fullPath: '/outreach/agents'
+      preLoaderRoute: typeof AppOutreachAgentsRouteImport
       parentRoute: typeof AppRoute
     }
     '/_app/outreach/voice-scripts/': {
@@ -1132,6 +1151,7 @@ const AppOutreachSocialReachRouteWithChildren =
 
 interface AppRouteChildren {
   AppIndexRoute: typeof AppIndexRoute
+  AppOutreachAgentsRoute: typeof AppOutreachAgentsRoute
   AppOutreachBillingRoute: typeof AppOutreachBillingRoute
   AppOutreachBillingEmptyRoute: typeof AppOutreachBillingEmptyRoute
   AppOutreachBillsRoute: typeof AppOutreachBillsRoute
@@ -1177,6 +1197,7 @@ interface AppRouteChildren {
 
 const AppRouteChildren: AppRouteChildren = {
   AppIndexRoute: AppIndexRoute,
+  AppOutreachAgentsRoute: AppOutreachAgentsRoute,
   AppOutreachBillingRoute: AppOutreachBillingRoute,
   AppOutreachBillingEmptyRoute: AppOutreachBillingEmptyRoute,
   AppOutreachBillsRoute: AppOutreachBillsRoute,
