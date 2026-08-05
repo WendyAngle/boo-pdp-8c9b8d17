@@ -32,6 +32,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { LanguageMultiSelect } from "@/components/LanguageMultiSelect";
 import {
   SCRIPT_LANGUAGES,
   TRANSFER_STRATEGIES,
@@ -229,7 +230,7 @@ function AgentsPage() {
               <Label>可服务语言</Label>
               <LanguageMultiSelect
                 value={form.languages}
-                onChange={(v) => setForm({ ...form, languages: v })}
+                onChange={(v: string[]) => setForm({ ...form, languages: v })}
               />
             </div>
             <div className="grid gap-4 sm:grid-cols-2">
