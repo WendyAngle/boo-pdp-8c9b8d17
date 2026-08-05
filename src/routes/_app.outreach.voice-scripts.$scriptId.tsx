@@ -190,6 +190,15 @@ function ScriptEditorPage() {
           </p>
         </div>
         <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1.5">
+            <span className="text-sm text-muted-foreground whitespace-nowrap">外呼语言</span>
+            <Select value={script.language} onValueChange={(v) => { updateScript(script.id, { language: v }); toast.success("外呼语言已更新"); }}>
+              <SelectTrigger className="w-[130px]"><SelectValue /></SelectTrigger>
+              <SelectContent>
+                {SCRIPT_LANGUAGES.map((l) => <SelectItem key={l.key} value={l.key}>{l.label}</SelectItem>)}
+              </SelectContent>
+            </Select>
+          </div>
           <Button variant="outline" className="gap-1.5" onClick={() => { updateScript(script.id, { status: script.status === "published" ? script.status : "draft" }); toast.success("草稿已保存"); }}>
             <Save className="h-4 w-4" />
             保存草稿
