@@ -84,9 +84,10 @@ function VoiceScriptsPage() {
   const mine = useScripts("tenant");
   const templates = useScripts("platform");
   const [kw, setKw] = useState("");
-  const [industry, setIndustry] = useState("all");
+  const [language, setLanguage] = useState("all");
   const [scene, setScene] = useState<string>("all");
   const [createOpen, setCreateOpen] = useState(false);
+  const [detail, setDetail] = useState<VoiceScript | null>(null);
 
   const filteredMine = useMemo(
     () => mine.filter((s) => (kw ? s.name.includes(kw) : true)),
@@ -98,10 +99,10 @@ function VoiceScriptsPage() {
         (t) =>
           t.status === "published" &&
           (kw ? t.name.toLowerCase().includes(kw.toLowerCase()) : true) &&
-          (industry === "all" ? true : t.industry === industry) &&
+          (language === "all" ? true : t.language === language) &&
           (scene === "all" ? true : t.scene === scene),
       ),
-    [templates, kw, industry, scene],
+    [templates, kw, language, scene],
   );
 
   return (
