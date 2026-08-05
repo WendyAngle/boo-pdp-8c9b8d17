@@ -99,7 +99,7 @@ export function AiVoiceCallDialog({
     setScene("marketing");
     setScript("");
     setConcurrency("20");
-    setDialMode("fixed");
+    setPacing("ramp");
     setStartTime("09:00");
     setEndTime("20:00");
     setMaxRetry("3");
