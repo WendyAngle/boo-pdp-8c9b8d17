@@ -89,6 +89,7 @@ function VoiceScriptsPage() {
   const [language, setLanguage] = useState("all");
   const [scene, setScene] = useState<string>("all");
   const [detail, setDetail] = useState<VoiceScript | null>(null);
+  const [useTpl, setUseTpl] = useState<VoiceScript | null>(null);
 
   const filteredMine = useMemo(
     () => mine.filter((s) => (kw ? s.name.includes(kw) : true)),
@@ -281,13 +282,7 @@ function VoiceScriptsPage() {
                     <Button
                       size="sm"
                       className="gap-1.5"
-                      onClick={() => {
-                        const copy = copyTemplateToMyScripts(t.id);
-                        if (copy) {
-                          toast.success("已复制到「我的话术」");
-                          navigate({ to: "/outreach/voice-scripts/$scriptId", params: { scriptId: copy.id } });
-                        }
-                      }}
+                      onClick={() => setUseTpl(t)}
                     >
                       <Sparkles className="h-3.5 w-3.5" />
                       使用
@@ -304,8 +299,18 @@ function VoiceScriptsPage() {
         template={detail}
         onOpenChange={(v) => !v && setDetail(null)}
         onUse={(id) => {
-          const copy = copyTemplateToMyScripts(id);
+          const t = templates.find((x) => x.id === id) ?? null;
           setDetail(null);
+          setUseTpl(t);
+        }}
+      />
+
+      <UseTemplateDialog
+        template={useTpl}
+        onOpenChange={(v) => !v && setUseTpl(null)}
+        onConfirm={(id, name, language) => {
+          const copy = copyTemplateToMyScripts(id, { name, language });
+          setUseTpl(null);
           if (copy) {
             toast.success("已复制到「我的话术」");
             navigate({ to: "/outreach/voice-scripts/$scriptId", params: { scriptId: copy.id } });
@@ -313,6 +318,68 @@ function VoiceScriptsPage() {
         }}
       />
     </div>
+  );
+}
+
+function UseTemplateDialog({
+  template,
+  onOpenChange,
+  onConfirm,
+}: {
+  template: VoiceScript | null;
+  onOpenChange: (v: boolean) => void;
+  onConfirm: (id: string, name: string, language: string) => void;
+}) {
+  const [name, setName] = useState("");
+  const [language, setLanguage] = useState("zh");
+
+  // 每次打开新模板时重置表单
+  const [lastId, setLastId] = useState<string | null>(null);
+  if (template && template.id !== lastId) {
+    setLastId(template.id);
+    setName(template.name);
+    setLanguage(template.language);
+  }
+
+  if (!template) return null;
+
+  return (
+    <Dialog open onOpenChange={onOpenChange}>
+      <DialogContent className="sm:max-w-md">
+        <DialogHeader>
+          <DialogTitle>使用模板创建话术</DialogTitle>
+          <DialogDescription>
+            将「{template.name}」复制为我的话术，可先设置名称与外呼语言。
+          </DialogDescription>
+        </DialogHeader>
+        <div className="space-y-4 py-1">
+          <div className="space-y-1.5">
+            <Label>话术名称</Label>
+            <Input value={name} onChange={(e) => setName(e.target.value)} placeholder="请输入话术名称" />
+          </div>
+          <div className="space-y-1.5">
+            <Label>外呼语言</Label>
+            <Select value={language} onValueChange={setLanguage}>
+              <SelectTrigger><SelectValue /></SelectTrigger>
+              <SelectContent>
+                {SCRIPT_LANGUAGES.map((l) => (
+                  <SelectItem key={l.key} value={l.key}>{l.label}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <p className="text-xs text-muted-foreground">
+              该语言即 AI 外呼时与客户对话使用的语言；若与模板原语言不同，请在编排页调整各步骤话术文本。
+            </p>
+          </div>
+        </div>
+        <DialogFooter>
+          <Button variant="outline" onClick={() => onOpenChange(false)}>取消</Button>
+          <Button disabled={!name.trim()} onClick={() => onConfirm(template.id, name, language)}>
+            创建并编排
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   );
 }
 
