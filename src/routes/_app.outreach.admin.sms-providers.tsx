@@ -79,7 +79,7 @@ function formatCostOriginal(cost: Provider["cost"]) {
 
 
 function SmsProvidersPage() {
-  const [list, setList] = useState<Provider[]>(SEED);
+  const list = useSmsProviders();
   const [editorOpen, setEditorOpen] = useState(false);
   const [editing, setEditing] = useState<Provider | null>(null);
   const [page, setPage] = useState(1);
@@ -107,30 +107,22 @@ function SmsProvidersPage() {
   }, [list]);
 
   function toggle(id: string) {
-    setList((s) =>
-      s.map((p) => {
-        if (p.id !== id) return p;
-        if (p.health === "down") {
-          toast.error("服务商已触发熔断，无法在此手动启用；请先解决底层问题");
-          return p;
-        }
-        return { ...p, enabled: !p.enabled };
-      }),
-    );
+    const p = list.find((x) => x.id === id);
+    if (!p) return;
+    if (p.health === "down") {
+      toast.error("服务商已触发熔断，无法在此手动启用；请先解决底层问题");
+      return;
+    }
+    patchProvider(id, { enabled: !p.enabled });
     toast.success("已更新服务商启用状态");
   }
 
   /** 熔断重置：进入观察态（paused），路由权重 0、只观测健康度，30 min 后自动恢复评估 */
   function resetToObservation(id: string) {
-    setList((s) =>
-      s.map((p) =>
-        p.id === id
-          ? { ...p, health: "paused", enabled: false, lastCheck: "刚刚" }
-          : p,
-      ),
-    );
+    patchProvider(id, { health: "paused", enabled: false, lastCheck: "刚刚" });
     toast.success("已重置为观察态，30 分钟内不参与路由，稳定后可手动启用");
   }
+
 
   function openCreate() {
     setEditing(null);
