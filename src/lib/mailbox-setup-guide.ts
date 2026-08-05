@@ -99,7 +99,7 @@ export const PROVIDER_GUIDES: Record<MailboxProvider, ProviderGuide> = {
     notes: [
       "普通登录密码无法用于 SMTP，必须使用应用专用密码",
       "未开启两步验证时看不到应用专用密码入口",
-    ],,
+    ],
     imapSteps: [
       "登录 Gmail → 设置（齿轮）→ 查看所有设置",
       "进入「转发和 POP/IMAP」标签页",
@@ -120,7 +120,7 @@ export const PROVIDER_GUIDES: Record<MailboxProvider, ProviderGuide> = {
       "复制应用密码，粘贴到「授权密码」",
     ],
     docHint: "Microsoft 账号 → 安全信息 → 应用密码",
-    notes: ["Microsoft 365 企业版默认关闭 SMTP AUTH，需管理员为该邮箱单独开启"],,
+    notes: ["Microsoft 365 企业版默认关闭 SMTP AUTH，需管理员为该邮箱单独开启"],
     imapSteps: [
       "个人账号：登录 Outlook.com → 设置 → 邮件 → 同步电子邮件，确认已开启 POP/IMAP 访问",
       "企业账号：管理员在 Microsoft 365 管理中心 → 用户 → 邮箱应用中勾选「IMAP」",
@@ -140,7 +140,7 @@ export const PROVIDER_GUIDES: Record<MailboxProvider, ProviderGuide> = {
       "复制专用密码，粘贴到「授权密码」",
     ],
     docHint: "腾讯企业邮 → 设置 → 收发信设置 → 客户端专用密码",
-    notes: ["若管理员开启了「安全登录」，需先在企业管理后台放开客户端登录"],,
+    notes: ["若管理员开启了「安全登录」，需先在企业管理后台放开客户端登录"],
     imapSteps: [
       "登录 exmail.qq.com → 设置 → 收发信设置",
       "确认「IMAP/SMTP 服务」已开启（与发信为同一开关）",
@@ -160,7 +160,7 @@ export const PROVIDER_GUIDES: Record<MailboxProvider, ProviderGuide> = {
       "将密码粘贴到「授权密码」",
     ],
     docHint: "阿里企业邮 → 设置 → 账户与安全 → 客户端设置",
-    notes: ["部分企业限制外网客户端登录，需管理员在安全策略中放行"],,
+    notes: ["部分企业限制外网客户端登录，需管理员在安全策略中放行"],
     imapSteps: [
       "登录 qiye.aliyun.com → 设置 → 账户与安全 → 客户端设置",
       "开启「IMAP 服务」（与 SMTP 为独立开关，需分别确认）",
@@ -179,7 +179,7 @@ export const PROVIDER_GUIDES: Record<MailboxProvider, ProviderGuide> = {
       "复制授权码，粘贴到「授权密码」",
     ],
     docHint: "网易企业邮 → 设置 → 客户端设置 → 授权码",
-    notes: ["网易企业邮 SMTP SSL 端口为 994（部分企业为 465），以后台展示为准"],,
+    notes: ["网易企业邮 SMTP SSL 端口为 994（部分企业为 465），以后台展示为准"],
     imapSteps: [
       "登录 qiye.163.com → 设置 → 客户端设置",
       "开启「IMAP 服务」并确认授权码可用",
@@ -202,7 +202,7 @@ export const PROVIDER_GUIDES: Record<MailboxProvider, ProviderGuide> = {
     notes: [
       "常用端口：465（SSL）、587（STARTTLS）、25（不加密，多数云厂商已封禁）",
       "服务器需允许平台出口 IP 访问，否则测试会超时",
-    ],,
+    ],
     imapSteps: [
       "向企业邮件管理员确认是否提供 IMAP 收信服务",
       "索取 IMAP 服务器地址、端口与加密方式",
