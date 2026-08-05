@@ -89,6 +89,7 @@ function VoiceScriptsPage() {
   const [language, setLanguage] = useState("all");
   const [scene, setScene] = useState<string>("all");
   const [detail, setDetail] = useState<VoiceScript | null>(null);
+  const [useTpl, setUseTpl] = useState<VoiceScript | null>(null);
 
   const filteredMine = useMemo(
     () => mine.filter((s) => (kw ? s.name.includes(kw) : true)),
