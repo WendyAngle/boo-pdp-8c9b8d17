@@ -1214,6 +1214,7 @@ function FilingsPanel({ filings, templates, onEdit }: {
                   )}
                 </div>
                 <div className="mt-1 text-[11px] text-muted-foreground flex items-center gap-3 flex-wrap">
+                  {f.externalId && <span>回执号：<code className="text-[11px]">{f.externalId}</code></span>}
 
                   {f.submittedAt && <span>报备：{f.submittedAt}</span>}
                   {f.approvedAt && <span>通过：{f.approvedAt}</span>}
