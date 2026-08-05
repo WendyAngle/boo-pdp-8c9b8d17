@@ -38,7 +38,7 @@ import { isSuppressed } from "@/lib/suppressions-store";
 import {
   useSmsTemplates,
   toComposeSyntax,
-  getTemplateApprovedRegions,
+  getTemplateDeliverableRegions,
   regionLabel,
 } from "@/lib/sms-templates-store";
 import { FileText, ShieldCheck, ShieldAlert } from "lucide-react";
@@ -928,9 +928,9 @@ function SmsTemplatePicker({
                     {t.locale}
                   </span>
                   <span className="text-[10px] text-muted-foreground">
-                    {getTemplateApprovedRegions(t.id).length > 0
-                      ? getTemplateApprovedRegions(t.id).map(regionLabel).join(" / ")
-                      : "未报备地区"}
+                    {getTemplateDeliverableRegions(t.id).length > 0
+                      ? getTemplateDeliverableRegions(t.id).map(regionLabel).join(" / ")
+                      : "当前无可用通道"}
                   </span>
                 </div>
               </SelectItem>
