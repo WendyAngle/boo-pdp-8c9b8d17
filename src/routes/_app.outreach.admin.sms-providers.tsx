@@ -454,13 +454,47 @@ function ProviderEditor({
           <Field label="厂商" required>
             <Input value={form.vendor} onChange={(e) => set("vendor", e.target.value)} placeholder="Twilio / Vonage / Aliyun" />
           </Field>
-          <Field label="覆盖区域" hint="用逗号分隔，如 US, EU, APAC">
-            <Input
-              value={form.regions.join(", ")}
-              onChange={(e) => set("regions", e.target.value.split(",").map((s) => s.trim()).filter(Boolean))}
-              placeholder="全球"
-            />
+          <Field label="覆盖地区" required hint="与短信模板报备的目标地区口径一致">
+            <div className="flex flex-wrap gap-x-4 gap-y-1.5 rounded-md border p-2 max-h-32 overflow-auto">
+              {FILING_REGIONS.map((r) => (
+                <label key={r.key} className="flex items-center gap-1.5 text-xs">
+                  <Checkbox
+                    checked={form.regions.includes(r.key)}
+                    onCheckedChange={() =>
+                      set(
+                        "regions",
+                        form.regions.includes(r.key)
+                          ? form.regions.filter((x) => x !== r.key)
+                          : [...form.regions, r.key],
+                      )
+                    }
+                  />
+                  {r.label}
+                </label>
+              ))}
+            </div>
           </Field>
+          <Field label="承载报备通道" required hint="决定哪些模板报备可由该服务商发出">
+            <div className="flex flex-wrap gap-x-4 gap-y-1.5 rounded-md border p-2 max-h-32 overflow-auto">
+              {FILING_CHANNELS.map((c) => (
+                <label key={c.key} className="flex items-center gap-1.5 text-xs">
+                  <Checkbox
+                    checked={form.filingChannels.includes(c.key)}
+                    onCheckedChange={() =>
+                      set(
+                        "filingChannels",
+                        form.filingChannels.includes(c.key)
+                          ? form.filingChannels.filter((x) => x !== c.key)
+                          : [...form.filingChannels, c.key],
+                      )
+                    }
+                  />
+                  {c.label}
+                </label>
+              ))}
+            </div>
+          </Field>
+
           <Field label="支持渠道" required>
             <div className="flex items-center gap-4 h-9">
               <label className="flex items-center gap-2 text-sm">
