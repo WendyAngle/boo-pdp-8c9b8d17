@@ -515,13 +515,21 @@ function Field({ label, required, hint, children }: { label: string; required?: 
 }
 
 function makeDraft(editing: Provider | null): Provider {
-  if (editing) return { ...editing, regions: [...editing.regions], channels: [...editing.channels], cost: { ...editing.cost } };
+  if (editing)
+    return {
+      ...editing,
+      regions: [...editing.regions],
+      channels: [...editing.channels],
+      filingChannels: [...editing.filingChannels],
+      cost: { ...editing.cost },
+    };
   return {
     id: `prov-${Date.now().toString(36)}`,
     name: "",
     vendor: "",
-    regions: ["全球"],
+    regions: ["na"],
     channels: ["notification"],
+    filingChannels: ["intl-a2p"],
     enabled: false,
     health: "paused",
     deliveryRate: 0,
@@ -532,6 +540,7 @@ function makeDraft(editing: Provider | null): Provider {
     lastCheck: "刚刚",
   };
 }
+
 
 function RuleCell({ tone, label, rule }: { tone: "ok" | "warn" | "err" | "fatal"; label: string; rule: string }) {
   return (
