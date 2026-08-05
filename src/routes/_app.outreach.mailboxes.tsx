@@ -117,6 +117,13 @@ function statusBadgeCls(s: MailboxStatus) {
   return "bg-muted text-muted-foreground border-border";
 }
 
+function receiveBadgeCls(s: Mailbox["receiveStatus"]) {
+  if (s === "收信正常") return "bg-sky-100 text-sky-700 border-sky-200";
+  if (s === "收信异常") return "bg-rose-100 text-rose-700 border-rose-200";
+  if (s === "未开启收信") return "bg-muted text-muted-foreground border-border";
+  return "bg-amber-100 text-amber-700 border-amber-200";
+}
+
 function formatDateTime(iso?: string) {
   if (!iso) return "—";
   const d = new Date(iso);
@@ -463,6 +470,9 @@ function MailboxCard({
               {m.status}
             </Badge>
             <Badge variant="outline" className="text-[10px]">企业邮箱</Badge>
+            <Badge variant="outline" className={receiveBadgeCls(m.receiveStatus)}>
+              {m.receiveStatus}
+            </Badge>
           </div>
           <div className="text-xs text-muted-foreground mt-0.5 truncate">{m.displayName}</div>
         </div>
@@ -479,6 +489,12 @@ function MailboxCard({
           icon={<MailboxIcon className="h-3.5 w-3.5" />}
           label="SMTP"
           value={m.smtpHost || "—"}
+          mono
+        />
+        <Meta
+          icon={<MailboxIcon className="h-3.5 w-3.5" />}
+          label="IMAP"
+          value={m.receiveEnabled ? m.imapHost || "—" : "未开启"}
           mono
         />
         <Meta
@@ -870,7 +886,7 @@ function MailboxFormDialog({
         <DialogHeader>
           <DialogTitle>{editing ? "编辑邮箱" : "新增企业邮箱"}</DialogTitle>
           <DialogDescription>
-            只需填写「邮箱地址 + {guide.credentialName}」，服务器参数由系统按域名自动识别；完成后建议「保存并测试」验证连通性。
+            只需填写「邮箱地址 + {guide.credentialName}」，发信（SMTP）与收信（IMAP）参数由系统按域名自动识别；完成后建议「保存并测试」分别验证两条通道的连通性。
           </DialogDescription>
         </DialogHeader>
 
@@ -941,8 +957,8 @@ function MailboxFormDialog({
             {/* 第 2 步：自动识别 */}
             <StepBlock
               index={2}
-              title="服务器配置"
-              desc="系统根据邮箱域名自动识别，通常无需修改。"
+              title="服务器配置（发信 / 收信）"
+              desc="系统根据邮箱域名自动识别 SMTP 与 IMAP 参数，通常无需修改。"
               action={
                 <div className="flex items-center gap-2">
                   <Label className="text-[11px] text-muted-foreground">手动调整</Label>
