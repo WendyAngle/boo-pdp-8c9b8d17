@@ -259,6 +259,36 @@ export function getTemplateApprovedRegions(templateId: string): string[] {
   return FILING_REGIONS.filter((r) => set.has(r.key)).map((r) => r.key);
 }
 
+/**
+ * 实际可发地区 = 报备通过的地区 ∩ 当前有可用服务商承载该通道的地区。
+ * 这是用户端选模板时真正生效的范围。
+ */
+export function getTemplateDeliverableRegions(templateId: string): string[] {
+  const set = new Set<string>();
+  filings
+    .filter((f) => f.templateId === templateId && f.status === "approved")
+    .forEach((f) =>
+      (f.regions ?? []).forEach((r) => {
+        if (isChannelRegionServiceable(f.channel, r)) set.add(r);
+      }),
+    );
+  return FILING_REGIONS.filter((r) => set.has(r.key)).map((r) => r.key);
+}
+
+/** 已报备但当前无服务商承载的地区（后台需关注的断链） */
+export function getTemplateBlockedRegions(
+  templateId: string,
+): { channel: FilingChannel; region: string }[] {
+  const out: { channel: FilingChannel; region: string }[] = [];
+  filings
+    .filter((f) => f.templateId === templateId && f.status === "approved")
+    .forEach((f) =>
+      (f.regions ?? []).forEach((r) => {
+        if (!isChannelRegionServiceable(f.channel, r)) out.push({ channel: f.channel, region: r });
+      }),
+    );
+  return out;
+}
 
 
 /** 登记 / 更新一条渠道报备 */
