@@ -129,22 +129,6 @@ const HS_POOL: string[] = (() => {
   return codes;
 })();
 
-const BILL_DESCS = [
-  "POLYESTER CURTAIN FABRIC 100% POLY",
-  "FROZEN BLACKBERRIES IQF 10KG BULK",
-  "STAINLESS STEEL KITCHEN SINK 304",
-  "LED COB DOWNLIGHT 12W WARM WHITE",
-  "PORTLAND CEMENT GREY TYPE I 50KG",
-  "CNC PRECISION MACHINED ALUMINUM PART",
-];
-const PORTS_FROM = ["SHANGHAI", "NINGBO", "YANTIAN", "QINGDAO", "GENOA", "HAMBURG"];
-const PORTS_TO = [
-  "LOS ANGELES, CA",
-  "LONG BEACH, CA",
-  "NEW YORK/NEWARK, NJ",
-  "HOUSTON, TX",
-  "SAVANNAH, GA",
-];
 
 function genFootprints(): FootprintItem[] {
   const items: FootprintItem[] = [];
