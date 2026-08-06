@@ -1092,7 +1092,9 @@ function ThreadDetail({
           ? `Re: ${thread.messages[0].subject.replace(/^Re:\s*/i, "")}`
           : undefined,
         aiGenerated: aiGen,
+        contentZh: needsTranslation ? reply.trim() : undefined,
       });
+
       setReply("");
       setSelectedTpl("");
       setTranslated("");
