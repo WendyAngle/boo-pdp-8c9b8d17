@@ -400,7 +400,6 @@ function FootprintsPage() {
     { key: "enterprise", label: "企业", icon: Building2 },
     { key: "contact", label: "人物", icon: UserRound },
     { key: "product", label: "商品", icon: Package },
-    { key: "bill", label: "提单", icon: FileText },
   ];
 
   return (
