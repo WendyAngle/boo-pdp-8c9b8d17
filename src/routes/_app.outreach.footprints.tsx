@@ -296,7 +296,6 @@ function FootprintsPage() {
       enterprise: 0,
       contact: 0,
       product: 0,
-      bill: 0,
     };
     for (const it of visible) {
       if (date && !it.viewedAt.startsWith(formatDateKey(date))) continue;
