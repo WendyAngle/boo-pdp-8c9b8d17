@@ -215,6 +215,8 @@ function runtimeDedupeKey(f: FootprintItem | RuntimeFootprint): string {
       return `C:${f.enterpriseId}:${f.contactIdx}`;
     case "product":
       return `P:${f.hs}`;
+    default:
+      return f.id;
   }
 }
 
