@@ -1307,8 +1307,10 @@ export function sendReply(input: {
     subject: input.subject,
     content: input.content,
     aiGenerated: input.aiGenerated,
+    contentZhOutbound: input.contentZh,
     events: [{ type: "delivered", at: now }],
   });
+
   m.status = "waiting_reply";
   m.unread = 0;
   m.updatedAt = now;
