@@ -5,7 +5,7 @@ import {
   Footprints,
   Building2,
   Package,
-  FileText,
+  
   Sparkles,
   MousePointerClick,
   Calendar as CalendarIcon,
