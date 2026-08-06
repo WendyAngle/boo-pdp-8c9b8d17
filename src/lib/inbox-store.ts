@@ -884,7 +884,9 @@ function getDemoSocialStatusThreads(): Thread[] {
           fromName: "你",
           fromAddress: "CloudBeauty_Official",
           content: "Baik, saya akan uruskan sebentar lagi—harap tunggu sekejap ya.",
+          contentZhOutbound: "好的，我马上为您处理——请稍等一下。",
           events: [{ type: "sending", at: new Date(now.getTime() - 5 * 60_000).toISOString() }],
+
         }
       ],
       meta: {
