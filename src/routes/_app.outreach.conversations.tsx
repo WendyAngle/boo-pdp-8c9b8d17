@@ -1412,8 +1412,17 @@ function ThreadDetail({
                   ))}
                 </div>
               )}
-              <div className="mt-2 rounded-md border bg-card p-3 text-sm whitespace-pre-wrap leading-relaxed">
+              <div className={cn(
+                "mt-2 rounded-md border bg-card p-3 text-sm whitespace-pre-wrap leading-relaxed relative",
+                m.direction === "outbound" && m.events?.some(e => e.type === 'sending') && "opacity-70",
+                m.direction === "outbound" && m.events?.some(e => e.type === 'failed') && "border-rose-200 bg-rose-50/30"
+              )}>
                 {m.content}
+                {m.direction === "outbound" && m.events?.some(e => e.type === 'sending') && (
+                  <div className="absolute right-2 bottom-2">
+                    <Loader2 className="h-4 w-4 text-primary animate-spin" />
+                  </div>
+                )}
               </div>
               {m.direction === "inbound" && m.contentZh && (
                 <div className="mt-1.5 rounded-md border border-dashed border-sky-200 bg-sky-50/60 p-3 text-sm whitespace-pre-wrap leading-relaxed text-sky-900">
