@@ -1384,6 +1384,30 @@ function ThreadDetail({
                           已点击
                         </>
                       )}
+                      {ev.type === "sending" && (
+                        <>
+                          <Loader2 className="h-3 w-3 text-primary animate-spin" />
+                          发送中
+                        </>
+                      )}
+                      {ev.type === "failed" && (
+                        <>
+                          <RefreshCw className="h-3 w-3 text-rose-500" />
+                          <span className="text-rose-600">发送失败</span>
+                          {ev.failReason && (
+                            <span className="opacity-70"> · {ev.failReason}</span>
+                          )}
+                          <button 
+                            className="ml-1 text-primary hover:underline font-medium"
+                            onClick={(e) => {
+                              e.preventDefault();
+                              toast.info("功能演示：正在重新发送...");
+                            }}
+                          >
+                            重试
+                          </button>
+                        </>
+                      )}
                     </span>
                   ))}
                 </div>

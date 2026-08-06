@@ -832,7 +832,7 @@ function buildThreads(entries: LedgerEntry[]): Thread[] {
 
 /* -------------------- 社媒演示数据（含发送状态 mock） -------------------- */
 
-function getDemoSocialThreads(): Thread[] {
+function getDemoSocialStatusThreads(): Thread[] {
   // 生成一些含有「发送中」、「发送失败」状态的社媒会话
   const now = new Date();
   const demoThreads: Thread[] = [
@@ -1021,7 +1021,7 @@ export function useThreads(): Thread[] {
   useMetaVersion();
   const entries = useLedger();
   const tasks = useProspectingTasks();
-  const all = [...buildThreads(entries), ...getDemoSocialThreads()];
+  const all = [...buildThreads(entries), ...getDemoSocialThreads(), ...getDemoSocialStatusThreads()];
   // 询盘与回复模块只呈现"已有客户回复"的会话——即包含至少一条 inbound 消息。
   // 仅发出、尚未收到回复的触达在「触达」模块跟进，不进入询盘视图。
   const withReply = all.filter((t) => t.meta.inboundMessages.length > 0);
@@ -1034,7 +1034,7 @@ export function useThread(id: string): Thread | undefined {
 }
 
 export function getThreadsSnapshot(): Thread[] {
-  const all = [...buildThreads(getAllLedger()), ...getDemoSocialThreads()];
+  const all = [...buildThreads(getAllLedger()), ...getDemoSocialThreads(), ...getDemoSocialStatusThreads()];
   return sortByUrgency([
     ...all.filter((t) => t.meta.inboundMessages.length > 0),
     ...buildFriendThreads(getProspectingTasksSnapshot()),
