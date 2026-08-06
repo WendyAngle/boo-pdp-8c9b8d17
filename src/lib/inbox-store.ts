@@ -168,7 +168,7 @@ export interface ThreadMessage {
   /** outbound 关联的 ledger id */
   ledgerId?: string;
   /** outbound 送达事件（模拟） */
-  events?: Array<{ type: "delivered" | "opened" | "clicked"; at: string }>;
+  events?: Array<{ type: "delivered" | "opened" | "clicked" | "sending" | "failed"; at: string; failReason?: string }>;
 }
 
 /** 会话的持久化元数据 */
