@@ -5,7 +5,7 @@ import {
   Footprints,
   Building2,
   Package,
-  FileText,
+  
   Sparkles,
   MousePointerClick,
   Calendar as CalendarIcon,
@@ -66,12 +66,12 @@ function FootprintsEmptyDemo() {
             还没有浏览足迹
           </h2>
           <p className="mt-2 text-sm text-muted-foreground max-w-md">
-            浏览过的企业、商品与提单详情会自动归集在这里，按日期分组沉淀为可回溯的访问轨迹。
+            浏览过的企业与商品详情会自动归集在这里，按日期分组沉淀为可回溯的访问轨迹。
             <br />
             点击下方任一入口，开启你的第一段浏览旅程。
           </p>
 
-          <div className="mt-8 grid grid-cols-1 sm:grid-cols-3 gap-3 w-full max-w-2xl">
+          <div className="mt-8 grid grid-cols-1 sm:grid-cols-2 gap-3 w-full max-w-xl">
             <EmptyEntry
               to="/outreach/enterprise"
               icon={Building2}
@@ -87,14 +87,6 @@ function FootprintsEmptyDemo() {
               desc="按 HS6 浏览商品分类、走势与买卖双方"
               tone="text-amber-600"
               toneBg="bg-amber-500/10"
-            />
-            <EmptyEntry
-              to="/outreach/bills"
-              icon={FileText}
-              label="提单"
-              desc="查询具体提单与对应贸易明细"
-              tone="text-emerald-600"
-              toneBg="bg-emerald-500/10"
             />
           </div>
 
@@ -159,9 +151,6 @@ function EmptyIllustration() {
       </div>
       <div className="absolute bottom-1 -left-1 h-7 w-7 rounded-lg bg-background shadow border flex items-center justify-center text-amber-600">
         <Package className="h-3.5 w-3.5" />
-      </div>
-      <div className="absolute bottom-4 -right-2 h-7 w-7 rounded-lg bg-background shadow border flex items-center justify-center text-emerald-600">
-        <FileText className="h-3.5 w-3.5" />
       </div>
     </div>
   );

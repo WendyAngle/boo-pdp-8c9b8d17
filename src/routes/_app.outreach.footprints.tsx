@@ -6,7 +6,7 @@ import {
   Calendar as CalendarIcon,
   Building2,
   Package,
-  FileText,
+  
   X,
   Clock,
   MapPin,
@@ -79,7 +79,7 @@ export const Route = createFileRoute("/_app/outreach/footprints")({
   component: FootprintsPage,
 });
 
-type FootprintModule = "enterprise" | "contact" | "product" | "bill";
+type FootprintModule = "enterprise" | "contact" | "product";
 
 interface FootprintItem {
   id: string;
@@ -129,22 +129,6 @@ const HS_POOL: string[] = (() => {
   return codes;
 })();
 
-const BILL_DESCS = [
-  "POLYESTER CURTAIN FABRIC 100% POLY",
-  "FROZEN BLACKBERRIES IQF 10KG BULK",
-  "STAINLESS STEEL KITCHEN SINK 304",
-  "LED COB DOWNLIGHT 12W WARM WHITE",
-  "PORTLAND CEMENT GREY TYPE I 50KG",
-  "CNC PRECISION MACHINED ALUMINUM PART",
-];
-const PORTS_FROM = ["SHANGHAI", "NINGBO", "YANTIAN", "QINGDAO", "GENOA", "HAMBURG"];
-const PORTS_TO = [
-  "LOS ANGELES, CA",
-  "LONG BEACH, CA",
-  "NEW YORK/NEWARK, NJ",
-  "HOUSTON, TX",
-  "SAVANNAH, GA",
-];
 
 function genFootprints(): FootprintItem[] {
   const items: FootprintItem[] = [];
@@ -157,18 +141,16 @@ function genFootprints(): FootprintItem[] {
     const day = String(date.getDate()).padStart(2, "0");
     const dateStr = `${y}-${m}-${day}`;
     const seed = h(dateStr);
-    const count = 2 + (seed % 4);
+    const count = 2 + (seed % 3);
     for (let i = 0; i < count; i++) {
       const s = h(`${dateStr}-${i}`);
-      const moduleIdx = s % 4;
+      const moduleIdx = s % 3;
       const moduleKey: FootprintModule =
         moduleIdx === 0
           ? "enterprise"
           : moduleIdx === 1
             ? "contact"
-            : moduleIdx === 2
-              ? "product"
-              : "bill";
+            : "product";
       const hh = String(8 + ((s >> 3) % 12)).padStart(2, "0");
       const mm = String((s >> 5) % 60).padStart(2, "0");
       const ss = String((s >> 7) % 60).padStart(2, "0");
@@ -217,22 +199,6 @@ function genFootprints(): FootprintItem[] {
           productEn: lk?.l4.en,
           productCategory: lk ? `${lk.l1.name} / ${lk.l2.name}` : undefined,
         });
-      } else {
-        const exp = ENTERPRISES[s % ENTERPRISES.length];
-        const imp = ENTERPRISES[(s >> 4) % ENTERPRISES.length];
-        items.push({
-          id: `f-${dateStr}-${i}`,
-          module: moduleKey,
-          viewedAt,
-          billNo: `BL${(10000000 + (s % 90000000)).toString()}`,
-          billDate: dateStr,
-          exporter: exp.name,
-          importer: imp.name,
-          fromPort: PORTS_FROM[s % PORTS_FROM.length],
-          toPort: PORTS_TO[(s >> 2) % PORTS_TO.length],
-          desc: BILL_DESCS[s % BILL_DESCS.length],
-          hs: HS_POOL[(s >> 6) % HS_POOL.length],
-        });
       }
     }
   }
@@ -249,8 +215,8 @@ function runtimeDedupeKey(f: FootprintItem | RuntimeFootprint): string {
       return `C:${f.enterpriseId}:${f.contactIdx}`;
     case "product":
       return `P:${f.hs}`;
-    case "bill":
-      return `B:${f.billNo}`;
+    default:
+      return f.id;
   }
 }
 
@@ -330,7 +296,6 @@ function FootprintsPage() {
       enterprise: 0,
       contact: 0,
       product: 0,
-      bill: 0,
     };
     for (const it of visible) {
       if (date && !it.viewedAt.startsWith(formatDateKey(date))) continue;
@@ -359,9 +324,9 @@ function FootprintsPage() {
   }, [visible]);
 
   const modDist = useMemo(() => {
-    const c = { enterprise: 0, contact: 0, product: 0, bill: 0 };
+    const c = { enterprise: 0, contact: 0, product: 0 };
     for (const it of visible) c[it.module]++;
-    const total = c.enterprise + c.contact + c.product + c.bill || 1;
+    const total = c.enterprise + c.contact + c.product || 1;
     return { ...c, total };
   }, [visible]);
 
@@ -435,7 +400,6 @@ function FootprintsPage() {
     { key: "enterprise", label: "企业", icon: Building2 },
     { key: "contact", label: "人物", icon: UserRound },
     { key: "product", label: "商品", icon: Package },
-    { key: "bill", label: "提单", icon: FileText },
   ];
 
   return (
@@ -858,24 +822,6 @@ function buildFavorite(
       },
     };
   }
-  if (item.module === "bill" && item.billNo) {
-    return {
-      kind: "bill",
-      refId: item.billNo,
-      payload: {
-        title: `提单 ${item.billNo}`,
-        subtitle: `${item.exporter ?? ""} → ${item.importer ?? ""}`,
-        meta: {
-          ...(item.exporter ? { exporter: item.exporter } : {}),
-          ...(item.importer ? { importer: item.importer } : {}),
-          ...(item.fromPort ? { fromPort: item.fromPort } : {}),
-          ...(item.toPort ? { toPort: item.toPort } : {}),
-          ...(item.hs ? { hs: item.hs } : {}),
-          ...(item.billDate ? { date: item.billDate } : {}),
-        },
-      },
-    };
-  }
   return null;
 }
 
@@ -1014,9 +960,7 @@ function FootprintCard({
           {inner}
         </Link>
       ) : (
-        <Link to="/outreach/bills" className="block">
-          {inner}
-        </Link>
+        <div className="block">{inner}</div>
       )}
     </div>
   );
@@ -1153,44 +1097,7 @@ function renderCardInner(item: FootprintItem) {
     );
   }
 
-  return (
-    <Card className="p-4 h-full hover:shadow-md hover:border-primary/40 transition-all">
-      <div className="flex items-start gap-3">
-        <div className="h-10 w-10 rounded-lg bg-emerald-500/10 text-emerald-600 flex items-center justify-center shrink-0">
-          <FileText className="h-5 w-5" />
-        </div>
-        <div className="flex-1 min-w-0">
-          <div className="flex items-center gap-2 mb-1 flex-wrap pr-16">
-            <Badge
-              variant="outline"
-              className="text-[10px] px-1.5 py-0 h-4 text-emerald-600 border-emerald-300"
-            >
-              提单
-            </Badge>
-            <span className="text-[11px] text-muted-foreground font-mono">{item.billNo}</span>
-            <span className="text-[11px] text-muted-foreground flex items-center gap-1">
-              <Clock className="h-3 w-3" />
-              {formatTime(item.viewedAt)}
-            </span>
-          </div>
-          <div className="font-medium text-sm truncate group-hover:text-primary">
-            {item.desc}
-          </div>
-          <div className="text-xs text-muted-foreground mt-1 truncate">
-            <span className="text-foreground/80">{item.exporter}</span>
-            <ArrowRight className="inline h-3 w-3 mx-1" />
-            <span className="text-foreground/80">{item.importer}</span>
-          </div>
-          <div className="text-[11px] text-muted-foreground mt-1 flex items-center gap-1 font-mono">
-            <MapPin className="h-3 w-3" />
-            {item.fromPort}
-            <ArrowRight className="h-3 w-3" />
-            {item.toPort}
-          </div>
-        </div>
-      </div>
-    </Card>
-  );
+  return null;
 }
 
 /* ---------------- Insights Strip ---------------- */
@@ -1201,7 +1108,7 @@ interface InsightsProps {
     enterprise: number;
     contact: number;
     product: number;
-    bill: number;
+    
     total: number;
   };
   topEnterprises: { id: string; name: string; country?: string; count: number }[];
@@ -1237,7 +1144,6 @@ function InsightsStrip({ trend, modDist, topEnterprises }: InsightsProps) {
     { key: "enterprise", label: "企业", cls: "bg-primary" },
     { key: "contact", label: "人物", cls: "bg-violet-500" },
     { key: "product", label: "商品", cls: "bg-amber-500" },
-    { key: "bill", label: "提单", cls: "bg-emerald-500" },
   ];
 
   return (
