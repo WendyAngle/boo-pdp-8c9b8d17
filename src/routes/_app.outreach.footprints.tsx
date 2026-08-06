@@ -141,18 +141,16 @@ function genFootprints(): FootprintItem[] {
     const day = String(date.getDate()).padStart(2, "0");
     const dateStr = `${y}-${m}-${day}`;
     const seed = h(dateStr);
-    const count = 2 + (seed % 4);
+    const count = 2 + (seed % 3);
     for (let i = 0; i < count; i++) {
       const s = h(`${dateStr}-${i}`);
-      const moduleIdx = s % 4;
+      const moduleIdx = s % 3;
       const moduleKey: FootprintModule =
         moduleIdx === 0
           ? "enterprise"
           : moduleIdx === 1
             ? "contact"
-            : moduleIdx === 2
-              ? "product"
-              : "bill";
+            : "product";
       const hh = String(8 + ((s >> 3) % 12)).padStart(2, "0");
       const mm = String((s >> 5) % 60).padStart(2, "0");
       const ss = String((s >> 7) % 60).padStart(2, "0");
@@ -200,22 +198,6 @@ function genFootprints(): FootprintItem[] {
           productName: lk?.l4.name ?? hs,
           productEn: lk?.l4.en,
           productCategory: lk ? `${lk.l1.name} / ${lk.l2.name}` : undefined,
-        });
-      } else {
-        const exp = ENTERPRISES[s % ENTERPRISES.length];
-        const imp = ENTERPRISES[(s >> 4) % ENTERPRISES.length];
-        items.push({
-          id: `f-${dateStr}-${i}`,
-          module: moduleKey,
-          viewedAt,
-          billNo: `BL${(10000000 + (s % 90000000)).toString()}`,
-          billDate: dateStr,
-          exporter: exp.name,
-          importer: imp.name,
-          fromPort: PORTS_FROM[s % PORTS_FROM.length],
-          toPort: PORTS_TO[(s >> 2) % PORTS_TO.length],
-          desc: BILL_DESCS[s % BILL_DESCS.length],
-          hs: HS_POOL[(s >> 6) % HS_POOL.length],
         });
       }
     }
