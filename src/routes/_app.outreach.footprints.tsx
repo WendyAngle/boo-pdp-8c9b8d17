@@ -1202,7 +1202,6 @@ function InsightsStrip({ trend, modDist, topEnterprises }: InsightsProps) {
     { key: "enterprise", label: "企业", cls: "bg-primary" },
     { key: "contact", label: "人物", cls: "bg-violet-500" },
     { key: "product", label: "商品", cls: "bg-amber-500" },
-    { key: "bill", label: "提单", cls: "bg-emerald-500" },
   ];
 
   return (
