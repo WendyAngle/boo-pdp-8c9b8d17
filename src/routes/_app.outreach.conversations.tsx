@@ -1092,7 +1092,9 @@ function ThreadDetail({
           ? `Re: ${thread.messages[0].subject.replace(/^Re:\s*/i, "")}`
           : undefined,
         aiGenerated: aiGen,
+        contentZh: needsTranslation ? reply.trim() : undefined,
       });
+
       setReply("");
       setSelectedTpl("");
       setTranslated("");
@@ -1373,6 +1375,17 @@ function ThreadDetail({
                               {m.content}
                             </div>
                             
+                            {/* 译文展示 (发出的非中文内容增加中文译文) */}
+                            {isOutbound && m.contentZhOutbound && (
+                              <div className="mt-2 pt-2 border-t border-primary-foreground/20 text-[13px] opacity-90 italic">
+                                <div className="mb-0.5 text-[9px] font-medium flex items-center gap-1">
+                                  <Languages className="h-2.5 w-2.5" />
+                                  中文对照
+                                </div>
+                                {m.contentZhOutbound}
+                              </div>
+                            )}
+
                             {/* 状态图标 */}
                             {isOutbound && (
                               <div className="mt-1 flex justify-end items-center gap-1">
@@ -1386,6 +1399,7 @@ function ThreadDetail({
                                 )}
                               </div>
                             )}
+
 
                             {/* 操作菜单/翻译 */}
                             {!isOutbound && (
@@ -1556,6 +1570,15 @@ function ThreadDetail({
                     </div>
                   )}
                 </div>
+                {m.direction === "outbound" && m.contentZhOutbound && (
+                  <div className="mt-1.5 rounded-md border border-dashed border-primary/20 bg-primary/5 p-3 text-sm whitespace-pre-wrap leading-relaxed text-primary/80">
+                    <div className="mb-1 text-[11px] font-medium text-primary/70 inline-flex items-center gap-1">
+                      <Languages className="h-3 w-3" />
+                      中文对照（发送内容译文）
+                    </div>
+                    {m.contentZhOutbound}
+                  </div>
+                )}
                 {m.direction === "inbound" && m.contentZh && (
                   <div className="mt-1.5 rounded-md border border-dashed border-sky-200 bg-sky-50/60 p-3 text-sm whitespace-pre-wrap leading-relaxed text-sky-900">
                     <div className="mb-1 text-[11px] font-medium text-sky-700 inline-flex items-center gap-1">
@@ -1565,6 +1588,7 @@ function ThreadDetail({
                     {m.contentZh}
                   </div>
                 )}
+
               </div>
             </div>
           ));

@@ -165,6 +165,9 @@ export interface ThreadMessage {
   aiGenerated?: boolean;
   /** 对方回复的中文译文（仅 inbound 且原文非中文时提供） */
   contentZh?: string;
+  /** 我方发送的中文译文（仅 outbound 且原文非中文时提供，供内部对照） */
+  contentZhOutbound?: string;
+
   /** outbound 关联的 ledger id */
   ledgerId?: string;
   /** outbound 送达事件（模拟） */
@@ -804,7 +807,9 @@ function buildThreads(entries: LedgerEntry[]): Thread[] {
       content: r.content || "(此邮件无正文快照)",
       aiGenerated: r.aiGenerated,
       ledgerId: r.id,
+      contentZhOutbound: r.content && !isChinese(r.content) ? "（演示数据：此处展示该非中文触达内容的中文译文对照）" : undefined,
       events,
+
     });
     if (r.senderEmail && !t.senderEmail) t.senderEmail = r.senderEmail;
   }
@@ -861,7 +866,9 @@ function getDemoSocialStatusThreads(): Thread[] {
           fromName: "你",
           fromAddress: "CloudBeauty_Official",
           content: "Ada, saiz M ready stock. Nak saya tolong order?",
+          contentZhOutbound: "有的，M码有现货。需要我帮您下单吗？",
           events: [{ type: "delivered", at: new Date(now.getTime() - 1.4 * 3600_000).toISOString() }],
+
         },
         {
           id: "m_fb_3",
@@ -879,7 +886,9 @@ function getDemoSocialStatusThreads(): Thread[] {
           fromName: "你",
           fromAddress: "CloudBeauty_Official",
           content: "Baik, saya akan uruskan sebentar lagi—harap tunggu sekejap ya.",
+          contentZhOutbound: "好的，我马上为您处理——请稍等一下。",
           events: [{ type: "sending", at: new Date(now.getTime() - 5 * 60_000).toISOString() }],
+
         }
       ],
       meta: {
@@ -1289,7 +1298,9 @@ export function sendReply(input: {
   fromName?: string;
   subject?: string;
   aiGenerated?: boolean;
+  contentZh?: string;
 }) {
+
   const m = metaStore[input.threadId];
   if (!m) return;
   const now = new Date().toISOString();
@@ -1302,8 +1313,10 @@ export function sendReply(input: {
     subject: input.subject,
     content: input.content,
     aiGenerated: input.aiGenerated,
+    contentZhOutbound: input.contentZh,
     events: [{ type: "delivered", at: now }],
   });
+
   m.status = "waiting_reply";
   m.unread = 0;
   m.updatedAt = now;
