@@ -66,12 +66,12 @@ function FootprintsEmptyDemo() {
             还没有浏览足迹
           </h2>
           <p className="mt-2 text-sm text-muted-foreground max-w-md">
-            浏览过的企业、商品与提单详情会自动归集在这里，按日期分组沉淀为可回溯的访问轨迹。
+            浏览过的企业与商品详情会自动归集在这里，按日期分组沉淀为可回溯的访问轨迹。
             <br />
             点击下方任一入口，开启你的第一段浏览旅程。
           </p>
 
-          <div className="mt-8 grid grid-cols-1 sm:grid-cols-3 gap-3 w-full max-w-2xl">
+          <div className="mt-8 grid grid-cols-1 sm:grid-cols-2 gap-3 w-full max-w-xl">
             <EmptyEntry
               to="/outreach/enterprise"
               icon={Building2}
