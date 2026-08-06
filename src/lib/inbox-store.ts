@@ -168,7 +168,7 @@ export interface ThreadMessage {
   /** outbound 关联的 ledger id */
   ledgerId?: string;
   /** outbound 送达事件（模拟） */
-  events?: Array<{ type: "delivered" | "opened" | "clicked"; at: string }>;
+  events?: Array<{ type: "delivered" | "opened" | "clicked" | "sending" | "failed"; at: string; failReason?: string }>;
 }
 
 /** 会话的持久化元数据 */
@@ -830,6 +830,145 @@ function buildThreads(entries: LedgerEntry[]): Thread[] {
   return Array.from(map.values()).sort((a, b) => b.lastAt.localeCompare(a.lastAt));
 }
 
+/* -------------------- 社媒演示数据（含发送状态 mock） -------------------- */
+
+function getDemoSocialStatusThreads(): Thread[] {
+  // 生成一些含有「发送中」、「发送失败」状态的社媒会话
+  const now = new Date();
+  const demoThreads: Thread[] = [
+    {
+      id: "demo:social:fb:sending",
+      targetKind: "contact",
+      targetId: "demo-target-fb-1",
+      targetName: "Aidil Rahman",
+      channel: "facebook",
+      counterpartyAddress: "@aidil_r",
+      senderEmail: "CloudBeauty_Official",
+      messages: [
+        {
+          id: "m_fb_1",
+          direction: "inbound",
+          createdAt: new Date(now.getTime() - 2 * 3600_000).toISOString(),
+          fromName: "Aidil Rahman",
+          fromAddress: "@aidil_r",
+          content: "Hai, boleh saya tahu masa penghantaran ke KL?",
+          contentZh: "你好，请问寄到吉隆坡要多久？",
+        },
+        {
+          id: "m_fb_2",
+          direction: "outbound",
+          createdAt: new Date(now.getTime() - 1.5 * 3600_000).toISOString(),
+          fromName: "你",
+          fromAddress: "CloudBeauty_Official",
+          content: "Ada, saiz M ready stock. Nak saya tolong order?",
+          events: [{ type: "delivered", at: new Date(now.getTime() - 1.4 * 3600_000).toISOString() }],
+        },
+        {
+          id: "m_fb_3",
+          direction: "inbound",
+          createdAt: new Date(now.getTime() - 1 * 3600_000).toISOString(),
+          fromName: "Aidil Rahman",
+          fromAddress: "@aidil_r",
+          content: "Ok, boleh share size chart?",
+          contentZh: "好的，能发下尺码表吗？",
+        },
+        {
+          id: "m_fb_4",
+          direction: "outbound",
+          createdAt: new Date(now.getTime() - 5 * 60_000).toISOString(),
+          fromName: "你",
+          fromAddress: "CloudBeauty_Official",
+          content: "Baik, saya akan uruskan sebentar lagi—harap tunggu sekejap ya.",
+          events: [{ type: "sending", at: new Date(now.getTime() - 5 * 60_000).toISOString() }],
+        }
+      ],
+      meta: {
+        threadId: "demo:social:fb:sending",
+        status: "pending",
+        tags: ["发送状态演示"],
+        unread: 0,
+        extraMessages: [],
+        inboundMessages: [], // 此处简化，buildThreads 会合并
+        tasks: [],
+        createdAt: new Date(now.getTime() - 2 * 3600_000).toISOString(),
+        updatedAt: now.toISOString(),
+      },
+      lastAt: now.toISOString(),
+      lastPreview: "Baik, saya akan uruskan sebentar lagi—harap tunggu sekejap ya.",
+      lastDirection: "outbound",
+    },
+    {
+      id: "demo:social:tt:failed",
+      targetKind: "contact",
+      targetId: "demo-target-tt-1",
+      targetName: "李婷婷",
+      channel: "tiktok",
+      counterpartyAddress: "@liting",
+      senderEmail: "CloudBeauty_Official",
+      messages: [
+        {
+          id: "m_tt_1",
+          direction: "inbound",
+          createdAt: new Date(now.getTime() - 24 * 3600_000).toISOString(),
+          fromName: "李婷婷",
+          fromAddress: "@liting",
+          content: "你好呀，认识一下~",
+        },
+        {
+          id: "m_tt_2",
+          direction: "outbound",
+          createdAt: new Date(now.getTime() - 23 * 3600_000).toISOString(),
+          fromName: "你",
+          fromAddress: "CloudBeauty_Official",
+          content: "你好，感谢关注~",
+          events: [{ type: "delivered", at: new Date(now.getTime() - 22.9 * 3600_000).toISOString() }],
+        },
+        {
+          id: "m_tt_3",
+          direction: "inbound",
+          createdAt: new Date(now.getTime() - 22 * 3600_000).toISOString(),
+          fromName: "李婷婷",
+          fromAddress: "@liting",
+          content: "好的，麻烦发下尺码表~",
+        },
+        {
+          id: "m_tt_4",
+          direction: "outbound",
+          createdAt: new Date(now.getTime() - 10 * 60_000).toISOString(),
+          fromName: "你",
+          fromAddress: "CloudBeauty_Official",
+          content: "感谢您的耐心等待，正在为您核实中。",
+          events: [{ 
+            type: "failed", 
+            at: new Date(now.getTime() - 9 * 60_000).toISOString(),
+            failReason: "网络连接超时，请重试"
+          }],
+        }
+      ],
+      meta: {
+        threadId: "demo:social:tt:failed",
+        status: "pending",
+        tags: ["发送失败示例"],
+        unread: 0,
+        extraMessages: [],
+        inboundMessages: [],
+        tasks: [],
+        createdAt: new Date(now.getTime() - 24 * 3600_000).toISOString(),
+        updatedAt: now.toISOString(),
+      },
+      lastAt: now.toISOString(),
+      lastPreview: "感谢您的耐心等待，正在为您核实中。",
+      lastDirection: "outbound",
+    }
+  ];
+
+  // 补全 inboundMessages 字段以便 useThreads 过滤逻辑能选中它们
+  return demoThreads.map(t => {
+    t.meta.inboundMessages = t.messages.filter(m => m.direction === 'inbound');
+    return t;
+  });
+}
+
 /* -------------------- 社媒好友池 → 客户触达 -------------------- */
 
 /**
@@ -882,7 +1021,7 @@ export function useThreads(): Thread[] {
   useMetaVersion();
   const entries = useLedger();
   const tasks = useProspectingTasks();
-  const all = [...buildThreads(entries), ...getDemoSocialThreads()];
+  const all = [...buildThreads(entries), ...getDemoSocialThreads(), ...getDemoSocialStatusThreads()];
   // 询盘与回复模块只呈现"已有客户回复"的会话——即包含至少一条 inbound 消息。
   // 仅发出、尚未收到回复的触达在「触达」模块跟进，不进入询盘视图。
   const withReply = all.filter((t) => t.meta.inboundMessages.length > 0);
@@ -895,7 +1034,7 @@ export function useThread(id: string): Thread | undefined {
 }
 
 export function getThreadsSnapshot(): Thread[] {
-  const all = [...buildThreads(getAllLedger()), ...getDemoSocialThreads()];
+  const all = [...buildThreads(getAllLedger()), ...getDemoSocialThreads(), ...getDemoSocialStatusThreads()];
   return sortByUrgency([
     ...all.filter((t) => t.meta.inboundMessages.length > 0),
     ...buildFriendThreads(getProspectingTasksSnapshot()),
