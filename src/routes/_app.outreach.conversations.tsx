@@ -1570,6 +1570,15 @@ function ThreadDetail({
                     </div>
                   )}
                 </div>
+                {m.direction === "outbound" && m.contentZhOutbound && (
+                  <div className="mt-1.5 rounded-md border border-dashed border-primary/20 bg-primary/5 p-3 text-sm whitespace-pre-wrap leading-relaxed text-primary/80">
+                    <div className="mb-1 text-[11px] font-medium text-primary/70 inline-flex items-center gap-1">
+                      <Languages className="h-3 w-3" />
+                      中文对照（发送内容译文）
+                    </div>
+                    {m.contentZhOutbound}
+                  </div>
+                )}
                 {m.direction === "inbound" && m.contentZh && (
                   <div className="mt-1.5 rounded-md border border-dashed border-sky-200 bg-sky-50/60 p-3 text-sm whitespace-pre-wrap leading-relaxed text-sky-900">
                     <div className="mb-1 text-[11px] font-medium text-sky-700 inline-flex items-center gap-1">
@@ -1579,6 +1588,7 @@ function ThreadDetail({
                     {m.contentZh}
                   </div>
                 )}
+
               </div>
             </div>
           ));
