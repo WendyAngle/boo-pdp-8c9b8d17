@@ -960,9 +960,7 @@ function FootprintCard({
           {inner}
         </Link>
       ) : (
-        <Link to="/outreach/bills" className="block">
-          {inner}
-        </Link>
+        <div className="block">{inner}</div>
       )}
     </div>
   );
