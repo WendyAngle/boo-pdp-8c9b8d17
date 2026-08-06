@@ -6,7 +6,7 @@ import {
   Calendar as CalendarIcon,
   Building2,
   Package,
-  FileText,
+  
   X,
   Clock,
   MapPin,
