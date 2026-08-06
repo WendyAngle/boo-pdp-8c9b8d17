@@ -152,9 +152,6 @@ function EmptyIllustration() {
       <div className="absolute bottom-1 -left-1 h-7 w-7 rounded-lg bg-background shadow border flex items-center justify-center text-amber-600">
         <Package className="h-3.5 w-3.5" />
       </div>
-      <div className="absolute bottom-4 -right-2 h-7 w-7 rounded-lg bg-background shadow border flex items-center justify-center text-emerald-600">
-        <FileText className="h-3.5 w-3.5" />
-      </div>
     </div>
   );
 }
