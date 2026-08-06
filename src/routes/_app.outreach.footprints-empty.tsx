@@ -88,14 +88,6 @@ function FootprintsEmptyDemo() {
               tone="text-amber-600"
               toneBg="bg-amber-500/10"
             />
-            <EmptyEntry
-              to="/outreach/bills"
-              icon={FileText}
-              label="提单"
-              desc="查询具体提单与对应贸易明细"
-              tone="text-emerald-600"
-              toneBg="bg-emerald-500/10"
-            />
           </div>
 
           <div className="mt-8 flex items-center gap-2 text-xs text-muted-foreground">
