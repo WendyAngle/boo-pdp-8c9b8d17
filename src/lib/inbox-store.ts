@@ -1292,7 +1292,9 @@ export function sendReply(input: {
   fromName?: string;
   subject?: string;
   aiGenerated?: boolean;
+  contentZh?: string;
 }) {
+
   const m = metaStore[input.threadId];
   if (!m) return;
   const now = new Date().toISOString();
