@@ -79,7 +79,7 @@ export const Route = createFileRoute("/_app/outreach/footprints")({
   component: FootprintsPage,
 });
 
-type FootprintModule = "enterprise" | "contact" | "product" | "bill";
+type FootprintModule = "enterprise" | "contact" | "product";
 
 interface FootprintItem {
   id: string;
