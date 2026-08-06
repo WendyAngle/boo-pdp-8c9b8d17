@@ -1099,44 +1099,7 @@ function renderCardInner(item: FootprintItem) {
     );
   }
 
-  return (
-    <Card className="p-4 h-full hover:shadow-md hover:border-primary/40 transition-all">
-      <div className="flex items-start gap-3">
-        <div className="h-10 w-10 rounded-lg bg-emerald-500/10 text-emerald-600 flex items-center justify-center shrink-0">
-          <FileText className="h-5 w-5" />
-        </div>
-        <div className="flex-1 min-w-0">
-          <div className="flex items-center gap-2 mb-1 flex-wrap pr-16">
-            <Badge
-              variant="outline"
-              className="text-[10px] px-1.5 py-0 h-4 text-emerald-600 border-emerald-300"
-            >
-              提单
-            </Badge>
-            <span className="text-[11px] text-muted-foreground font-mono">{item.billNo}</span>
-            <span className="text-[11px] text-muted-foreground flex items-center gap-1">
-              <Clock className="h-3 w-3" />
-              {formatTime(item.viewedAt)}
-            </span>
-          </div>
-          <div className="font-medium text-sm truncate group-hover:text-primary">
-            {item.desc}
-          </div>
-          <div className="text-xs text-muted-foreground mt-1 truncate">
-            <span className="text-foreground/80">{item.exporter}</span>
-            <ArrowRight className="inline h-3 w-3 mx-1" />
-            <span className="text-foreground/80">{item.importer}</span>
-          </div>
-          <div className="text-[11px] text-muted-foreground mt-1 flex items-center gap-1 font-mono">
-            <MapPin className="h-3 w-3" />
-            {item.fromPort}
-            <ArrowRight className="h-3 w-3" />
-            {item.toPort}
-          </div>
-        </div>
-      </div>
-    </Card>
-  );
+  return null;
 }
 
 /* ---------------- Insights Strip ---------------- */
