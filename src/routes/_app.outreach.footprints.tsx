@@ -324,9 +324,9 @@ function FootprintsPage() {
   }, [visible]);
 
   const modDist = useMemo(() => {
-    const c = { enterprise: 0, contact: 0, product: 0, bill: 0 };
+    const c = { enterprise: 0, contact: 0, product: 0 };
     for (const it of visible) c[it.module]++;
-    const total = c.enterprise + c.contact + c.product + c.bill || 1;
+    const total = c.enterprise + c.contact + c.product || 1;
     return { ...c, total };
   }, [visible]);
 
