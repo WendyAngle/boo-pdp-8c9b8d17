@@ -822,24 +822,6 @@ function buildFavorite(
       },
     };
   }
-  if (item.module === "bill" && item.billNo) {
-    return {
-      kind: "bill",
-      refId: item.billNo,
-      payload: {
-        title: `提单 ${item.billNo}`,
-        subtitle: `${item.exporter ?? ""} → ${item.importer ?? ""}`,
-        meta: {
-          ...(item.exporter ? { exporter: item.exporter } : {}),
-          ...(item.importer ? { importer: item.importer } : {}),
-          ...(item.fromPort ? { fromPort: item.fromPort } : {}),
-          ...(item.toPort ? { toPort: item.toPort } : {}),
-          ...(item.hs ? { hs: item.hs } : {}),
-          ...(item.billDate ? { date: item.billDate } : {}),
-        },
-      },
-    };
-  }
   return null;
 }
 
