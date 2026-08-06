@@ -807,7 +807,9 @@ function buildThreads(entries: LedgerEntry[]): Thread[] {
       content: r.content || "(此邮件无正文快照)",
       aiGenerated: r.aiGenerated,
       ledgerId: r.id,
+      contentZhOutbound: r.content && !isChinese(r.content) ? "（演示数据：此处展示该非中文触达内容的中文译文对照）" : undefined,
       events,
+
     });
     if (r.senderEmail && !t.senderEmail) t.senderEmail = r.senderEmail;
   }
