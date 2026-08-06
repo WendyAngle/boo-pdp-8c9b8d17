@@ -1323,119 +1323,252 @@ function ThreadDetail({
             <span className="ml-auto">{formatDateTime(ev.at)}</span>
           </div>
         ))}
-        {thread.messages.map((m) => (
-          <div key={m.id} className="flex gap-3">
-            <div
-              className={cn(
-                "h-8 w-8 rounded-full shrink-0 flex items-center justify-center text-xs font-medium",
-                m.direction === "outbound"
-                  ? "bg-primary/10 text-primary"
-                  : "bg-emerald-100 text-emerald-700",
-              )}
-            >
-              {m.direction === "outbound" ? "我" : "TA"}
-            </div>
-            <div className="min-w-0 flex-1">
-              <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                <span className="font-medium text-foreground">
-                  {m.direction === "outbound" ? "你发出" : "对方回复"}
-                </span>
-                <span>· {formatDateTime(m.createdAt)}</span>
-                {m.aiGenerated && (
-                  <Badge variant="outline" className="text-[10px] py-0 h-4">
-                    <Sparkles className="h-2.5 w-2.5 mr-0.5" />
-                    AI
-                  </Badge>
-                )}
-                {m.direction === "inbound" &&
-                  (() => {
-                    const ml = detectLanguage(m.content ?? "");
-                    return (
-                      <Badge
-                        variant="outline"
-                        className="text-[10px] py-0 h-4 bg-violet-50 text-violet-700 border-violet-200"
-                        title={`AI 语种识别：${ml.en} · 置信度 ${ml.confidence}%`}
-                      >
-                        <Sparkles className="h-2.5 w-2.5 mr-0.5" />
-                        {ml.zh}
-                      </Badge>
-                    );
-                  })()}
-              </div>
-              {m.direction === "outbound" && m.events && m.events.length > 0 && (
-                <div className="mt-1 flex items-center gap-2 text-[11px] text-muted-foreground">
-                  {m.events.map((ev, i) => (
-                    <span key={i} className="inline-flex items-center gap-0.5">
-                      {ev.type === "delivered" && (
-                        <>
-                          <CheckCheck className="h-3 w-3 text-emerald-500" />
-                          已送达
-                        </>
-                      )}
-                      {ev.type === "opened" && (
-                        <>
-                          <MailOpen className="h-3 w-3 text-sky-500" />
-                          已打开
-                        </>
-                      )}
-                      {ev.type === "clicked" && (
-                        <>
-                          <MousePointerClick className="h-3 w-3 text-violet-500" />
-                          已点击
-                        </>
-                      )}
-                      {ev.type === "sending" && (
-                        <>
-                          <Loader2 className="h-3 w-3 text-primary animate-spin" />
-                          发送中
-                        </>
-                      )}
-                      {ev.type === "failed" && (
-                        <>
-                          <RefreshCw className="h-3 w-3 text-rose-500" />
-                          <span className="text-rose-600">发送失败</span>
-                          {ev.failReason && (
-                            <span className="opacity-70"> · {ev.failReason}</span>
+        {(() => {
+          const isSocial = thread.channel === "facebook" || thread.channel === "tiktok";
+          
+          if (isSocial) {
+            return (
+              <div className="flex flex-col space-y-4 pb-4">
+                {thread.messages.map((m) => {
+                  const isOutbound = m.direction === "outbound";
+                  const ml = m.direction === "inbound" ? detectLanguage(m.content ?? "") : null;
+                  const sending = isOutbound && m.events?.some(e => e.type === 'sending');
+                  const failed = isOutbound && m.events?.some(e => e.type === 'failed');
+                  const delivered = isOutbound && m.events?.some(e => e.type === 'delivered');
+
+                  return (
+                    <div key={m.id} className={cn("flex w-full", isOutbound ? "justify-end" : "justify-start")}>
+                      <div className={cn("flex max-w-[85%] sm:max-w-[70%] gap-2", isOutbound ? "flex-row-reverse" : "flex-row")}>
+                        {/* 头像 */}
+                        <div
+                          className={cn(
+                            "h-8 w-8 rounded-full shrink-0 flex items-center justify-center text-[10px] font-medium shadow-sm",
+                            isOutbound
+                              ? "bg-primary text-primary-foreground"
+                              : "bg-emerald-500 text-white"
                           )}
-                          <button 
-                            className="ml-1 text-primary hover:underline font-medium"
-                            onClick={(e) => {
-                              e.preventDefault();
-                              toast.info("功能演示：正在重新发送...");
-                            }}
+                        >
+                          {isOutbound ? "我" : "TA"}
+                        </div>
+
+                        {/* 气泡区域 */}
+                        <div className={cn("flex flex-col min-w-0", isOutbound ? "items-end" : "items-start")}>
+                          <div className="flex items-center gap-1.5 px-1 mb-1 text-[10px] text-muted-foreground">
+                            {isOutbound ? <span>你发出</span> : <span>{thread.targetName}</span>}
+                            <span>· {formatDateTime(m.createdAt)}</span>
+                          </div>
+
+                          {/* 消息气泡 */}
+                          <div
+                            className={cn(
+                              "relative group rounded-2xl px-3 py-2 text-sm shadow-sm",
+                              isOutbound
+                                ? "bg-primary text-primary-foreground rounded-tr-none"
+                                : "bg-card border rounded-tl-none",
+                              sending && "opacity-70",
+                              failed && "border-rose-200 bg-rose-50/50 text-rose-900 shadow-none"
+                            )}
                           >
-                            重试
-                          </button>
-                        </>
-                      )}
-                    </span>
-                  ))}
+                            <div className="whitespace-pre-wrap leading-relaxed break-words">
+                              {m.content}
+                            </div>
+                            
+                            {/* 状态图标 */}
+                            {isOutbound && (
+                              <div className="mt-1 flex justify-end items-center gap-1">
+                                {sending && <Loader2 className="h-3 w-3 animate-spin text-primary-foreground/70" />}
+                                {delivered && <CheckCheck className="h-3 w-3 text-primary-foreground/70" />}
+                                {failed && (
+                                  <div className="flex items-center gap-1 text-[10px] text-rose-600">
+                                    <RefreshCw className="h-3 w-3" />
+                                    <span>发送失败</span>
+                                  </div>
+                                )}
+                              </div>
+                            )}
+
+                            {/* 操作菜单/翻译 */}
+                            {!isOutbound && (
+                              <div className="absolute top-0 -right-8 opacity-0 group-hover:opacity-100 transition-opacity">
+                                <Button variant="ghost" size="icon" className="h-6 w-6">
+                                  <MoreHorizontal className="h-3.5 w-3.5" />
+                                </Button>
+                              </div>
+                            )}
+                          </div>
+
+                          {/* 失败重试 */}
+                          {failed && (
+                            <div className="mt-1 flex items-center gap-2 text-[10px]">
+                              <span className="text-rose-500">
+                                {m.events?.find(e => e.type === 'failed')?.failReason ?? "网络异常"}
+                              </span>
+                              <button
+                                className="text-primary hover:underline font-medium"
+                                onClick={(e) => {
+                                  e.preventDefault();
+                                  toast.info("功能演示：正在重新发送...");
+                                }}
+                              >
+                                重试
+                              </button>
+                            </div>
+                          )}
+
+                          {/* 翻译块 */}
+                          {m.direction === "inbound" && (
+                            <div className="mt-1.5 space-y-1.5 max-w-full">
+                              <div className="flex items-center gap-1.5">
+                                {ml && (
+                                  <Badge
+                                    variant="outline"
+                                    className="text-[9px] py-0 h-3.5 bg-violet-50 text-violet-700 border-violet-200"
+                                  >
+                                    <Sparkles className="h-2 w-2 mr-0.5" />
+                                    {ml.zh}
+                                  </Badge>
+                                )}
+                                {m.aiGenerated && (
+                                  <Badge variant="outline" className="text-[9px] py-0 h-3.5">
+                                    AI
+                                  </Badge>
+                                )}
+                              </div>
+                              {m.contentZh && (
+                                <div className="rounded-xl border border-dashed border-sky-200 bg-sky-50/40 p-2 text-[13px] leading-relaxed text-sky-900">
+                                  <div className="mb-0.5 text-[9px] font-medium text-sky-600 flex items-center gap-1">
+                                    <Languages className="h-2.5 w-2.5" />
+                                    译文
+                                  </div>
+                                  {m.contentZh}
+                                </div>
+                              )}
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            );
+          }
+
+          // 非社媒渠道保持原有的列表排版
+          return thread.messages.map((m) => (
+            <div key={m.id} className="flex gap-3">
+              <div
+                className={cn(
+                  "h-8 w-8 rounded-full shrink-0 flex items-center justify-center text-xs font-medium",
+                  m.direction === "outbound"
+                    ? "bg-primary/10 text-primary"
+                    : "bg-emerald-100 text-emerald-700",
+                )}
+              >
+                {m.direction === "outbound" ? "我" : "TA"}
+              </div>
+              <div className="min-w-0 flex-1">
+                <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                  <span className="font-medium text-foreground">
+                    {m.direction === "outbound" ? "你发出" : "对方回复"}
+                  </span>
+                  <span>· {formatDateTime(m.createdAt)}</span>
+                  {m.aiGenerated && (
+                    <Badge variant="outline" className="text-[10px] py-0 h-4">
+                      <Sparkles className="h-2.5 w-2.5 mr-0.5" />
+                      AI
+                    </Badge>
+                  )}
+                  {m.direction === "inbound" &&
+                    (() => {
+                      const ml = detectLanguage(m.content ?? "");
+                      return (
+                        <Badge
+                          variant="outline"
+                          className="text-[10px] py-0 h-4 bg-violet-50 text-violet-700 border-violet-200"
+                          title={`AI 语种识别：${ml.en} · 置信度 ${ml.confidence}%`}
+                        >
+                          <Sparkles className="h-2.5 w-2.5 mr-0.5" />
+                          {ml.zh}
+                        </Badge>
+                      );
+                    })()}
                 </div>
-              )}
-              <div className={cn(
-                "mt-2 rounded-md border bg-card p-3 text-sm whitespace-pre-wrap leading-relaxed relative",
-                m.direction === "outbound" && m.events?.some(e => e.type === 'sending') && "opacity-70",
-                m.direction === "outbound" && m.events?.some(e => e.type === 'failed') && "border-rose-200 bg-rose-50/30"
-              )}>
-                {m.content}
-                {m.direction === "outbound" && m.events?.some(e => e.type === 'sending') && (
-                  <div className="absolute right-2 bottom-2">
-                    <Loader2 className="h-4 w-4 text-primary animate-spin" />
+                {m.direction === "outbound" && m.events && m.events.length > 0 && (
+                  <div className="mt-1 flex items-center gap-2 text-[11px] text-muted-foreground">
+                    {m.events.map((ev, i) => (
+                      <span key={i} className="inline-flex items-center gap-0.5">
+                        {ev.type === "delivered" && (
+                          <>
+                            <CheckCheck className="h-3 w-3 text-emerald-500" />
+                            已送达
+                          </>
+                        )}
+                        {ev.type === "opened" && (
+                          <>
+                            <MailOpen className="h-3 w-3 text-sky-500" />
+                            已打开
+                          </>
+                        )}
+                        {ev.type === "clicked" && (
+                          <>
+                            <MousePointerClick className="h-3 w-3 text-violet-500" />
+                            已点击
+                          </>
+                        )}
+                        {ev.type === "sending" && (
+                          <>
+                            <Loader2 className="h-3 w-3 text-primary animate-spin" />
+                            发送中
+                          </>
+                        )}
+                        {ev.type === "failed" && (
+                          <>
+                            <RefreshCw className="h-3 w-3 text-rose-500" />
+                            <span className="text-rose-600">发送失败</span>
+                            {ev.failReason && (
+                              <span className="opacity-70"> · {ev.failReason}</span>
+                            )}
+                            <button 
+                              className="ml-1 text-primary hover:underline font-medium"
+                              onClick={(e) => {
+                                e.preventDefault();
+                                toast.info("功能演示：正在重新发送...");
+                              }}
+                            >
+                              重试
+                            </button>
+                          </>
+                        )}
+                      </span>
+                    ))}
+                  </div>
+                )}
+                <div className={cn(
+                  "mt-2 rounded-md border bg-card p-3 text-sm whitespace-pre-wrap leading-relaxed relative",
+                  m.direction === "outbound" && m.events?.some(e => e.type === 'sending') && "opacity-70",
+                  m.direction === "outbound" && m.events?.some(e => e.type === 'failed') && "border-rose-200 bg-rose-50/30"
+                )}>
+                  {m.content}
+                  {m.direction === "outbound" && m.events?.some(e => e.type === 'sending') && (
+                    <div className="absolute right-2 bottom-2">
+                      <Loader2 className="h-4 w-4 text-primary animate-spin" />
+                    </div>
+                  )}
+                </div>
+                {m.direction === "inbound" && m.contentZh && (
+                  <div className="mt-1.5 rounded-md border border-dashed border-sky-200 bg-sky-50/60 p-3 text-sm whitespace-pre-wrap leading-relaxed text-sky-900">
+                    <div className="mb-1 text-[11px] font-medium text-sky-700 inline-flex items-center gap-1">
+                      <Sparkles className="h-3 w-3" />
+                      中文译文（AI 自动翻译）
+                    </div>
+                    {m.contentZh}
                   </div>
                 )}
               </div>
-              {m.direction === "inbound" && m.contentZh && (
-                <div className="mt-1.5 rounded-md border border-dashed border-sky-200 bg-sky-50/60 p-3 text-sm whitespace-pre-wrap leading-relaxed text-sky-900">
-                  <div className="mb-1 text-[11px] font-medium text-sky-700 inline-flex items-center gap-1">
-                    <Sparkles className="h-3 w-3" />
-                    中文译文（AI 自动翻译）
-                  </div>
-                  {m.contentZh}
-                </div>
-              )}
             </div>
-          </div>
-        ))}
+          ));
+        })()}
         </TabsContent>
         <TabsContent value="profile" className="flex-1 min-h-0 overflow-y-auto px-6 py-4 mt-0">
           <ProfilePanel thread={thread} />
