@@ -1166,7 +1166,7 @@ interface InsightsProps {
     enterprise: number;
     contact: number;
     product: number;
-    bill: number;
+    
     total: number;
   };
   topEnterprises: { id: string; name: string; country?: string; count: number }[];
