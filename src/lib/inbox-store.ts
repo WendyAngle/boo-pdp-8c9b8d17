@@ -864,7 +864,9 @@ function getDemoSocialStatusThreads(): Thread[] {
           fromName: "你",
           fromAddress: "CloudBeauty_Official",
           content: "Ada, saiz M ready stock. Nak saya tolong order?",
+          contentZhOutbound: "有的，M码有现货。需要我帮您下单吗？",
           events: [{ type: "delivered", at: new Date(now.getTime() - 1.4 * 3600_000).toISOString() }],
+
         },
         {
           id: "m_fb_3",
