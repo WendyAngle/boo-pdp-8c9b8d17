@@ -1375,6 +1375,17 @@ function ThreadDetail({
                               {m.content}
                             </div>
                             
+                            {/* 译文展示 (发出的非中文内容增加中文译文) */}
+                            {isOutbound && m.contentZhOutbound && (
+                              <div className="mt-2 pt-2 border-t border-primary-foreground/20 text-[13px] opacity-90 italic">
+                                <div className="mb-0.5 text-[9px] font-medium flex items-center gap-1">
+                                  <Languages className="h-2.5 w-2.5" />
+                                  中文对照
+                                </div>
+                                {m.contentZhOutbound}
+                              </div>
+                            )}
+
                             {/* 状态图标 */}
                             {isOutbound && (
                               <div className="mt-1 flex justify-end items-center gap-1">
@@ -1388,6 +1399,7 @@ function ThreadDetail({
                                 )}
                               </div>
                             )}
+
 
                             {/* 操作菜单/翻译 */}
                             {!isOutbound && (
