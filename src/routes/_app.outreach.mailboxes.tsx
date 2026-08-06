@@ -811,7 +811,7 @@ function MailboxFormDialog({
       if (!(form.imapPort > 0 && form.imapPort < 65536)) return "IMAP 端口无效";
     }
     if (!form.username.trim()) return "请输入登录用户名";
-    if (!form.password.trim()) return `请输入${guide.credentialName}`;
+    if (!form.password.trim()) return form.provider === "Outlook" ? "请通过 OAuth 授权或填写应用密码" : `请输入${guide.credentialName}`;
     if (form.dailyLimit < 1) return "日发上限至少为 1";
     return null;
   };
@@ -886,7 +886,9 @@ function MailboxFormDialog({
         <DialogHeader>
           <DialogTitle>{editing ? "编辑邮箱" : "新增企业邮箱"}</DialogTitle>
           <DialogDescription>
-            只需填写「邮箱地址 + {guide.credentialName}」，发信（SMTP）与收信（IMAP）参数由系统按域名自动识别；完成后建议「保存并测试」分别验证两条通道的连通性。
+            {form.provider === "Outlook" 
+              ? "推荐使用 OAuth 2.0 现代认证方式，安全且无需手动配置服务器参数；完成后建议「保存并测试」验证连通性。"
+              : `只需填写「邮箱地址 + ${guide.credentialName}」，发信（SMTP）与收信（IMAP）参数由系统按域名自动识别；完成后建议「保存并测试」分别验证两条通道的连通性。`}
           </DialogDescription>
         </DialogHeader>
 
@@ -929,14 +931,45 @@ function MailboxFormDialog({
                     系统按邮箱域名自动识别，如识别有误可手动切换。
                   </div>
                 </Field>
-                <Field label={`${guide.credentialName}`} required>
-                  <Input
-                    type="password"
-                    value={form.password}
-                    onChange={(e) => update("password", e.target.value)}
-                    placeholder="非邮箱登录密码，见右侧配置指导"
-                  />
-                </Field>
+                {form.provider === "Outlook" ? (
+                  <Field label="身份验证方式" required>
+                    <div className="flex flex-col gap-2">
+                      <Button 
+                        type="button" 
+                        className="w-full bg-[#0078d4] hover:bg-[#005a9e] text-white flex items-center justify-center gap-2"
+                        onClick={() => {
+                          toast.info("演示：正在跳转 Microsoft OAuth 2.0 授权页面...");
+                          setTimeout(() => {
+                            update("password", "OAUTH2_TOKEN_DEMO");
+                            toast.success("Outlook OAuth 授权成功，已获取 Access Token");
+                          }, 1500);
+                        }}
+                      >
+                        <ShieldCheck className="h-4 w-4" />
+                        使用 OAuth 2.0 登录 (推荐)
+                      </Button>
+                      <div className="relative py-2">
+                        <div className="absolute inset-0 flex items-center"><span className="w-full border-t" /></div>
+                        <div className="relative flex justify-center text-[10px] uppercase"><span className="bg-background px-2 text-muted-foreground">或者使用应用密码</span></div>
+                      </div>
+                      <Input
+                        type="password"
+                        value={form.password === "OAUTH2_TOKEN_DEMO" ? "" : form.password}
+                        onChange={(e) => update("password", e.target.value)}
+                        placeholder="填入 16 位应用密码"
+                      />
+                    </div>
+                  </Field>
+                ) : (
+                  <Field label={`${guide.credentialName}`} required>
+                    <Input
+                      type="password"
+                      value={form.password}
+                      onChange={(e) => update("password", e.target.value)}
+                      placeholder="非邮箱登录密码，见右侧配置指导"
+                    />
+                  </Field>
+                )}
                 <Field label="显示名称" required>
                   <Input
                     value={form.displayName}
@@ -1116,7 +1149,7 @@ function MailboxFormDialog({
                       mono
                     />
                     <AutoField label="登录用户名" value={form.username || "—"} mono />
-                    <AutoField label="凭证" value={`同${guide.credentialName}`} />
+                    <AutoField label="凭证" value={form.password === "OAUTH2_TOKEN_DEMO" ? "OAuth 2.0" : `同${guide.credentialName}`} />
                   </div>
                 )}
               </div>

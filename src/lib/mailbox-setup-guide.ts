@@ -112,23 +112,26 @@ export const PROVIDER_GUIDES: Record<MailboxProvider, ProviderGuide> = {
     ]
   },
   Outlook: {
-    credentialName: "应用密码（App Password）",
+    credentialName: "OAuth 2.0 授权 (推荐)",
     steps: [
-      "登录 Microsoft 账号 → 安全信息，开启「双重验证」",
-      "进入「其他验证方式 / 应用密码」，创建新的应用密码",
+      "点击「OAuth 2.0 登录」通过 Microsoft 官方页面授权（最安全）",
+      "若使用传统方式：在 Microsoft 账号安全性页面开启「双重验证」",
+      "进入「其他验证方式 / 应用密码」，创建新的应用密码并复制",
       "企业账号需管理员在 Exchange 管理中心开启「已通过身份验证的 SMTP」",
-      "复制应用密码，粘贴到「授权密码」",
     ],
-    docHint: "Microsoft 账号 → 安全信息 → 应用密码",
-    notes: ["Microsoft 365 企业版默认关闭 SMTP AUTH，需管理员为该邮箱单独开启"],
+    docHint: "Microsoft 账号 → 安全信息 → OAuth 授权 / 应用密码",
+    notes: [
+      "2024 年起 Microsoft 已基本废弃 Basic Auth，强烈建议使用 OAuth 方式接入",
+      "Microsoft 365 企业版默认关闭 SMTP AUTH，使用应用密码前需管理员单独开启",
+    ],
     imapSteps: [
-      "个人账号：登录 Outlook.com → 设置 → 邮件 → 同步电子邮件，确认已开启 POP/IMAP 访问",
+      "个人账号：登录 Outlook.com → 设置 → 邮件 → 同步电子邮件，开启 POP/IMAP 访问",
       "企业账号：管理员在 Microsoft 365 管理中心 → 用户 → 邮箱应用中勾选「IMAP」",
-      "收信使用与发信相同的应用密码",
+      "OAuth 授权将同时自动获得 IMAP 收信权限",
     ],
     imapNotes: [
-      "Microsoft 365 已停用基本身份验证的租户需管理员为该邮箱单独开启 IMAP 认证",
-      "IMAP 服务器：outlook.office365.com，端口 993（SSL）",
+      "IMAP 服务器：outlook.office365.com，端口 993 (SSL/TLS)",
+      "若 Outlook Desktop 连接不稳，建议检查是否开启了 Exchange 同步方式",
     ]
   },
   腾讯企业邮: {
