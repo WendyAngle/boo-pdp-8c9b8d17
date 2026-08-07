@@ -5,13 +5,13 @@ import {
   Facebook,
   Music2,
   CheckCircle2,
-  Wallet,
   UserCheck,
   Search,
   RotateCcw,
   X,
 } from "lucide-react";
 import { useSocialFriends, type SocialFriend } from "@/lib/social-friends";
+
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -39,9 +39,9 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { useCreditBalance } from "@/lib/credits-balance";
 import {
   regionLabel,
+
   REGION_OPTIONS,
   useSocialAccounts,
   type SocialAccount,
@@ -101,8 +101,8 @@ const EXPIRY_LABEL: Record<ExpiryBucket, string> = {
 };
 
 function SocialAccountsPage() {
-  const balance = useCreditBalance();
   const accounts = useSocialAccounts();
+
   const friends = useSocialFriends();
   const friendCountByAccount = useMemo(() => {
     const m = new Map<string, number>();
@@ -157,12 +157,9 @@ function SocialAccountsPage() {
             </p>
           </div>
           <div className="ml-auto flex items-center gap-3 text-xs text-muted-foreground">
-            <span className="inline-flex items-center gap-1.5">
-              <Wallet className="h-3.5 w-3.5" />
-              当前积分：<span className="font-semibold text-foreground tabular-nums">{balance.balance.toLocaleString()}</span>
-            </span>
             <Button
               variant="outline"
+
               size="sm"
               className="h-8 gap-1.5 text-xs"
               onClick={() => setAllFriendsOpen(true)}
