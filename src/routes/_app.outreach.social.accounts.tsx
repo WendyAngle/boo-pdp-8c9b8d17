@@ -231,7 +231,11 @@ function SocialAccountsPage() {
               <Button variant="outline" size="sm" className="h-8 gap-1.5 text-xs px-2.5">
                 状态
                 <span className="text-muted-foreground">
-                  {statuses.length === STATUS_OPTIONS.length ? "全部" : `已选 ${statuses.length}`}
+                  {statuses.length === STATUS_OPTIONS.length
+                    ? "全部"
+                    : statuses.length === 1
+                      ? statuses[0]
+                      : `已选 ${statuses.length}`}
                 </span>
                 <ChevronDown className="h-3 w-3 text-muted-foreground" />
               </Button>
