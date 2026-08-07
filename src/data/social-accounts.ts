@@ -44,7 +44,7 @@ export interface SocialAccount {
   /** Facebook / TikTok：每日私信额度（默认 20） */
   dailyDmLimit?: number;
   dmSentToday?: number;
-  status: "正常" | "停用" | "异常" | "养号中" | "备货中";
+  status: "正常" | "风控" | "被封" | "养号中" | "备货中";
   purchasedAt?: string;
   /** 下单时间 */
   orderedAt?: string;
