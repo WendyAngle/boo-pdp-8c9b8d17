@@ -130,38 +130,57 @@ export function BatchSocialPlatformDialog({
 
   const allCandidates = internalCandidates;
 
-  /** 按平台联系方式分组数量 */
-  const groups = useMemo(() => {
-    const g: Record<ReachPlatform, PlatformCandidate[]> = {
-      Facebook: [],
-      TikTok: [],
-    };
-    const none: PlatformCandidate[] = [];
+  /** 当前平台筛选下的触达目标（单一账号级别，而不是企业级别） */
+  type Job = {
+    key: string; // 唯一标识：candidateKey-platform
+    candidate: PlatformCandidate;
+    platform: ReachPlatform;
+    handle: string;
+  };
+
+  /** 将 candidates 展平为具体的账号任务列表 */
+  const allAccountJobs = useMemo<Job[]>(() => {
+    const out: Job[] = [];
     for (const c of allCandidates) {
-      let hit = false;
       for (const p of REACH_PLATFORMS) {
         if (c.handles[p]) {
-          g[p].push(c);
-          hit = true;
+          out.push({
+            key: `${c.key}-${p}`,
+            candidate: c,
+            platform: p,
+            handle: c.handles[p]!,
+          });
         }
-      }
-      if (!hit) none.push(c);
-    }
-    return { ...g, none };
-  }, [allCandidates]);
-
-  /** 当前平台筛选下的触达目标（平台 + 目标 的组合） */
-  type Job = { candidate: PlatformCandidate; platform: ReachPlatform; handle: string };
-  const jobs = useMemo<Job[]>(() => {
-    const out: Job[] = [];
-    for (const p of REACH_PLATFORMS) {
-      if (platform !== "all" && platform !== p) continue;
-      for (const c of groups[p]) {
-        out.push({ candidate: c, platform: p, handle: c.handles[p]! });
       }
     }
     return out;
-  }, [groups, platform]);
+  }, [allCandidates]);
+
+  // 内部维护的已删除 Job Keys (针对单一账号的删除)
+  const [removedJobKeys, setRemovedJobKeys] = useState<Set<string>>(new Set());
+
+  // 实际参与执行的任务列表
+  const filteredJobs = useMemo(() => {
+    return allAccountJobs.filter((j) => !removedJobKeys.has(j.key));
+  }, [allAccountJobs, removedJobKeys]);
+
+  /** 筛选后的任务数量统计 */
+  const groups = useMemo(() => {
+    const g: Record<ReachPlatform, Job[]> = {
+      Facebook: [],
+      TikTok: [],
+    };
+    for (const j of filteredJobs) {
+      g[j.platform].push(j);
+    }
+    return g;
+  }, [filteredJobs]);
+
+  /** 当前 UI 筛选平台下的任务 */
+  const jobs = useMemo<Job[]>(() => {
+    if (platform === "all") return filteredJobs;
+    return filteredJobs.filter((j) => j.platform === platform);
+  }, [filteredJobs, platform]);
 
   /** 相应平台状态为正常的账号（用于展示数量） */
   const normalAccounts = useMemo(
