@@ -124,25 +124,28 @@ function SocialAccountsPage() {
   const [keyword, setKeyword] = useState("");
   const [platform, setPlatform] = useState<PlatformFilter>("all");
   const [region, setRegion] = useState<string>("all");
+  const [statuses, setStatuses] = useState<SocialStatus[]>(["正常"]);
 
   const filtered = useMemo(() => {
     const kw = keyword.trim().toLowerCase();
     return accounts.filter((a) => {
       if (platform !== "all" && a.platform !== platform) return false;
       if (region !== "all" && a.ownerRegion !== region) return false;
+      if (!statuses.includes(a.status as SocialStatus)) return false;
       if (kw) {
         const hay = `${a.handle ?? ""} ${a.displayName ?? ""}`.toLowerCase();
         if (!hay.includes(kw)) return false;
       }
       return true;
     });
-  }, [accounts, keyword, platform, region]);
+  }, [accounts, keyword, platform, region, statuses]);
 
-  const hasFilter = keyword !== "" || platform !== "all" || region !== "all";
+  const hasFilter = keyword !== "" || platform !== "all" || region !== "all" || statuses.length !== STATUS_OPTIONS.length;
   const reset = () => {
     setKeyword("");
     setPlatform("all");
     setRegion("all");
+    setStatuses(STATUS_OPTIONS);
   };
 
   const regionOptionsInUse = useMemo(() => {
