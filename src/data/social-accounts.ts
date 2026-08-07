@@ -60,8 +60,8 @@ export interface SocialAccount {
   proxyRegion?: string;
 }
 
-const KEY = "boo:social-accounts:v9";
-const SEED_FLAG = "boo:social-accounts:v9:seeded";
+const KEY = "boo:social-accounts:v10";
+const SEED_FLAG = "boo:social-accounts:v10:seeded";
 
 /** 已交付账号必须有 handle / 显示名 / 交付与到期时间，缺一即为脏数据 */
 function isValidAccount(a: SocialAccount): boolean {
