@@ -260,6 +260,34 @@ export function BatchSocialPlatformDialog({
     });
   }
 
+  function handleAddExtra() {
+    if (!newTarget.name || !newTarget.handle) {
+      toast.error("请填写完整信息");
+      return;
+    }
+    const candidate: PlatformCandidate = {
+      key: `extra-${Date.now()}-${Math.random()}`,
+      name: newTarget.name,
+      address: newTarget.handle,
+      targetKind: "contact",
+      targetId: "manual",
+      handles: { [newTarget.platform]: newTarget.handle },
+      ctx: {
+        联系人名: newTarget.name,
+        我的公司: profile.companyName,
+        我的姓名: user.name,
+      },
+    };
+    setExtraTargets((prev) => [...prev, candidate]);
+    setNewTarget({ ...newTarget, name: "", handle: "" });
+    setIsAdding(false);
+    toast.success("已手动添加触达目标");
+  }
+
+  function handleRemoveExtra(key: string) {
+    setExtraTargets((prev) => prev.filter((t) => t.key !== key));
+  }
+
   async function handleAiGenerate() {
     if (aiLoading) return;
     setAiLoading(true);
