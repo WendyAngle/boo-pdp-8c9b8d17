@@ -235,6 +235,7 @@ export function BatchSocialPlatformDialog({
   function handleSend() {
     if (!canSend) return;
     const scheduled = nextDayStart();
+    const taskName = `批量社媒私信 · ${allCandidates.length}个目标`;
     let n = 0;
     jobs.forEach((job, i) => {
       const r = job.candidate;
@@ -246,6 +247,7 @@ export function BatchSocialPlatformDialog({
         channel: "social",
         platform: job.platform,
         detail: job.handle,
+        subject: taskName, // 使用 subject 存储任务名称以便聚合
         content: renderTemplate(sendContent, r.ctx),
         aiGenerated: aiUsed,
         cost: unit,
@@ -260,7 +262,7 @@ export function BatchSocialPlatformDialog({
         deferredCount > 0
           ? `今日执行 ${todayCount} 条，剩余 ${deferredCount} 条将于明日 09:00 自动继续执行；`
           : ""
-      }共扣除 ${grandTotal} 积分，可在「触达任务」模块查看进度`,
+      }共扣除 ${grandTotal} 积分，可在「客户触达」模块查看进度`,
     });
   }
 
