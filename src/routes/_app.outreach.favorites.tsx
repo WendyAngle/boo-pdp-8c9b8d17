@@ -779,10 +779,9 @@ function FavoritesPage() {
             <Button
               variant="outline"
               size="sm"
-              disabled={selected.size === 0}
-              className="gap-1.5 border-primary/30 text-primary hover:bg-primary/10 hover:text-primary disabled:opacity-50"
+              className="gap-1.5 border-primary/30 text-primary hover:bg-primary/10 hover:text-primary"
               onClick={() => {
-                if (aiCallTargets.length === 0) {
+                if (selected.size > 0 && aiCallTargets.length === 0) {
                   toast.warning("所选对象均没有可用电话号码", {
                     description: "请选择包含电话号码的企业或人物，或在弹窗中手动添加号码。",
                   });
