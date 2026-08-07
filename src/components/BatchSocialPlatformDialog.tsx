@@ -255,7 +255,7 @@ export function BatchSocialPlatformDialog({
   function handleSend() {
     if (!canSend) return;
     const scheduled = nextDayStart();
-    const taskName = `批量社媒私信 · ${allCandidates.length}个目标`;
+    const taskName = `批量社媒私信 · ${filteredJobs.length}个账号`;
     let n = 0;
     jobs.forEach((job, i) => {
       const r = job.candidate;
