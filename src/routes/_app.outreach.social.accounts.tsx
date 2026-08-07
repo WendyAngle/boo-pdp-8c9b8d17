@@ -159,7 +159,7 @@ function SocialAccountsPage() {
           <div>
             <h1 className="text-lg font-semibold">社媒账号</h1>
             <p className="text-xs text-muted-foreground mt-0.5">
-              统一查看与管理已购买的社媒触达账号，支持按平台、状态、所属地区、关键字筛选。
+              统一查看已购买的社媒触达账号，支持按平台、状态、所属地区、关键字筛选。
             </p>
           </div>
           <div className="ml-auto flex items-center gap-3 text-xs text-muted-foreground">
