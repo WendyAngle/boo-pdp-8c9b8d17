@@ -133,7 +133,7 @@ export function BatchSocialPlatformDialog({
       TikTok: [],
     };
     const none: PlatformCandidate[] = [];
-    for (const c of candidates) {
+    for (const c of allCandidates) {
       let hit = false;
       for (const p of REACH_PLATFORMS) {
         if (c.handles[p]) {
@@ -144,7 +144,7 @@ export function BatchSocialPlatformDialog({
       if (!hit) none.push(c);
     }
     return { ...g, none };
-  }, [candidates]);
+  }, [allCandidates]);
 
   /** 当前平台筛选下的触达目标（平台 + 目标 的组合） */
   type Job = { candidate: PlatformCandidate; platform: ReachPlatform; handle: string };
