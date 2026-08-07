@@ -305,6 +305,8 @@ function InboxPage() {
 
   const q = search.q ?? "";
   const ch = search.ch ?? "all";
+
+
   const group = search.group ?? "all";
   const senderKey = search.sender ?? "all";
   const resolveSender = useThreadSenderResolver();
@@ -921,6 +923,8 @@ function ThreadDetail({
   onToggleScorePanel?: () => void;
 }) {
   const [reply, setReply] = useState("");
+  const [socialSendMode, setSocialSendMode] = useState<"active" | "immediate">("active");
+
   const detailSender = useThreadSenderResolver()(thread);
   // AI 识别的对方语言
   const detectedLang = useMemo(() => detectThreadLanguage(thread), [thread]);
@@ -1633,12 +1637,34 @@ function ThreadDetail({
         <div className="flex items-center gap-2 mb-2 flex-wrap">
           <MessageCircleReply className="h-4 w-4 text-muted-foreground" />
           <span className="text-sm font-medium">回复</span>
-          <span className="text-xs text-muted-foreground">
-            {thread.channel === "whatsapp"
-              ? "由公司共享 WhatsApp 商号发出（对客户显示同一号码）"
-              : `将以 ${detailSender.address} 发出`}
-            ，保持在同一会话内
+          <span className="text-xs text-muted-foreground flex items-center gap-1.5 flex-wrap">
+            {(thread.channel === "facebook" || thread.channel === "tiktok") ? (
+              <>
+                将以 <span className="text-foreground font-medium">{detailSender.address}</span>
+                <Select 
+                  value={socialSendMode} 
+                  onValueChange={(v) => setSocialSendMode(v as "active" | "immediate")}
+                >
+                  <SelectTrigger className="h-6 text-[11px] px-1 py-0 w-fit gap-1 bg-transparent border-none hover:bg-muted/50 transition-colors focus:ring-0">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="active">在其活跃时间</SelectItem>
+                    <SelectItem value="immediate">立即</SelectItem>
+                  </SelectContent>
+                </Select>
+                发出
+              </>
+            ) : (
+              <>
+                {thread.channel === "whatsapp"
+                  ? "由公司共享 WhatsApp 商号发出（对客户显示同一号码）"
+                  : `将以 ${detailSender.address} 发出`}
+                ，保持在同一会话内
+              </>
+            )}
           </span>
+
           <Button
             variant="ghost"
             size="sm"
