@@ -380,7 +380,7 @@ export function CreateReachTaskDialog({
   function handleConfirm() {
     if (!name.trim()) return toast.error("请填写任务名");
     if (!keywords.trim()) return toast.error("请填写目标关键词");
-    if (targetCap <= 0) return toast.error("目标数量上限需大于 0");
+    if (targetCap <= 0) return toast.error("私信目标数量需大于 0");
     if (!content.trim()) return toast.error("请填写私信内容");
     if (overLimit)
       return toast.error(
@@ -463,7 +463,7 @@ export function CreateReachTaskDialog({
               </Select>
             </div>
             <div className="space-y-1">
-              <Label className="text-xs text-muted-foreground">目标数量上限 *</Label>
+              <Label className="text-xs text-muted-foreground">私信目标数量 *</Label>
               <Input
                 type="number"
                 min={1}
@@ -680,8 +680,7 @@ export function CreateReachTaskDialog({
               {availableAccounts.length}
             </span>
             <span className="text-muted-foreground">
-              · 单账号 {DAILY_PER_ACCOUNT} 个/天 · 今日加友上限{" "}
-              <span className="font-medium text-foreground tabular-nums">{dailyCap}</span>
+              · 单账号 {DAILY_PER_ACCOUNT} 个/天
             </span>
             {availableAccounts.length === 0 && (
               <span className="ml-auto text-rose-600">
