@@ -440,14 +440,12 @@ export function BatchSocialPlatformDialog({
                       )}
                     </div>
                   </div>
-                  {c.targetId === "manual" && (
-                    <button 
-                      onClick={() => handleRemoveExtra(c.key)}
-                      className="text-muted-foreground hover:text-destructive p-0.5 opacity-0 group-hover:opacity-100 transition-opacity"
-                    >
-                      <X className="h-3 w-3" />
-                    </button>
-                  )}
+                  <button 
+                    onClick={() => handleRemoveCandidate(c.key)}
+                    className="text-muted-foreground hover:text-destructive p-0.5 opacity-0 group-hover:opacity-100 transition-opacity"
+                  >
+                    <X className="h-3 w-3" />
+                  </button>
                 </div>
               ))}
             </div>
