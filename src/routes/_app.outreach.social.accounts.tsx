@@ -157,11 +157,8 @@ function SocialAccountsPage() {
             </p>
           </div>
           <div className="ml-auto flex items-center gap-3 text-xs text-muted-foreground">
-            <span className="inline-flex items-center gap-1.5">
-              <Wallet className="h-3.5 w-3.5" />
-              当前积分：<span className="font-semibold text-foreground tabular-nums">{balance.balance.toLocaleString()}</span>
-            </span>
             <Button
+
               variant="outline"
               size="sm"
               className="h-8 gap-1.5 text-xs"
