@@ -6,11 +6,11 @@ import {
   Music2,
   CheckCircle2,
   UserCheck,
-
   Search,
   RotateCcw,
   X,
 } from "lucide-react";
+
 import { useSocialFriends, type SocialFriend } from "@/lib/social-friends";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
