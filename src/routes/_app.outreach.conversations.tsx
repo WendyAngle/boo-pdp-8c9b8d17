@@ -1653,7 +1653,7 @@ function ThreadDetail({
                     <SelectItem value="immediate">立即</SelectItem>
                   </SelectContent>
                 </Select>
-                发出
+                发出，保持在同一会话内
               </>
             ) : (
               <>
