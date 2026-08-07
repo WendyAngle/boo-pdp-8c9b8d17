@@ -111,8 +111,8 @@ export function BatchSocialPlatformDialog({
   /** 目标语言译文（实际发送内容） */
   const [translated, setTranslated] = useState("");
 
-  // 手动添加目标相关
-  const [extraTargets, setExtraTargets] = useState<PlatformCandidate[]>([]);
+  // 内部维护的完整目标列表（含外部传入和手动添加的）
+  const [internalCandidates, setInternalCandidates] = useState<PlatformCandidate[]>([]);
   const [isAdding, setIsAdding] = useState(false);
   const [newTarget, setNewTarget] = useState({ name: "", handle: "", platform: "Facebook" as ReachPlatform });
 
@@ -124,11 +124,11 @@ export function BatchSocialPlatformDialog({
     setPreviewIdx(0);
     setTargetLang("en");
     setTranslated("");
-    setExtraTargets([]);
+    setInternalCandidates(initialCandidates);
     setIsAdding(false);
-  }, [open]);
+  }, [open, initialCandidates]);
 
-  const allCandidates = useMemo(() => [...candidates, ...extraTargets], [candidates, extraTargets]);
+  const allCandidates = internalCandidates;
 
   /** 按平台联系方式分组数量 */
   const groups = useMemo(() => {
