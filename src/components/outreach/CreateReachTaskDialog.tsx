@@ -173,7 +173,7 @@ export function CreateReachTaskDialog({
     () => accounts.filter((a) => a.platform === platform && a.status === "正常"),
     [accounts, platform],
   );
-  const dailyCap = availableAccounts.length * DAILY_PER_ACCOUNT;
+  
 
   /** 推广产品候选：企业信息主营产品 + 手动添加项 */
   const productOptions = useMemo(() => {
