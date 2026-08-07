@@ -118,6 +118,8 @@ export function ComposeSendDialog({
   const ledger = useLedger();
 
   const [recipients, setRecipients] = useState<Recipient[]>(incomingRecipients);
+  /** 记录初始进入弹窗时被自动过滤的数量，用于维持“已自动过滤”文案的稳定性 */
+  const [initialFilteredCount, setInitialFilteredCount] = useState(0);
   const [subject, setSubject] = useState("");
   const [content, setContent] = useState("");
   const [aiUsed, setAiUsed] = useState(false);
@@ -183,6 +185,11 @@ export function ComposeSendDialog({
   useEffect(() => {
     if (!open) return;
     setRecipients(incomingRecipients);
+    if (typeof totalSelected === "number") {
+      setInitialFilteredCount(Math.max(0, totalSelected - incomingRecipients.length));
+    } else {
+      setInitialFilteredCount(0);
+    }
     setManualInput("");
     setPreviewIdx(0);
     setSubject("");
@@ -440,15 +447,14 @@ export function ComposeSendDialog({
               </Label>
               {recipients.length === 0 ? (
                 <span className="text-xs text-rose-600">
-                  {typeof totalSelected === "number" && totalSelected > 0
-                    ? `已选 ${totalSelected} 条，均无${isEmail ? "邮箱" : "电话"}，已全部过滤`
+                  {initialFilteredCount > 0
+                    ? `已选对象均无${isEmail ? "邮箱" : "电话"}，已全部过滤`
                     : "暂无收件人，可在下方手动添加"}
                 </span>
               ) : (
-                typeof totalSelected === "number" &&
-                totalSelected > recipients.length && (
+                initialFilteredCount > 0 && (
                   <span className="text-xs text-amber-600">
-                    已自动过滤 {totalSelected - recipients.length} 条无
+                    已自动过滤 {initialFilteredCount} 条无
                     {isEmail ? "邮箱" : "电话"}的数据
                   </span>
                 )
