@@ -9,6 +9,7 @@ import {
   Search,
   RotateCcw,
   X,
+  ChevronDown,
 } from "lucide-react";
 import { useSocialFriends, type SocialFriend } from "@/lib/social-friends";
 
@@ -16,6 +17,12 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
+import { Checkbox } from "@/components/ui/checkbox";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
 import {
   Dialog,
   DialogContent,
@@ -41,7 +48,6 @@ import {
 } from "@/components/ui/table";
 import {
   regionLabel,
-
   REGION_OPTIONS,
   useSocialAccounts,
   type SocialAccount,
@@ -61,6 +67,8 @@ export const Route = createFileRoute("/_app/outreach/social/accounts")({
 });
 
 type PlatformFilter = "all" | "Facebook" | "TikTok";
+type SocialStatus = "正常" | "风控" | "被封";
+const STATUS_OPTIONS: SocialStatus[] = ["正常", "风控", "被封"];
 
 /** 按到期时间返回分档（用于行底色与标签） */
 type ExpiryBucket = "safe" | "quarter" | "month" | "week" | "expired" | "none";
@@ -100,6 +108,21 @@ const EXPIRY_LABEL: Record<ExpiryBucket, string> = {
   none: "",
 };
 
+const STATUS_TONE: Record<SocialStatus, string> = {
+  正常: "bg-emerald-50 text-emerald-700 border-emerald-200",
+  风控: "bg-amber-50 text-amber-700 border-amber-200",
+  被封: "bg-rose-50 text-rose-700 border-rose-200",
+};
+
+function StatusBadge({ status }: { status: SocialStatus }) {
+  return (
+    <span className={cn("inline-flex items-center gap-1 px-2 py-0.5 rounded-md border text-xs", STATUS_TONE[status])}>
+      {status === "正常" && <CheckCircle2 className="h-3 w-3" />}
+      {status}
+    </span>
+  );
+}
+
 function SocialAccountsPage() {
   const accounts = useSocialAccounts();
 
@@ -116,25 +139,28 @@ function SocialAccountsPage() {
   const [keyword, setKeyword] = useState("");
   const [platform, setPlatform] = useState<PlatformFilter>("all");
   const [region, setRegion] = useState<string>("all");
+  const [statuses, setStatuses] = useState<SocialStatus[]>(["正常"]);
 
   const filtered = useMemo(() => {
     const kw = keyword.trim().toLowerCase();
     return accounts.filter((a) => {
       if (platform !== "all" && a.platform !== platform) return false;
       if (region !== "all" && a.ownerRegion !== region) return false;
+      if (!statuses.includes(a.status as SocialStatus)) return false;
       if (kw) {
         const hay = `${a.handle ?? ""} ${a.displayName ?? ""}`.toLowerCase();
         if (!hay.includes(kw)) return false;
       }
       return true;
     });
-  }, [accounts, keyword, platform, region]);
+  }, [accounts, keyword, platform, region, statuses]);
 
-  const hasFilter = keyword !== "" || platform !== "all" || region !== "all";
+  const hasFilter = keyword !== "" || platform !== "all" || region !== "all" || statuses.length !== 1 || statuses[0] !== "正常";
   const reset = () => {
     setKeyword("");
     setPlatform("all");
     setRegion("all");
+    setStatuses(["正常"]);
   };
 
   const regionOptionsInUse = useMemo(() => {
@@ -153,7 +179,7 @@ function SocialAccountsPage() {
           <div>
             <h1 className="text-lg font-semibold">社媒账号</h1>
             <p className="text-xs text-muted-foreground mt-0.5">
-              统一查看与管理已购买的社媒触达账号，支持按平台、状态、所属地区、关键字筛选。
+              统一查看已购买的社媒触达账号，支持按平台、状态、所属地区、关键字筛选。
             </p>
           </div>
           <div className="ml-auto flex items-center gap-3 text-xs text-muted-foreground">
@@ -200,6 +226,37 @@ function SocialAccountsPage() {
               ))}
             </SelectContent>
           </Select>
+          <Popover>
+            <PopoverTrigger asChild>
+              <Button variant="outline" size="sm" className="h-8 gap-1.5 text-xs px-2.5">
+                状态
+                <span className="text-muted-foreground">
+                  {statuses.length === STATUS_OPTIONS.length ? "全部" : `已选 ${statuses.length}`}
+                </span>
+                <ChevronDown className="h-3 w-3 text-muted-foreground" />
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent className="w-40 p-2.5" align="start">
+              <div className="space-y-2">
+                {STATUS_OPTIONS.map((s) => (
+                  <label
+                    key={s}
+                    className="flex cursor-pointer items-center gap-2 rounded-md px-1 py-1 text-xs hover:bg-muted"
+                  >
+                    <Checkbox
+                      checked={statuses.includes(s)}
+                      onCheckedChange={(checked) => {
+                        setStatuses((prev) =>
+                          checked ? [...prev, s] : prev.filter((x) => x !== s),
+                        );
+                      }}
+                    />
+                    <StatusBadge status={s} />
+                  </label>
+                ))}
+              </div>
+            </PopoverContent>
+          </Popover>
           {hasFilter && (
             <Button variant="ghost" size="sm" className="h-8 text-xs gap-1" onClick={reset}>
               <RotateCcw className="h-3 w-3" /> 重置
@@ -288,9 +345,7 @@ function AccountRow({ account, friendCount, onFriendsClick }: { account: SocialA
       <TableCell className="font-mono text-xs">{account.handle}</TableCell>
       <TableCell className="text-sm">{account.displayName}</TableCell>
       <TableCell>
-        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md border text-xs bg-emerald-50 text-emerald-700 border-emerald-200">
-          正常
-        </span>
+        <StatusBadge status={(account.status as SocialStatus) ?? "正常"} />
       </TableCell>
       <TableCell className="text-xs text-muted-foreground">{regionLabel(account.ownerRegion)}</TableCell>
       <TableCell className="text-xs tabular-nums">

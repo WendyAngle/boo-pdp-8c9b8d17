@@ -272,7 +272,7 @@ function CreateProspectingDialog({
   const warming = platformAccounts.filter((a) => a.status === "养号中").length;
   const pending = platformAccounts.filter((a) => a.status === "备货中").length;
   const abnormal = platformAccounts.filter(
-    (a) => a.status === "异常" || a.status === "停用",
+    (a) => a.status === "风控" || a.status === "被封",
   ).length;
   const freeze = cap * COST_SOCIAL_ADD_FRIEND;
 

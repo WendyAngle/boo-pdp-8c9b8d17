@@ -11,12 +11,12 @@ export function computeHealth(a: SocialAccount): HealthResult {
   let score = 100;
   const reasons: string[] = [];
 
-  if (a.status === "异常") {
+  if (a.status === "风控") {
     score -= 60;
-    reasons.push("账号状态异常");
-  } else if (a.status === "停用") {
+    reasons.push("账号处于风控状态");
+  } else if (a.status === "被封") {
     score -= 80;
-    reasons.push("账号已停用");
+    reasons.push("账号已被封禁");
   } else if (a.status === "养号中") {
     score -= 15;
     reasons.push("养号期");

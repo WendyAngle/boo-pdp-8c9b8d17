@@ -44,7 +44,7 @@ export interface SocialAccount {
   /** Facebook / TikTok：每日私信额度（默认 20） */
   dailyDmLimit?: number;
   dmSentToday?: number;
-  status: "正常" | "停用" | "异常" | "养号中" | "备货中";
+  status: "正常" | "风控" | "被封" | "养号中" | "备货中";
   purchasedAt?: string;
   /** 下单时间 */
   orderedAt?: string;
@@ -60,8 +60,8 @@ export interface SocialAccount {
   proxyRegion?: string;
 }
 
-const KEY = "boo:social-accounts:v9";
-const SEED_FLAG = "boo:social-accounts:v9:seeded";
+const KEY = "boo:social-accounts:v10";
+const SEED_FLAG = "boo:social-accounts:v10:seeded";
 
 /** 已交付账号必须有 handle / 显示名 / 交付与到期时间，缺一即为脏数据 */
 function isValidAccount(a: SocialAccount): boolean {
@@ -150,7 +150,7 @@ function seed() {
       dailyLimit: 20, sentToday: 0,
       dailyFriendLimit: 5, friendSentToday: 0,
       dailyDmLimit: 20, dmSentToday: 0,
-      status: "正常",
+      status: "风控",
       ownerRegion: "SG",
       proxyRegion: "SG",
       deliveredAt: nowIso,
@@ -178,7 +178,7 @@ function seed() {
       dailyLimit: 20, sentToday: 0,
       dailyFriendLimit: 5, friendSentToday: 0,
       dailyDmLimit: 20, dmSentToday: 0,
-      status: "正常",
+      status: "被封",
       ownerRegion: "MY",
       proxyRegion: "SG",
       deliveredAt: nowIso,
@@ -206,7 +206,7 @@ function seed() {
       dailyLimit: 20, sentToday: 2,
       dailyFriendLimit: 5, friendSentToday: 2,
       dailyDmLimit: 20, dmSentToday: 2,
-      status: "正常",
+      status: "风控",
       ownerRegion: "TH",
       proxyRegion: "SG",
       deliveredAt: nowIso,
