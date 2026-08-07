@@ -932,6 +932,11 @@ function FavoritesPage() {
         open={batchPlatformOpen}
         onOpenChange={setBatchPlatformOpen}
         candidates={platformCandidates}
+        onCandidatesChange={(newList) => {
+          // 这里可以根据 key 同步 selected Set，或者在这里不做处理仅让弹窗内部维护
+          // 如果用户删除了弹窗里的目标，通常不希望影响收藏列表的选择状态，
+          // 但如果希望联动，可以调用 setSelected 等逻辑
+        }}
       />
       <AiVoiceCallDialog
         open={aiCallOpen}

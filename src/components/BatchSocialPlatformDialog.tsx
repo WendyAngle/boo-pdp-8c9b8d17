@@ -84,13 +84,17 @@ export function usableExecAccounts(
 export interface BatchSocialPlatformDialogProps {
   open: boolean;
   onOpenChange: (v: boolean) => void;
+  /** 初始待触达目标列表（来自外部选择） */
   candidates: PlatformCandidate[];
+  /** 当内部列表变动时同步给父组件 */
+  onCandidatesChange?: (newList: PlatformCandidate[]) => void;
 }
 
 export function BatchSocialPlatformDialog({
   open,
   onOpenChange,
-  candidates,
+  candidates: initialCandidates,
+  onCandidatesChange,
 }: BatchSocialPlatformDialogProps) {
   const accounts = useSocialAccounts();
   const profile = useLeadProfile();
@@ -107,8 +111,8 @@ export function BatchSocialPlatformDialog({
   /** 目标语言译文（实际发送内容） */
   const [translated, setTranslated] = useState("");
 
-  // 手动添加目标相关
-  const [extraTargets, setExtraTargets] = useState<PlatformCandidate[]>([]);
+  // 内部维护的完整目标列表（含外部传入和手动添加的）
+  const [internalCandidates, setInternalCandidates] = useState<PlatformCandidate[]>([]);
   const [isAdding, setIsAdding] = useState(false);
   const [newTarget, setNewTarget] = useState({ name: "", handle: "", platform: "Facebook" as ReachPlatform });
 
@@ -120,11 +124,11 @@ export function BatchSocialPlatformDialog({
     setPreviewIdx(0);
     setTargetLang("en");
     setTranslated("");
-    setExtraTargets([]);
+    setInternalCandidates(initialCandidates);
     setIsAdding(false);
-  }, [open]);
+  }, [open, initialCandidates]);
 
-  const allCandidates = useMemo(() => [...candidates, ...extraTargets], [candidates, extraTargets]);
+  const allCandidates = internalCandidates;
 
   /** 按平台联系方式分组数量 */
   const groups = useMemo(() => {
@@ -231,6 +235,7 @@ export function BatchSocialPlatformDialog({
   function handleSend() {
     if (!canSend) return;
     const scheduled = nextDayStart();
+    const taskName = `批量社媒私信 · ${allCandidates.length}个目标`;
     let n = 0;
     jobs.forEach((job, i) => {
       const r = job.candidate;
@@ -242,6 +247,7 @@ export function BatchSocialPlatformDialog({
         channel: "social",
         platform: job.platform,
         detail: job.handle,
+        subject: taskName, // 使用 subject 存储任务名称以便聚合
         content: renderTemplate(sendContent, r.ctx),
         aiGenerated: aiUsed,
         cost: unit,
@@ -256,7 +262,7 @@ export function BatchSocialPlatformDialog({
         deferredCount > 0
           ? `今日执行 ${todayCount} 条，剩余 ${deferredCount} 条将于明日 09:00 自动继续执行；`
           : ""
-      }共扣除 ${grandTotal} 积分，可在「触达任务」模块查看进度`,
+      }共扣除 ${grandTotal} 积分，可在「客户触达」模块查看进度`,
     });
   }
 
@@ -278,21 +284,25 @@ export function BatchSocialPlatformDialog({
         我的姓名: user.name,
       },
     };
-    setExtraTargets((prev) => [...prev, candidate]);
+    const newList = [...internalCandidates, candidate];
+    setInternalCandidates(newList);
+    onCandidatesChange?.(newList);
     setNewTarget({ ...newTarget, name: "", handle: "" });
     setIsAdding(false);
     toast.success("已手动添加触达目标");
   }
 
-  function handleRemoveExtra(key: string) {
-    setExtraTargets((prev) => prev.filter((t) => t.key !== key));
+  function handleRemoveCandidate(key: string) {
+    const newList = internalCandidates.filter((t) => t.key !== key);
+    setInternalCandidates(newList);
+    onCandidatesChange?.(newList);
   }
 
   async function handleAiGenerate() {
     if (aiLoading) return;
     setAiLoading(true);
     try {
-      const sample = jobs[0]?.candidate ?? candidates[0];
+      const sample = jobs[0]?.candidate ?? allCandidates[0];
       const res = await callGenerate({
         data: {
           channel: "social",
@@ -325,13 +335,13 @@ export function BatchSocialPlatformDialog({
             <Users className="h-5 w-5 text-primary" />
             批量社媒私信 · 待处理 {allCandidates.length} 个目标
             <Badge variant="secondary" className="ml-1 font-normal">
-              可触达 {targetCount}
+              已选 {targetCount}
             </Badge>
           </DialogTitle>
           <DialogDescription className="text-xs">
-            向你收藏的目标按平台分发私信，超出当日额度将顺延至次日。
+            向选中的目标分发私信，支持手动添加和删除。超出当日额度将顺延至次日。
             <br />
-            目标来源：我的收藏（已选 {candidates.length} 个）· 需要系统帮你找新目标？前往「触达任务 → 社媒拓客触达」。
+            目标来源：待执行任务（当前 {allCandidates.length} 个）· 需要系统帮你找新目标？前往「触达任务 → 社媒拓客触达」。
           </DialogDescription>
         </DialogHeader>
 
@@ -341,7 +351,7 @@ export function BatchSocialPlatformDialog({
           <section className="rounded-md border bg-muted/30 p-3 space-y-3">
             <div className="flex items-center justify-between">
               <Label className="text-xs font-medium">
-                选中数据 · 社媒联系方式分布
+                待执行任务 · {allCandidates.length} 个目标
               </Label>
               <Button
                 variant="ghost"
@@ -432,14 +442,12 @@ export function BatchSocialPlatformDialog({
                       )}
                     </div>
                   </div>
-                  {c.targetId === "manual" && (
-                    <button 
-                      onClick={() => handleRemoveExtra(c.key)}
-                      className="text-muted-foreground hover:text-destructive p-0.5 opacity-0 group-hover:opacity-100 transition-opacity"
-                    >
-                      <X className="h-3 w-3" />
-                    </button>
-                  )}
+                  <button 
+                    onClick={() => handleRemoveCandidate(c.key)}
+                    className="text-muted-foreground hover:text-destructive p-0.5 opacity-0 group-hover:opacity-100 transition-opacity"
+                  >
+                    <X className="h-3 w-3" />
+                  </button>
                 </div>
               ))}
             </div>
