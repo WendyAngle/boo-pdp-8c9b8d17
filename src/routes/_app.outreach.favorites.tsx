@@ -748,10 +748,9 @@ function FavoritesPage() {
             <Button
               variant="outline"
               size="sm"
-              disabled={selected.size === 0}
-              className="gap-1.5 border-primary/30 text-primary hover:bg-primary/10 hover:text-primary disabled:opacity-50"
+              className="gap-1.5 border-primary/30 text-primary hover:bg-primary/10 hover:text-primary"
               onClick={() => {
-                if (!guardBatch(emailEligible, "邮件")) return;
+                if (selected.size > 0 && !guardBatch(emailEligible, "邮件")) return;
                 if (usableMailboxes.length === 0) {
                   setNoMailboxOpen(true);
                   return;
@@ -768,10 +767,9 @@ function FavoritesPage() {
             <Button
               variant="outline"
               size="sm"
-              disabled={selected.size === 0}
-              className="gap-1.5 border-primary/30 text-primary hover:bg-primary/10 hover:text-primary disabled:opacity-50"
+              className="gap-1.5 border-primary/30 text-primary hover:bg-primary/10 hover:text-primary"
               onClick={() => {
-                if (!guardBatch(smsEligible, "短信")) return;
+                if (selected.size > 0 && !guardBatch(smsEligible, "短信")) return;
                 setBatchSmsOpen(true);
               }}
             >
@@ -781,10 +779,9 @@ function FavoritesPage() {
             <Button
               variant="outline"
               size="sm"
-              disabled={selected.size === 0}
-              className="gap-1.5 border-primary/30 text-primary hover:bg-primary/10 hover:text-primary disabled:opacity-50"
+              className="gap-1.5 border-primary/30 text-primary hover:bg-primary/10 hover:text-primary"
               onClick={() => {
-                if (aiCallTargets.length === 0) {
+                if (selected.size > 0 && aiCallTargets.length === 0) {
                   toast.warning("所选对象均没有可用电话号码", {
                     description: "请选择包含电话号码的企业或人物，或在弹窗中手动添加号码。",
                   });
@@ -812,17 +809,15 @@ function FavoritesPage() {
             <Button
               variant="outline"
               size="sm"
-              disabled={selected.size === 0}
-              className="gap-1.5 border-primary/30 text-primary hover:bg-primary/10 hover:text-primary disabled:opacity-50"
+              className="gap-1.5 border-primary/30 text-primary hover:bg-primary/10 hover:text-primary"
               onClick={() => {
-                if (!guardBatch(socialEligible, "社媒")) return;
+                if (selected.size > 0 && !guardBatch(socialEligible, "社媒")) return;
                 setBatchPlatformOpen(true);
               }}
               title="批量社媒私信"
             >
               <Users className="h-4 w-4" />
               批量社媒私信
-
             </Button>
 
 
