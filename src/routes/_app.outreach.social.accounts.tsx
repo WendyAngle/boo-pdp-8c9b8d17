@@ -67,6 +67,8 @@ export const Route = createFileRoute("/_app/outreach/social/accounts")({
 });
 
 type PlatformFilter = "all" | "Facebook" | "TikTok";
+type SocialStatus = "正常" | "风控" | "被封";
+const STATUS_OPTIONS: SocialStatus[] = ["正常", "风控", "被封"];
 
 /** 按到期时间返回分档（用于行底色与标签） */
 type ExpiryBucket = "safe" | "quarter" | "month" | "week" | "expired" | "none";
