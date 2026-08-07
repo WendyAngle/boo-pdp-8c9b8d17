@@ -211,6 +211,37 @@ function SocialAccountsPage() {
               ))}
             </SelectContent>
           </Select>
+          <Popover>
+            <PopoverTrigger asChild>
+              <Button variant="outline" size="sm" className="h-8 gap-1.5 text-xs px-2.5">
+                状态
+                <span className="text-muted-foreground">
+                  {statuses.length === STATUS_OPTIONS.length ? "全部" : `已选 ${statuses.length}`}
+                </span>
+                <ChevronDown className="h-3 w-3 text-muted-foreground" />
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent className="w-40 p-2.5" align="start">
+              <div className="space-y-2">
+                {STATUS_OPTIONS.map((s) => (
+                  <label
+                    key={s}
+                    className="flex cursor-pointer items-center gap-2 rounded-md px-1 py-1 text-xs hover:bg-muted"
+                  >
+                    <Checkbox
+                      checked={statuses.includes(s)}
+                      onCheckedChange={(checked) => {
+                        setStatuses((prev) =>
+                          checked ? [...prev, s] : prev.filter((x) => x !== s),
+                        );
+                      }}
+                    />
+                    <StatusBadge status={s} />
+                  </label>
+                ))}
+              </div>
+            </PopoverContent>
+          </Popover>
           {hasFilter && (
             <Button variant="ghost" size="sm" className="h-8 text-xs gap-1" onClick={reset}>
               <RotateCcw className="h-3 w-3" /> 重置
