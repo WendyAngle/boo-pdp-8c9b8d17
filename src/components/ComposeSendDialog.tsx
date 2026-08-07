@@ -118,6 +118,8 @@ export function ComposeSendDialog({
   const ledger = useLedger();
 
   const [recipients, setRecipients] = useState<Recipient[]>(incomingRecipients);
+  /** 记录初始进入弹窗时被自动过滤的数量，用于维持“已自动过滤”文案的稳定性 */
+  const [initialFilteredCount, setInitialFilteredCount] = useState(0);
   const [subject, setSubject] = useState("");
   const [content, setContent] = useState("");
   const [aiUsed, setAiUsed] = useState(false);
