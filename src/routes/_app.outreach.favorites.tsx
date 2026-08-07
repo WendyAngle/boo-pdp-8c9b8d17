@@ -809,17 +809,15 @@ function FavoritesPage() {
             <Button
               variant="outline"
               size="sm"
-              disabled={selected.size === 0}
-              className="gap-1.5 border-primary/30 text-primary hover:bg-primary/10 hover:text-primary disabled:opacity-50"
+              className="gap-1.5 border-primary/30 text-primary hover:bg-primary/10 hover:text-primary"
               onClick={() => {
-                if (!guardBatch(socialEligible, "社媒")) return;
+                if (selected.size > 0 && !guardBatch(socialEligible, "社媒")) return;
                 setBatchPlatformOpen(true);
               }}
               title="批量社媒私信"
             >
               <Users className="h-4 w-4" />
               批量社媒私信
-
             </Button>
 
 
