@@ -140,12 +140,12 @@ function SocialAccountsPage() {
     });
   }, [accounts, keyword, platform, region, statuses]);
 
-  const hasFilter = keyword !== "" || platform !== "all" || region !== "all" || statuses.length !== STATUS_OPTIONS.length;
+  const hasFilter = keyword !== "" || platform !== "all" || region !== "all" || statuses.length !== 1 || statuses[0] !== "正常";
   const reset = () => {
     setKeyword("");
     setPlatform("all");
     setRegion("all");
-    setStatuses(STATUS_OPTIONS);
+    setStatuses(["正常"]);
   };
 
   const regionOptionsInUse = useMemo(() => {
