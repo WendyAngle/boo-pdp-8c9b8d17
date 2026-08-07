@@ -84,13 +84,17 @@ export function usableExecAccounts(
 export interface BatchSocialPlatformDialogProps {
   open: boolean;
   onOpenChange: (v: boolean) => void;
+  /** 初始待触达目标列表（来自外部选择） */
   candidates: PlatformCandidate[];
+  /** 当内部列表变动时同步给父组件 */
+  onCandidatesChange?: (newList: PlatformCandidate[]) => void;
 }
 
 export function BatchSocialPlatformDialog({
   open,
   onOpenChange,
-  candidates,
+  candidates: initialCandidates,
+  onCandidatesChange,
 }: BatchSocialPlatformDialogProps) {
   const accounts = useSocialAccounts();
   const profile = useLeadProfile();
