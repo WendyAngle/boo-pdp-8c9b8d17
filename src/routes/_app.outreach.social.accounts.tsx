@@ -5,8 +5,8 @@ import {
   Facebook,
   Music2,
   CheckCircle2,
-  Wallet,
   UserCheck,
+
   Search,
   RotateCcw,
   X,
