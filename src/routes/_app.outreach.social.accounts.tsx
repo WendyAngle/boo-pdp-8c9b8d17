@@ -10,8 +10,8 @@ import {
   RotateCcw,
   X,
 } from "lucide-react";
-
 import { useSocialFriends, type SocialFriend } from "@/lib/social-friends";
+
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -40,8 +40,8 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import {
-
   regionLabel,
+
   REGION_OPTIONS,
   useSocialAccounts,
   type SocialAccount,
@@ -158,8 +158,8 @@ function SocialAccountsPage() {
           </div>
           <div className="ml-auto flex items-center gap-3 text-xs text-muted-foreground">
             <Button
-
               variant="outline"
+
               size="sm"
               className="h-8 gap-1.5 text-xs"
               onClick={() => setAllFriendsOpen(true)}
