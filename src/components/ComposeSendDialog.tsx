@@ -185,6 +185,11 @@ export function ComposeSendDialog({
   useEffect(() => {
     if (!open) return;
     setRecipients(incomingRecipients);
+    if (typeof totalSelected === "number") {
+      setInitialFilteredCount(Math.max(0, totalSelected - incomingRecipients.length));
+    } else {
+      setInitialFilteredCount(0);
+    }
     setManualInput("");
     setPreviewIdx(0);
     setSubject("");
