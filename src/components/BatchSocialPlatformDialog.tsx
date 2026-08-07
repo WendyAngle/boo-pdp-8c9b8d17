@@ -335,11 +335,11 @@ export function BatchSocialPlatformDialog({
             <Users className="h-5 w-5 text-primary" />
             批量社媒私信 · 待处理 {allCandidates.length} 个目标
             <Badge variant="secondary" className="ml-1 font-normal">
-              可触达 {targetCount}
+              已选 {targetCount}
             </Badge>
           </DialogTitle>
           <DialogDescription className="text-xs">
-            向你收藏的目标按平台分发私信，超出当日额度将顺延至次日。
+            向选中的目标分发私信，支持手动添加和删除。超出当日额度将顺延至次日。
             <br />
             目标来源：待执行任务（当前 {allCandidates.length} 个）· 需要系统帮你找新目标？前往「触达任务 → 社媒拓客触达」。
           </DialogDescription>
