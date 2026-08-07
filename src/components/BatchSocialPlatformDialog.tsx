@@ -312,10 +312,12 @@ export function BatchSocialPlatformDialog({
     toast.success("已手动添加触达目标");
   }
 
-  function handleRemoveCandidate(key: string) {
-    const newList = internalCandidates.filter((t) => t.key !== key);
-    setInternalCandidates(newList);
-    onCandidatesChange?.(newList);
+  function handleRemoveJob(jobKey: string) {
+    setRemovedJobKeys((prev) => {
+      const next = new Set(prev);
+      next.add(jobKey);
+      return next;
+    });
   }
 
   async function handleAiGenerate() {
