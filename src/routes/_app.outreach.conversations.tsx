@@ -304,8 +304,8 @@ function InboxPage() {
   const [scorePanelOpen, setScorePanelOpen] = useState(true);
 
   const q = search.q ?? "";
-  const [socialSendMode, setSocialSendMode] = useState<"active" | "immediate">("active");
   const ch = search.ch ?? "all";
+
 
   const group = search.group ?? "all";
   const senderKey = search.sender ?? "all";
@@ -923,6 +923,8 @@ function ThreadDetail({
   onToggleScorePanel?: () => void;
 }) {
   const [reply, setReply] = useState("");
+  const [socialSendMode, setSocialSendMode] = useState<"active" | "immediate">("active");
+
   const detailSender = useThreadSenderResolver()(thread);
   // AI 识别的对方语言
   const detectedLang = useMemo(() => detectThreadLanguage(thread), [thread]);
