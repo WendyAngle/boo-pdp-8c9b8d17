@@ -305,6 +305,9 @@ function InboxPage() {
 
   const q = search.q ?? "";
   const ch = search.ch ?? "all";
+  const [socialSendMode, setSocialSendMode] = useState<"active" | "immediate">("active");
+
+  const ch = search.ch ?? "all";
   const group = search.group ?? "all";
   const senderKey = search.sender ?? "all";
   const resolveSender = useThreadSenderResolver();
