@@ -337,11 +337,69 @@ export function BatchSocialPlatformDialog({
 
 
         <div className="space-y-5">
-          {/* 分组统计 */}
-          <section className="rounded-md border bg-muted/30 p-3 space-y-2">
-            <Label className="text-xs font-medium">
-              选中数据 · 社媒联系方式分布
-            </Label>
+          {/* 分组统计与目标展示 */}
+          <section className="rounded-md border bg-muted/30 p-3 space-y-3">
+            <div className="flex items-center justify-between">
+              <Label className="text-xs font-medium">
+                选中数据 · 社媒联系方式分布
+              </Label>
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-6 text-[11px] text-primary"
+                onClick={() => setIsAdding(!isAdding)}
+              >
+                {isAdding ? "取消添加" : "手动添加目标"}
+              </Button>
+            </div>
+
+            {isAdding && (
+              <div className="space-y-3 border-b pb-3 mb-2">
+                <div className="grid grid-cols-3 gap-2">
+                  <div className="space-y-1">
+                    <Label className="text-[10px] text-muted-foreground">人名/企业名</Label>
+                    <Input
+                      size={1}
+                      className="h-7 text-xs"
+                      placeholder="例如: John Doe"
+                      value={newTarget.name}
+                      onChange={(e) => setNewTarget({ ...newTarget, name: e.target.value })}
+                    />
+                  </div>
+                  <div className="space-y-1">
+                    <Label className="text-[10px] text-muted-foreground">平台</Label>
+                    <Select
+                      value={newTarget.platform}
+                      onValueChange={(v) => setNewTarget({ ...newTarget, platform: v as ReachPlatform })}
+                    >
+                      <SelectTrigger className="h-7 text-xs">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="Facebook">Facebook</SelectItem>
+                        <SelectItem value="TikTok">TikTok</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="space-y-1">
+                    <Label className="text-[10px] text-muted-foreground">账号/主页链接</Label>
+                    <Input
+                      size={1}
+                      className="h-7 text-xs"
+                      placeholder="handle 或 URL"
+                      value={newTarget.handle}
+                      onChange={(e) => setNewTarget({ ...newTarget, handle: e.target.value })}
+                    />
+                  </div>
+                </div>
+                <div className="flex justify-end">
+                  <Button size="sm" className="h-7 text-[11px]" onClick={handleAddExtra}>
+                    添加至列表
+                  </Button>
+                </div>
+              </div>
+            )}
+
             <div className="grid grid-cols-3 gap-2 text-xs">
               <StatCell
                 tone="sky"
@@ -350,6 +408,40 @@ export function BatchSocialPlatformDialog({
               />
               <StatCell tone="violet" label="TikTok" value={groups.TikTok.length} />
               <StatCell tone="slate" label="无社媒账号" value={groups.none.length} />
+            </div>
+
+            {/* 目标列表滚动展示 */}
+            <div className="mt-3 max-h-32 overflow-y-auto border-t pt-2 space-y-1.5 pr-1">
+              {allCandidates.map((c) => (
+                <div key={c.key} className="flex items-center justify-between group">
+                  <div className="flex items-center gap-2 flex-1 min-w-0">
+                    <span className="text-[11px] font-medium truncate max-w-[120px]">{c.name}</span>
+                    <div className="flex gap-1 overflow-hidden">
+                      {REACH_PLATFORMS.map(p => c.handles[p] && (
+                        <Badge key={p} variant="outline" className={cn(
+                          "px-1 py-0 h-4 text-[9px] font-normal",
+                          p === "Facebook" ? "border-sky-200 text-sky-700 bg-sky-50" : "border-violet-200 text-violet-700 bg-violet-50"
+                        )}>
+                          {p}: {c.handles[p]}
+                        </Badge>
+                      ))}
+                      {!REACH_PLATFORMS.some(p => c.handles[p]) && (
+                        <Badge variant="outline" className="px-1 py-0 h-4 text-[9px] font-normal text-muted-foreground bg-muted/50">
+                          暂无账号
+                        </Badge>
+                      )}
+                    </div>
+                  </div>
+                  {c.targetId === "manual" && (
+                    <button 
+                      onClick={() => handleRemoveExtra(c.key)}
+                      className="text-muted-foreground hover:text-destructive p-0.5 opacity-0 group-hover:opacity-100 transition-opacity"
+                    >
+                      <X className="h-3 w-3" />
+                    </button>
+                  )}
+                </div>
+              ))}
             </div>
           </section>
 
