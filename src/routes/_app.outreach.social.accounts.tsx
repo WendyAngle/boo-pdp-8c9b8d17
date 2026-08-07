@@ -101,8 +101,8 @@ const EXPIRY_LABEL: Record<ExpiryBucket, string> = {
 };
 
 function SocialAccountsPage() {
-  const balance = useCreditBalance();
   const accounts = useSocialAccounts();
+
   const friends = useSocialFriends();
   const friendCountByAccount = useMemo(() => {
     const m = new Map<string, number>();
