@@ -323,7 +323,7 @@ export function BatchSocialPlatformDialog({
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Users className="h-5 w-5 text-primary" />
-            批量社媒私信 · 已选 {candidates.length} 个目标
+            批量社媒私信 · 待处理 {allCandidates.length} 个目标
             <Badge variant="secondary" className="ml-1 font-normal">
               可触达 {targetCount}
             </Badge>
