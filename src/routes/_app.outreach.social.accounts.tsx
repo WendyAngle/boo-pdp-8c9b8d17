@@ -108,6 +108,21 @@ const EXPIRY_LABEL: Record<ExpiryBucket, string> = {
   none: "",
 };
 
+const STATUS_TONE: Record<SocialStatus, string> = {
+  正常: "bg-emerald-50 text-emerald-700 border-emerald-200",
+  风控: "bg-amber-50 text-amber-700 border-amber-200",
+  被封: "bg-rose-50 text-rose-700 border-rose-200",
+};
+
+function StatusBadge({ status }: { status: SocialStatus }) {
+  return (
+    <span className={cn("inline-flex items-center gap-1 px-2 py-0.5 rounded-md border text-xs", STATUS_TONE[status])}>
+      {status === "正常" && <CheckCircle2 className="h-3 w-3" />}
+      {status}
+    </span>
+  );
+}
+
 function SocialAccountsPage() {
   const accounts = useSocialAccounts();
 
