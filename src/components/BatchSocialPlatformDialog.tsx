@@ -125,43 +125,63 @@ export function BatchSocialPlatformDialog({
     setTargetLang("en");
     setTranslated("");
     setInternalCandidates(initialCandidates);
+    setRemovedJobKeys(new Set());
     setIsAdding(false);
   }, [open, initialCandidates]);
 
   const allCandidates = internalCandidates;
 
-  /** 按平台联系方式分组数量 */
-  const groups = useMemo(() => {
-    const g: Record<ReachPlatform, PlatformCandidate[]> = {
-      Facebook: [],
-      TikTok: [],
-    };
-    const none: PlatformCandidate[] = [];
+  /** 当前平台筛选下的触达目标（单一账号级别，而不是企业级别） */
+  type Job = {
+    key: string; // 唯一标识：candidateKey-platform
+    candidate: PlatformCandidate;
+    platform: ReachPlatform;
+    handle: string;
+  };
+
+  /** 将 candidates 展平为具体的账号任务列表 */
+  const allAccountJobs = useMemo<Job[]>(() => {
+    const out: Job[] = [];
     for (const c of allCandidates) {
-      let hit = false;
       for (const p of REACH_PLATFORMS) {
         if (c.handles[p]) {
-          g[p].push(c);
-          hit = true;
+          out.push({
+            key: `${c.key}-${p}`,
+            candidate: c,
+            platform: p,
+            handle: c.handles[p]!,
+          });
         }
-      }
-      if (!hit) none.push(c);
-    }
-    return { ...g, none };
-  }, [allCandidates]);
-
-  /** 当前平台筛选下的触达目标（平台 + 目标 的组合） */
-  type Job = { candidate: PlatformCandidate; platform: ReachPlatform; handle: string };
-  const jobs = useMemo<Job[]>(() => {
-    const out: Job[] = [];
-    for (const p of REACH_PLATFORMS) {
-      if (platform !== "all" && platform !== p) continue;
-      for (const c of groups[p]) {
-        out.push({ candidate: c, platform: p, handle: c.handles[p]! });
       }
     }
     return out;
-  }, [groups, platform]);
+  }, [allCandidates]);
+
+  // 内部维护的已删除 Job Keys (针对单一账号的删除)
+  const [removedJobKeys, setRemovedJobKeys] = useState<Set<string>>(new Set());
+
+  // 实际参与执行的任务列表
+  const filteredJobs = useMemo(() => {
+    return allAccountJobs.filter((j) => !removedJobKeys.has(j.key));
+  }, [allAccountJobs, removedJobKeys]);
+
+  /** 筛选后的任务数量统计 */
+  const groups = useMemo(() => {
+    const g: Record<ReachPlatform, Job[]> = {
+      Facebook: [],
+      TikTok: [],
+    };
+    for (const j of filteredJobs) {
+      g[j.platform].push(j);
+    }
+    return g;
+  }, [filteredJobs]);
+
+  /** 当前 UI 筛选平台下的任务 */
+  const jobs = useMemo<Job[]>(() => {
+    if (platform === "all") return filteredJobs;
+    return filteredJobs.filter((j) => j.platform === platform);
+  }, [filteredJobs, platform]);
 
   /** 相应平台状态为正常的账号（用于展示数量） */
   const normalAccounts = useMemo(
@@ -235,7 +255,7 @@ export function BatchSocialPlatformDialog({
   function handleSend() {
     if (!canSend) return;
     const scheduled = nextDayStart();
-    const taskName = `批量社媒私信 · ${allCandidates.length}个目标`;
+    const taskName = `批量社媒私信 · ${filteredJobs.length}个账号`;
     let n = 0;
     jobs.forEach((job, i) => {
       const r = job.candidate;
@@ -292,10 +312,12 @@ export function BatchSocialPlatformDialog({
     toast.success("已手动添加触达目标");
   }
 
-  function handleRemoveCandidate(key: string) {
-    const newList = internalCandidates.filter((t) => t.key !== key);
-    setInternalCandidates(newList);
-    onCandidatesChange?.(newList);
+  function handleRemoveJob(jobKey: string) {
+    setRemovedJobKeys((prev) => {
+      const next = new Set(prev);
+      next.add(jobKey);
+      return next;
+    });
   }
 
   async function handleAiGenerate() {
@@ -333,15 +355,15 @@ export function BatchSocialPlatformDialog({
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Users className="h-5 w-5 text-primary" />
-            批量社媒私信 · 待处理 {allCandidates.length} 个目标
+            批量社媒私信 · 待执行任务 {filteredJobs.length}
             <Badge variant="secondary" className="ml-1 font-normal">
-              已选 {targetCount}
+              已选 {jobs.length}
             </Badge>
           </DialogTitle>
           <DialogDescription className="text-xs">
             向选中的目标分发私信，支持手动添加和删除。超出当日额度将顺延至次日。
             <br />
-            目标来源：待执行任务（当前 {allCandidates.length} 个）· 需要系统帮你找新目标？前往「触达任务 → 社媒拓客触达」。
+            目标来源：待执行任务（当前共 {filteredJobs.length} 个账号）
           </DialogDescription>
         </DialogHeader>
 
@@ -351,7 +373,7 @@ export function BatchSocialPlatformDialog({
           <section className="rounded-md border bg-muted/30 p-3 space-y-3">
             <div className="flex items-center justify-between">
               <Label className="text-xs font-medium">
-                待执行任务 · {allCandidates.length} 个目标
+                待执行任务列表
               </Label>
               <Button
                 variant="ghost"
@@ -410,46 +432,42 @@ export function BatchSocialPlatformDialog({
               </div>
             )}
 
-            <div className="grid grid-cols-3 gap-2 text-xs">
+            <div className="grid grid-cols-2 gap-2 text-xs">
               <StatCell
                 tone="sky"
                 label="Facebook"
                 value={groups.Facebook.length}
               />
               <StatCell tone="violet" label="TikTok" value={groups.TikTok.length} />
-              <StatCell tone="slate" label="无社媒账号" value={groups.none.length} />
             </div>
 
             {/* 目标列表滚动展示 */}
-            <div className="mt-3 max-h-32 overflow-y-auto border-t pt-2 space-y-1.5 pr-1">
-              {allCandidates.map((c) => (
-                <div key={c.key} className="flex items-center justify-between group">
-                  <div className="flex items-center gap-2 flex-1 min-w-0">
-                    <span className="text-[11px] font-medium truncate max-w-[120px]">{c.name}</span>
-                    <div className="flex gap-1 overflow-hidden">
-                      {REACH_PLATFORMS.map(p => c.handles[p] && (
-                        <Badge key={p} variant="outline" className={cn(
-                          "px-1 py-0 h-4 text-[9px] font-normal",
-                          p === "Facebook" ? "border-sky-200 text-sky-700 bg-sky-50" : "border-violet-200 text-violet-700 bg-violet-50"
-                        )}>
-                          {p}: {c.handles[p]}
-                        </Badge>
-                      ))}
-                      {!REACH_PLATFORMS.some(p => c.handles[p]) && (
-                        <Badge variant="outline" className="px-1 py-0 h-4 text-[9px] font-normal text-muted-foreground bg-muted/50">
-                          暂无账号
-                        </Badge>
-                      )}
-                    </div>
-                  </div>
-                  <button 
-                    onClick={() => handleRemoveCandidate(c.key)}
-                    className="text-muted-foreground hover:text-destructive p-0.5 opacity-0 group-hover:opacity-100 transition-opacity"
-                  >
-                    <X className="h-3 w-3" />
-                  </button>
+            <div className="mt-3 max-h-40 overflow-y-auto border-t pt-2 space-y-1.5 pr-1">
+              {filteredJobs.length === 0 ? (
+                <div className="text-center py-4 text-xs text-muted-foreground">
+                  暂无待执行任务，请添加或从外部选择目标。
                 </div>
-              ))}
+              ) : (
+                filteredJobs.map((j) => (
+                  <div key={j.key} className="flex items-center justify-between group py-0.5">
+                    <div className="flex items-center gap-2 flex-1 min-w-0">
+                      <span className="text-[11px] font-medium truncate max-w-[120px]">{j.candidate.name}</span>
+                      <Badge variant="outline" className={cn(
+                        "px-1 py-0 h-4 text-[9px] font-normal",
+                        j.platform === "Facebook" ? "border-sky-200 text-sky-700 bg-sky-50" : "border-violet-200 text-violet-700 bg-violet-50"
+                      )}>
+                        {j.platform}: {j.handle}
+                      </Badge>
+                    </div>
+                    <button 
+                      onClick={() => handleRemoveJob(j.key)}
+                      className="text-muted-foreground hover:text-destructive p-0.5 opacity-0 group-hover:opacity-100 transition-opacity"
+                    >
+                      <X className="h-3 w-3" />
+                    </button>
+                  </div>
+                ))
+              )}
             </div>
           </section>
 
