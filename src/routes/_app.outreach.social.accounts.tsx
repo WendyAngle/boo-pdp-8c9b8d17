@@ -345,9 +345,7 @@ function AccountRow({ account, friendCount, onFriendsClick }: { account: SocialA
       <TableCell className="font-mono text-xs">{account.handle}</TableCell>
       <TableCell className="text-sm">{account.displayName}</TableCell>
       <TableCell>
-        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md border text-xs bg-emerald-50 text-emerald-700 border-emerald-200">
-          正常
-        </span>
+        <StatusBadge status={(account.status as SocialStatus) ?? "正常"} />
       </TableCell>
       <TableCell className="text-xs text-muted-foreground">{regionLabel(account.ownerRegion)}</TableCell>
       <TableCell className="text-xs tabular-nums">
