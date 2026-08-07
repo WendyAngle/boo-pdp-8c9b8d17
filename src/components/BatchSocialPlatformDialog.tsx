@@ -125,6 +125,7 @@ export function BatchSocialPlatformDialog({
     setTargetLang("en");
     setTranslated("");
     setInternalCandidates(initialCandidates);
+    setRemovedJobKeys(new Set());
     setIsAdding(false);
   }, [open, initialCandidates]);
 
