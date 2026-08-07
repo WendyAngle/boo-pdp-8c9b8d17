@@ -447,15 +447,14 @@ export function ComposeSendDialog({
               </Label>
               {recipients.length === 0 ? (
                 <span className="text-xs text-rose-600">
-                  {typeof totalSelected === "number" && totalSelected > 0
-                    ? `已选 ${totalSelected} 条，均无${isEmail ? "邮箱" : "电话"}，已全部过滤`
+                  {initialFilteredCount > 0
+                    ? `已选对象均无${isEmail ? "邮箱" : "电话"}，已全部过滤`
                     : "暂无收件人，可在下方手动添加"}
                 </span>
               ) : (
-                typeof totalSelected === "number" &&
-                totalSelected > recipients.length && (
+                initialFilteredCount > 0 && (
                   <span className="text-xs text-amber-600">
-                    已自动过滤 {totalSelected - recipients.length} 条无
+                    已自动过滤 {initialFilteredCount} 条无
                     {isEmail ? "邮箱" : "电话"}的数据
                   </span>
                 )
