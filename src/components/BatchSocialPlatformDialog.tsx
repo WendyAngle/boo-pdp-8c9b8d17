@@ -351,7 +351,7 @@ export function BatchSocialPlatformDialog({
           <section className="rounded-md border bg-muted/30 p-3 space-y-3">
             <div className="flex items-center justify-between">
               <Label className="text-xs font-medium">
-                选中数据 · 社媒联系方式分布
+                待执行任务 · {allCandidates.length} 个目标
               </Label>
               <Button
                 variant="ghost"
