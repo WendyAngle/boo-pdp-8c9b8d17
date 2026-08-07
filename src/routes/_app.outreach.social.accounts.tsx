@@ -9,6 +9,7 @@ import {
   Search,
   RotateCcw,
   X,
+  ChevronDown,
 } from "lucide-react";
 import { useSocialFriends, type SocialFriend } from "@/lib/social-friends";
 
@@ -16,6 +17,12 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
+import { Checkbox } from "@/components/ui/checkbox";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
 import {
   Dialog,
   DialogContent,
@@ -41,7 +48,6 @@ import {
 } from "@/components/ui/table";
 import {
   regionLabel,
-
   REGION_OPTIONS,
   useSocialAccounts,
   type SocialAccount,
