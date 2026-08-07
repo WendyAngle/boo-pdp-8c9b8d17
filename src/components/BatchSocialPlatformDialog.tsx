@@ -107,6 +107,11 @@ export function BatchSocialPlatformDialog({
   /** 目标语言译文（实际发送内容） */
   const [translated, setTranslated] = useState("");
 
+  // 手动添加目标相关
+  const [extraTargets, setExtraTargets] = useState<PlatformCandidate[]>([]);
+  const [isAdding, setIsAdding] = useState(false);
+  const [newTarget, setNewTarget] = useState({ name: "", handle: "", platform: "Facebook" as ReachPlatform });
+
   useEffect(() => {
     if (!open) return;
     setPlatform("all");
@@ -115,7 +120,11 @@ export function BatchSocialPlatformDialog({
     setPreviewIdx(0);
     setTargetLang("en");
     setTranslated("");
+    setExtraTargets([]);
+    setIsAdding(false);
   }, [open]);
+
+  const allCandidates = useMemo(() => [...candidates, ...extraTargets], [candidates, extraTargets]);
 
   /** 按平台联系方式分组数量 */
   const groups = useMemo(() => {
