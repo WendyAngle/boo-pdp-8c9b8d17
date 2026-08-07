@@ -282,21 +282,25 @@ export function BatchSocialPlatformDialog({
         我的姓名: user.name,
       },
     };
-    setExtraTargets((prev) => [...prev, candidate]);
+    const newList = [...internalCandidates, candidate];
+    setInternalCandidates(newList);
+    onCandidatesChange?.(newList);
     setNewTarget({ ...newTarget, name: "", handle: "" });
     setIsAdding(false);
     toast.success("已手动添加触达目标");
   }
 
-  function handleRemoveExtra(key: string) {
-    setExtraTargets((prev) => prev.filter((t) => t.key !== key));
+  function handleRemoveCandidate(key: string) {
+    const newList = internalCandidates.filter((t) => t.key !== key);
+    setInternalCandidates(newList);
+    onCandidatesChange?.(newList);
   }
 
   async function handleAiGenerate() {
     if (aiLoading) return;
     setAiLoading(true);
     try {
-      const sample = jobs[0]?.candidate ?? candidates[0];
+      const sample = jobs[0]?.candidate ?? allCandidates[0];
       const res = await callGenerate({
         data: {
           channel: "social",
@@ -335,7 +339,7 @@ export function BatchSocialPlatformDialog({
           <DialogDescription className="text-xs">
             向你收藏的目标按平台分发私信，超出当日额度将顺延至次日。
             <br />
-            目标来源：我的收藏（已选 {candidates.length} 个）· 需要系统帮你找新目标？前往「触达任务 → 社媒拓客触达」。
+            目标来源：待执行任务（当前 {allCandidates.length} 个）· 需要系统帮你找新目标？前往「触达任务 → 社媒拓客触达」。
           </DialogDescription>
         </DialogHeader>
 
