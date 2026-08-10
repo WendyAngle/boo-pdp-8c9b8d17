@@ -99,7 +99,6 @@ export function BatchSocialPlatformDialog({
   const myInfo = useMyInfoGuard();
   const callGenerate = useServerFn(generateAiContent);
 
-  const [platform, setPlatform] = useState<ReachPlatform | "all">("all");
   const [content, setContent] = useState("");
   const [aiUsed, setAiUsed] = useState(false);
   const [previewIdx, setPreviewIdx] = useState(0);
@@ -116,7 +115,6 @@ export function BatchSocialPlatformDialog({
 
   useEffect(() => {
     if (!open) return;
-    setPlatform("all");
     setContent("");
     setAiUsed(false);
     setPreviewIdx(0);
@@ -163,33 +161,12 @@ export function BatchSocialPlatformDialog({
     return allAccountJobs.filter((j) => !removedJobKeys.has(j.key));
   }, [allAccountJobs, removedJobKeys]);
 
-  /** 筛选后的任务数量统计 */
-  const groups = useMemo(() => {
-    const g: Record<ReachPlatform, Job[]> = {
-      Facebook: [],
-      TikTok: [],
-    };
-    for (const j of filteredJobs) {
-      g[j.platform].push(j);
-    }
-    return g;
-  }, [filteredJobs]);
+  const jobs = filteredJobs;
 
-  /** 当前 UI 筛选平台下的任务 */
-  const jobs = useMemo<Job[]>(() => {
-    if (platform === "all") return filteredJobs;
-    return filteredJobs.filter((j) => j.platform === platform);
-  }, [filteredJobs, platform]);
-
-  /** 相应平台状态为正常的账号（用于展示数量） */
+  /** 状态正常的执行账号（用于展示数量） */
   const normalAccounts = useMemo(
-    () =>
-      accounts.filter(
-        (a) =>
-          a.status === "正常" &&
-          (platform === "all" || a.platform === platform),
-      ),
-    [accounts, platform],
+    () => accounts.filter((a) => a.status === "正常"),
+    [accounts],
   );
   /** 今日仍有剩余额度的可用执行账号 */
   const usable = useMemo(
@@ -311,7 +288,7 @@ export function BatchSocialPlatformDialog({
       const res = await callGenerate({
         data: {
           channel: "social",
-          platform: platform === "all" ? "Facebook" : platform,
+          platform: "Facebook",
           scene: "开发信",
           tone: "friendly",
           language: "zh",
@@ -413,16 +390,8 @@ export function BatchSocialPlatformDialog({
               </div>
             )}
 
-            <div className="grid grid-cols-2 gap-2 text-xs">
-              <StatCell
-                tone="sky"
-                label="Facebook"
-                value={groups.Facebook.length}
-              />
-              <StatCell tone="violet" label="TikTok" value={groups.TikTok.length} />
-            </div>
-
             {/* 目标列表滚动展示 */}
+
             <div className="mt-3 max-h-40 overflow-y-auto border-t pt-2 space-y-1.5 pr-1">
               {filteredJobs.length === 0 ? (
                 <div className="text-center py-4 text-xs text-muted-foreground">
@@ -452,53 +421,29 @@ export function BatchSocialPlatformDialog({
             </div>
           </section>
 
-          {/* 目标平台 + 可用账号 */}
-          <section className="grid gap-3 sm:grid-cols-2">
-            <div className="space-y-1">
-              <Label className="text-xs text-muted-foreground">目标平台</Label>
-              <Select
-                value={platform}
-                onValueChange={(v) => {
-                  setPlatform(v as ReachPlatform | "all");
-                  setPreviewIdx(0);
-                }}
-              >
-                <SelectTrigger className="h-9">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">全部</SelectItem>
-                  <SelectItem value="Facebook">Facebook</SelectItem>
-                  <SelectItem value="TikTok">TikTok</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="space-y-1">
-              <Label className="text-xs text-muted-foreground flex items-center gap-1">
-                <ServerCog className="h-3.5 w-3.5" /> 可用执行账号
-              </Label>
-              <div
-                className={cn(
-                "flex h-9 items-center justify-between rounded-md border px-3 text-xs",
-                  normalAccounts.length === 0
-                    ? "border-amber-200 bg-amber-50 text-amber-800"
-                    : "bg-muted/40 text-muted-foreground",
-                )}
-              >
-                <span>
-                  <span className="text-foreground font-semibold mx-0.5">
-                    {normalAccounts.length}
-                  </span>
-                  个账号 · 今日可触达
-                  <span className="text-foreground font-semibold mx-0.5">
-                    {capacity}
-                  </span>
-                  次
-                </span>
-                <span className="text-[11px]">单账号 {DAILY_PER_ACCOUNT} 次/天</span>
-              </div>
-            </div>
-          </section>
+          {/* 可用执行账号 */}
+          <div
+            className={cn(
+              "flex h-9 items-center justify-between rounded-md border px-3 text-xs",
+              normalAccounts.length === 0
+                ? "border-amber-200 bg-amber-50 text-amber-800"
+                : "bg-muted/40 text-muted-foreground",
+            )}
+          >
+            <span className="flex items-center gap-1">
+              <ServerCog className="h-3.5 w-3.5" />
+              可用执行账号
+              <span className="text-foreground font-semibold mx-0.5">
+                {normalAccounts.length}
+              </span>
+              个 · 今日可触达
+              <span className="text-foreground font-semibold mx-0.5">
+                {capacity}
+              </span>
+              次
+            </span>
+            <span className="text-[11px]">单账号 {DAILY_PER_ACCOUNT} 次/天</span>
+          </div>
 
           {overLimit && (
             <div className="rounded-md border border-amber-200 bg-amber-50 p-2 text-xs text-amber-800 flex items-start gap-1.5">
@@ -546,7 +491,7 @@ export function BatchSocialPlatformDialog({
 
             <ComposeFormatHint
               channel="social"
-              platform={platform === "all" ? "Facebook" : platform}
+              platform="Facebook"
             />
 
             <div className="grid gap-0 lg:grid-cols-2 lg:divide-x rounded-md border overflow-hidden">
@@ -654,31 +599,3 @@ export function BatchSocialPlatformDialog({
     </Dialog>
   );
 }
-
-function StatCell({
-  tone,
-  label,
-  value,
-}: {
-  tone: "sky" | "violet" | "slate";
-  label: string;
-  value: number;
-}) {
-  const cls = {
-    sky: "border-sky-200 bg-sky-50 text-sky-700",
-    violet: "border-violet-200 bg-violet-50 text-violet-700",
-    slate: "border-slate-200 bg-slate-50 text-slate-600",
-  }[tone];
-  return (
-    <div
-      className={cn(
-        "flex items-center justify-between rounded border px-2 py-1.5",
-        cls,
-      )}
-    >
-      <span>{label}</span>
-      <span className="font-semibold tabular-nums">{value}</span>
-    </div>
-  );
-}
-

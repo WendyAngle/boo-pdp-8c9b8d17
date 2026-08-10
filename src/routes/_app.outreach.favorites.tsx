@@ -109,7 +109,7 @@ import {
 
 
 export const Route = createFileRoute("/_app/outreach/favorites")({
-  validateSearch: (search: Record<string, unknown>) => ({
+  validateSearch: (search: Record<string, unknown>): { tab?: "unlocked" | "favorites" } => ({
     tab: search.tab === "unlocked" ? ("unlocked" as const) : ("favorites" as const),
   }),
   head: () => ({ meta: [{ title: "出海大数据平台 · 收藏 | 出海大数据平台" }] }),

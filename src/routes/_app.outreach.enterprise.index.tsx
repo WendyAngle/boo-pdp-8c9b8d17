@@ -39,7 +39,7 @@ import { useUnlockedContacts } from "@/lib/unlocked-contacts";
 
 export const Route = createFileRoute("/_app/outreach/enterprise/")({
   head: () => ({ meta: [{ title: "出海大数据平台 · 企业 | 出海大数据平台" }] }),
-  validateSearch: (s: Record<string, unknown>) => ({
+  validateSearch: (s: Record<string, unknown>): { hs?: string; product?: string; q?: string; role?: "进口" | "出口" } => ({
     hs: typeof s.hs === "string" ? s.hs : undefined,
     product: typeof s.product === "string" ? s.product : undefined,
     q: typeof s.q === "string" ? s.q : undefined,
