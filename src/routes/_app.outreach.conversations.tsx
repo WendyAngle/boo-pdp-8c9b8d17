@@ -80,7 +80,6 @@ import {
   SNOOZE_PRESETS,
   INTENT_LABEL,
   INTENT_COLOR,
-  STATUS_LABEL,
   type Thread,
 
   type AiIntent,
