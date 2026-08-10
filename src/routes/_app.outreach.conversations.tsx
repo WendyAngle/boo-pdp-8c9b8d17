@@ -1032,9 +1032,6 @@ function ThreadDetail({
               </div>
             )}
             <div className="mt-1 flex items-center gap-1.5 flex-wrap">
-              <Badge variant="outline" className="text-[11px]">
-                {STATUS_LABEL[thread.meta.status]}
-              </Badge>
               {thread.meta.aiIntent && (
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
