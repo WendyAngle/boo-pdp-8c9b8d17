@@ -1139,12 +1139,39 @@ function ThreadDetail({
                 {STATUS_LABEL[thread.meta.status]}
               </Badge>
               {thread.meta.aiIntent && (
-                <Badge
-                  variant="outline"
-                  className={cn("text-[11px]", INTENT_COLOR[thread.meta.aiIntent])}
-                >
-                  {INTENT_LABEL[thread.meta.aiIntent]}
-                </Badge>
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Badge
+                      variant="outline"
+                      className={cn(
+                        "text-[11px] cursor-pointer hover:opacity-90 gap-1",
+                        INTENT_COLOR[thread.meta.aiIntent],
+                      )}
+                      title="点击修正意向分类"
+                    >
+                      {INTENT_LABEL[thread.meta.aiIntent]}
+                      <Pencil className="h-3 w-3 opacity-70" />
+                    </Badge>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="start" className="w-44">
+                    <DropdownMenuLabel className="text-[11px] text-muted-foreground">
+                      修正意向分类
+                    </DropdownMenuLabel>
+                    {(
+                      ["interested", "quote", "ooo", "reject", "unsubscribe", "other"] as AiIntent[]
+                    ).map((i) => (
+                      <DropdownMenuItem
+                        key={i}
+                        onClick={() => {
+                          updateIntent(thread.id, i);
+                          toast.success(`已修正为「${INTENT_LABEL[i]}」`);
+                        }}
+                      >
+                        {INTENT_LABEL[i]}
+                      </DropdownMenuItem>
+                    ))}
+                  </DropdownMenuContent>
+                </DropdownMenu>
               )}
               {/* AI 识别的对方语言 */}
               <Popover>
@@ -2318,30 +2345,6 @@ function __ActionBarImpl({ thread }: { thread: Thread }) {
         </PopoverContent>
       </Popover>
 
-      {/* 更多：修正 AI 分类 */}
-      <DropdownMenu>
-        <DropdownMenuTrigger asChild>
-          <Button variant="ghost" size="icon" className="h-8 w-8">
-            <MoreHorizontal className="h-4 w-4" />
-          </Button>
-        </DropdownMenuTrigger>
-        <DropdownMenuContent align="end" className="w-56">
-          <DropdownMenuLabel>修正 AI 分类</DropdownMenuLabel>
-          {(
-            ["interested", "quote", "ooo", "reject", "unsubscribe", "other"] as AiIntent[]
-          ).map((i) => (
-            <DropdownMenuItem
-              key={i}
-              onClick={() => {
-                updateIntent(thread.id, i);
-                toast.success(`已修正为「${INTENT_LABEL[i]}」`);
-              }}
-            >
-              {INTENT_LABEL[i]}
-            </DropdownMenuItem>
-          ))}
-        </DropdownMenuContent>
-      </DropdownMenu>
     </div>
   );
 }
