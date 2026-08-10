@@ -3,7 +3,6 @@ import {
   Send,
   Sparkles,
   Loader2,
-  Eye,
   X,
   ServerCog,
   Users,
@@ -101,7 +100,6 @@ export function BatchSocialPlatformDialog({
 
   const [content, setContent] = useState("");
   const [aiUsed, setAiUsed] = useState(false);
-  const [previewIdx, setPreviewIdx] = useState(0);
   const [aiLoading, setAiLoading] = useState(false);
   /** 目标语言（发送语言）代码 */
   const [targetLang, setTargetLang] = useState<string>("en");
