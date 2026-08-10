@@ -148,7 +148,6 @@ const EMAIL_QUICK_REPLIES: { id: string; name: string; body: string }[] = [
 import {
   useThreadSenderResolver,
   useSenderOptions,
-  senderText,
 } from "@/lib/thread-sender";
 
 const searchSchema = z.object({
@@ -677,38 +676,40 @@ function ThreadRow({
       )}
     >
       <div className="flex items-start gap-2">
-        <div
-          className={cn(
-            "mt-1 h-1.5 w-1.5 rounded-full shrink-0",
-            isUnread ? "bg-rose-500" : "bg-transparent",
-          )}
-        />
+        {isUnread ? (
+          <div className="mt-1.5 flex items-center gap-1 shrink-0 min-w-[24px]">
+            <span className="h-2 w-2 rounded-full bg-rose-500" />
+            <span className="text-[10px] font-semibold text-rose-600 tabular-nums">
+              {thread.meta.unread}
+            </span>
+          </div>
+        ) : (
+          <div className="mt-1.5 h-2 w-2 shrink-0" />
+        )}
         <div className="min-w-0 flex-1">
           <div className="flex items-center gap-2">
+            {(() => {
+              const CI = channelIcon(thread.channel);
+              return (
+                <CI
+                  className="h-3.5 w-3.5 shrink-0 text-muted-foreground"
+                  aria-label={CHANNEL_LABEL[thread.channel]}
+                />
+              );
+            })()}
             <span
               className={cn(
                 "text-sm truncate",
                 isUnread ? "font-semibold" : "font-medium",
               )}
+              title={thread.targetName}
             >
               {thread.targetName}
             </span>
-            {(isUnread || isPending) && (
-              <Badge
-                className={cn(
-                  "h-4 py-0 px-1.5 text-[10px] font-medium shrink-0 whitespace-nowrap",
-                  isUnread
-                    ? "bg-rose-500 hover:bg-rose-500 text-white"
-                    : "bg-amber-500 hover:bg-amber-500 text-white",
-                )}
-              >
-                {isUnread ? "待我回复" : "跟进中"}
+            {isPending && !isUnread && (
+              <Badge className="h-4 py-0 px-1.5 text-[10px] font-medium shrink-0 whitespace-nowrap bg-amber-500 hover:bg-amber-500 text-white">
+                跟进中
               </Badge>
-            )}
-            {thread.parentRef && (
-              <span className="text-[11px] text-muted-foreground truncate">
-                · {thread.parentRef.name}
-              </span>
             )}
             {woken && (
               <Badge className="text-[10px] py-0 px-1 h-4 bg-amber-500 hover:bg-amber-500">
@@ -733,43 +734,14 @@ function ThreadRow({
             </div>
           )}
           <div className="mt-1 text-xs text-foreground/70 line-clamp-2">
-            <span
-              className={cn(
-                "inline mr-1 text-[10px] px-1 py-0.5 rounded border",
-                thread.lastDirection === "outbound"
-                  ? "bg-slate-50 text-slate-600 border-slate-200"
-                  : "bg-emerald-50 text-emerald-700 border-emerald-200",
-              )}
-            >
-              {thread.lastDirection === "outbound" ? "我" : "TA"}
-            </span>
             {thread.lastPreview}
           </div>
-          {/* 精简徽标行：只保留 1 枚最高优先级状态标签 + 渠道图标 */}
           <div className="mt-1.5 flex items-center gap-1.5 text-muted-foreground">
-            {(() => {
-              const CI = channelIcon(thread.channel);
-              return (
-                <CI
-                  className="h-3 w-3 shrink-0"
-                  aria-label={CHANNEL_LABEL[thread.channel]}
-                />
-              );
-            })()}
-            <span className="text-[10px]">{CHANNEL_LABEL[thread.channel]}</span>
             <span
-              className={cn(
-                "text-[10px] truncate max-w-[170px] inline-flex items-center gap-0.5",
-                sender.health === "warning" && "text-rose-600",
-              )}
-              title={`发自 ${senderText(sender)}${
-                sender.healthNote ? ` · ${sender.healthNote}` : ""
-              }`}
+              className="text-[10px] truncate max-w-[200px]"
+              title={thread.parentRef?.name || thread.targetName}
             >
-              {sender.health === "warning" && (
-                <AlertTriangle className="h-2.5 w-2.5 shrink-0" />
-              )}
-              · 发自 {sender.address}
+              {thread.parentRef?.name || thread.targetName}
             </span>
             {thread.isFriend && (
               <Badge
