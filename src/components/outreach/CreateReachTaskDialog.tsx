@@ -817,34 +817,6 @@ export function CreateReachTaskDialog({
           )}
 
 
-          {/* 预览 */}
-          {previewTargets.length > 0 && sendContent && (
-            <section className="space-y-2 rounded-md border bg-muted/30 p-3">
-              <div className="flex items-center justify-between">
-                <Label className="text-xs font-medium flex items-center gap-1">
-                  <Eye className="h-3.5 w-3.5" />
-                  发送预览（变量已替换，示例目标）
-                </Label>
-                {previewTargets.length > 1 && (
-                  <Select value={String(previewIdx)} onValueChange={(v) => setPreviewIdx(Number(v))}>
-                    <SelectTrigger className="h-7 w-[240px] text-xs">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {previewTargets.map((r, i) => (
-                        <SelectItem key={`${r.handle}-${i}`} value={String(i)}>
-                          第 {i + 1} 条 · {r.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                )}
-              </div>
-              <div className="text-xs whitespace-pre-wrap text-foreground/90 max-h-40 overflow-y-auto">
-                {previewContent || <span className="text-muted-foreground">（暂无内容）</span>}
-              </div>
-            </section>
-          )}
 
           {/* 消耗积分 */}
           <section className="rounded-md border border-rose-200 bg-rose-50 p-3 text-xs space-y-1">
