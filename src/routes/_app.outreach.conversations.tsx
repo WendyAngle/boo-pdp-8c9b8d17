@@ -80,14 +80,11 @@ import {
   SNOOZE_PRESETS,
   type Thread,
   type Channel,
-  type GroupKind,
   CHANNEL_LABEL,
   CHANNEL_COLOR,
   WINDOW_HOURS,
-  GROUP_LABEL,
   TEAM_MEMBERS,
   memberById,
-  threadGroup,
   updateThreadProfile,
   addThreadNote,
   removeThreadNote,
@@ -160,7 +157,6 @@ const searchSchema = z.object({
   ch: z
     .enum(["all", "email", "sms", "whatsapp", "telegram", "facebook", "tiktok"])
     .optional(),
-  group: z.enum(["all", "enterprise", "contact"]).optional(),
   /** 发信账号（我方身份）过滤，值为 ThreadSender.key */
   sender: z.string().optional(),
   tid: z.string().optional(),
@@ -269,8 +265,6 @@ function InboxPage() {
   const q = search.q ?? "";
   const ch = search.ch ?? "all";
 
-
-  const group = search.group ?? "all";
   const senderKey = search.sender ?? "all";
   const resolveSender = useThreadSenderResolver();
   const senderOptions = useSenderOptions(threads);
@@ -280,7 +274,6 @@ function InboxPage() {
     if (ch !== "all") list = list.filter((t) => t.channel === ch);
     if (senderKey !== "all")
       list = list.filter((t) => resolveSender(t).key === senderKey);
-    if (group !== "all") list = list.filter((t) => threadGroup(t) === group);
     if (intent !== "all")
       list = list.filter((t) => scoreIntent(t).band === intent);
     if (view === "unread") list = list.filter((t) => t.meta.unread > 0);
@@ -323,8 +316,6 @@ function InboxPage() {
     }
     return list;
   }, [threads, view, q, ch, intent, senderKey, resolveSender]);
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  void group;
 
   const currentId = search.tid ?? filtered[0]?.id;
   const current = threads.find((t) => t.id === currentId);
@@ -432,19 +423,6 @@ function InboxPage() {
 
             </SelectContent>
           </Select>
-          <Select
-            value={group}
-            onValueChange={(v) => goto({ group: v as typeof group, tid: undefined })}
-          >
-            <SelectTrigger className="h-8 text-xs w-[112px]">
-              <SelectValue placeholder="类型" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">类型：全部</SelectItem>
-              <SelectItem value="enterprise">企业</SelectItem>
-              <SelectItem value="contact">人物</SelectItem>
-            </SelectContent>
-          </Select>
         </div>
         <div className="flex-1 min-w-0 max-w-xs relative ml-1">
           <Search className="h-3.5 w-3.5 absolute left-2.5 top-1/2 -translate-y-1/2 text-muted-foreground" />
@@ -505,10 +483,10 @@ function InboxPage() {
               </span>
               条会话
             </span>
-            {(view !== "all" || ch !== "all" || group !== "all" || senderKey !== "all" || q || intent !== "all") && (
+            {(view !== "all" || ch !== "all" || senderKey !== "all" || q || intent !== "all") && (
               <button
                 onClick={() =>
-                  goto({ view: "all", ch: "all", group: "all", sender: "all", q: "", intent: undefined, tid: undefined })
+                  goto({ view: "all", ch: "all", sender: "all", q: "", intent: undefined, tid: undefined })
                 }
                 className="text-primary hover:underline"
               >
