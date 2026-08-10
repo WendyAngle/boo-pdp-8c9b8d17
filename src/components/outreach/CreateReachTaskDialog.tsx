@@ -29,8 +29,6 @@ import { useSocialAccounts } from "@/data/social-accounts";
 import { useCreditBalance, spendCredits } from "@/lib/credits-balance";
 import { COST_SOCIAL_DM, createSocialReachBatch } from "@/lib/credits-ledger";
 
-import {
-} from "@/lib/message-vars";
 import { LANGUAGES, langByCode } from "@/lib/lang-detect";
 import { useLeadProfile, saveProfile } from "@/lib/lead-profile";
 import { useCurrentUser } from "@/lib/current-user";
