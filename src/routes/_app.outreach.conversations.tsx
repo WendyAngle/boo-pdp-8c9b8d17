@@ -33,9 +33,10 @@ import {
   ShieldAlert,
   AlertTriangle,
   UserCheck,
-  Hand,
+  
   Zap,
   Pin,
+  Hand,
   ChevronDown as ChevronDownIcon,
   FileText,
   User as UserIcon,
@@ -78,7 +79,7 @@ import {
   toggleStar,
   enrollCadence,
   suppressThread,
-  setHumanTakeover,
+  
   addTag,
   addTaskForThread,
   updateIntent,
@@ -2274,43 +2275,6 @@ function __ActionBarImpl({ thread }: { thread: Thread }) {
     <div className="flex items-center gap-1 shrink-0">
       <AssignMenu thread={thread} />
 
-      {/* 模式：人工接管 — 紧凑 toggle */}
-      <button
-        type="button"
-        onClick={() => {
-          const on = !thread.meta.humanTakeover;
-          setHumanTakeover(thread.id, on);
-          toast.success(
-            on ? "已切换为人工接管，跟进序列已暂停" : "已撤销人工接管，恢复自动跟进",
-          );
-        }}
-        title={
-          thread.meta.humanTakeover
-            ? "人工接管中 · 点击撤销"
-            : "切换为人工接管（暂停自动跟进）"
-        }
-        className={cn(
-          "ml-1 inline-flex items-center gap-1 h-8 px-2 rounded-md border text-xs transition-colors",
-          thread.meta.humanTakeover
-            ? "bg-sky-500 border-sky-500 text-white hover:bg-sky-600"
-            : "border-border text-muted-foreground hover:bg-muted",
-        )}
-      >
-        <Hand className="h-3.5 w-3.5" />
-        <span
-          className={cn(
-            "h-3 w-6 rounded-full relative transition-colors",
-            thread.meta.humanTakeover ? "bg-white/40" : "bg-muted-foreground/30",
-          )}
-        >
-          <span
-            className={cn(
-              "absolute top-0.5 h-2 w-2 rounded-full bg-white transition-all",
-              thread.meta.humanTakeover ? "left-3.5" : "left-0.5",
-            )}
-          />
-        </span>
-      </button>
 
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
