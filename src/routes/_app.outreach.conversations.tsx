@@ -28,7 +28,6 @@ import {
   Facebook,
   Music2,
   Send as SendIcon,
-  ShieldAlert,
   AlertTriangle,
   UserCheck,
 
@@ -1589,14 +1588,6 @@ function ThreadDetail({
       )}
     </div>
   );
-}
-
-function formatHm(ms: number) {
-  const total = Math.max(0, Math.floor(ms / 60000));
-  const h = Math.floor(total / 60);
-  const m = total % 60;
-  if (h >= 24) return `${Math.floor(h / 24)}d ${h % 24}h`;
-  return `${h}h ${m}m`;
 }
 
 function ActionBar({ thread }: { thread: Thread }) {
