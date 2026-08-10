@@ -171,17 +171,28 @@ export function deriveUnlockedContacts(entries: LedgerEntry[]): UnlockedContact[
   for (const e of sorted) {
     const d = e.kind === "reach" ? reachToDerived(e) : viewToDerived(e);
     if (!d) continue;
-    const key = `${e.targetKind}:${e.targetId}:${d.ct}:${d.value}`;
+    const handle = e.kind === "reach" ? socialHandleOf(e) : null;
+    // 无企业归属的社媒账号：以 @handle 作为独立主体（单独一张卡片）
+    const ownerId = handle ?? e.targetId;
+    const ownerName = handle ?? e.targetName;
+    const ownerType: OwnerType = handle ? "person" : toOwnerType(e.targetKind);
+    if (!handle && e.channel === "social" && e.platform !== "WhatsApp" && !findEnterprise(e.targetId) && e.targetKind === "enterprise") {
+      // 社媒触达但无法解析出账号：不构成有效的已解锁联系方式
+      continue;
+    }
+    const key = `${ownerType}:${ownerId}:${d.ct}:${handle ?? d.value}`;
     if (map.has(key)) continue;
     map.set(key, {
       id: e.id,
-      contact_type: d.ct,
-      contact_value: d.value,
-      owner_type: toOwnerType(e.targetKind),
-      owner_id: e.targetId,
-      owner_name: e.targetName,
-      parent_ref: resolveParentRef(e.targetKind, e.targetId, e.parentRef),
-      platform: d.platform,
+      contact_type: handle ? "social_media" : d.ct,
+      contact_value: handle ?? d.value,
+      owner_type: ownerType,
+      owner_id: ownerId,
+      owner_name: ownerName,
+      parent_ref: handle
+        ? undefined
+        : resolveParentRef(e.targetKind, e.targetId, e.parentRef),
+      platform: handle ? (e.platform ?? d.platform) : d.platform,
       unlock_time: new Date(e.createdAt).getTime(),
       unlock_cost: e.kind === "view" ? e.cost : 0,
       is_unlocked: true,
