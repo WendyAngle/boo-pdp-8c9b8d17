@@ -1912,11 +1912,6 @@ function ProfileEditor({
             </div>
           ))}
         </div>
-        {thread.meta.assigneeId && (
-          <div className="text-xs text-muted-foreground">
-            当前跟进：{memberById(thread.meta.assigneeId)?.name}
-          </div>
-        )}
         {footer && <div className="border-t pt-3">{footer}</div>}
       </div>
 
