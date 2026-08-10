@@ -222,7 +222,6 @@ type ViewKey = NonNullable<z.infer<typeof searchSchema>["view"]>;
 
 const VIEW_LABEL: Record<ViewKey, string> = {
   my_todo: "我的待办",
-  due_soon: "即将超时",
   unassigned: "未分配",
   unread: "未读",
   mine: "我的全部",
