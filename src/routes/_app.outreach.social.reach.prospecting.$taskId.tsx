@@ -37,7 +37,7 @@ import {
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/_app/outreach/social/reach/prospecting/$taskId")({
-  validateSearch: (s: Record<string, unknown>) => {
+  validateSearch: (s: Record<string, unknown>): { status?: "all" | TargetStatus } => {
     const status = s.status;
     const allowed = ["all", "requested", "accepted", "rejected", "failed", "pending"];
     return { status: typeof status === "string" && allowed.includes(status) ? (status as "all" | TargetStatus) : undefined };

@@ -44,7 +44,7 @@ import { useThreads, threadKeyFor, type Thread, type Channel } from "@/lib/inbox
 import { getTargetReason } from "@/lib/target-reason";
 
 export const Route = createFileRoute("/_app/outreach/reach-targets")({
-  validateSearch: (search: Record<string, unknown>) => ({
+  validateSearch: (search: Record<string, unknown>): { task?: string } => ({
     task: typeof search.task === "string" ? search.task : undefined,
   }),
   head: () => ({
