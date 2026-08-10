@@ -391,7 +391,7 @@ function InboxPage() {
             </>
           )}
         </div>
-        {/* 统一筛选面板：渠道 / 类型 / 状态 / 搜索 */}
+        {/* 统一筛选面板：渠道 / 类型 / 搜索 */}
         <div className="ml-2 flex items-center gap-1.5 shrink-0">
           <Select value={ch} onValueChange={(v) => goto({ ch: v as typeof ch, tid: undefined })}>
             <SelectTrigger className="h-8 text-xs w-[128px]">
@@ -448,37 +448,6 @@ function InboxPage() {
               <SelectItem value="all">类型：全部</SelectItem>
               <SelectItem value="enterprise">企业</SelectItem>
               <SelectItem value="contact">人物</SelectItem>
-            </SelectContent>
-          </Select>
-          <Select
-            value={view}
-            onValueChange={(v) => goto({ view: v as ViewKey, tid: undefined })}
-          >
-            <SelectTrigger className="h-8 text-xs w-[140px]">
-              <SelectValue placeholder="状态" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">状态：全部（{counts.all}）</SelectItem>
-              <SelectGroup>
-                <SelectLabel>生命周期</SelectLabel>
-                <SelectItem value="pending">待我回复（{counts.pending}）</SelectItem>
-                <SelectItem value="waiting">等客回复（{counts.waiting}）</SelectItem>
-                <SelectItem value="snoozed">稍后处理（{counts.snoozed}）</SelectItem>
-                <SelectItem value="won">已成交（{counts.won}）</SelectItem>
-                <SelectItem value="lost">已流失（{counts.lost}）</SelectItem>
-                {counts.suppressed > 0 && (
-                  <SelectItem value="suppressed">已退订（{counts.suppressed}）</SelectItem>
-                )}
-              </SelectGroup>
-              <SelectGroup>
-                <SelectLabel>智能视图</SelectLabel>
-                {counts.unread > 0 && (
-                  <SelectItem value="unread">未读（{counts.unread}）</SelectItem>
-                )}
-                {intentCounts.needsHuman > 0 && (
-                  <SelectItem value="needs_human">人工接管（{intentCounts.needsHuman}）</SelectItem>
-                )}
-              </SelectGroup>
             </SelectContent>
           </Select>
         </div>
