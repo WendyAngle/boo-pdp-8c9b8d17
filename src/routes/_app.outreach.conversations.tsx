@@ -138,6 +138,8 @@ const searchSchema = z.object({
   q: z.string().optional(),
   /** 意向档位过滤：高/中/低/全部（左侧列表顶部 Tab） */
   intent: z.enum(["all", "high", "mid", "low"]).optional(),
+  /** 加星过滤 */
+  starred: z.enum(["all", "starred", "unstarred"]).optional(),
   // 从"最新沟通"胶囊中的"AI 回复"进入时，自动生成一条 AI 草稿。
   action: z.enum(["ai"]).optional(),
 });
@@ -223,6 +225,7 @@ function InboxPage() {
   // 避免出现「右侧展示了会话，中间列表却提示"该视图下暂无会话"」的错位。
   const view: ViewKey = search.view ?? "all";
   const intent = search.intent ?? "all";
+  const starred = search.starred ?? "all";
   const [scorePanelOpen, setScorePanelOpen] = useState(true);
   const [mounted, setMounted] = useState(false);
   useEffect(() => setMounted(true), []);
@@ -239,6 +242,8 @@ function InboxPage() {
     if (ch !== "all") list = list.filter((t) => t.channel === ch);
     if (senderKey !== "all")
       list = list.filter((t) => resolveSender(t).key === senderKey);
+    if (starred !== "all")
+      list = list.filter((t) => (starred === "starred" ? t.meta.starred : !t.meta.starred));
     if (intent !== "all")
       list = list.filter((t) => scoreIntent(t).band === intent);
     if (view === "unread") list = list.filter((t) => t.meta.unread > 0);
@@ -280,7 +285,7 @@ function InboxPage() {
       );
     }
     return list;
-  }, [threads, view, q, ch, intent, senderKey, resolveSender]);
+  }, [threads, view, q, ch, intent, starred, senderKey, resolveSender]);
 
   const currentId = search.tid ?? filtered[0]?.id;
   const current = threads.find((t) => t.id === currentId);
