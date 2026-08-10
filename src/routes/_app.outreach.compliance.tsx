@@ -52,10 +52,11 @@ function CompliancePage() {
       <div className="flex items-center gap-1.5 text-sm text-muted-foreground">
         <span>出海大数据平台</span>
         <ChevronRight className="h-3.5 w-3.5" />
-        <span>企业设置</span>
+        <span>管理后台</span>
         <ChevronRight className="h-3.5 w-3.5" />
         <span className="text-foreground">数据与合规</span>
       </div>
+
 
       <div>
         <h1 className="text-2xl font-semibold flex items-center gap-2">
