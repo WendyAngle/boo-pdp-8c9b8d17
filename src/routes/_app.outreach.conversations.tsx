@@ -36,6 +36,7 @@ import {
   
   Zap,
   Pin,
+  Hand,
   ChevronDown as ChevronDownIcon,
   FileText,
   User as UserIcon,
