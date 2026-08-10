@@ -296,6 +296,8 @@ function InboxPage() {
   const view: ViewKey = search.view ?? "all";
   const intent = search.intent ?? "all";
   const [scorePanelOpen, setScorePanelOpen] = useState(true);
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => setMounted(true), []);
 
   const q = search.q ?? "";
   const ch = search.ch ?? "all";
