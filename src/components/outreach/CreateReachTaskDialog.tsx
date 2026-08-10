@@ -33,7 +33,7 @@ import { LANGUAGES, langByCode } from "@/lib/lang-detect";
 import { useLeadProfile, saveProfile } from "@/lib/lead-profile";
 import { useCurrentUser } from "@/lib/current-user";
 import { ComposeFormatHint } from "@/components/outreach/ComposeFormatHint";
-import { AutoVarFillHint } from "@/components/outreach/AutoVarFillHint";
+import { useMyInfoGuard } from "@/lib/my-info-guard";
 import { generateAiContent } from "@/lib/api/ai-compose.functions";
 import { translateMessage } from "@/lib/api/ai-translate.functions";
 import {
@@ -104,6 +104,7 @@ export function CreateReachTaskDialog({
 }) {
   const profile = useLeadProfile();
   const user = useCurrentUser();
+  const myInfo = useMyInfoGuard();
   const accounts = useSocialAccounts();
   const balance = useCreditBalance();
   const callGenerate = useServerFn(generateAiContent);
@@ -295,7 +296,7 @@ export function CreateReachTaskDialog({
           }严格控制篇幅：建议 ${AI_SUGGESTED_CHAR_LEN} 字符长度以内（中文/日文/韩文每字按 2 字符计），绝对不得超过 ${platform} 平台上限 ${charLimit} 字符。`,
         },
       });
-      if (res.content) setContent(res.content);
+      if (res.content) setContent(myInfo.fillMine(res.content));
       setAiUsed(true);
       toast.success("AI 已生成中文私信文案（免费），可直接修改");
     } catch (e) {
@@ -686,8 +687,6 @@ export function CreateReachTaskDialog({
             </div>
 
             <ComposeFormatHint channel="social" platform={platform} />
-
-            <AutoVarFillHint />
 
             <div className="grid gap-0 lg:grid-cols-2 lg:divide-x rounded-md border overflow-hidden">
               {/* 左：中文原文 */}
