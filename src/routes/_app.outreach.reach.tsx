@@ -295,26 +295,6 @@ function ReachPage() {
           </div>
 
         </div>
-        <div className="mt-3 flex flex-wrap items-center gap-4 text-xs text-white/85">
-          <span className="inline-flex items-center gap-1">
-            <Facebook className="h-3.5 w-3.5" />
-            Facebook 今日加友剩余
-            <span className="font-semibold tabular-nums">{fbRemain}</span>
-          </span>
-          <span className="inline-flex items-center gap-1">
-            <Music2 className="h-3.5 w-3.5" />
-            TikTok 今日加友剩余
-            <span className="font-semibold tabular-nums">{ttRemain}</span>
-          </span>
-          <span className="inline-flex items-center gap-1">
-            账号池平均健康度
-            <span className="font-semibold tabular-nums">{poolHealth}</span>
-          </span>
-          <span className="inline-flex items-center gap-1">
-            可用社媒账号
-            <span className="font-semibold tabular-nums">{usableAccounts}</span>
-          </span>
-        </div>
         <div className="relative mt-3 flex flex-wrap items-center gap-2">
 
           <Button
