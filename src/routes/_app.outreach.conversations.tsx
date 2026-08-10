@@ -2258,7 +2258,6 @@ function ProfilePanel({ thread }: { thread: Thread }) {
 
 function __ActionBarImpl({ thread }: { thread: Thread }) {
   const [tagInput, setTagInput] = useState("");
-  const [taskTitle, setTaskTitle] = useState("");
 
   return (
     <div className="flex items-center gap-1 shrink-0">
