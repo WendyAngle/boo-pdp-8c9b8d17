@@ -217,10 +217,7 @@ const HSM_TEMPLATES: Record<string, { id: string; name: string; body: string }[]
 type ViewKey = NonNullable<z.infer<typeof searchSchema>["view"]>;
 
 const VIEW_LABEL: Record<ViewKey, string> = {
-  my_todo: "我的待办",
-  unassigned: "未分配",
   unread: "未读",
-  mine: "我的全部",
   pending: "待我回复",
   waiting: "等客回复",
   snoozed: "稍后处理",
