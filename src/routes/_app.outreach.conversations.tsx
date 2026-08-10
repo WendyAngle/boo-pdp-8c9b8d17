@@ -148,7 +148,6 @@ const EMAIL_QUICK_REPLIES: { id: string; name: string; body: string }[] = [
 import {
   useThreadSenderResolver,
   useSenderOptions,
-  senderText,
 } from "@/lib/thread-sender";
 
 const searchSchema = z.object({
