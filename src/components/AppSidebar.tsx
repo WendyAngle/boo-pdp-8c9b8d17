@@ -1,12 +1,21 @@
 import { useState, useEffect } from "react";
 import { Link, useRouterState } from "@tanstack/react-router";
-import { ShieldCheck, ChevronDown, Users, UserCog, Send, FolderTree, Box, Wallet, Layers, Receipt, FileText, LayoutDashboard, Inbox, KeyRound } from "lucide-react";
+import { ShieldCheck, ChevronDown, Users, UserCog, Send, FolderTree, Box, Wallet, Layers, Receipt, FileText, LayoutDashboard, Inbox, KeyRound, PanelLeftClose, PanelLeftOpen, Search, Lightbulb, CreditCard, Settings, Share2 } from "lucide-react";
 import { AccountMenu } from "@/components/account/AccountMenu";
 import { useSidebarBadge } from "@/lib/inbox-store";
 
 type Leaf = { label: string; to: string; icon?: typeof Users };
 type Group = { label: string; to?: string; icon?: typeof Users; divider?: boolean; children: Leaf[] };
 type Root = { label: string; icon: typeof ShieldCheck; children: Group[] };
+
+/** 侧边栏合拢态下展示的分组图标 */
+const groupIcons: Record<string, typeof Users> = {
+  客户发现: Lightbulb,
+  客户运营: Share2,
+  费用中心: CreditCard,
+  企业设置: Settings,
+};
+
 
 const menu: Root[] = [
   {
