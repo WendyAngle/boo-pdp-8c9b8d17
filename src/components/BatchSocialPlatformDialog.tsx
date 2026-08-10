@@ -452,53 +452,29 @@ export function BatchSocialPlatformDialog({
             </div>
           </section>
 
-          {/* 目标平台 + 可用账号 */}
-          <section className="grid gap-3 sm:grid-cols-2">
-            <div className="space-y-1">
-              <Label className="text-xs text-muted-foreground">目标平台</Label>
-              <Select
-                value={platform}
-                onValueChange={(v) => {
-                  setPlatform(v as ReachPlatform | "all");
-                  setPreviewIdx(0);
-                }}
-              >
-                <SelectTrigger className="h-9">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">全部</SelectItem>
-                  <SelectItem value="Facebook">Facebook</SelectItem>
-                  <SelectItem value="TikTok">TikTok</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="space-y-1">
-              <Label className="text-xs text-muted-foreground flex items-center gap-1">
-                <ServerCog className="h-3.5 w-3.5" /> 可用执行账号
-              </Label>
-              <div
-                className={cn(
-                "flex h-9 items-center justify-between rounded-md border px-3 text-xs",
-                  normalAccounts.length === 0
-                    ? "border-amber-200 bg-amber-50 text-amber-800"
-                    : "bg-muted/40 text-muted-foreground",
-                )}
-              >
-                <span>
-                  <span className="text-foreground font-semibold mx-0.5">
-                    {normalAccounts.length}
-                  </span>
-                  个账号 · 今日可触达
-                  <span className="text-foreground font-semibold mx-0.5">
-                    {capacity}
-                  </span>
-                  次
-                </span>
-                <span className="text-[11px]">单账号 {DAILY_PER_ACCOUNT} 次/天</span>
-              </div>
-            </div>
-          </section>
+          {/* 可用执行账号 */}
+          <div
+            className={cn(
+              "flex h-9 items-center justify-between rounded-md border px-3 text-xs",
+              normalAccounts.length === 0
+                ? "border-amber-200 bg-amber-50 text-amber-800"
+                : "bg-muted/40 text-muted-foreground",
+            )}
+          >
+            <span className="flex items-center gap-1">
+              <ServerCog className="h-3.5 w-3.5" />
+              可用执行账号
+              <span className="text-foreground font-semibold mx-0.5">
+                {normalAccounts.length}
+              </span>
+              个 · 今日可触达
+              <span className="text-foreground font-semibold mx-0.5">
+                {capacity}
+              </span>
+              次
+            </span>
+            <span className="text-[11px]">单账号 {DAILY_PER_ACCOUNT} 次/天</span>
+          </div>
 
           {overLimit && (
             <div className="rounded-md border border-amber-200 bg-amber-50 p-2 text-xs text-amber-800 flex items-start gap-1.5">
