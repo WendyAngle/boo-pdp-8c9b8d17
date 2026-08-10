@@ -393,6 +393,19 @@ function InboxPage() {
 
             </SelectContent>
           </Select>
+          <Select
+            value={starred}
+            onValueChange={(v) => goto({ starred: v as "all" | "starred" | "unstarred", tid: undefined })}
+          >
+            <SelectTrigger className="h-8 text-xs w-[120px]">
+              <SelectValue placeholder="加星" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">全部</SelectItem>
+              <SelectItem value="starred">已加星</SelectItem>
+              <SelectItem value="unstarred">未加星</SelectItem>
+            </SelectContent>
+          </Select>
         </div>
         <div className="flex-1 min-w-0 max-w-xs relative ml-1">
           <Search className="h-3.5 w-3.5 absolute left-2.5 top-1/2 -translate-y-1/2 text-muted-foreground" />
