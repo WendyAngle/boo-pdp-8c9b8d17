@@ -550,9 +550,11 @@ export function BatchSocialPlatformDialog({
 
             <AutoVarFillHint />
 
-            <div className="grid gap-3 lg:grid-cols-2">
-              <div className="space-y-1">
-                <Label className="text-xs text-muted-foreground">私信内容（中文原文）*</Label>
+            <div className="grid gap-0 lg:grid-cols-2 lg:divide-x rounded-md border overflow-hidden">
+              <div className="space-y-2 p-3">
+                <div className="flex h-8 items-center">
+                  <Label className="text-xs text-muted-foreground">中文原文 *</Label>
+                </div>
                 <Textarea
                   value={content}
                   onChange={(e) => setContent(e.target.value)}
@@ -574,6 +576,7 @@ export function BatchSocialPlatformDialog({
                 onChange={setTranslated}
                 rows={10}
                 kindLabel="私信"
+                bare
               />
             </div>
           </section>
