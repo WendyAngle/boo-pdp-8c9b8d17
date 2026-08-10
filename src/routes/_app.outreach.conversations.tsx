@@ -159,9 +159,6 @@ const searchSchema = z.object({
       "lost",
       "snoozed",
       "suppressed",
-      "unassigned",
-      "mine",
-      "my_todo",
       "high_intent",
       "needs_human",
     ])
