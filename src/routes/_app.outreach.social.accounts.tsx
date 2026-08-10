@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import {
   Users,
@@ -52,6 +52,7 @@ import {
   useSocialAccounts,
   type SocialAccount,
 } from "@/data/social-accounts";
+import { ListPagination } from "@/components/ListPagination";
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/_app/outreach/social/accounts")({
@@ -154,6 +155,16 @@ function SocialAccountsPage() {
       return true;
     });
   }, [accounts, keyword, platform, region, statuses]);
+
+  const [page, setPage] = useState(1);
+  const pageSize = 10;
+  useEffect(() => {
+    setPage(1);
+  }, [keyword, platform, region, statuses]);
+  const pageItems = useMemo(
+    () => filtered.slice((page - 1) * pageSize, page * pageSize),
+    [filtered, page],
+  );
 
   const hasFilter = keyword !== "" || platform !== "all" || region !== "all" || statuses.length !== 1 || statuses[0] !== "正常";
   const reset = () => {
@@ -298,7 +309,7 @@ function SocialAccountsPage() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {filtered.map((a) => (
+              {pageItems.map((a) => (
                 <AccountRow
                   key={a.id}
                   account={a}
@@ -308,6 +319,16 @@ function SocialAccountsPage() {
               ))}
             </TableBody>
           </Table>
+        )}
+        {filtered.length > 0 && (
+          <div className="px-4 pb-4">
+            <ListPagination
+              page={page}
+              pageSize={pageSize}
+              total={filtered.length}
+              onPageChange={setPage}
+            />
+          </div>
         )}
       </Card>
 
