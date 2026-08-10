@@ -71,6 +71,7 @@ import { useCurrentUser } from "@/lib/current-user";
 import { ComposeFormatHint } from "@/components/outreach/ComposeFormatHint";
 import { generateAiContent } from "@/lib/api/ai-compose.functions";
 import { TargetLangSection } from "@/components/outreach/TargetLangSection";
+import { useMyInfoGuard } from "@/lib/my-info-guard";
 
 
 export type ComposeChannel = "email" | "phone";
@@ -389,6 +390,7 @@ export function ComposeSendDialog({
 
   async function handleAiGenerate() {
     if (aiLoading) return;
+    if (!myInfo.ensure()) return;
     setAiLoading(true);
     try {
       const sample = recipients[0];
@@ -399,14 +401,17 @@ export function ComposeSendDialog({
           tone: "friendly",
           language: "zh",
           languageName: "中文",
-
           myCompany: profile.companyName,
           myName: user.name,
+          literal: true,
           sampleEnterprise: sample?.ctx.企业名,
+          sampleContact: sample?.ctx.联系人名,
+          sampleIndustry: sample?.ctx.行业,
+          sampleCity: sample?.ctx.城市,
         },
       });
-      if (isEmail && res.subject) setSubject(res.subject);
-      if (res.content) setContent(res.content);
+      if (isEmail && res.subject) setSubject(myInfo.fillAll(res.subject, sample?.ctx));
+      if (res.content) setContent(myInfo.fillAll(res.content, sample?.ctx));
       setAiUsed(true);
       // AI 生成 → 视为未报备草稿
       if (!isEmail) {
@@ -424,7 +429,7 @@ export function ComposeSendDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-3xl max-h-[92vh] overflow-y-auto">
+      <DialogContent className="max-w-5xl max-h-[92vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Send className="h-5 w-5 text-primary" />
@@ -679,7 +684,7 @@ export function ComposeSendDialog({
                 <SmsTemplatePicker
                   currentId={smsTemplateId}
                   onPick={(id, name, c) => {
-                    setContent(c);
+                    setContent(myInfo.fillAll(c, recipients[0]?.ctx));
                     setSmsTemplateId(id);
                     setSmsTemplateName(name);
                     setAiUsed(false);
