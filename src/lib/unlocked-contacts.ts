@@ -147,6 +147,21 @@ function viewToDerived(e: LedgerEntry): Derived | null {
   return v ? { ct, value: v } : null;
 }
 
+/**
+ * 社媒平台触达（Facebook / TikTok 加好友 · 私信）目标是社媒账号本身，
+ * 不关联 CRM 企业/人物（targetId 为占位符）。这类记录不能按「企业」聚合，
+ * 否则会出现「Facebook平台私信 · 企业 · 5」这种不合理卡片。
+ * 统一归一化为「社媒账号」维度：每个 @handle 单独一张卡片，且不关联企业。
+ */
+function socialHandleOf(e: LedgerEntry): string | null {
+  if (e.channel !== "social") return null;
+  if (e.platform === "WhatsApp") return null;
+  const known = e.targetKind === "enterprise" ? findEnterprise(e.targetId) : undefined;
+  if (known) return null;
+  const m = (e.detail ?? "").match(/@[\w.\-]+/);
+  return m ? m[0] : null;
+}
+
 export function deriveUnlockedContacts(entries: LedgerEntry[]): UnlockedContact[] {
   // 时间正序：view + reach 均视为解锁来源；相同联系方式仅保留最早
   const sorted = [...entries]
