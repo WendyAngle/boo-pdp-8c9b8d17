@@ -504,9 +504,6 @@ function InboxPage() {
                 {intentCounts.needsHuman > 0 && (
                   <SelectItem value="needs_human">人工接管（{intentCounts.needsHuman}）</SelectItem>
                 )}
-                {smartCounts.dueSoon > 0 && (
-                  <SelectItem value="due_soon">即将超时（{smartCounts.dueSoon}）</SelectItem>
-                )}
                 {smartCounts.myTodo > 0 ? (
                   <SelectItem value="my_todo">我的待办（{smartCounts.myTodo}）</SelectItem>
                 ) : smartCounts.mine > 0 ? (
