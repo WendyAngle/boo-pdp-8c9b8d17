@@ -138,6 +138,8 @@ const searchSchema = z.object({
   q: z.string().optional(),
   /** 意向档位过滤：高/中/低/全部（左侧列表顶部 Tab） */
   intent: z.enum(["all", "high", "mid", "low"]).optional(),
+  /** 加星过滤 */
+  starred: z.enum(["all", "starred", "unstarred"]).optional(),
   // 从"最新沟通"胶囊中的"AI 回复"进入时，自动生成一条 AI 草稿。
   action: z.enum(["ai"]).optional(),
 });
@@ -223,6 +225,7 @@ function InboxPage() {
   // 避免出现「右侧展示了会话，中间列表却提示"该视图下暂无会话"」的错位。
   const view: ViewKey = search.view ?? "all";
   const intent = search.intent ?? "all";
+  const starred = search.starred ?? "all";
   const [scorePanelOpen, setScorePanelOpen] = useState(true);
   const [mounted, setMounted] = useState(false);
   useEffect(() => setMounted(true), []);
@@ -239,6 +242,8 @@ function InboxPage() {
     if (ch !== "all") list = list.filter((t) => t.channel === ch);
     if (senderKey !== "all")
       list = list.filter((t) => resolveSender(t).key === senderKey);
+    if (starred !== "all")
+      list = list.filter((t) => (starred === "starred" ? t.meta.starred : !t.meta.starred));
     if (intent !== "all")
       list = list.filter((t) => scoreIntent(t).band === intent);
     if (view === "unread") list = list.filter((t) => t.meta.unread > 0);
@@ -280,7 +285,7 @@ function InboxPage() {
       );
     }
     return list;
-  }, [threads, view, q, ch, intent, senderKey, resolveSender]);
+  }, [threads, view, q, ch, intent, starred, senderKey, resolveSender]);
 
   const currentId = search.tid ?? filtered[0]?.id;
   const current = threads.find((t) => t.id === currentId);
@@ -388,6 +393,19 @@ function InboxPage() {
 
             </SelectContent>
           </Select>
+          <Select
+            value={starred}
+            onValueChange={(v) => goto({ starred: v as "all" | "starred" | "unstarred", tid: undefined })}
+          >
+            <SelectTrigger className="h-8 text-xs w-[120px]">
+              <SelectValue placeholder="加星" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">全部</SelectItem>
+              <SelectItem value="starred">已加星</SelectItem>
+              <SelectItem value="unstarred">未加星</SelectItem>
+            </SelectContent>
+          </Select>
         </div>
         <div className="flex-1 min-w-0 max-w-xs relative ml-1">
           <Search className="h-3.5 w-3.5 absolute left-2.5 top-1/2 -translate-y-1/2 text-muted-foreground" />
@@ -448,10 +466,10 @@ function InboxPage() {
               </span>
               条会话
             </span>
-            {(view !== "all" || ch !== "all" || senderKey !== "all" || q || intent !== "all") && (
+            {(view !== "all" || ch !== "all" || senderKey !== "all" || q || intent !== "all" || starred !== "all") && (
               <button
                 onClick={() =>
-                  goto({ view: "all", ch: "all", sender: "all", q: "", intent: undefined, tid: undefined })
+                  goto({ view: "all", ch: "all", sender: "all", q: "", intent: undefined, starred: "all", tid: undefined })
                 }
                 className="text-primary hover:underline"
               >
