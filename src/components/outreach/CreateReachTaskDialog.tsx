@@ -227,19 +227,9 @@ export function CreateReachTaskDialog({
     );
   }, [keywords, region]);
 
-  const previewTarget =
-    previewTargets[Math.min(previewIdx, previewTargets.length - 1)];
   /** 实际发送内容：有译文则发译文 */
   const sendContent = (translated.trim() || content).trim();
-  const previewContent = previewTarget
-    ? renderTemplate(sendContent, {
-        企业名: previewTarget.name,
-        联系人名: previewTarget.name,
-        行业: profile.industries[0],
-        城市: region,
-        ...my,
-      })
-    : "";
+
 
   const sendCost = targetCap * COST_SOCIAL_DM;
   const hit = SENSITIVE_WORDS.find((w) =>
