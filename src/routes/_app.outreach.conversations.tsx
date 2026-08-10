@@ -2345,30 +2345,6 @@ function __ActionBarImpl({ thread }: { thread: Thread }) {
         </PopoverContent>
       </Popover>
 
-      {/* 更多：修正 AI 分类 */}
-      <DropdownMenu>
-        <DropdownMenuTrigger asChild>
-          <Button variant="ghost" size="icon" className="h-8 w-8">
-            <MoreHorizontal className="h-4 w-4" />
-          </Button>
-        </DropdownMenuTrigger>
-        <DropdownMenuContent align="end" className="w-56">
-          <DropdownMenuLabel>修正 AI 分类</DropdownMenuLabel>
-          {(
-            ["interested", "quote", "ooo", "reject", "unsubscribe", "other"] as AiIntent[]
-          ).map((i) => (
-            <DropdownMenuItem
-              key={i}
-              onClick={() => {
-                updateIntent(thread.id, i);
-                toast.success(`已修正为「${INTENT_LABEL[i]}」`);
-              }}
-            >
-              {INTENT_LABEL[i]}
-            </DropdownMenuItem>
-          ))}
-        </DropdownMenuContent>
-      </DropdownMenu>
     </div>
   );
 }
