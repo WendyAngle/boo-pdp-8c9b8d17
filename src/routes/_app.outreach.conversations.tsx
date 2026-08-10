@@ -745,6 +745,11 @@ function ThreadRow({
             {thread.lastPreview}
           </div>
           <div className="mt-1.5 flex items-center gap-1.5 text-muted-foreground">
+            {(thread.parentRef?.name || thread.targetKind === "enterprise") && (
+              <span title="企业">
+                <Building2 className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
+              </span>
+            )}
             <span
               className="text-[10px] truncate max-w-[200px]"
               title={thread.parentRef?.name || thread.targetName}
