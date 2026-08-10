@@ -204,6 +204,12 @@ function channelIcon(ch: Channel) {
   }
 }
 
+function channelTooltip(ch: Channel) {
+  if (ch === "email") return "邮箱";
+  if (ch === "sms") return "短信";
+  return CHANNEL_LABEL[ch];
+}
+
 /** WhatsApp / Facebook HSM 演示模板 */
 const HSM_TEMPLATES: Record<string, { id: string; name: string; body: string }[]> = {
   whatsapp: [
