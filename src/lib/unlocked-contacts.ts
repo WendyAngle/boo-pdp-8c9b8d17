@@ -147,6 +147,21 @@ function viewToDerived(e: LedgerEntry): Derived | null {
   return v ? { ct, value: v } : null;
 }
 
+/**
+ * 社媒平台触达（Facebook / TikTok 加好友 · 私信）目标是社媒账号本身，
+ * 不关联 CRM 企业/人物（targetId 为占位符）。这类记录不能按「企业」聚合，
+ * 否则会出现「Facebook平台私信 · 企业 · 5」这种不合理卡片。
+ * 统一归一化为「社媒账号」维度：每个 @handle 单独一张卡片，且不关联企业。
+ */
+function socialHandleOf(e: LedgerEntry): string | null {
+  if (e.channel !== "social") return null;
+  if (e.platform === "WhatsApp") return null;
+  const known = e.targetKind === "enterprise" ? findEnterprise(e.targetId) : undefined;
+  if (known) return null;
+  const m = (e.detail ?? "").match(/@[\w.\-]+/);
+  return m ? m[0] : null;
+}
+
 export function deriveUnlockedContacts(entries: LedgerEntry[]): UnlockedContact[] {
   // 时间正序：view + reach 均视为解锁来源；相同联系方式仅保留最早
   const sorted = [...entries]
@@ -156,17 +171,28 @@ export function deriveUnlockedContacts(entries: LedgerEntry[]): UnlockedContact[
   for (const e of sorted) {
     const d = e.kind === "reach" ? reachToDerived(e) : viewToDerived(e);
     if (!d) continue;
-    const key = `${e.targetKind}:${e.targetId}:${d.ct}:${d.value}`;
+    const handle = e.kind === "reach" ? socialHandleOf(e) : null;
+    // 无企业归属的社媒账号：以 @handle 作为独立主体（单独一张卡片）
+    const ownerId = handle ?? e.targetId;
+    const ownerName = handle ?? e.targetName;
+    const ownerType: OwnerType = handle ? "person" : toOwnerType(e.targetKind);
+    if (!handle && e.channel === "social" && e.platform !== "WhatsApp" && !findEnterprise(e.targetId) && e.targetKind === "enterprise") {
+      // 社媒触达但无法解析出账号：不构成有效的已解锁联系方式
+      continue;
+    }
+    const key = `${ownerType}:${ownerId}:${d.ct}:${handle ?? d.value}`;
     if (map.has(key)) continue;
     map.set(key, {
       id: e.id,
-      contact_type: d.ct,
-      contact_value: d.value,
-      owner_type: toOwnerType(e.targetKind),
-      owner_id: e.targetId,
-      owner_name: e.targetName,
-      parent_ref: resolveParentRef(e.targetKind, e.targetId, e.parentRef),
-      platform: d.platform,
+      contact_type: handle ? "social_media" : d.ct,
+      contact_value: handle ?? d.value,
+      owner_type: ownerType,
+      owner_id: ownerId,
+      owner_name: ownerName,
+      parent_ref: handle
+        ? undefined
+        : resolveParentRef(e.targetKind, e.targetId, e.parentRef),
+      platform: handle ? (e.platform ?? d.platform) : d.platform,
       unlock_time: new Date(e.createdAt).getTime(),
       unlock_cost: e.kind === "view" ? e.cost : 0,
       is_unlocked: true,
