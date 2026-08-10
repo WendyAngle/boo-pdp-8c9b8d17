@@ -663,8 +663,6 @@ function ThreadRow({
   const isUnread = thread.meta.unread > 0;
   const isPending = thread.meta.status === "pending";
   const last = thread.messages[thread.messages.length - 1];
-  const sla = slaInfo(thread);
-  const authenticity = scoreAuthenticity(thread);
   const sender = useThreadSenderResolver()(thread);
   const woken =
     thread.meta.wokenAt &&
