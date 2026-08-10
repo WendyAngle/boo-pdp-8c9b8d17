@@ -106,6 +106,8 @@ export function BatchSocialDialog({
   const user = useCurrentUser();
   const callGenerate = useServerFn(generateAiContent);
   const ledger = useLedger();
+  const myInfo = useMyInfoGuard();
+
 
   const [candidates, setCandidates] = useState<SocialCandidate[]>(incoming);
   const [content, setContent] = useState("");
