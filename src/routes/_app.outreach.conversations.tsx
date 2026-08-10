@@ -726,6 +726,44 @@ function ThreadRow({
               }
               return null;
             })()}
+            {thread.meta.tags && thread.meta.tags.length > 0 && (
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <div className="flex items-center gap-1 ml-auto shrink-0 overflow-hidden">
+                    {thread.meta.tags.slice(0, 2).map((tag) => (
+                      <Badge
+                        key={tag}
+                        variant="outline"
+                        className="h-4 py-0 px-1.5 text-[10px] bg-muted/50 text-foreground/80 border-border/70 truncate max-w-[80px]"
+                      >
+                        {tag}
+                      </Badge>
+                    ))}
+                    {thread.meta.tags.length > 2 && (
+                      <Badge
+                        variant="outline"
+                        className="h-4 py-0 px-1.5 text-[10px] bg-muted/50 text-foreground/80 border-border/70 shrink-0"
+                      >
+                        +{thread.meta.tags.length - 2}
+                      </Badge>
+                    )}
+                  </div>
+                </TooltipTrigger>
+                <TooltipContent side="top" align="start" className="max-w-xs">
+                  <div className="flex flex-wrap gap-1">
+                    {thread.meta.tags.map((tag) => (
+                      <Badge
+                        key={tag}
+                        variant="outline"
+                        className="text-[10px] bg-muted/50 text-foreground/80 border-border/70"
+                      >
+                        {tag}
+                      </Badge>
+                    ))}
+                  </div>
+                </TooltipContent>
+              </Tooltip>
+            )}
           </div>
         </div>
       </div>
