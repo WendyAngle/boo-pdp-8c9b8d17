@@ -59,7 +59,7 @@ const menu: Root[] = [
           { label: "发信邮箱", to: "/outreach/mailboxes" },
           { label: "人工坐席", to: "/outreach/agents" },
           { label: "退订名单", to: "/outreach/suppressions" },
-          { label: "询盘分派规则", to: "/outreach/inquiry-dispatch" },
+          
           { label: "数据与合规", to: "/outreach/compliance" },
         ],
       },

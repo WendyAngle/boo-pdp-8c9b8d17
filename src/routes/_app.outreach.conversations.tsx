@@ -2261,7 +2261,7 @@ function __ActionBarImpl({ thread }: { thread: Thread }) {
 
   return (
     <div className="flex items-center gap-1 shrink-0">
-      <AssignMenu thread={thread} />
+      
 
 
       <DropdownMenu>
