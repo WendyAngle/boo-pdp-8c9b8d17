@@ -1786,6 +1786,7 @@ function ThreadDetail({
           </div>
         </div>
       </div>
+      )}
     </div>
   );
 }
