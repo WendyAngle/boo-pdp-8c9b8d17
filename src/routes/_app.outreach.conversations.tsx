@@ -482,14 +482,6 @@ function InboxPage() {
                 {intentCounts.needsHuman > 0 && (
                   <SelectItem value="needs_human">人工接管（{intentCounts.needsHuman}）</SelectItem>
                 )}
-                {smartCounts.myTodo > 0 ? (
-                  <SelectItem value="my_todo">我的待办（{smartCounts.myTodo}）</SelectItem>
-                ) : smartCounts.mine > 0 ? (
-                  <SelectItem value="mine">我负责的（{smartCounts.mine}）</SelectItem>
-                ) : null}
-                {smartCounts.myTodo > 0 && smartCounts.mine > smartCounts.myTodo && (
-                  <SelectItem value="mine">我负责的（{smartCounts.mine}）</SelectItem>
-                )}
               </SelectGroup>
             </SelectContent>
           </Select>
