@@ -673,11 +673,11 @@ export function CreateReachTaskDialog({
             )}
           </div>
 
-          {/* 撰写内容：中文原文 */}
-          <section className="space-y-3">
+          {/* 撰写内容：中文原文 → 目标语言译文（一体区域） */}
+          <section className="space-y-3 rounded-md border p-3">
             <div className="flex items-center justify-between">
               <Label className="text-sm font-medium flex items-center gap-2">
-                私信内容（中文原文）
+                私信内容
                 {aiUsed && (
                   <Badge variant="secondary" className="gap-1 bg-amber-100 text-amber-800">
                     <Sparkles className="h-3 w-3" />
@@ -707,101 +707,101 @@ export function CreateReachTaskDialog({
 
             <AutoVarFillHint />
 
-            <div className="grid gap-3 lg:grid-cols-2 items-start">
-            <div className="space-y-1">
-              <Textarea
-                value={content}
-                onChange={(e) => setContent(e.target.value)}
-                rows={10}
-                placeholder={`Hi {联系人名}，我是 {我的公司} 的 {我的姓名}……（AI 生成默认为首发开发信）`}
-              />
-              <div className="flex items-center justify-between text-[11px]">
-                <span
-                  className={
-                    contentLen > charLimit ? "text-rose-600" : "text-muted-foreground"
-                  }
-                >
-                  {contentLen} / {charLimit} 字符（{platform}）
-                </span>
-                <span className="text-muted-foreground">
-                  中/日/韩字符按 2 计 · AI 生成建议 {AI_SUGGESTED_CHAR_LEN} 字符内
-                </span>
+            <div className="grid gap-0 lg:grid-cols-2 lg:divide-x rounded-md border overflow-hidden">
+              {/* 左：中文原文 */}
+              <div className="space-y-2 p-3">
+                <div className="flex h-8 items-center">
+                  <Label className="text-xs text-muted-foreground">中文原文</Label>
+                </div>
+                <Textarea
+                  value={content}
+                  onChange={(e) => setContent(e.target.value)}
+                  rows={10}
+                  placeholder={`Hi {联系人名}，我是 {我的公司} 的 {我的姓名}……（AI 生成默认为首发开发信）`}
+                />
+                <div className="flex items-center justify-between text-[11px]">
+                  <span
+                    className={
+                      contentLen > charLimit ? "text-rose-600" : "text-muted-foreground"
+                    }
+                  >
+                    {contentLen} / {charLimit} 字符（{platform}）
+                  </span>
+                  <span className="text-muted-foreground">
+                    中/日/韩字符按 2 计
+                  </span>
+                </div>
               </div>
-            </div>
 
-            {/* 目标语言译文（实际发送内容） */}
-            <section className="space-y-2 rounded-md border border-primary/25 bg-primary/[0.03] p-3">
-            <div className="flex items-center justify-between gap-2">
-              <Label className="text-sm font-medium flex items-center gap-2">
-                <Languages className="h-4 w-4 text-primary" />
-                目标语言文案
-                <Badge variant="outline" className="font-normal text-[10px]">
-                  实际发送内容
-                </Badge>
-              </Label>
-              <div className="flex items-center gap-2">
-                <Select
-                  value={targetLang}
-                  onValueChange={(v) => {
-                    setTargetLang(v);
-                    if (content.trim()) void handleTranslate(v);
-                  }}
-                >
-                  <SelectTrigger className="h-8 w-[150px] text-xs">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent className="max-h-[280px]">
-                    {TARGET_LANGS.map((l) => (
-                      <SelectItem key={l.code} value={l.code}>
-                        {l.flag} {l.zh}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                <Button
-                  type="button"
-                  size="sm"
-                  variant="outline"
-                  className="h-8 gap-1"
-                  disabled={trLoading || !content.trim()}
-                  onClick={() => void handleTranslate()}
-                >
-                  {trLoading ? (
-                    <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                  ) : (
+              {/* 右：目标语言译文（实际发送内容） */}
+              <div className="space-y-2 bg-primary/[0.03] p-3">
+                <div className="flex h-8 items-center justify-between gap-2">
+                  <Label className="text-xs font-medium flex items-center gap-1.5">
                     <Languages className="h-3.5 w-3.5 text-primary" />
+                    实际发送内容
+                  </Label>
+                  <div className="flex items-center gap-2">
+                    <Select
+                      value={targetLang}
+                      onValueChange={(v) => {
+                        setTargetLang(v);
+                        if (content.trim()) void handleTranslate(v);
+                      }}
+                    >
+                      <SelectTrigger className="h-8 w-[140px] text-xs">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent className="max-h-[280px]">
+                        {TARGET_LANGS.map((l) => (
+                          <SelectItem key={l.code} value={l.code}>
+                            {l.flag} {l.zh}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <Button
+                      type="button"
+                      size="sm"
+                      variant="outline"
+                      className="h-8 gap-1"
+                      disabled={trLoading || !content.trim()}
+                      onClick={() => void handleTranslate()}
+                    >
+                      {trLoading ? (
+                        <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                      ) : (
+                        <Languages className="h-3.5 w-3.5 text-primary" />
+                      )}
+                      {translated ? "重新翻译" : "翻译"}
+                    </Button>
+                  </div>
+                </div>
+                <Textarea
+                  value={translated}
+                  onChange={(e) => setTranslated(e.target.value)}
+                  rows={10}
+                  placeholder={`选择目标语言后点击「翻译」，此处展示 ${
+                    targetLangOpt?.zh ?? "目标语言"
+                  }文案，可手动修改`}
+                />
+                <div className="flex items-center justify-between text-[11px]">
+                  <span
+                    className={
+                      translatedLen > charLimit ? "text-rose-600" : "text-muted-foreground"
+                    }
+                  >
+                    {translated
+                      ? `将以${targetLangOpt?.zh ?? ""}发送 · ${translatedLen} / ${charLimit} 字符`
+                      : "未翻译时，将直接发送中文原文"}
+                  </span>
+                  {staleTranslation && (
+                    <span className="text-amber-600">原文已修改，建议重新翻译</span>
                   )}
-                  {translated ? "重新翻译" : "翻译"}
-                  <span className="text-[11px] text-emerald-600">免费</span>
-                </Button>
+                </div>
               </div>
-            </div>
-
-            <Textarea
-              value={translated}
-              onChange={(e) => setTranslated(e.target.value)}
-              rows={10}
-              placeholder={`选择目标语言后点击「翻译」，此处展示 ${
-                targetLangOpt?.zh ?? "目标语言"
-              }文案，可手动修改`}
-            />
-            <div className="flex items-center justify-between text-[11px]">
-              <span
-                className={
-                  translatedLen > charLimit ? "text-rose-600" : "text-muted-foreground"
-                }
-              >
-                {translated
-                  ? `将以${targetLangOpt?.zh ?? ""}发送 · ${translatedLen} / ${charLimit} 字符`
-                  : "未翻译时，将直接发送中文原文"}
-              </span>
-              {staleTranslation && (
-                <span className="text-amber-600">中文原文已修改，建议重新翻译</span>
-              )}
-            </div>
-            </section>
             </div>
           </section>
+
 
           {overLimit && (
             <div className="text-xs text-rose-600">
