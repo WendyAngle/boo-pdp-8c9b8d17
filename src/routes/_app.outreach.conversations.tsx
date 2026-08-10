@@ -31,12 +31,11 @@ import {
   ShieldAlert,
   AlertTriangle,
   UserCheck,
-  
+
   Zap,
   Pin,
   Hand,
   ChevronDown as ChevronDownIcon,
-  FileText,
   User as UserIcon,
 } from "lucide-react";
 import { Card } from "@/components/ui/card";
@@ -92,7 +91,6 @@ import {
 import { generateAiContent } from "@/lib/api/ai-compose.functions";
 import { translateMessage } from "@/lib/api/ai-translate.functions";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
-import { getApprovedSmsTemplates } from "@/lib/sms-templates-store";
 
 import { IntelPanel } from "@/components/outreach/IntelPanel";
 import { scoreIntent } from "@/lib/ai-intent-score";
@@ -108,29 +106,6 @@ import { resolveThreadProfile } from "@/lib/thread-profile";
 
 
 
-/** 邮件场景的快捷回复模板（Phase 1 hardcoded） */
-const EMAIL_QUICK_REPLIES: { id: string; name: string; body: string }[] = [
-  {
-    id: "eq_thanks",
-    name: "致谢 · 确认收到",
-    body: "Hi,\n\nThanks for your reply — noted with thanks. I'll get back to you shortly with the details.\n\nBest regards,",
-  },
-  {
-    id: "eq_quote",
-    name: "报价 · 请提供需求",
-    body: "Hi,\n\nHappy to prepare a formal quote. Could you share:\n1) Target SKUs / quantities\n2) Destination port & Incoterm\n3) Expected shipment date\n\nBest,",
-  },
-  {
-    id: "eq_meeting",
-    name: "邀约 · 30 分钟电话",
-    body: "Hi,\n\nWould you have 30 minutes this week for a quick call? Please share 2-3 slots that work for you and I'll confirm.\n\nBest,",
-  },
-  {
-    id: "eq_followup",
-    name: "跟进 · 二次触达",
-    body: "Hi,\n\nJust following up on my previous email — let me know if you'd like more information or a sample.\n\nBest,",
-  },
-];
 
 import {
   useThreadSenderResolver,
@@ -190,16 +165,6 @@ function channelTooltip(ch: Channel) {
   return CHANNEL_LABEL[ch];
 }
 
-/** WhatsApp / Facebook HSM 演示模板 */
-const HSM_TEMPLATES: Record<string, { id: string; name: string; body: string }[]> = {
-  whatsapp: [
-    { id: "wa_hello", name: "welcome_intro", body: "Hi {{1}}, thanks for reaching out to us earlier. Would this be a good time to continue our conversation?" },
-    { id: "wa_quote", name: "quote_followup", body: "Hi {{1}}, following up on the quote we shared for {{2}}. Let me know if you'd like to schedule a call." },
-  ],
-  facebook: [
-    { id: "fb_update", name: "CONFIRMED_EVENT_UPDATE", body: "Reminder: your appointment on {{1}} is confirmed." },
-  ],
-};
 
 type ViewKey = NonNullable<z.infer<typeof searchSchema>["view"]>;
 
@@ -824,7 +789,6 @@ function ThreadDetail({
   const [translatedFrom, setTranslatedFrom] = useState("");
   const [translating, setTranslating] = useState(false);
   const [sending, setSending] = useState(false);
-  const [selectedTpl, setSelectedTpl] = useState<string>("");
   const [draftSavedAt, setDraftSavedAt] = useState<string | null>(null);
   const draftKey = `boo:inbox:draft:${thread.id}`;
   // 切换会话：从 localStorage 恢复该会话的草稿
@@ -879,8 +843,6 @@ function ThreadDetail({
     const leftMs = exp - Date.now();
     return { winH, leftMs, closed: leftMs <= 0 };
   }, [thread.channel, thread.meta.windowExpiresAt]);
-
-  const templates = HSM_TEMPLATES[thread.channel] ?? [];
 
   async function aiGenerate() {
     setAiLoading(true);
@@ -958,10 +920,7 @@ function ThreadDetail({
   }
 
   function doSend(aiGen = false) {
-    const content = winInfo?.closed && templates.length
-      ? templates.find((t) => t.id === selectedTpl)?.body ?? sendContent
-      : sendContent;
-    if (!content.trim()) {
+    if (!sendContent.trim()) {
       toast.error(needsTranslation ? "请先生成目标语言译文" : "请输入回复内容");
       return;
     }
@@ -969,7 +928,7 @@ function ThreadDetail({
     setTimeout(() => {
       sendReply({
         threadId: thread.id,
-        content: content.trim(),
+        content: sendContent.trim(),
         fromAddress: thread.senderEmail || "outreach@bytetech.cn",
         subject: thread.messages[0]?.subject
           ? `Re: ${thread.messages[0].subject.replace(/^Re:\s*/i, "")}`
@@ -979,13 +938,12 @@ function ThreadDetail({
       });
 
       setReply("");
-      setSelectedTpl("");
       setTranslated("");
       setTranslatedFrom("");
       if (typeof window !== "undefined") window.localStorage.removeItem(draftKey);
       setDraftSavedAt(null);
       setSending(false);
-      toast.success(winInfo?.closed ? "已通过 HSM 模板发送" : "回复已发送");
+      toast.success("回复已发送");
     }, 400);
   }
 
@@ -1415,12 +1373,7 @@ function ThreadDetail({
             <ShieldAlert className="h-3.5 w-3.5 shrink-0" />
             {winInfo.closed ? (
               <span>
-                {CHANNEL_LABEL[thread.channel]} 客服窗口已关闭，
-                {thread.channel === "whatsapp"
-                  ? "请从下方选择已审核的 HSM 模板发送。"
-                  : thread.channel === "facebook"
-                    ? "需附合规消息标签（如 CONFIRMED_EVENT_UPDATE）。"
-                    : "窗口外禁止外发消息。"}
+                {CHANNEL_LABEL[thread.channel]} 客服窗口已关闭，窗口外禁止外发消息。
               </span>
             ) : (
               <span>
@@ -1455,34 +1408,8 @@ function ThreadDetail({
             )}
             AI 生成回复（中文）
           </Button>
-          <QuickTemplateMenu
-            channel={thread.channel}
-            disabled={!!winInfo?.closed}
-            onPick={(body) => {
-              setReply(body);
-              setTranslated("");
-            }}
-          />
         </div>
-        {winInfo?.closed && templates.length > 0 ? (
-          <div className="space-y-2">
-            <div className="grid grid-cols-1 gap-2">
-              {templates.map((t) => (
-                <button
-                  key={t.id}
-                  onClick={() => setSelectedTpl(t.id)}
-                  className={cn(
-                    "text-left rounded-md border bg-background p-3 hover:border-primary transition-colors",
-                    selectedTpl === t.id && "border-primary ring-1 ring-primary/40",
-                  )}
-                >
-                  <div className="text-xs font-medium mb-1">{t.name}</div>
-                  <div className="text-xs text-muted-foreground whitespace-pre-wrap">{t.body}</div>
-                </button>
-              ))}
-            </div>
-          </div>
-        ) : needsTranslation ? (
+        {needsTranslation ? (
           <div className="grid gap-2 md:grid-cols-2">
             {/* 左：中文原文 */}
             <div className="space-y-1">
@@ -1626,12 +1553,10 @@ function ThreadDetail({
             onClick={() => doSend(false)}
             disabled={
               sending ||
-              (winInfo?.closed && templates.length > 0 && !selectedTpl) ||
-              (winInfo?.closed && templates.length === 0) ||
+              !!winInfo?.closed ||
               (!winInfo?.closed && translationStale) ||
               (!winInfo?.closed && !sendContent.trim())
             }
-
             className="gap-1.5"
           >
             {sending ? (
@@ -1639,11 +1564,7 @@ function ThreadDetail({
             ) : (
               <Send className="h-4 w-4" />
             )}
-            {winInfo?.closed && templates.length > 0
-              ? "发送模板消息"
-              : needsTranslation
-                ? `发送${targetLang.zh}译文`
-                : "发送回复"}
+            {needsTranslation ? `发送${targetLang.zh}译文` : "发送回复"}
           </Button>
           <Button
             variant="outline"
@@ -1651,13 +1572,11 @@ function ThreadDetail({
               setReply("");
               setTranslated("");
               setTranslatedFrom("");
-              setSelectedTpl("");
-
               if (typeof window !== "undefined")
                 window.localStorage.removeItem(draftKey);
               setDraftSavedAt(null);
             }}
-            disabled={(!reply && !translated && !selectedTpl) || sending}
+            disabled={(!reply && !translated) || sending}
           >
             清空
           </Button>
@@ -1687,56 +1606,6 @@ function formatHm(ms: number) {
 
 function ActionBar({ thread }: { thread: Thread }) {
   return _ActionBar({ thread });
-}
-
-function QuickTemplateMenu({
-  channel,
-  disabled,
-  onPick,
-}: {
-  channel: Channel;
-  disabled?: boolean;
-  onPick: (body: string) => void;
-}) {
-  const smsTpls = channel === "sms" ? getApprovedSmsTemplates() : [];
-  const list: { id: string; name: string; body: string }[] =
-    channel === "email"
-      ? EMAIL_QUICK_REPLIES
-      : channel === "sms"
-        ? smsTpls.map((t) => ({ id: t.id, name: t.name, body: t.content }))
-        : [];
-  return (
-    <DropdownMenu>
-      <DropdownMenuTrigger asChild>
-        <Button
-          variant="ghost"
-          size="sm"
-          className="gap-1 h-7"
-          disabled={disabled || list.length === 0}
-        >
-          <FileText className="h-3.5 w-3.5" />
-          模板
-        </Button>
-      </DropdownMenuTrigger>
-      <DropdownMenuContent align="end" className="w-72">
-        <DropdownMenuLabel className="text-[11px] text-muted-foreground">
-          {channel === "email" ? "邮件快捷回复" : "短信审核通过模板"}
-        </DropdownMenuLabel>
-        {list.map((t) => (
-          <DropdownMenuItem
-            key={t.id}
-            className="flex flex-col items-start gap-0.5 py-2"
-            onClick={() => onPick(t.body)}
-          >
-            <span className="text-xs font-medium">{t.name}</span>
-            <span className="text-[11px] text-muted-foreground line-clamp-2">
-              {t.body}
-            </span>
-          </DropdownMenuItem>
-        ))}
-      </DropdownMenuContent>
-    </DropdownMenu>
-  );
 }
 
 function _ActionBar({ thread }: { thread: Thread }) {
