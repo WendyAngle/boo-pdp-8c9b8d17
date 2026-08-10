@@ -323,25 +323,13 @@ function InboxPage() {
       list = list.filter((t) => t.meta.status === "snoozed");
     else if (view === "suppressed")
       list = list.filter((t) => t.meta.status === "suppressed");
-    else if (view === "unassigned")
-      list = list.filter((t) => !t.meta.assigneeId);
-    else if (view === "mine")
-      list = list.filter((t) => t.meta.assigneeId === CURRENT_TEAM_USER_ID);
-    else if (view === "my_todo")
-      list = list.filter(
-        (t) =>
-          t.meta.assigneeId === CURRENT_TEAM_USER_ID &&
-          (t.meta.status === "pending" || t.meta.status === "snoozed"),
-      );
     else if (view === "high_intent")
       list = list.filter((t) => scoreIntent(t).band === "high");
     else if (view === "needs_human")
       list = list.filter(
         (t) =>
           !t.meta.humanTakeover &&
-          (t.meta.aiIntent === "complaint" ||
-            t.meta.aiIntent === "unsubscribe" ||
-            !t.meta.assigneeId),
+          (t.meta.aiIntent === "complaint" || t.meta.aiIntent === "unsubscribe"),
       );
     if (q.trim()) {
       const kw = q.trim().toLowerCase();
