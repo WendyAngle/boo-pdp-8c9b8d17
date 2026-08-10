@@ -697,11 +697,12 @@ function ThreadRow({
             {(() => {
               const CI = channelIcon(thread.channel);
               return (
-                <CI
-                  className="h-3.5 w-3.5 shrink-0 text-muted-foreground"
-                  aria-label={channelTooltip(thread.channel)}
-                  title={channelTooltip(thread.channel)}
-                />
+                <span title={channelTooltip(thread.channel)}>
+                  <CI
+                    className="h-3.5 w-3.5 shrink-0 text-muted-foreground"
+                    aria-label={channelTooltip(thread.channel)}
+                  />
+                </span>
               );
             })()}
             <span
