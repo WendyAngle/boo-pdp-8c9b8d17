@@ -123,17 +123,28 @@ function VoiceScriptsPage() {
         <span className="text-foreground">外呼话术</span>
       </div>
 
-      <div className="flex items-start justify-between gap-4 flex-wrap">
-        <div>
-          <h1 className="text-2xl font-semibold flex items-center gap-2">
-            <PhoneCall className="h-6 w-6 text-primary" />
-            外呼话术
-          </h1>
-          <p className="text-sm text-muted-foreground mt-1">
-            AI 智能外呼使用的对话内容。可从平台模板市场一键复制，再按线性步骤编排多轮对话与意向判定。
-          </p>
+      <section className="relative overflow-hidden rounded-2xl ring-1 ring-border">
+        <img
+          src={heroBg}
+          alt="外呼话术"
+          width={1920}
+          height={512}
+          className="absolute inset-0 w-full h-full object-cover"
+        />
+        <div className="absolute inset-0 bg-gradient-to-r from-[hsl(184_70%_42%/0.92)] via-[hsl(184_60%_55%/0.55)] to-transparent" />
+        <div className="relative px-8 py-10 flex items-center gap-5 text-white">
+          <div className="h-14 w-14 rounded-2xl bg-white/25 backdrop-blur-sm flex items-center justify-center ring-1 ring-white/30">
+            <PhoneCall className="h-7 w-7" />
+          </div>
+          <div>
+            <h1 className="text-2xl font-bold tracking-wide">外呼话术</h1>
+            <p className="text-white/90 text-sm mt-1">
+              AI 智能外呼使用的对话内容。可从平台模板市场一键复制，再按线性步骤编排多轮对话与意向判定。
+            </p>
+          </div>
         </div>
-      </div>
+      </section>
+
 
       <Tabs defaultValue="market">
         <TabsList>
