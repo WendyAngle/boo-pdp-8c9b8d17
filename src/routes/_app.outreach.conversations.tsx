@@ -36,7 +36,6 @@ import {
   Hand,
   Zap,
   Pin,
-  AlarmClock,
   ChevronDown as ChevronDownIcon,
   FileText,
   User as UserIcon,
