@@ -176,13 +176,6 @@ function ReachPage() {
   }, [reachRows]);
 
 
-  // 社媒账号池运营指标（替代原积分口径，突出触达任务本身的执行能力）
-  const accounts = useSocialAccounts();
-  const fbRemain = friendRemaining(accounts, "Facebook");
-  const ttRemain = friendRemaining(accounts, "TikTok");
-  const poolHealth = poolAverageHealth(accounts);
-  const usableAccounts = accounts.filter((a) => a.status === "正常").length;
-
   const replyTotal = useMemo(
     () =>
       reachRows.reduce((n, r) => {
