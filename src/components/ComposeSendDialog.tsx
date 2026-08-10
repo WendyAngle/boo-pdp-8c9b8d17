@@ -688,93 +688,77 @@ export function ComposeSendDialog({
               </div>
             )}
 
-            {/* 变量插入 */}
-            <div className={cn("flex flex-wrap items-center gap-1.5", !isEmail && "hidden")}>
-              <span className="text-xs text-muted-foreground">
-                插入变量（光标处插入到{focusField === "subject" ? "主题" : "正文"}）：
-              </span>
-              {MESSAGE_VARIABLES.map((v) => (
-                <button
-                  key={v}
-                  type="button"
-                  onClick={() => insertVarAt(focusField, v)}
-                  className="rounded border bg-background px-1.5 py-0.5 text-[11px] font-mono text-primary hover:bg-primary/10"
-                >
-                  {`{${v}}`}
-                </button>
-              ))}
-            </div>
+            <div className="grid gap-0 lg:grid-cols-2 lg:divide-x rounded-md border overflow-hidden">
+              <div className="space-y-2 p-3">
+                <div className="flex h-8 items-center">
+                  <Label className="text-xs text-muted-foreground">中文原文 *</Label>
+                </div>
 
-            {isEmail && (
-              <div className="space-y-1">
-                <Label className="text-xs text-muted-foreground">主题 *</Label>
-                <Input
-                  ref={subjectRef}
-                  value={subject}
-                  onChange={(e) => setSubject(e.target.value)}
-                  onFocus={() => setFocusField("subject")}
-                  maxLength={120}
-                  placeholder="例：{企业名}，关于 {行业} 出口合作的提案"
+                {isEmail && (
+                  <div className="space-y-1">
+                    <Label className="text-xs text-muted-foreground">主题 *</Label>
+                    <Input
+                      ref={subjectRef}
+                      value={subject}
+                      onChange={(e) => setSubject(e.target.value)}
+                      maxLength={120}
+                      placeholder="例：关于出口合作的提案"
+                    />
+                  </div>
+                )}
+
+                <Textarea
+                  ref={contentRef}
+                  value={content}
+                  readOnly={!isEmail}
+                  className={cn(!isEmail && "bg-muted/40 cursor-not-allowed")}
+                  onChange={(e) => {
+                    if (!isEmail) return;
+                    setContent(e.target.value);
+                  }}
+                  rows={isEmail ? 8 : 6}
+                  maxLength={isEmail ? 5000 : 300}
+                  placeholder={
+                    isEmail
+                      ? "您好，我是××公司的×××……"
+                      : "您好，我是××公司的×××……"
+                  }
                 />
-              </div>
-            )}
-
-            <div className="space-y-1">
-              <Label className="text-xs text-muted-foreground">
-                {isEmail ? "正文 *" : "短信内容 *（模板内容不可编辑）"}
-              </Label>
-              <Textarea
-                ref={contentRef}
-                value={content}
-                readOnly={!isEmail}
-                className={cn(!isEmail && "bg-muted/40 cursor-not-allowed")}
-                onChange={(e) => {
-                  if (!isEmail) return;
-                  setContent(e.target.value);
-                }}
-                onFocus={() => setFocusField("content")}
-                rows={isEmail ? 8 : 5}
-                maxLength={isEmail ? 5000 : 300}
-                placeholder={
-                  isEmail
-                    ? "你好 {联系人名}，我是 {我的公司} 的 {我的姓名}……"
-                    : "{联系人名}您好，我是{我的公司}的{我的姓名}……"
-                }
-              />
-              <div className="flex items-center justify-between text-[11px] text-muted-foreground">
-                <span>
-                  {content.length} / {isEmail ? 5000 : 300} 字
-                  {!isEmail && content && (
-                    <span className="ml-2">
-                      · 拆分 {smsSegments(content)} 条
+                <div className="flex items-center justify-between text-[11px] text-muted-foreground">
+                  <span>
+                    {content.length} / {isEmail ? 5000 : 300} 字
+                    {!isEmail && content && (
+                      <span className="ml-2">· 拆分 {smsSegments(content)} 条</span>
+                    )}
+                  </span>
+                  {missingContact > 0 && (
+                    <span className="text-amber-600">
+                      {missingContact} 条记录缺少联系人名，将以「您好」代替
                     </span>
                   )}
-                </span>
-                {missingContact > 0 && (
-                  <span className="text-amber-600">
-                    {missingContact} 条记录缺少联系人名，将以「您好」代替
-                  </span>
+                </div>
+                {!isEmail && content.trim().length > 0 && (
+                  <ComplianceStrip templateName={smsTemplateName} />
                 )}
               </div>
-              {!isEmail && content.trim().length > 0 && (
-                <ComplianceStrip templateName={smsTemplateName} />
-              )}
+
+              {/* 目标语言文案（实际发送内容） */}
+              <TargetLangSection
+                source={content}
+                sourceSubject={isEmail ? subject : undefined}
+                lang={targetLang}
+                onLangChange={setTargetLang}
+                value={translated}
+                onChange={setTranslated}
+                subjectValue={isEmail ? translatedSubject : undefined}
+                onSubjectChange={isEmail ? setTranslatedSubject : undefined}
+                rows={isEmail ? 8 : 6}
+                kindLabel={isEmail ? "邮件" : "短信"}
+                bare
+              />
             </div>
           </section>
 
-          {/* 目标语言文案（实际发送内容） */}
-          <TargetLangSection
-            source={content}
-            sourceSubject={isEmail ? subject : undefined}
-            lang={targetLang}
-            onLangChange={setTargetLang}
-            value={translated}
-            onChange={setTranslated}
-            subjectValue={isEmail ? translatedSubject : undefined}
-            onSubjectChange={isEmail ? setTranslatedSubject : undefined}
-            rows={isEmail ? 8 : 5}
-            kindLabel={isEmail ? "邮件" : "短信"}
-          />
 
           {/* 预览 */}
 
