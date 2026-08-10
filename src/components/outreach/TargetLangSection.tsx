@@ -21,6 +21,14 @@ import { translateMessage } from "@/lib/api/ai-translate.functions";
 /** 目标语言候选（中文为原文，故排除） */
 export const TARGET_LANGS = LANGUAGES.filter((l) => l.code !== "zh");
 
+/** 译文兜底清理：AI 有时会把公司名等内容用 {} 包住，去掉花括号只保留内容 */
+function unwrapBraces(text: string): string {
+  return text
+    .replace(/[{｛]\s*([^{}｛｝\n]{0,120}?)\s*[}｝]/g, "$1")
+    .replace(/[ \t]{2,}/g, " ");
+}
+
+
 /**
  * 「目标语言文案」板块（与 触达任务-新建社媒触达任务 弹窗一致）：
  * 中文原文 → 选择目标语言 → 一键翻译 → 译文即实际发送内容（可手动修改）。
