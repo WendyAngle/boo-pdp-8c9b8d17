@@ -110,6 +110,41 @@ export function IntentScorePanel({ thread }: { thread: Thread }) {
         >
           {result.bandLabel}
         </Badge>
+        {thread.meta.aiIntent && (
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Badge
+                variant="outline"
+                className={cn(
+                  "mt-1.5 text-[11px] cursor-pointer hover:opacity-90 gap-1",
+                  INTENT_COLOR[thread.meta.aiIntent],
+                )}
+                title="点击修正意向分类"
+              >
+                {INTENT_LABEL[thread.meta.aiIntent]}
+                <Pencil className="h-3 w-3 opacity-70" />
+              </Badge>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="center" className="w-44">
+              <DropdownMenuLabel className="text-[11px] text-muted-foreground">
+                修正意向分类
+              </DropdownMenuLabel>
+              {(
+                ["interested", "quote", "ooo", "reject", "unsubscribe", "other"] as AiIntent[]
+              ).map((i) => (
+                <DropdownMenuItem
+                  key={i}
+                  onClick={() => {
+                    updateIntent(thread.id, i);
+                    toast.success(`已修正为「${INTENT_LABEL[i]}」`);
+                  }}
+                >
+                  {INTENT_LABEL[i]}
+                </DropdownMenuItem>
+              ))}
+            </DropdownMenuContent>
+          </DropdownMenu>
+        )}
       </div>
 
       {/* 客户信息 */}
