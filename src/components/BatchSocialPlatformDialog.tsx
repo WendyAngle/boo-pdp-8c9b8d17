@@ -45,7 +45,7 @@ import { useCurrentUser } from "@/lib/current-user";
 import { ComposeFormatHint } from "@/components/outreach/ComposeFormatHint";
 import { generateAiContent } from "@/lib/api/ai-compose.functions";
 import { TargetLangSection } from "@/components/outreach/TargetLangSection";
-import { AutoVarFillHint } from "@/components/outreach/AutoVarFillHint";
+import { useMyInfoGuard } from "@/lib/my-info-guard";
 
 export type ReachPlatform = "Facebook" | "TikTok";
 export const REACH_PLATFORMS: ReachPlatform[] = ["Facebook", "TikTok"];
@@ -96,6 +96,7 @@ export function BatchSocialPlatformDialog({
   const accounts = useSocialAccounts();
   const profile = useLeadProfile();
   const user = useCurrentUser();
+  const myInfo = useMyInfoGuard();
   const callGenerate = useServerFn(generateAiContent);
 
   const [platform, setPlatform] = useState<ReachPlatform | "all">("all");
@@ -303,6 +304,7 @@ export function BatchSocialPlatformDialog({
 
   async function handleAiGenerate() {
     if (aiLoading) return;
+    if (!myInfo.ensure()) return;
     setAiLoading(true);
     try {
       const sample = jobs[0]?.candidate ?? allCandidates[0];
@@ -319,7 +321,7 @@ export function BatchSocialPlatformDialog({
           sampleEnterprise: sample?.ctx.企业名,
         },
       });
-      if (res.content) setContent(res.content);
+      if (res.content) setContent(myInfo.fillMine(res.content));
       setAiUsed(true);
       toast.success("AI 已生成社媒首次接触文案");
     } catch (e) {
@@ -546,9 +548,6 @@ export function BatchSocialPlatformDialog({
               channel="social"
               platform={platform === "all" ? "Facebook" : platform}
             />
-
-
-            <AutoVarFillHint />
 
             <div className="grid gap-0 lg:grid-cols-2 lg:divide-x rounded-md border overflow-hidden">
               <div className="space-y-2 p-3">
