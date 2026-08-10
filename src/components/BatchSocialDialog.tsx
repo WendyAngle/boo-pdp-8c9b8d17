@@ -3,7 +3,6 @@ import {
   Send,
   Sparkles,
   Loader2,
-  Eye,
   X,
   CheckCircle2,
   XCircle,
@@ -40,7 +39,6 @@ import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
 
 import {
-  MESSAGE_VARIABLES,
   renderTemplate,
   myContext,
   type Recipient,
@@ -112,7 +110,6 @@ export function BatchSocialDialog({
   const [candidates, setCandidates] = useState<SocialCandidate[]>(incoming);
   const [content, setContent] = useState("");
   const [aiUsed, setAiUsed] = useState(false);
-  const [previewIdx, setPreviewIdx] = useState(0);
   const [aiLoading, setAiLoading] = useState(false);
   /** 目标语言（发送语言）代码 */
   const [targetLang, setTargetLang] = useState<string>("en");
@@ -124,7 +121,6 @@ export function BatchSocialDialog({
     setCandidates(incoming);
     setContent("");
     setAiUsed(false);
-    setPreviewIdx(0);
     setTargetLang("en");
     setTranslated("");
     // 打开即自动校验（跳过已缓存）
@@ -192,28 +188,9 @@ export function BatchSocialDialog({
   const grandTotal = sendTotal + viewCostTotal;
 
   const contentRef = useRef<HTMLTextAreaElement | null>(null);
-  function insertVarAt(v: string) {
-    const token = `{${v}}`;
-    const el = contentRef.current;
-    const s = content;
-    if (!el) return setContent(s + token);
-    const start = el.selectionStart ?? s.length;
-    const end = el.selectionEnd ?? s.length;
-    const next = s.slice(0, start) + token + s.slice(end);
-    setContent(next);
-    requestAnimationFrame(() => {
-      el.focus();
-      const pos = start + token.length;
-      el.setSelectionRange(pos, pos);
-    });
-  }
 
   /** 实际发送内容：有译文则发译文 */
   const sendContent = (translated.trim() || content).trim();
-  const previewRecipient = verified[Math.min(previewIdx, Math.max(0, verified.length - 1))];
-  const previewContent = previewRecipient
-    ? renderTemplate(sendContent, previewRecipient.ctx)
-    : "";
 
   const noPool = capacity === 0;
   const canSend =
@@ -329,7 +306,7 @@ export function BatchSocialDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-3xl max-h-[92vh] overflow-y-auto">
+      <DialogContent className="max-w-5xl max-h-[92vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <MessageCircle className="h-5 w-5 text-emerald-600" />
