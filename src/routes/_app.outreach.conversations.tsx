@@ -1092,30 +1092,6 @@ function ThreadDetail({
               <Badge variant="outline" className="text-[11px]">
                 {STATUS_LABEL[thread.meta.status]}
               </Badge>
-              {(() => {
-                const sla = slaInfo(thread);
-                if (!sla) return null;
-                return (
-                  <Badge
-                    variant="outline"
-                    className={cn(
-                      "text-[11px]",
-                      sla.overdue
-                        ? "bg-rose-50 text-rose-700 border-rose-200"
-                        : sla.approaching
-                          ? "bg-amber-50 text-amber-700 border-amber-200"
-                          : "bg-emerald-50 text-emerald-700 border-emerald-200",
-                    )}
-                  >
-                    <Clock className="h-3 w-3 mr-1" />
-                    {sla.overdue
-                      ? `SLA 逾期 ${formatShort(-sla.leftMs)}`
-                      : sla.approaching
-                        ? `SLA 即将超时 ${formatShort(sla.leftMs)}`
-                        : `SLA 剩 ${formatShort(sla.leftMs)}`}
-                  </Badge>
-                );
-              })()}
               {thread.meta.aiIntent && (
                 <Badge
                   variant="outline"
