@@ -536,7 +536,6 @@ function NewTplDialog({
 }) {
   const [name, setName] = useState(initial?.name ?? "");
   const [channel, setChannel] = useState<Tpl["channel"]>(initial?.channel ?? "marketing");
-  const [locale, setLocale] = useState(initial?.locale ?? "zh-CN");
   const [content, setContent] = useState(initial?.content ?? "");
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const isEdit = !!initial;
@@ -545,7 +544,6 @@ function NewTplDialog({
     if (!open) return;
     setName(initial?.name ?? "");
     setChannel(initial?.channel ?? "marketing");
-    setLocale(initial?.locale ?? "zh-CN");
     setContent(initial?.content ?? "");
   }, [open, initial]);
 
@@ -580,7 +578,7 @@ function NewTplDialog({
       toast.error("营销类模板必须包含退订提示（STOP / 退订 / TD）");
       return;
     }
-    onSubmit({ name: name.trim(), channel, locale, content: content.trim() });
+    onSubmit({ name: name.trim(), channel, locale: "zh-CN", content: content.trim() });
     setName("");
     setContent("");
     onOpenChange(false);
