@@ -1,10 +1,25 @@
 import { useMemo } from "react";
-import { ShieldCheck, Sparkles, Target, ChevronsRight } from "lucide-react";
+import { ShieldCheck, Sparkles, Target, ChevronsRight, Pencil } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { cn } from "@/lib/utils";
 import { formatDateTime } from "@/lib/format-date";
-import { CHANNEL_LABEL, type Thread } from "@/lib/inbox-store";
+import {
+  CHANNEL_LABEL,
+  updateIntent,
+  INTENT_LABEL,
+  INTENT_COLOR,
+  type Thread,
+  type AiIntent,
+} from "@/lib/inbox-store";
 import { scoreIntent, type IntentBand } from "@/lib/ai-intent-score";
+import { toast } from "sonner";
 
 const BAND_RING: Record<IntentBand, string> = {
   high: "stroke-emerald-500",
