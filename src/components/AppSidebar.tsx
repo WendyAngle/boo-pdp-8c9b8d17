@@ -1,12 +1,21 @@
 import { useState, useEffect } from "react";
 import { Link, useRouterState } from "@tanstack/react-router";
-import { ShieldCheck, ChevronDown, Users, UserCog, Send, FolderTree, Box, Wallet, Layers, Receipt, FileText, LayoutDashboard, Inbox, KeyRound } from "lucide-react";
+import { ShieldCheck, ChevronDown, Users, UserCog, Send, FolderTree, Box, Wallet, Layers, Receipt, FileText, LayoutDashboard, Inbox, KeyRound, PanelLeftClose, PanelLeftOpen, Search, Lightbulb, CreditCard, Settings, Share2 } from "lucide-react";
 import { AccountMenu } from "@/components/account/AccountMenu";
 import { useSidebarBadge } from "@/lib/inbox-store";
 
 type Leaf = { label: string; to: string; icon?: typeof Users };
 type Group = { label: string; to?: string; icon?: typeof Users; divider?: boolean; children: Leaf[] };
 type Root = { label: string; icon: typeof ShieldCheck; children: Group[] };
+
+/** 侧边栏合拢态下展示的分组图标 */
+const groupIcons: Record<string, typeof Users> = {
+  客户发现: Lightbulb,
+  客户运营: Share2,
+  费用中心: CreditCard,
+  企业设置: Settings,
+};
+
 
 const menu: Root[] = [
   {
@@ -84,15 +93,85 @@ export function AppSidebar() {
     客户运营: true,
     管理后台: true,
   });
+  const [collapsed, setCollapsed] = useState(false);
+
+  if (collapsed) {
+    const rail: { label: string; to: string; icon: typeof Users }[] = [
+      { label: "全域检索", to: "/outreach/search", icon: Search },
+      ...menu[0].children.map((g) => ({
+        label: g.label,
+        to: g.children[0]?.to ?? "/outreach/search",
+        icon: groupIcons[g.label] ?? FolderTree,
+      })),
+      { label: "管理后台", to: menu[1].children[0]?.to ?? "/outreach/search", icon: ShieldCheck },
+    ];
+    return (
+      <aside className="w-16 shrink-0 border-r border-sidebar-border bg-sidebar flex flex-col items-center">
+        <div className="h-16 flex items-center justify-center border-b border-sidebar-border w-full">
+          <button
+            type="button"
+            onClick={() => setCollapsed(false)}
+            title="展开菜单"
+            aria-label="展开菜单"
+            className="h-9 w-9 rounded-lg bg-gradient-to-br from-primary to-accent flex items-center justify-center text-primary-foreground font-bold"
+          >
+            B
+          </button>
+        </div>
+        <nav className="flex-1 w-full py-3 space-y-1 flex flex-col items-center overflow-y-auto">
+          {rail.map((r) => {
+            const RIcon = r.icon;
+            const active = location.pathname === r.to;
+            return (
+              <Link
+                key={r.label}
+                to={r.to}
+                title={r.label}
+                aria-label={r.label}
+                className={`h-10 w-10 flex items-center justify-center rounded-lg transition-colors ${
+                  active
+                    ? "bg-primary text-primary-foreground"
+                    : "text-sidebar-foreground/80 hover:bg-sidebar-accent/60"
+                }`}
+              >
+                <RIcon className="h-4.5 w-4.5" />
+              </Link>
+            );
+          })}
+        </nav>
+        <div className="p-2 border-t border-sidebar-border w-full flex justify-center">
+          <button
+            type="button"
+            onClick={() => setCollapsed(false)}
+            title="展开菜单"
+            aria-label="展开菜单"
+            className="h-9 w-9 inline-flex items-center justify-center rounded-md text-muted-foreground hover:bg-sidebar-accent/60"
+          >
+            <PanelLeftOpen className="h-4 w-4" />
+          </button>
+        </div>
+      </aside>
+    );
+  }
 
   return (
     <aside className="w-60 shrink-0 border-r border-sidebar-border bg-sidebar flex flex-col">
-      <div className="h-16 flex items-center gap-2 px-5 border-b border-sidebar-border">
+      <div className="h-16 flex items-center gap-2 px-4 border-b border-sidebar-border">
         <div className="h-9 w-9 rounded-lg bg-gradient-to-br from-primary to-accent flex items-center justify-center text-primary-foreground font-bold">
           B
         </div>
-        <span className="font-semibold text-sidebar-foreground tracking-wide">出海大数据平台</span>
+        <span className="font-semibold text-sidebar-foreground tracking-wide flex-1 truncate">出海大数据平台</span>
+        <button
+          type="button"
+          onClick={() => setCollapsed(true)}
+          title="合拢菜单"
+          aria-label="合拢菜单"
+          className="h-8 w-8 shrink-0 inline-flex items-center justify-center rounded-md text-muted-foreground hover:bg-sidebar-accent/60 hover:text-sidebar-accent-foreground transition-colors"
+        >
+          <PanelLeftClose className="h-4 w-4" />
+        </button>
       </div>
+
       <nav className="p-3 space-y-1 flex-1 overflow-y-auto">
         {menu.map((item) => {
           const Icon = item.icon;

@@ -644,10 +644,27 @@ function InboxPage() {
               </div>
             )}
           </div>
-          {current && scorePanelOpen && (
-            <aside className="hidden lg:flex w-[300px] xl:w-[320px] shrink-0 border-l bg-muted/10 flex-col min-h-0">
-              <IntelPanel thread={current} />
-            </aside>
+          {current && (
+            scorePanelOpen ? (
+              <aside className="hidden lg:flex w-[300px] xl:w-[320px] shrink-0 border-l bg-muted/10 flex-col min-h-0">
+                <IntelPanel thread={current} onCollapse={() => setScorePanelOpen(false)} />
+              </aside>
+            ) : (
+              <aside className="hidden lg:flex w-10 shrink-0 border-l bg-muted/10 flex-col items-center pt-2">
+                <button
+                  type="button"
+                  onClick={() => setScorePanelOpen(true)}
+                  title="展开意向评分"
+                  aria-label="展开意向评分"
+                  className="h-8 w-8 inline-flex items-center justify-center rounded-md text-muted-foreground hover:bg-muted hover:text-foreground transition-colors"
+                >
+                  <PanelRightOpen className="h-4 w-4" />
+                </button>
+                <span className="mt-2 text-[11px] text-muted-foreground [writing-mode:vertical-rl] tracking-widest">
+                  意向评分
+                </span>
+              </aside>
+            )
           )}
         </div>
       </div>
