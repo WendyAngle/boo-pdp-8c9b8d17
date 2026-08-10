@@ -59,9 +59,8 @@ const menu: Root[] = [
           { label: "发信邮箱", to: "/outreach/mailboxes" },
           { label: "人工坐席", to: "/outreach/agents" },
           { label: "退订名单", to: "/outreach/suppressions" },
-          
-          { label: "数据与合规", to: "/outreach/compliance" },
         ],
+
       },
     ],
   },
@@ -77,6 +76,8 @@ const menu: Root[] = [
       { label: "短信模板", to: "/outreach/admin/sms-templates", children: [] },
       { label: "外呼话术模板", to: "/outreach/admin/voice-templates", children: [] },
       { label: "发票审核", to: "/outreach/admin/invoice-review", children: [] },
+      { label: "数据与合规", to: "/outreach/compliance", children: [] },
+
     ],
   },
 ];
