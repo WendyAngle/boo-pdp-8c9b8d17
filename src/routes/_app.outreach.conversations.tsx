@@ -828,6 +828,42 @@ function ThreadRow({
   );
 }
 
+function initialsOf(name: string) {
+  const t = (name || "").replace(/^@/, "").trim();
+  if (!t) return "?";
+  const cn_ = t.match(/[\u4e00-\u9fa5]/);
+  if (cn_) return t.slice(0, 1);
+  return t.slice(0, 2).toUpperCase();
+}
+
+/** 会话气泡头像：社媒=账号头像（首字母），邮箱/短信=渠道图标 */
+function PartyAvatar({
+  channel,
+  name,
+  outbound,
+  className,
+}: {
+  channel: Channel;
+  name: string;
+  outbound: boolean;
+  className?: string;
+}) {
+  const isSocial = channel === "facebook" || channel === "tiktok" || channel === "whatsapp" || channel === "telegram";
+  const CI = channelIcon(channel);
+  return (
+    <div
+      className={cn(
+        "h-8 w-8 rounded-full shrink-0 flex items-center justify-center text-[11px] font-medium shadow-sm",
+        outbound ? "bg-primary text-primary-foreground" : "bg-emerald-500 text-white",
+        className,
+      )}
+      title={name}
+    >
+      {isSocial || outbound ? initialsOf(name) : <CI className="h-4 w-4" />}
+    </div>
+  );
+}
+
 function ThreadDetail({
   thread,
   autoAi,
@@ -842,9 +878,12 @@ function ThreadDetail({
   onToggleScorePanel?: () => void;
 }) {
   const [reply, setReply] = useState("");
-  const [socialSendMode, setSocialSendMode] = useState<"active" | "immediate">("active");
 
   const detailSender = useThreadSenderResolver()(thread);
+  const [detailTab, setDetailTab] = useState("thread");
+  const senderNickname = detailSender.displayName || detailSender.address;
+  const counterpartyNickname =
+    thread.meta.profile?.targetName || thread.targetName || thread.counterpartyAddress;
   // AI 识别的对方语言
   const detectedLang = useMemo(() => detectThreadLanguage(thread), [thread]);
   // 回复目标语言：auto = 跟随对方语言
@@ -1165,30 +1204,13 @@ function ThreadDetail({
             </div>
           </div>
           <div className="flex items-center gap-1.5 flex-wrap shrink-0">
-            {onToggleScorePanel && (
-              <Button
-                variant="outline"
-                size="sm"
-                className="h-8 gap-1 hidden lg:inline-flex"
-                onClick={onToggleScorePanel}
-                title={scorePanelOpen ? "收起 AI 意向评分" : "展开 AI 意向评分"}
-              >
-                {scorePanelOpen ? (
-                  <PanelRightClose className="h-3.5 w-3.5" />
-                ) : (
-                  <PanelRightOpen className="h-3.5 w-3.5" />
-                )}
-                <TargetIcon className="h-3.5 w-3.5 text-primary" />
-                <span className="text-xs">AI 意向</span>
-              </Button>
-            )}
             <ActionBar thread={thread} />
           </div>
         </div>
       </div>
 
       {/* 时间线 */}
-      <Tabs defaultValue="thread" className="flex-1 flex flex-col min-h-0">
+      <Tabs value={detailTab} onValueChange={setDetailTab} className="flex-1 flex flex-col min-h-0">
         <TabsList className="mx-6 mt-2 h-9 shrink-0 self-start">
           <TabsTrigger value="thread" className="text-xs gap-1">
             <MessageCircleReply className="h-3.5 w-3.5" />
@@ -1241,21 +1263,18 @@ function ThreadDetail({
                     <div key={m.id} className={cn("flex w-full", isOutbound ? "justify-end" : "justify-start")}>
                       <div className={cn("flex max-w-[85%] sm:max-w-[70%] gap-2", isOutbound ? "flex-row-reverse" : "flex-row")}>
                         {/* 头像 */}
-                        <div
-                          className={cn(
-                            "h-8 w-8 rounded-full shrink-0 flex items-center justify-center text-[10px] font-medium shadow-sm",
-                            isOutbound
-                              ? "bg-primary text-primary-foreground"
-                              : "bg-emerald-500 text-white"
-                          )}
-                        >
-                          {isOutbound ? "我" : "TA"}
-                        </div>
+                        <PartyAvatar
+                          channel={thread.channel}
+                          name={isOutbound ? senderNickname : counterpartyNickname}
+                          outbound={isOutbound}
+                        />
 
                         {/* 气泡区域 */}
                         <div className={cn("flex flex-col min-w-0", isOutbound ? "items-end" : "items-start")}>
                           <div className="flex items-center gap-1.5 px-1 mb-1 text-[10px] text-muted-foreground">
-                            {isOutbound ? <span>你发出</span> : <span>{thread.targetName}</span>}
+                            <span className="font-medium text-foreground">
+                              {isOutbound ? senderNickname : counterpartyNickname}
+                            </span>
                             <span>· {formatDateTime(m.createdAt)}</span>
                           </div>
 
@@ -1370,20 +1389,15 @@ function ThreadDetail({
           // 非社媒渠道保持原有的列表排版
           return thread.messages.map((m) => (
             <div key={m.id} className="flex gap-3">
-              <div
-                className={cn(
-                  "h-8 w-8 rounded-full shrink-0 flex items-center justify-center text-xs font-medium",
-                  m.direction === "outbound"
-                    ? "bg-primary/10 text-primary"
-                    : "bg-emerald-100 text-emerald-700",
-                )}
-              >
-                {m.direction === "outbound" ? "我" : "TA"}
-              </div>
+              <PartyAvatar
+                channel={thread.channel}
+                name={m.direction === "outbound" ? senderNickname : counterpartyNickname}
+                outbound={m.direction === "outbound"}
+              />
               <div className="min-w-0 flex-1">
                 <div className="flex items-center gap-2 text-xs text-muted-foreground">
                   <span className="font-medium text-foreground">
-                    {m.direction === "outbound" ? "你发出" : "对方回复"}
+                    {m.direction === "outbound" ? senderNickname : counterpartyNickname}
                   </span>
                   <span>· {formatDateTime(m.createdAt)}</span>
                   {m.aiGenerated && (
@@ -1498,7 +1512,8 @@ function ThreadDetail({
         </TabsContent>
       </Tabs>
 
-      {/* 回复区 */}
+      {/* 回复区（客户资料标签页下不展示） */}
+      {detailTab === "thread" && (
       <div className="border-t bg-muted/20 p-4 shrink-0">
         {winInfo && (
           <div
@@ -1533,31 +1548,10 @@ function ThreadDetail({
           <MessageCircleReply className="h-4 w-4 text-muted-foreground" />
           <span className="text-sm font-medium">回复</span>
           <span className="text-xs text-muted-foreground flex items-center gap-1.5 flex-wrap">
-            {(thread.channel === "facebook" || thread.channel === "tiktok") ? (
-              <>
-                将以 <span className="text-foreground font-medium">{detailSender.address}</span>
-                <Select 
-                  value={socialSendMode} 
-                  onValueChange={(v) => setSocialSendMode(v as "active" | "immediate")}
-                >
-                  <SelectTrigger className="h-6 text-[11px] px-1 py-0 w-fit gap-1 bg-transparent border-none hover:bg-muted/50 transition-colors focus:ring-0">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="active">在其活跃时间</SelectItem>
-                    <SelectItem value="immediate">立即</SelectItem>
-                  </SelectContent>
-                </Select>
-                发出，保持在同一会话内
-              </>
-            ) : (
-              <>
-                {thread.channel === "whatsapp"
-                  ? "由公司共享 WhatsApp 商号发出（对客户显示同一号码）"
-                  : `将以 ${detailSender.address} 发出`}
-                ，保持在同一会话内
-              </>
-            )}
+            {thread.channel === "whatsapp"
+              ? "由公司共享 WhatsApp 商号发出（对客户显示同一号码）"
+              : `将以 ${detailSender.address} 发出`}
+            ，保持在同一会话内
           </span>
 
           <Button
