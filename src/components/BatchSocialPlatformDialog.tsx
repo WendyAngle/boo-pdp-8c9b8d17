@@ -115,7 +115,7 @@ export function BatchSocialPlatformDialog({
     if (!open) return;
     setContent("");
     setAiUsed(false);
-    setPreviewIdx(0);
+    
     setTargetLang("en");
     setTranslated("");
     setInternalCandidates(initialCandidates);
