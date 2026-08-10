@@ -204,6 +204,12 @@ function channelIcon(ch: Channel) {
   }
 }
 
+function channelTooltip(ch: Channel) {
+  if (ch === "email") return "邮箱";
+  if (ch === "sms") return "短信";
+  return CHANNEL_LABEL[ch];
+}
+
 /** WhatsApp / Facebook HSM 演示模板 */
 const HSM_TEMPLATES: Record<string, { id: string; name: string; body: string }[]> = {
   whatsapp: [
@@ -290,6 +296,8 @@ function InboxPage() {
   const view: ViewKey = search.view ?? "all";
   const intent = search.intent ?? "all";
   const [scorePanelOpen, setScorePanelOpen] = useState(true);
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => setMounted(true), []);
 
   const q = search.q ?? "";
   const ch = search.ch ?? "all";
@@ -386,6 +394,15 @@ function InboxPage() {
       search: { ...search, ...patch },
       replace: true,
     });
+  }
+
+  if (!mounted) {
+    return (
+      <div className="h-[calc(100vh-4rem)] flex flex-col items-center justify-center gap-2 text-sm text-muted-foreground">
+        <Loader2 className="h-5 w-5 animate-spin" />
+        加载会话数据中…
+      </div>
+    );
   }
 
   return (
@@ -691,10 +708,12 @@ function ThreadRow({
             {(() => {
               const CI = channelIcon(thread.channel);
               return (
-                <CI
-                  className="h-3.5 w-3.5 shrink-0 text-muted-foreground"
-                  aria-label={CHANNEL_LABEL[thread.channel]}
-                />
+                <span title={channelTooltip(thread.channel)}>
+                  <CI
+                    className="h-3.5 w-3.5 shrink-0 text-muted-foreground"
+                    aria-label={channelTooltip(thread.channel)}
+                  />
+                </span>
               );
             })()}
             <span
@@ -737,6 +756,11 @@ function ThreadRow({
             {thread.lastPreview}
           </div>
           <div className="mt-1.5 flex items-center gap-1.5 text-muted-foreground">
+            {(thread.parentRef?.name || thread.targetKind === "enterprise") && (
+              <span title="企业">
+                <Building2 className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
+              </span>
+            )}
             <span
               className="text-[10px] truncate max-w-[200px]"
               title={thread.parentRef?.name || thread.targetName}
