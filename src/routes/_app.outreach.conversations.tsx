@@ -277,16 +277,13 @@ function InboxPage() {
       if (band === "high") high++;
       else if (band === "mid") mid++;
       else low++;
-      if (!t.meta.humanTakeover) {
-        const sla = slaInfo(t);
-        if (
-          t.meta.aiIntent === "complaint" ||
+      if (
+        !t.meta.humanTakeover &&
+        (t.meta.aiIntent === "complaint" ||
           t.meta.aiIntent === "unsubscribe" ||
-          !t.meta.assigneeId ||
-          (sla && sla.overdue)
-        ) {
-          needsHuman++;
-        }
+          !t.meta.assigneeId)
+      ) {
+        needsHuman++;
       }
     }
     return { high, mid, low, needsHuman };
