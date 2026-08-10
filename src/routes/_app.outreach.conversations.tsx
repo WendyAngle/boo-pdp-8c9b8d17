@@ -28,7 +28,6 @@ import {
   Facebook,
   Music2,
   Send as SendIcon,
-  ShieldAlert,
   AlertTriangle,
   UserCheck,
 
@@ -1377,30 +1376,7 @@ function ThreadDetail({
       {/* 回复区（客户资料标签页下不展示） */}
       {detailTab === "thread" && (
       <div className="border-t bg-muted/20 p-4 shrink-0">
-        {winInfo && (
-          <div
-            className={cn(
-              "mb-3 rounded-md border px-3 py-2 text-xs flex items-center gap-2",
-              winInfo.closed
-                ? "bg-rose-50 border-rose-200 text-rose-700"
-                : winInfo.leftMs < 2 * 3600_000
-                  ? "bg-amber-50 border-amber-200 text-amber-800"
-                  : "bg-emerald-50 border-emerald-200 text-emerald-800",
-            )}
-          >
-            <ShieldAlert className="h-3.5 w-3.5 shrink-0" />
-            {winInfo.closed ? (
-              <span>
-                {CHANNEL_LABEL[thread.channel]} 客服窗口已关闭，窗口外禁止外发消息。
-              </span>
-            ) : (
-              <span>
-                {CHANNEL_LABEL[thread.channel]} 客服窗口剩余{" "}
-                <b>{formatHm(winInfo.leftMs)}</b>，窗口内可自由文本回复。
-              </span>
-            )}
-          </div>
-        )}
+
         <div className="flex items-center gap-2 mb-2 flex-wrap">
           <MessageCircleReply className="h-4 w-4 text-muted-foreground" />
           <span className="text-sm font-medium">回复</span>
@@ -1612,14 +1588,6 @@ function ThreadDetail({
       )}
     </div>
   );
-}
-
-function formatHm(ms: number) {
-  const total = Math.max(0, Math.floor(ms / 60000));
-  const h = Math.floor(total / 60);
-  const m = total % 60;
-  if (h >= 24) return `${Math.floor(h / 24)}d ${h % 24}h`;
-  return `${h}h ${m}m`;
 }
 
 function ActionBar({ thread }: { thread: Thread }) {
