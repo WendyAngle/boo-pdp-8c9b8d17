@@ -36,7 +36,6 @@ import {
   Hand,
   Zap,
   Pin,
-  AlarmClock,
   ChevronDown as ChevronDownIcon,
   FileText,
   User as UserIcon,
@@ -102,7 +101,6 @@ import {
   threadGroup,
   assignThread,
   previousAssigneeIds,
-  slaInfo,
 } from "@/lib/inbox-store";
 import { generateAiContent } from "@/lib/api/ai-compose.functions";
 import { translateMessage } from "@/lib/api/ai-translate.functions";
@@ -111,7 +109,6 @@ import { getApprovedSmsTemplates } from "@/lib/sms-templates-store";
 
 import { IntelPanel } from "@/components/outreach/IntelPanel";
 import { scoreIntent } from "@/lib/ai-intent-score";
-import { scoreAuthenticity } from "@/lib/ai-authenticity";
 import { Target as TargetIcon, PanelRightClose, PanelRightOpen, Languages } from "lucide-react";
 import {
   detectThreadLanguage,
@@ -170,7 +167,6 @@ const searchSchema = z.object({
       "unassigned",
       "mine",
       "my_todo",
-      "due_soon",
       "high_intent",
       "needs_human",
     ])
@@ -224,7 +220,6 @@ type ViewKey = NonNullable<z.infer<typeof searchSchema>["view"]>;
 
 const VIEW_LABEL: Record<ViewKey, string> = {
   my_todo: "我的待办",
-  due_soon: "即将超时",
   unassigned: "未分配",
   unread: "未读",
   mine: "我的全部",
@@ -260,17 +255,14 @@ function InboxPage() {
   // 智能视图计数（前端派生，避免修改 store）
   const smartCounts = useMemo(() => {
     let myTodo = 0;
-    let dueSoon = 0;
     let mine = 0;
     for (const t of threads) {
       if (t.meta.assigneeId === CURRENT_TEAM_USER_ID) {
         mine++;
         if (t.meta.status === "pending" || t.meta.status === "snoozed") myTodo++;
       }
-      const s = slaInfo(t);
-      if (s && (s.overdue || s.approaching)) dueSoon++;
     }
-    return { myTodo, dueSoon, mine };
+    return { myTodo, mine };
   }, [threads]);
   // 按标签维度的计数（用于中栏顶部的标签筛选条）
   const intentCounts = useMemo(() => {
@@ -283,16 +275,13 @@ function InboxPage() {
       if (band === "high") high++;
       else if (band === "mid") mid++;
       else low++;
-      if (!t.meta.humanTakeover) {
-        const sla = slaInfo(t);
-        if (
-          t.meta.aiIntent === "complaint" ||
+      if (
+        !t.meta.humanTakeover &&
+        (t.meta.aiIntent === "complaint" ||
           t.meta.aiIntent === "unsubscribe" ||
-          !t.meta.assigneeId ||
-          (sla && sla.overdue)
-        ) {
-          needsHuman++;
-        }
+          !t.meta.assigneeId)
+      ) {
+        needsHuman++;
       }
     }
     return { high, mid, low, needsHuman };
@@ -347,25 +336,15 @@ function InboxPage() {
           t.meta.assigneeId === CURRENT_TEAM_USER_ID &&
           (t.meta.status === "pending" || t.meta.status === "snoozed"),
       );
-    else if (view === "due_soon")
-      list = list.filter((t) => {
-        const s = slaInfo(t);
-        return !!s && (s.overdue || s.approaching);
-      });
     else if (view === "high_intent")
       list = list.filter((t) => scoreIntent(t).band === "high");
     else if (view === "needs_human")
       list = list.filter(
-        (t) => {
-          if (t.meta.humanTakeover) return false;
-          const sla = slaInfo(t);
-          return (
-            t.meta.aiIntent === "complaint" ||
+        (t) =>
+          !t.meta.humanTakeover &&
+          (t.meta.aiIntent === "complaint" ||
             t.meta.aiIntent === "unsubscribe" ||
-            !t.meta.assigneeId ||
-            (!!sla && sla.overdue)
-          );
-        },
+            !t.meta.assigneeId),
       );
     if (q.trim()) {
       const kw = q.trim().toLowerCase();
@@ -432,22 +411,6 @@ function InboxPage() {
                 title="点击查看未读会话"
               >
                 未读 <span className="tabular-nums">{counts.unread}</span>
-              </button>
-            </>
-          )}
-          {smartCounts.dueSoon > 0 && (
-            <>
-              <span className="text-border">|</span>
-              <button
-                onClick={() => goto({ view: "due_soon", tid: undefined })}
-                className={cn(
-                  "inline-flex items-center gap-1 transition-colors hover:text-amber-700",
-                  view === "due_soon" ? "text-amber-700 font-medium" : "",
-                )}
-                title="点击查看即将超时会话"
-              >
-                即将超时 <span className="tabular-nums">{smartCounts.dueSoon}</span>
-                <AlarmClock className="h-3 w-3 text-amber-600" />
               </button>
             </>
           )}
@@ -538,9 +501,6 @@ function InboxPage() {
                 )}
                 {intentCounts.needsHuman > 0 && (
                   <SelectItem value="needs_human">人工接管（{intentCounts.needsHuman}）</SelectItem>
-                )}
-                {smartCounts.dueSoon > 0 && (
-                  <SelectItem value="due_soon">即将超时（{smartCounts.dueSoon}）</SelectItem>
                 )}
                 {smartCounts.myTodo > 0 ? (
                   <SelectItem value="my_todo">我的待办（{smartCounts.myTodo}）</SelectItem>
@@ -701,8 +661,6 @@ function ThreadRow({
   const isUnread = thread.meta.unread > 0;
   const isPending = thread.meta.status === "pending";
   const last = thread.messages[thread.messages.length - 1];
-  const sla = slaInfo(thread);
-  const authenticity = scoreAuthenticity(thread);
   const sender = useThreadSenderResolver()(thread);
   const woken =
     thread.meta.wokenAt &&
@@ -846,42 +804,7 @@ function ThreadRow({
               }
               return null;
             })()}
-            {(authenticity.level !== "trusted" || authenticity.score < 100) && (
-              <Badge
-                variant="outline"
-                className={cn(
-                  "h-4 py-0 px-1.5 text-[10px] gap-0.5",
-                  authenticity.level === "blocked"
-                    ? "bg-rose-50 text-rose-700 border-rose-200"
-                    : authenticity.score < 40
-                      ? "bg-orange-50 text-orange-700 border-orange-200"
-                      : authenticity.score < 60
-                        ? "bg-amber-50 text-amber-700 border-amber-200"
-                        : "bg-sky-50 text-sky-700 border-sky-200",
-                )}
-              >
-                <ShieldAlert className="h-2.5 w-2.5" />
-                真实度 {authenticity.level === "blocked" ? "拦截" : authenticity.score}
-              </Badge>
-            )}
             {(() => {
-              // 单一优先级徽标：逾期 > 即将超时 > 高意向 > 接管中 > 未分配
-              if (sla?.overdue) {
-                return (
-                  <Badge className="ml-auto h-4 py-0 px-1.5 text-[10px] bg-rose-500 hover:bg-rose-500 text-white gap-0.5">
-                    <AlarmClock className="h-2.5 w-2.5" />
-                    逾期 {formatShort(-sla.leftMs)}
-                  </Badge>
-                );
-              }
-              if (sla?.approaching) {
-                return (
-                  <Badge className="ml-auto h-4 py-0 px-1.5 text-[10px] bg-amber-500 hover:bg-amber-500 text-white gap-0.5">
-                    <Clock className="h-2.5 w-2.5" />
-                    即将超时 {formatShort(sla.leftMs)}
-                  </Badge>
-                );
-              }
               if (thread.meta.humanTakeover) {
                 return null; // humanTakeover 已在标题行显示"接管中"
               }
@@ -1167,30 +1090,6 @@ function ThreadDetail({
               <Badge variant="outline" className="text-[11px]">
                 {STATUS_LABEL[thread.meta.status]}
               </Badge>
-              {(() => {
-                const sla = slaInfo(thread);
-                if (!sla) return null;
-                return (
-                  <Badge
-                    variant="outline"
-                    className={cn(
-                      "text-[11px]",
-                      sla.overdue
-                        ? "bg-rose-50 text-rose-700 border-rose-200"
-                        : sla.approaching
-                          ? "bg-amber-50 text-amber-700 border-amber-200"
-                          : "bg-emerald-50 text-emerald-700 border-emerald-200",
-                    )}
-                  >
-                    <Clock className="h-3 w-3 mr-1" />
-                    {sla.overdue
-                      ? `SLA 逾期 ${formatShort(-sla.leftMs)}`
-                      : sla.approaching
-                        ? `SLA 即将超时 ${formatShort(sla.leftMs)}`
-                        : `SLA 剩 ${formatShort(sla.leftMs)}`}
-                  </Badge>
-                );
-              })()}
               {thread.meta.aiIntent && (
                 <Badge
                   variant="outline"
@@ -1907,14 +1806,6 @@ function formatHm(ms: number) {
   const m = total % 60;
   if (h >= 24) return `${Math.floor(h / 24)}d ${h % 24}h`;
   return `${h}h ${m}m`;
-}
-
-function formatShort(ms: number) {
-  const total = Math.max(0, Math.floor(ms / 60000));
-  if (total < 60) return `${total}m`;
-  const h = Math.floor(total / 60);
-  if (h < 24) return `${h}h`;
-  return `${Math.floor(h / 24)}d`;
 }
 
 function ActionBar({ thread }: { thread: Thread }) {
