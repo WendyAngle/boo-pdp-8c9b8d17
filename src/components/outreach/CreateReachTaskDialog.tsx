@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
 import { Sparkles, Loader2, Eye, Send, Zap, Wand2, Languages, Package, X, Plus, Check } from "lucide-react";
@@ -30,7 +30,6 @@ import { useCreditBalance, spendCredits } from "@/lib/credits-balance";
 import { COST_SOCIAL_DM, createSocialReachBatch } from "@/lib/credits-ledger";
 
 import {
-  MESSAGE_VARIABLES,
   renderTemplate,
   myContext,
   type VarContext,
@@ -39,6 +38,7 @@ import { LANGUAGES, langByCode } from "@/lib/lang-detect";
 import { useLeadProfile, saveProfile } from "@/lib/lead-profile";
 import { useCurrentUser } from "@/lib/current-user";
 import { ComposeFormatHint } from "@/components/outreach/ComposeFormatHint";
+import { AutoVarFillHint } from "@/components/outreach/AutoVarFillHint";
 import { generateAiContent } from "@/lib/api/ai-compose.functions";
 import { translateMessage } from "@/lib/api/ai-translate.functions";
 import {
@@ -256,22 +256,6 @@ export function CreateReachTaskDialog({
   const overLimit = sendLen > charLimit;
 
 
-  const contentRef = useRef<HTMLTextAreaElement | null>(null);
-  function insertVarAt(v: string) {
-    const token = `{${v}}`;
-    const el = contentRef.current;
-    const s = content;
-    if (!el) return setContent(s + token);
-    const start = el.selectionStart ?? s.length;
-    const end = el.selectionEnd ?? s.length;
-    setContent(s.slice(0, start) + token + s.slice(end));
-    requestAnimationFrame(() => {
-      el.focus();
-      const pos = start + token.length;
-      el.setSelectionRange(pos, pos);
-    });
-  }
-
   /** 按推广产品维度 AI 推荐关键词（每个产品 3-5 个，免费） */
   async function recommendKeywords() {
     if (promoProducts.length === 0) {
@@ -411,7 +395,7 @@ export function CreateReachTaskDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-3xl max-h-[92vh] overflow-y-auto">
+      <DialogContent className="max-w-5xl max-h-[92vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Zap className="h-5 w-5 text-primary" />
@@ -721,26 +705,14 @@ export function CreateReachTaskDialog({
 
             <ComposeFormatHint channel="social" platform={platform} />
 
-            <div className="flex flex-wrap items-center gap-1.5">
-              <span className="text-xs text-muted-foreground">插入变量：</span>
-              {MESSAGE_VARIABLES.map((v) => (
-                <button
-                  key={v}
-                  type="button"
-                  onClick={() => insertVarAt(v)}
-                  className="rounded border bg-background px-1.5 py-0.5 text-[11px] font-mono text-primary hover:bg-primary/10"
-                >
-                  {`{${v}}`}
-                </button>
-              ))}
-            </div>
+            <AutoVarFillHint />
 
+            <div className="grid gap-3 lg:grid-cols-2 items-start">
             <div className="space-y-1">
               <Textarea
-                ref={contentRef}
                 value={content}
                 onChange={(e) => setContent(e.target.value)}
-                rows={6}
+                rows={10}
                 placeholder={`Hi {联系人名}，我是 {我的公司} 的 {我的姓名}……（AI 生成默认为首发开发信）`}
               />
               <div className="flex items-center justify-between text-[11px]">
@@ -756,11 +728,10 @@ export function CreateReachTaskDialog({
                 </span>
               </div>
             </div>
-          </section>
+            </div>
 
-
-          {/* 目标语言译文（实际发送内容） */}
-          <section className="space-y-2 rounded-md border border-primary/25 bg-primary/[0.03] p-3">
+            {/* 目标语言译文（实际发送内容） */}
+            <section className="space-y-2 rounded-md border border-primary/25 bg-primary/[0.03] p-3">
             <div className="flex items-center justify-between gap-2">
               <Label className="text-sm font-medium flex items-center gap-2">
                 <Languages className="h-4 w-4 text-primary" />
@@ -828,6 +799,8 @@ export function CreateReachTaskDialog({
               {staleTranslation && (
                 <span className="text-amber-600">中文原文已修改，建议重新翻译</span>
               )}
+            </div>
+            </section>
             </div>
           </section>
 
