@@ -93,7 +93,6 @@ import {
   TEAM_MEMBERS,
   memberById,
   threadGroup,
-  previousAssigneeIds,
   updateThreadProfile,
   addThreadNote,
   removeThreadNote,
@@ -159,9 +158,6 @@ const searchSchema = z.object({
       "lost",
       "snoozed",
       "suppressed",
-      "unassigned",
-      "mine",
-      "my_todo",
       "high_intent",
       "needs_human",
     ])
@@ -179,9 +175,6 @@ const searchSchema = z.object({
   // 从"最新沟通"胶囊中的"AI 回复"进入时，自动生成一条 AI 草稿。
   action: z.enum(["ai"]).optional(),
 });
-
-/** 演示环境的"当前登录员工"（Phase 1 mock，见 TEAM_MEMBERS） */
-const CURRENT_TEAM_USER_ID = "u_zhang";
 
 function channelIcon(ch: Channel) {
   switch (ch) {
@@ -220,10 +213,7 @@ const HSM_TEMPLATES: Record<string, { id: string; name: string; body: string }[]
 type ViewKey = NonNullable<z.infer<typeof searchSchema>["view"]>;
 
 const VIEW_LABEL: Record<ViewKey, string> = {
-  my_todo: "我的待办",
-  unassigned: "未分配",
   unread: "未读",
-  mine: "我的全部",
   pending: "待我回复",
   waiting: "等客回复",
   snoozed: "稍后处理",
@@ -253,18 +243,6 @@ function InboxPage() {
   const navigate = useNavigate();
   const threads = useThreads();
   const counts = useInboxCounts();
-  // 智能视图计数（前端派生，避免修改 store）
-  const smartCounts = useMemo(() => {
-    let myTodo = 0;
-    let mine = 0;
-    for (const t of threads) {
-      if (t.meta.assigneeId === CURRENT_TEAM_USER_ID) {
-        mine++;
-        if (t.meta.status === "pending" || t.meta.status === "snoozed") myTodo++;
-      }
-    }
-    return { myTodo, mine };
-  }, [threads]);
   // 按标签维度的计数（用于中栏顶部的标签筛选条）
   const intentCounts = useMemo(() => {
     let high = 0;
@@ -278,9 +256,7 @@ function InboxPage() {
       else low++;
       if (
         !t.meta.humanTakeover &&
-        (t.meta.aiIntent === "complaint" ||
-          t.meta.aiIntent === "unsubscribe" ||
-          !t.meta.assigneeId)
+        (t.meta.aiIntent === "complaint" || t.meta.aiIntent === "unsubscribe")
       ) {
         needsHuman++;
       }
@@ -329,25 +305,13 @@ function InboxPage() {
       list = list.filter((t) => t.meta.status === "snoozed");
     else if (view === "suppressed")
       list = list.filter((t) => t.meta.status === "suppressed");
-    else if (view === "unassigned")
-      list = list.filter((t) => !t.meta.assigneeId);
-    else if (view === "mine")
-      list = list.filter((t) => t.meta.assigneeId === CURRENT_TEAM_USER_ID);
-    else if (view === "my_todo")
-      list = list.filter(
-        (t) =>
-          t.meta.assigneeId === CURRENT_TEAM_USER_ID &&
-          (t.meta.status === "pending" || t.meta.status === "snoozed"),
-      );
     else if (view === "high_intent")
       list = list.filter((t) => scoreIntent(t).band === "high");
     else if (view === "needs_human")
       list = list.filter(
         (t) =>
           !t.meta.humanTakeover &&
-          (t.meta.aiIntent === "complaint" ||
-            t.meta.aiIntent === "unsubscribe" ||
-            !t.meta.assigneeId),
+          (t.meta.aiIntent === "complaint" || t.meta.aiIntent === "unsubscribe"),
       );
     if (q.trim()) {
       const kw = q.trim().toLowerCase();
@@ -513,14 +477,6 @@ function InboxPage() {
                 )}
                 {intentCounts.needsHuman > 0 && (
                   <SelectItem value="needs_human">人工接管（{intentCounts.needsHuman}）</SelectItem>
-                )}
-                {smartCounts.myTodo > 0 ? (
-                  <SelectItem value="my_todo">我的待办（{smartCounts.myTodo}）</SelectItem>
-                ) : smartCounts.mine > 0 ? (
-                  <SelectItem value="mine">我负责的（{smartCounts.mine}）</SelectItem>
-                ) : null}
-                {smartCounts.myTodo > 0 && smartCounts.mine > smartCounts.myTodo && (
-                  <SelectItem value="mine">我负责的（{smartCounts.mine}）</SelectItem>
                 )}
               </SelectGroup>
             </SelectContent>
@@ -812,27 +768,6 @@ function ThreadRow({
                 );
               }
               return null;
-            })()}
-            {(() => {
-              if (thread.meta.humanTakeover) {
-                return null; // humanTakeover 已在标题行显示"接管中"
-              }
-              if (!thread.meta.assigneeId) {
-                return (
-                  <Badge
-                    variant="outline"
-                    className="ml-auto h-4 py-0 px-1.5 text-[10px] bg-amber-50 text-amber-700 border-amber-200"
-                  >
-                    未分配
-                  </Badge>
-                );
-              }
-              return (
-                <span className="ml-auto text-[10px] inline-flex items-center gap-0.5">
-                  <UserCheck className="h-2.5 w-2.5" />
-                  {memberById(thread.meta.assigneeId)?.name}
-                </span>
-              );
             })()}
           </div>
         </div>
@@ -1262,30 +1197,6 @@ function ThreadDetail({
           </TabsTrigger>
         </TabsList>
         <TabsContent value="thread" className="flex-1 min-h-0 overflow-y-auto px-6 py-4 space-y-4 mt-0">
-        {(thread.meta.assignmentEvents ?? []).map((ev) => (
-          <div
-            key={ev.id}
-            className="flex items-center gap-2 text-[11px] text-muted-foreground border-l-2 border-primary/30 pl-3 py-1"
-          >
-            <UserCheck className="h-3 w-3 text-primary" />
-            <span>
-              {ev.from ? memberById(ev.from)?.name ?? "未知" : "未分配"} →{" "}
-              {ev.to ? memberById(ev.to)?.name ?? "未知" : "未分配"}
-            </span>
-            {ev.crossGroup && (
-              <Badge variant="outline" className="text-[10px] h-4 px-1 bg-amber-50 text-amber-700 border-amber-200">
-                跨组
-              </Badge>
-            )}
-            {ev.greetingSent && (
-              <Badge variant="outline" className="text-[10px] h-4 px-1">
-                已发切换招呼
-              </Badge>
-            )}
-            {ev.reason && <span className="text-foreground/70">· {ev.reason}</span>}
-            <span className="ml-auto">{formatDateTime(ev.at)}</span>
-          </div>
-        ))}
         {(() => {
           const isSocial = thread.channel === "facebook" || thread.channel === "tiktok";
           
@@ -2000,11 +1911,6 @@ function ProfileEditor({
             </div>
           ))}
         </div>
-        {thread.meta.assigneeId && (
-          <div className="text-xs text-muted-foreground">
-            当前跟进：{memberById(thread.meta.assigneeId)?.name}
-          </div>
-        )}
         {footer && <div className="border-t pt-3">{footer}</div>}
       </div>
 
