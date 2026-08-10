@@ -257,17 +257,14 @@ function InboxPage() {
   // 智能视图计数（前端派生，避免修改 store）
   const smartCounts = useMemo(() => {
     let myTodo = 0;
-    let dueSoon = 0;
     let mine = 0;
     for (const t of threads) {
       if (t.meta.assigneeId === CURRENT_TEAM_USER_ID) {
         mine++;
         if (t.meta.status === "pending" || t.meta.status === "snoozed") myTodo++;
       }
-      const s = slaInfo(t);
-      if (s && (s.overdue || s.approaching)) dueSoon++;
     }
-    return { myTodo, dueSoon, mine };
+    return { myTodo, mine };
   }, [threads]);
   // 按标签维度的计数（用于中栏顶部的标签筛选条）
   const intentCounts = useMemo(() => {
