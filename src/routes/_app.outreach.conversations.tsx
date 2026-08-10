@@ -396,6 +396,15 @@ function InboxPage() {
     });
   }
 
+  if (!mounted) {
+    return (
+      <div className="h-[calc(100vh-4rem)] flex flex-col items-center justify-center gap-2 text-sm text-muted-foreground">
+        <Loader2 className="h-5 w-5 animate-spin" />
+        加载会话数据中…
+      </div>
+    );
+  }
+
   return (
     <div className="h-[calc(100vh-4rem)] flex flex-col">
       {/* 顶栏 */}
