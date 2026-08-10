@@ -2258,11 +2258,68 @@ function ProfilePanel({ thread }: { thread: Thread }) {
 function __ActionBarImpl({ thread }: { thread: Thread }) {
   const [tagInput, setTagInput] = useState("");
 
+  const addTagHandler = () => {
+    if (tagInput.trim()) {
+      addTag(thread.id, tagInput.trim());
+      setTagInput("");
+      toast.success("已加标签");
+    }
+  };
+
   return (
     <div className="flex items-center gap-1 shrink-0">
-      
+      {/* 加星 */}
+      <Button
+        variant="ghost"
+        size="icon"
+        className="h-8 w-8"
+        onClick={() => {
+          toggleStar(thread.id);
+          toast.success(thread.meta.starred ? "已取消加星" : "已加星");
+        }}
+      >
+        <Star
+          className={cn(
+            "h-4 w-4",
+            thread.meta.starred ? "fill-amber-400 text-amber-400" : "",
+          )}
+        />
+      </Button>
 
+      {/* 打标签 */}
+      <Popover>
+        <PopoverTrigger asChild>
+          <Button variant="ghost" size="icon" className="h-8 w-8">
+            <Tag className="h-4 w-4" />
+          </Button>
+        </PopoverTrigger>
+        <PopoverContent align="end" className="w-56 p-2.5">
+          <div className="text-xs font-medium text-muted-foreground mb-1.5">
+            标签 / 分类
+          </div>
+          <div className="flex items-center gap-1">
+            <Input
+              value={tagInput}
+              onChange={(e) => setTagInput(e.target.value)}
+              placeholder="打标签"
+              className="h-7"
+              onKeyDown={(e) => {
+                if (e.key === "Enter") addTagHandler();
+              }}
+            />
+            <Button
+              variant="outline"
+              size="sm"
+              className="h-7 shrink-0"
+              onClick={addTagHandler}
+            >
+              <Tag className="h-3 w-3" />
+            </Button>
+          </div>
+        </PopoverContent>
+      </Popover>
 
+      {/* 更多：修正 AI 分类 */}
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
           <Button variant="ghost" size="icon" className="h-8 w-8">
@@ -2270,52 +2327,6 @@ function __ActionBarImpl({ thread }: { thread: Thread }) {
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end" className="w-56">
-          <DropdownMenuItem
-            onClick={() => {
-              toggleStar(thread.id);
-              toast.success(thread.meta.starred ? "已取消加星" : "已加星");
-            }}
-          >
-            <Star
-              className={cn(
-                "h-3.5 w-3.5 mr-2",
-                thread.meta.starred ? "fill-amber-400 text-amber-400" : "",
-              )}
-            />
-            {thread.meta.starred ? "取消加星" : "加星"}
-          </DropdownMenuItem>
-          <DropdownMenuSeparator />
-          <DropdownMenuLabel>标签 / 分类</DropdownMenuLabel>
-          <div className="px-2 py-1.5 flex items-center gap-1">
-            <Input
-              value={tagInput}
-              onChange={(e) => setTagInput(e.target.value)}
-              placeholder="打标签"
-              className="h-7"
-              onKeyDown={(e) => {
-                if (e.key === "Enter" && tagInput.trim()) {
-                  addTag(thread.id, tagInput.trim());
-                  setTagInput("");
-                  toast.success("已加标签");
-                }
-              }}
-            />
-            <Button
-              variant="outline"
-              size="sm"
-              className="h-7 shrink-0"
-              onClick={() => {
-                if (tagInput.trim()) {
-                  addTag(thread.id, tagInput.trim());
-                  setTagInput("");
-                  toast.success("已加标签");
-                }
-              }}
-            >
-              <Tag className="h-3 w-3" />
-            </Button>
-          </div>
-          <DropdownMenuSeparator />
           <DropdownMenuLabel>修正 AI 分类</DropdownMenuLabel>
           {(
             ["interested", "quote", "ooo", "reject", "unsubscribe", "other"] as AiIntent[]
