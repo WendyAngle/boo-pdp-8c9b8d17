@@ -59,6 +59,8 @@ import {
   type ScriptScene,
   type VoiceScript,
 } from "@/lib/voice-scripts";
+import heroBg from "@/assets/voice-scripts-hero.jpg";
+
 
 export const Route = createFileRoute("/_app/outreach/voice-scripts/")({
   head: () => ({
