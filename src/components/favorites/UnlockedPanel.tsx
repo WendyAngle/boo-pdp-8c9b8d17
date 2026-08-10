@@ -293,18 +293,47 @@ function GroupCard({
       </div>
 
       <div className="border-t pt-3 space-y-2">
-        {g.contacts.map((c) => {
-          const key = `${c.owner_type}:${c.owner_id}:${c.contact_type}:${c.contact_value}`;
-          return (
-            <ContactRow
-              key={key}
-              c={c}
-              revealed={revealed.has(key)}
-              onToggle={() => onToggle(key)}
-            />
-          );
-        })}
+        {dateBuckets
+          ? dateBuckets.map(([dk, list]) => (
+              <div key={dk} className="space-y-2">
+                <div className="flex items-center gap-2">
+                  <CalendarIcon className="h-3 w-3 shrink-0 text-muted-foreground" />
+                  <span className="text-[11px] font-medium text-muted-foreground tabular-nums">
+                    {dk} · {weekdayCN(dk)}
+                  </span>
+                  <span className="text-[11px] text-muted-foreground/70 tabular-nums">
+                    {list.length} 条
+                  </span>
+                  <div className="flex-1 h-px bg-border/70" />
+                </div>
+                <div className="space-y-2 pl-1">
+                  {list.map((c) => {
+                    const key = `${c.owner_type}:${c.owner_id}:${c.contact_type}:${c.contact_value}`;
+                    return (
+                      <ContactRow
+                        key={key}
+                        c={c}
+                        revealed={revealed.has(key)}
+                        onToggle={() => onToggle(key)}
+                      />
+                    );
+                  })}
+                </div>
+              </div>
+            ))
+          : g.contacts.map((c) => {
+              const key = `${c.owner_type}:${c.owner_id}:${c.contact_type}:${c.contact_value}`;
+              return (
+                <ContactRow
+                  key={key}
+                  c={c}
+                  revealed={revealed.has(key)}
+                  onToggle={() => onToggle(key)}
+                />
+              );
+            })}
       </div>
+
 
       {(enterpriseLink || personLink) && (
         <div className="flex items-center justify-end text-[11px]">
