@@ -644,7 +644,6 @@ function ThreadRow({
   onClick: () => void;
 }) {
   const isUnread = thread.meta.unread > 0;
-  const isPending = thread.meta.status === "pending";
   const last = thread.messages[thread.messages.length - 1];
   const sender = useThreadSenderResolver()(thread);
   const woken =
