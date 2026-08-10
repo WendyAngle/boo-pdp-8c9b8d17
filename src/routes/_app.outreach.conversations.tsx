@@ -699,7 +699,8 @@ function ThreadRow({
               return (
                 <CI
                   className="h-3.5 w-3.5 shrink-0 text-muted-foreground"
-                  aria-label={CHANNEL_LABEL[thread.channel]}
+                  aria-label={channelTooltip(thread.channel)}
+                  title={channelTooltip(thread.channel)}
                 />
               );
             })()}
