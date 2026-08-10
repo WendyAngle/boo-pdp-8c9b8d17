@@ -644,7 +644,6 @@ function ThreadRow({
   onClick: () => void;
 }) {
   const isUnread = thread.meta.unread > 0;
-  const isPending = thread.meta.status === "pending";
   const last = thread.messages[thread.messages.length - 1];
   const sender = useThreadSenderResolver()(thread);
   const woken =
@@ -657,7 +656,6 @@ function ThreadRow({
         "w-full text-left px-4 py-3 border-b hover:bg-muted/40 transition-colors block",
         active && "bg-primary/5 border-l-2 border-l-primary",
         !active && isUnread && "border-l-2 border-l-rose-500 bg-rose-50/40",
-        !active && !isUnread && isPending && "border-l-2 border-l-amber-400 bg-amber-50/30",
         woken && "bg-amber-50/60",
       )}
     >
@@ -694,11 +692,6 @@ function ThreadRow({
             >
               {thread.targetName}
             </span>
-            {isPending && !isUnread && (
-              <Badge className="h-4 py-0 px-1.5 text-[10px] font-medium shrink-0 whitespace-nowrap bg-amber-500 hover:bg-amber-500 text-white">
-                跟进中
-              </Badge>
-            )}
             {woken && (
               <Badge className="text-[10px] py-0 px-1 h-4 bg-amber-500 hover:bg-amber-500">
                 已唤醒
