@@ -209,6 +209,17 @@ interface ThreadMeta {
     byName: string;
     reason?: string;
   };
+  /** 用户手工编辑的客户资料覆盖值 */
+  profile?: {
+    targetName?: string;
+    counterpartyAddress?: string;
+    contactPerson?: string;
+    phone?: string;
+    website?: string;
+    country?: string;
+  };
+  /** 客户备注 */
+  notes?: Array<{ id: string; text: string; at: string; by: string }>;
   createdAt: string;
   updatedAt: string;
 }
@@ -1175,6 +1186,35 @@ export function reopenThread(id: string) {
   if (!m) return;
   m.status = "pending";
   m.updatedAt = new Date().toISOString();
+  commit();
+}
+
+export function updateThreadProfile(
+  id: string,
+  patch: NonNullable<ThreadMeta["profile"]>,
+) {
+  const m = metaStore[id];
+  if (!m) return;
+  m.profile = { ...(m.profile ?? {}), ...patch };
+  m.updatedAt = new Date().toISOString();
+  commit();
+}
+
+export function addThreadNote(id: string, text: string, by = "我") {
+  const m = metaStore[id];
+  if (!m || !text.trim()) return;
+  m.notes = [
+    ...(m.notes ?? []),
+    { id: makeId("note"), text: text.trim(), at: new Date().toISOString(), by },
+  ];
+  m.updatedAt = new Date().toISOString();
+  commit();
+}
+
+export function removeThreadNote(id: string, noteId: string) {
+  const m = metaStore[id];
+  if (!m) return;
+  m.notes = (m.notes ?? []).filter((n) => n.id !== noteId);
   commit();
 }
 
