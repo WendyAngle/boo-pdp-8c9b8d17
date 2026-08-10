@@ -806,42 +806,7 @@ function ThreadRow({
               }
               return null;
             })()}
-            {(authenticity.level !== "trusted" || authenticity.score < 100) && (
-              <Badge
-                variant="outline"
-                className={cn(
-                  "h-4 py-0 px-1.5 text-[10px] gap-0.5",
-                  authenticity.level === "blocked"
-                    ? "bg-rose-50 text-rose-700 border-rose-200"
-                    : authenticity.score < 40
-                      ? "bg-orange-50 text-orange-700 border-orange-200"
-                      : authenticity.score < 60
-                        ? "bg-amber-50 text-amber-700 border-amber-200"
-                        : "bg-sky-50 text-sky-700 border-sky-200",
-                )}
-              >
-                <ShieldAlert className="h-2.5 w-2.5" />
-                真实度 {authenticity.level === "blocked" ? "拦截" : authenticity.score}
-              </Badge>
-            )}
             {(() => {
-              // 单一优先级徽标：逾期 > 即将超时 > 高意向 > 接管中 > 未分配
-              if (sla?.overdue) {
-                return (
-                  <Badge className="ml-auto h-4 py-0 px-1.5 text-[10px] bg-rose-500 hover:bg-rose-500 text-white gap-0.5">
-                    <AlarmClock className="h-2.5 w-2.5" />
-                    逾期 {formatShort(-sla.leftMs)}
-                  </Badge>
-                );
-              }
-              if (sla?.approaching) {
-                return (
-                  <Badge className="ml-auto h-4 py-0 px-1.5 text-[10px] bg-amber-500 hover:bg-amber-500 text-white gap-0.5">
-                    <Clock className="h-2.5 w-2.5" />
-                    即将超时 {formatShort(sla.leftMs)}
-                  </Badge>
-                );
-              }
               if (thread.meta.humanTakeover) {
                 return null; // humanTakeover 已在标题行显示"接管中"
               }
