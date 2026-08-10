@@ -151,7 +151,6 @@ export function CreateReachTaskDialog({
     setTranslated("");
     setTrSource("");
     setTargetLang("en");
-    setPreviewIdx(0);
     setAiUsed(false);
   }, [open]);
 
