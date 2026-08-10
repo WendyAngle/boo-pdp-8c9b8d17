@@ -218,12 +218,25 @@ function GroupCard({
   g,
   revealed,
   onToggle,
+  groupByDate = false,
 }: {
   g: ContactGroup;
   revealed: Set<string>;
   onToggle: (key: string) => void;
+  groupByDate?: boolean;
 }) {
   const isPerson = g.owner_type === "person";
+  const dateBuckets = (() => {
+    if (!groupByDate) return null;
+    const m = new Map<string, UnlockedContact[]>();
+    for (const c of g.contacts) {
+      const k = dateKeyOf(c.unlock_time);
+      if (!m.has(k)) m.set(k, []);
+      m.get(k)!.push(c);
+    }
+    return Array.from(m.entries()).sort((a, b) => (a[0] < b[0] ? 1 : -1));
+  })();
+
   const enterpriseRef = isPerson ? g.parent_ref : undefined;
   const enterpriseLink = isPerson
     ? enterpriseRef
@@ -280,18 +293,47 @@ function GroupCard({
       </div>
 
       <div className="border-t pt-3 space-y-2">
-        {g.contacts.map((c) => {
-          const key = `${c.owner_type}:${c.owner_id}:${c.contact_type}:${c.contact_value}`;
-          return (
-            <ContactRow
-              key={key}
-              c={c}
-              revealed={revealed.has(key)}
-              onToggle={() => onToggle(key)}
-            />
-          );
-        })}
+        {dateBuckets
+          ? dateBuckets.map(([dk, list]) => (
+              <div key={dk} className="space-y-2">
+                <div className="flex items-center gap-2">
+                  <CalendarIcon className="h-3 w-3 shrink-0 text-muted-foreground" />
+                  <span className="text-[11px] font-medium text-muted-foreground tabular-nums">
+                    {dk} · {weekdayCN(dk)}
+                  </span>
+                  <span className="text-[11px] text-muted-foreground/70 tabular-nums">
+                    {list.length} 条
+                  </span>
+                  <div className="flex-1 h-px bg-border/70" />
+                </div>
+                <div className="space-y-2 pl-1">
+                  {list.map((c) => {
+                    const key = `${c.owner_type}:${c.owner_id}:${c.contact_type}:${c.contact_value}`;
+                    return (
+                      <ContactRow
+                        key={key}
+                        c={c}
+                        revealed={revealed.has(key)}
+                        onToggle={() => onToggle(key)}
+                      />
+                    );
+                  })}
+                </div>
+              </div>
+            ))
+          : g.contacts.map((c) => {
+              const key = `${c.owner_type}:${c.owner_id}:${c.contact_type}:${c.contact_value}`;
+              return (
+                <ContactRow
+                  key={key}
+                  c={c}
+                  revealed={revealed.has(key)}
+                  onToggle={() => onToggle(key)}
+                />
+              );
+            })}
       </div>
+
 
       {(enterpriseLink || personLink) && (
         <div className="flex items-center justify-end text-[11px]">
@@ -437,8 +479,8 @@ export function UnlockedPanel() {
       : fmtDate(dateRange.from)
     : "解锁时间";
 
+  // 平铺模式：按日期分桶，每条联系方式一张卡片
   const groupedByDate = useMemo(() => {
-    // First bucket contacts by date, then optionally aggregate by owner within each day
     const byDate = new Map<string, UnlockedContact[]>();
     for (const c of filtered) {
       const k = dateKeyOf(c.unlock_time);
@@ -447,50 +489,50 @@ export function UnlockedPanel() {
     }
     const out: { dateKey: string; count: number; groups: ContactGroup[] }[] = [];
     for (const [dateKey, list] of byDate.entries()) {
-      let groups: ContactGroup[];
-      if (aggregate === "owner") {
-        const map = new Map<string, ContactGroup>();
-        for (const c of list) {
-          const k = `${c.owner_type}:${c.owner_id}`;
-          let g = map.get(k);
-          if (!g) {
-            g = {
-              key: `${dateKey}:${k}`,
-              owner_type: c.owner_type,
-              owner_id: c.owner_id,
-              owner_name: c.owner_name,
-              parent_ref: c.parent_ref,
-              contacts: [],
-              latestUnlock: 0,
-            };
-            map.set(k, g);
-          }
-          g.contacts.push(c);
-          if (!g.parent_ref && c.parent_ref) g.parent_ref = c.parent_ref;
-          if (c.unlock_time > g.latestUnlock) g.latestUnlock = c.unlock_time;
-        }
-        groups = Array.from(map.values()).sort(
-          (a, b) => b.latestUnlock - a.latestUnlock,
-        );
-      } else {
-        // Flat: one card per contact
-        groups = list
-          .slice()
-          .sort((a, b) => b.unlock_time - a.unlock_time)
-          .map((c) => ({
-            key: `${dateKey}:${c.owner_type}:${c.owner_id}:${c.contact_type}:${c.contact_value}`,
-            owner_type: c.owner_type,
-            owner_id: c.owner_id,
-            owner_name: c.owner_name,
-            parent_ref: c.parent_ref,
-            contacts: [c],
-            latestUnlock: c.unlock_time,
-          }));
-      }
+      const groups = list
+        .slice()
+        .sort((a, b) => b.unlock_time - a.unlock_time)
+        .map((c) => ({
+          key: `${dateKey}:${c.owner_type}:${c.owner_id}:${c.contact_type}:${c.contact_value}`,
+          owner_type: c.owner_type,
+          owner_id: c.owner_id,
+          owner_name: c.owner_name,
+          parent_ref: c.parent_ref,
+          contacts: [c],
+          latestUnlock: c.unlock_time,
+        }));
       out.push({ dateKey, count: list.length, groups });
     }
     return out.sort((a, b) => (a.dateKey < b.dateKey ? 1 : -1));
-  }, [filtered, aggregate]);
+  }, [filtered]);
+
+  // 聚合模式：跨日期合并为一张企业 / 人物卡片，卡片内再按日期展示
+  const ownerGroups = useMemo(() => {
+    const map = new Map<string, ContactGroup>();
+    for (const c of filtered) {
+      const k = `${c.owner_type}:${c.owner_id}`;
+      let g = map.get(k);
+      if (!g) {
+        g = {
+          key: k,
+          owner_type: c.owner_type,
+          owner_id: c.owner_id,
+          owner_name: c.owner_name,
+          parent_ref: c.parent_ref,
+          contacts: [],
+          latestUnlock: 0,
+        };
+        map.set(k, g);
+      }
+      g.contacts.push(c);
+      if (!g.parent_ref && c.parent_ref) g.parent_ref = c.parent_ref;
+      if (c.unlock_time > g.latestUnlock) g.latestUnlock = c.unlock_time;
+    }
+    const list = Array.from(map.values());
+    for (const g of list) g.contacts.sort((a, b) => b.unlock_time - a.unlock_time);
+    return list.sort((a, b) => b.latestUnlock - a.latestUnlock);
+  }, [filtered]);
+
 
   return (
     <TooltipProvider delayDuration={150}>
@@ -621,6 +663,18 @@ export function UnlockedPanel() {
             前往「客户发现」查看企业联系方式后，将自动出现在此处。
           </div>
         </Card>
+      ) : aggregate === "owner" ? (
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 items-start">
+          {ownerGroups.map((g) => (
+            <GroupCard
+              key={g.key}
+              g={g}
+              revealed={revealed}
+              onToggle={toggleReveal}
+              groupByDate
+            />
+          ))}
+        </div>
       ) : (
         <div className="space-y-6">
           {groupedByDate.map(({ dateKey, count, groups }) => (
@@ -656,6 +710,7 @@ export function UnlockedPanel() {
           ))}
         </div>
       )}
+
 
       <AlertDialog open={confirmOpen} onOpenChange={setConfirmOpen}>
         <AlertDialogContent>
