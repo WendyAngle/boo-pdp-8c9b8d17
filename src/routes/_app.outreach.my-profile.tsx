@@ -1,7 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { Target } from "lucide-react";
 import { ProfileTab } from "./_app.outreach.leads";
-import { useLeadProfile, profileCompleteness } from "@/lib/lead-profile";
 
 export const Route = createFileRoute("/_app/outreach/my-profile")({
   head: () => ({
@@ -18,8 +17,7 @@ export const Route = createFileRoute("/_app/outreach/my-profile")({
 });
 
 function MyProfilePage() {
-  const profile = useLeadProfile();
-  const completeness = profileCompleteness(profile);
+
 
   return (
     <div className="p-6 space-y-4">
