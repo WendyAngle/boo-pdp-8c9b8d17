@@ -1198,30 +1198,6 @@ function ThreadDetail({
           </TabsTrigger>
         </TabsList>
         <TabsContent value="thread" className="flex-1 min-h-0 overflow-y-auto px-6 py-4 space-y-4 mt-0">
-        {(thread.meta.assignmentEvents ?? []).map((ev) => (
-          <div
-            key={ev.id}
-            className="flex items-center gap-2 text-[11px] text-muted-foreground border-l-2 border-primary/30 pl-3 py-1"
-          >
-            <UserCheck className="h-3 w-3 text-primary" />
-            <span>
-              {ev.from ? memberById(ev.from)?.name ?? "未知" : "未分配"} →{" "}
-              {ev.to ? memberById(ev.to)?.name ?? "未知" : "未分配"}
-            </span>
-            {ev.crossGroup && (
-              <Badge variant="outline" className="text-[10px] h-4 px-1 bg-amber-50 text-amber-700 border-amber-200">
-                跨组
-              </Badge>
-            )}
-            {ev.greetingSent && (
-              <Badge variant="outline" className="text-[10px] h-4 px-1">
-                已发切换招呼
-              </Badge>
-            )}
-            {ev.reason && <span className="text-foreground/70">· {ev.reason}</span>}
-            <span className="ml-auto">{formatDateTime(ev.at)}</span>
-          </div>
-        ))}
         {(() => {
           const isSocial = thread.channel === "facebook" || thread.channel === "tiktok";
           
