@@ -196,10 +196,6 @@ export function BatchSocialPlatformDialog({
 
   /** 实际发送内容：有译文则发译文 */
   const sendContent = (translated.trim() || content).trim();
-  const previewJob = jobs[Math.min(previewIdx, Math.max(0, jobs.length - 1))];
-  const previewContent = previewJob
-    ? renderTemplate(sendContent, previewJob.candidate.ctx)
-    : "";
 
   const canSend = targetCount > 0 && content.trim().length > 0;
 
@@ -528,46 +524,6 @@ export function BatchSocialPlatformDialog({
               />
             </div>
           </section>
-
-
-          {/* 预览 */}
-
-          {jobs.length > 0 && (
-            <section className="space-y-2 rounded-md border bg-muted/30 p-3">
-              <div className="flex items-center justify-between">
-                <Label className="text-xs font-medium flex items-center gap-1">
-                  <Eye className="h-3.5 w-3.5" />
-                  内容预览（变量已替换）
-                </Label>
-                {jobs.length > 1 && (
-                  <Select
-                    value={String(Math.min(previewIdx, jobs.length - 1))}
-                    onValueChange={(v) => setPreviewIdx(Number(v))}
-                  >
-                    <SelectTrigger className="h-7 w-[220px] text-xs">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {jobs.map((j, i) => (
-                        <SelectItem key={`${j.platform}:${j.candidate.key}`} value={String(i)}>
-                          第 {i + 1} 条 · {j.platform} · {j.candidate.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                )}
-              </div>
-              {previewJob && (
-                <div className="text-[11px] text-muted-foreground">
-                  {previewJob.platform} · {previewJob.handle}
-                </div>
-              )}
-              <div className="text-xs whitespace-pre-wrap text-foreground/90 max-h-40 overflow-y-auto">
-                {previewContent || (
-                  <span className="text-muted-foreground">（暂无内容）</span>
-                )}
-              </div>
-            </section>
           )}
 
           {/* 费用 */}
