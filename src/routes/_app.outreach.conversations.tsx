@@ -177,9 +177,6 @@ const searchSchema = z.object({
   action: z.enum(["ai"]).optional(),
 });
 
-/** 演示环境的"当前登录员工"（Phase 1 mock，见 TEAM_MEMBERS） */
-const CURRENT_TEAM_USER_ID = "u_zhang";
-
 function channelIcon(ch: Channel) {
   switch (ch) {
     case "email":
