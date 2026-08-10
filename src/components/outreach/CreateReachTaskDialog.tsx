@@ -30,8 +30,6 @@ import { useCreditBalance, spendCredits } from "@/lib/credits-balance";
 import { COST_SOCIAL_DM, createSocialReachBatch } from "@/lib/credits-ledger";
 
 import {
-  myContext,
-  type VarContext,
 } from "@/lib/message-vars";
 import { LANGUAGES, langByCode } from "@/lib/lang-detect";
 import { useLeadProfile, saveProfile } from "@/lib/lead-profile";
@@ -207,7 +205,6 @@ export function CreateReachTaskDialog({
 
 
 
-  const my = useMemo<VarContext>(() => myContext(profile, user), [profile, user]);
   const targetLangOpt = langByCode(targetLang);
 
   // 预览：模拟 3 个虚拟目标（关键词/地区尚未真实抓取）
