@@ -416,22 +416,6 @@ function InboxPage() {
               </button>
             </>
           )}
-          {smartCounts.dueSoon > 0 && (
-            <>
-              <span className="text-border">|</span>
-              <button
-                onClick={() => goto({ view: "due_soon", tid: undefined })}
-                className={cn(
-                  "inline-flex items-center gap-1 transition-colors hover:text-amber-700",
-                  view === "due_soon" ? "text-amber-700 font-medium" : "",
-                )}
-                title="点击查看即将超时会话"
-              >
-                即将超时 <span className="tabular-nums">{smartCounts.dueSoon}</span>
-                <AlarmClock className="h-3 w-3 text-amber-600" />
-              </button>
-            </>
-          )}
         </div>
         {/* 统一筛选面板：渠道 / 类型 / 状态 / 搜索 */}
         <div className="ml-2 flex items-center gap-1.5 shrink-0">
