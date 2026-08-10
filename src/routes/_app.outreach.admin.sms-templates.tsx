@@ -617,31 +617,16 @@ function NewTplDialog({
                 placeholder="例：首触 · 产品介绍 EN"
               />
             </div>
-            <div className="grid grid-cols-2 gap-3">
-              <div>
-                <label className="text-xs text-muted-foreground">模板类型</label>
-                <Select value={channel} onValueChange={(v) => setChannel(v as Tpl["channel"])}>
-                  <SelectTrigger className="mt-1 h-9"><SelectValue /></SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="marketing">营销</SelectItem>
-                    <SelectItem value="notification">通知</SelectItem>
-                    <SelectItem value="otp">验证码</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              <div>
-                <label className="text-xs text-muted-foreground">语言</label>
-                <Select
-                  value={locale === "multi" ? "zh-CN" : locale}
-                  onValueChange={setLocale}
-                >
-                  <SelectTrigger className="mt-1 h-9"><SelectValue /></SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="zh-CN">中文</SelectItem>
-                    <SelectItem value="en-US">英文</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
+            <div>
+              <label className="text-xs text-muted-foreground">模板类型</label>
+              <Select value={channel} onValueChange={(v) => setChannel(v as Tpl["channel"])}>
+                <SelectTrigger className="mt-1 h-9"><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="marketing">营销</SelectItem>
+                  <SelectItem value="notification">通知</SelectItem>
+                  <SelectItem value="otp">验证码</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
             <div>
               <div className="flex items-center justify-between">
