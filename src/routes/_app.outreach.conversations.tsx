@@ -94,7 +94,6 @@ import {
   TEAM_MEMBERS,
   memberById,
   threadGroup,
-  assignThread,
   previousAssigneeIds,
   updateThreadProfile,
   addThreadNote,
