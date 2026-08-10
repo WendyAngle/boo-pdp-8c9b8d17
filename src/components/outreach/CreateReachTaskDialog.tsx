@@ -276,6 +276,7 @@ export function CreateReachTaskDialog({
 
   /** 单一按钮：AI 生成中文首发私信文案（免费） */
   async function handleAiGenerate() {
+    if (!myInfo.ensure()) return;
     setAiLoading(true);
     try {
       const res = await callGenerate({

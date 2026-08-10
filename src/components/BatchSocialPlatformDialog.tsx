@@ -304,6 +304,7 @@ export function BatchSocialPlatformDialog({
 
   async function handleAiGenerate() {
     if (aiLoading) return;
+    if (!myInfo.ensure()) return;
     setAiLoading(true);
     try {
       const sample = jobs[0]?.candidate ?? allCandidates[0];
