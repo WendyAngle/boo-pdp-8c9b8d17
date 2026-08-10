@@ -8,12 +8,10 @@ import {
   Send,
   Clock,
   CheckCheck,
-  Ban,
   Repeat,
   Star,
   MoreHorizontal,
   Tag,
-  ListTodo,
   UserPlus,
   ChevronRight,
   Building2,
@@ -77,11 +75,7 @@ import {
   closeThread,
   reopenThread,
   toggleStar,
-  enrollCadence,
-  suppressThread,
-  
   addTag,
-  addTaskForThread,
   updateIntent,
   sendReply,
   SNOOZE_PRESETS,
@@ -2264,7 +2258,6 @@ function ProfilePanel({ thread }: { thread: Thread }) {
 
 function __ActionBarImpl({ thread }: { thread: Thread }) {
   const [tagInput, setTagInput] = useState("");
-  const [taskTitle, setTaskTitle] = useState("");
 
   return (
     <div className="flex items-center gap-1 shrink-0">
@@ -2291,19 +2284,6 @@ function __ActionBarImpl({ thread }: { thread: Thread }) {
               )}
             />
             {thread.meta.starred ? "取消加星" : "加星"}
-          </DropdownMenuItem>
-          <DropdownMenuItem
-            onClick={() => {
-              enrollCadence(thread.id, !thread.meta.cadenceEnrolled);
-              toast.success(
-                thread.meta.cadenceEnrolled
-                  ? "已退出跟进序列"
-                  : "已加入 3/7/14 天跟进序列",
-              );
-            }}
-          >
-            <Repeat className="h-3.5 w-3.5 mr-2" />
-            {thread.meta.cadenceEnrolled ? "退出跟进序列" : "加入跟进序列"}
           </DropdownMenuItem>
           <DropdownMenuSeparator />
           <DropdownMenuLabel>标签 / 分类</DropdownMenuLabel>
@@ -2351,47 +2331,6 @@ function __ActionBarImpl({ thread }: { thread: Thread }) {
               {INTENT_LABEL[i]}
             </DropdownMenuItem>
           ))}
-          <DropdownMenuSeparator />
-          <DropdownMenuLabel>任务</DropdownMenuLabel>
-          <div className="px-2 py-1.5 flex items-center gap-1">
-            <Input
-              value={taskTitle}
-              onChange={(e) => setTaskTitle(e.target.value)}
-              placeholder="加待办"
-              className="h-7"
-              onKeyDown={(e) => {
-                if (e.key === "Enter" && taskTitle.trim()) {
-                  addTaskForThread(thread.id, taskTitle.trim());
-                  setTaskTitle("");
-                  toast.success("已创建待办");
-                }
-              }}
-            />
-            <Button
-              variant="outline"
-              size="sm"
-              className="h-7 shrink-0"
-              onClick={() => {
-                if (taskTitle.trim()) {
-                  addTaskForThread(thread.id, taskTitle.trim());
-                  setTaskTitle("");
-                  toast.success("已创建待办");
-                }
-              }}
-            >
-              <ListTodo className="h-3 w-3" />
-            </Button>
-          </div>
-          <DropdownMenuSeparator />
-          <DropdownMenuItem
-            className="text-rose-600 focus:text-rose-600"
-            onClick={() => {
-              suppressThread(thread.id);
-              toast.success("已加入抑制名单，后续将不再向该地址发送");
-            }}
-          >
-            <Ban className="h-3.5 w-3.5 mr-2" /> 加入抑制名单
-          </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>
     </div>
