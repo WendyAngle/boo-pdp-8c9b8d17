@@ -466,10 +466,10 @@ function InboxPage() {
               </span>
               条会话
             </span>
-            {(view !== "all" || ch !== "all" || senderKey !== "all" || q || intent !== "all") && (
+            {(view !== "all" || ch !== "all" || senderKey !== "all" || q || intent !== "all" || starred !== "all") && (
               <button
                 onClick={() =>
-                  goto({ view: "all", ch: "all", sender: "all", q: "", intent: undefined, tid: undefined })
+                  goto({ view: "all", ch: "all", sender: "all", q: "", intent: undefined, starred: "all", tid: undefined })
                 }
                 className="text-primary hover:underline"
               >
