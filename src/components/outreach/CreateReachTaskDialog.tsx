@@ -30,7 +30,6 @@ import { useCreditBalance, spendCredits } from "@/lib/credits-balance";
 import { COST_SOCIAL_DM, createSocialReachBatch } from "@/lib/credits-ledger";
 
 import {
-  renderTemplate,
   myContext,
   type VarContext,
 } from "@/lib/message-vars";
