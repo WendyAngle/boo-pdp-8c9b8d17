@@ -24,7 +24,6 @@ import { Route as AppOutreachMyProfileRouteImport } from './routes/_app.outreach
 import { Route as AppOutreachMailboxesRouteImport } from './routes/_app.outreach.mailboxes'
 import { Route as AppOutreachLeadsRouteImport } from './routes/_app.outreach.leads'
 import { Route as AppOutreachInvoicesRouteImport } from './routes/_app.outreach.invoices'
-import { Route as AppOutreachInquiryDispatchRouteImport } from './routes/_app.outreach.inquiry-dispatch'
 import { Route as AppOutreachFootprintsEmptyRouteImport } from './routes/_app.outreach.footprints-empty'
 import { Route as AppOutreachFootprintsRouteImport } from './routes/_app.outreach.footprints'
 import { Route as AppOutreachFavoritesEmptyRouteImport } from './routes/_app.outreach.favorites-empty'
@@ -139,12 +138,6 @@ const AppOutreachInvoicesRoute = AppOutreachInvoicesRouteImport.update({
   path: '/outreach/invoices',
   getParentRoute: () => AppRoute,
 } as any)
-const AppOutreachInquiryDispatchRoute =
-  AppOutreachInquiryDispatchRouteImport.update({
-    id: '/outreach/inquiry-dispatch',
-    path: '/outreach/inquiry-dispatch',
-    getParentRoute: () => AppRoute,
-  } as any)
 const AppOutreachFootprintsEmptyRoute =
   AppOutreachFootprintsEmptyRouteImport.update({
     id: '/outreach/footprints-empty',
@@ -381,7 +374,6 @@ export interface FileRoutesByFullPath {
   '/outreach/favorites-empty': typeof AppOutreachFavoritesEmptyRoute
   '/outreach/footprints': typeof AppOutreachFootprintsRoute
   '/outreach/footprints-empty': typeof AppOutreachFootprintsEmptyRoute
-  '/outreach/inquiry-dispatch': typeof AppOutreachInquiryDispatchRoute
   '/outreach/invoices': typeof AppOutreachInvoicesRoute
   '/outreach/leads': typeof AppOutreachLeadsRoute
   '/outreach/mailboxes': typeof AppOutreachMailboxesRoute
@@ -436,7 +428,6 @@ export interface FileRoutesByTo {
   '/outreach/favorites-empty': typeof AppOutreachFavoritesEmptyRoute
   '/outreach/footprints': typeof AppOutreachFootprintsRoute
   '/outreach/footprints-empty': typeof AppOutreachFootprintsEmptyRoute
-  '/outreach/inquiry-dispatch': typeof AppOutreachInquiryDispatchRoute
   '/outreach/invoices': typeof AppOutreachInvoicesRoute
   '/outreach/leads': typeof AppOutreachLeadsRoute
   '/outreach/mailboxes': typeof AppOutreachMailboxesRoute
@@ -491,7 +482,6 @@ export interface FileRoutesById {
   '/_app/outreach/favorites-empty': typeof AppOutreachFavoritesEmptyRoute
   '/_app/outreach/footprints': typeof AppOutreachFootprintsRoute
   '/_app/outreach/footprints-empty': typeof AppOutreachFootprintsEmptyRoute
-  '/_app/outreach/inquiry-dispatch': typeof AppOutreachInquiryDispatchRoute
   '/_app/outreach/invoices': typeof AppOutreachInvoicesRoute
   '/_app/outreach/leads': typeof AppOutreachLeadsRoute
   '/_app/outreach/mailboxes': typeof AppOutreachMailboxesRoute
@@ -549,7 +539,6 @@ export interface FileRouteTypes {
     | '/outreach/favorites-empty'
     | '/outreach/footprints'
     | '/outreach/footprints-empty'
-    | '/outreach/inquiry-dispatch'
     | '/outreach/invoices'
     | '/outreach/leads'
     | '/outreach/mailboxes'
@@ -604,7 +593,6 @@ export interface FileRouteTypes {
     | '/outreach/favorites-empty'
     | '/outreach/footprints'
     | '/outreach/footprints-empty'
-    | '/outreach/inquiry-dispatch'
     | '/outreach/invoices'
     | '/outreach/leads'
     | '/outreach/mailboxes'
@@ -658,7 +646,6 @@ export interface FileRouteTypes {
     | '/_app/outreach/favorites-empty'
     | '/_app/outreach/footprints'
     | '/_app/outreach/footprints-empty'
-    | '/_app/outreach/inquiry-dispatch'
     | '/_app/outreach/invoices'
     | '/_app/outreach/leads'
     | '/_app/outreach/mailboxes'
@@ -811,13 +798,6 @@ declare module '@tanstack/react-router' {
       path: '/outreach/invoices'
       fullPath: '/outreach/invoices'
       preLoaderRoute: typeof AppOutreachInvoicesRouteImport
-      parentRoute: typeof AppRoute
-    }
-    '/_app/outreach/inquiry-dispatch': {
-      id: '/_app/outreach/inquiry-dispatch'
-      path: '/outreach/inquiry-dispatch'
-      fullPath: '/outreach/inquiry-dispatch'
-      preLoaderRoute: typeof AppOutreachInquiryDispatchRouteImport
       parentRoute: typeof AppRoute
     }
     '/_app/outreach/footprints-empty': {
@@ -1181,7 +1161,6 @@ interface AppRouteChildren {
   AppOutreachFavoritesEmptyRoute: typeof AppOutreachFavoritesEmptyRoute
   AppOutreachFootprintsRoute: typeof AppOutreachFootprintsRoute
   AppOutreachFootprintsEmptyRoute: typeof AppOutreachFootprintsEmptyRoute
-  AppOutreachInquiryDispatchRoute: typeof AppOutreachInquiryDispatchRoute
   AppOutreachInvoicesRoute: typeof AppOutreachInvoicesRoute
   AppOutreachLeadsRoute: typeof AppOutreachLeadsRoute
   AppOutreachMailboxesRoute: typeof AppOutreachMailboxesRoute
@@ -1228,7 +1207,6 @@ const AppRouteChildren: AppRouteChildren = {
   AppOutreachFavoritesEmptyRoute: AppOutreachFavoritesEmptyRoute,
   AppOutreachFootprintsRoute: AppOutreachFootprintsRoute,
   AppOutreachFootprintsEmptyRoute: AppOutreachFootprintsEmptyRoute,
-  AppOutreachInquiryDispatchRoute: AppOutreachInquiryDispatchRoute,
   AppOutreachInvoicesRoute: AppOutreachInvoicesRoute,
   AppOutreachLeadsRoute: AppOutreachLeadsRoute,
   AppOutreachMailboxesRoute: AppOutreachMailboxesRoute,
@@ -1273,13 +1251,3 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}
