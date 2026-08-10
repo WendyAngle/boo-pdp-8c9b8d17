@@ -1878,34 +1878,59 @@ function _ActionBar({ thread }: { thread: Thread }) {
   return __ActionBarImpl({ thread });
 }
 
-function ProfileEditor({ thread }: { thread: Thread }) {
+function ProfileEditor({
+  thread,
+  footer,
+}: {
+  thread: Thread;
+  footer?: React.ReactNode;
+}) {
   const p = thread.meta.profile ?? {};
   const [editing, setEditing] = useState(false);
   const [form, setForm] = useState({
     targetName: p.targetName ?? thread.targetName,
-    counterpartyAddress: p.counterpartyAddress ?? thread.counterpartyAddress,
-    contactPerson: p.contactPerson ?? "",
-    phone: p.phone ?? "",
+    email:
+      p.email ?? (thread.channel === "email" ? thread.counterpartyAddress : ""),
+    phone:
+      p.phone ?? (thread.channel === "sms" ? thread.counterpartyAddress : ""),
+    company: p.company ?? thread.parentRef?.name ?? "",
     website: p.website ?? "",
     country: p.country ?? "",
   });
   const [note, setNote] = useState("");
   const notes = thread.meta.notes ?? [];
 
-  const fields: Array<[keyof typeof form, string]> = [
-    ["targetName", "客户名称"],
-    ["counterpartyAddress", "联系方式"],
-    ["contactPerson", "对接人"],
-    ["phone", "电话"],
-    ["website", "官网"],
-    ["country", "国家/地区"],
+  const fields: Array<[keyof typeof form, string, string]> = [
+    ["targetName", "客户名称", "客户 / 联系人名称"],
+    ["email", "联系邮箱", "name@company.com"],
+    ["phone", "联系电话", "+86 138…"],
+    ["company", "所属企业", "企业名称"],
+    ["website", "企业官网", "https://"],
+    ["country", "国家/地区", "如：德国"],
   ];
 
   return (
     <div className="space-y-3">
       <div className="rounded-md border bg-card p-4 space-y-3">
         <div className="flex items-center gap-2">
+          {thread.targetKind === "enterprise" ? (
+            <Building2 className="h-4 w-4 text-muted-foreground" />
+          ) : (
+            <UserRound className="h-4 w-4 text-muted-foreground" />
+          )}
           <span className="text-sm font-medium">客户资料</span>
+          <Badge variant="outline" className="h-5 py-0 px-1.5 text-[10px]">
+            {CHANNEL_LABEL[thread.channel]}
+          </Badge>
+          {thread.isFriend && (
+            <Badge
+              variant="outline"
+              className="h-5 py-0 px-1.5 text-[10px] gap-0.5 bg-violet-50 text-violet-700 border-violet-200"
+            >
+              <UserCheck className="h-2.5 w-2.5" />
+              好友
+            </Badge>
+          )}
           <div className="ml-auto flex items-center gap-1.5">
             {editing ? (
               <>
@@ -1937,23 +1962,33 @@ function ProfileEditor({ thread }: { thread: Thread }) {
             )}
           </div>
         </div>
-        <div className="grid gap-3 sm:grid-cols-2">
-          {fields.map(([k, label]) => (
+        <div className="grid gap-x-4 gap-y-2.5 sm:grid-cols-2">
+          {fields.map(([k, label, ph]) => (
             <div key={k} className="space-y-1">
               <div className="text-xs text-muted-foreground">{label}</div>
               {editing ? (
                 <Input
                   value={form[k]}
+                  placeholder={ph}
                   onChange={(e) => setForm((f) => ({ ...f, [k]: e.target.value }))}
                   className="h-8 text-sm"
                 />
               ) : (
-                <div className="text-sm">{form[k] || <span className="text-muted-foreground">—</span>}</div>
+                <div className="text-sm break-all">
+                  {form[k] || <span className="text-muted-foreground">—</span>}
+                </div>
               )}
             </div>
           ))}
         </div>
+        {thread.meta.assigneeId && (
+          <div className="text-xs text-muted-foreground">
+            当前跟进：{memberById(thread.meta.assigneeId)?.name}
+          </div>
+        )}
+        {footer && <div className="border-t pt-3">{footer}</div>}
       </div>
+
 
       <div className="rounded-md border bg-card p-4 space-y-3">
         <div className="text-sm font-medium">备注</div>
