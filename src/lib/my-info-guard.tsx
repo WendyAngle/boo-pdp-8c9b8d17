@@ -45,7 +45,7 @@ export function useMyInfoGuard() {
    * 兜底清理：AI 仍然吐出占位符时，用目标客户资料直接替换；
    * 目标资料缺失的占位符整体移除，避免把 {行业} 这类变量发出去。
    */
-  function fillAll(text: string, ctx?: Record<string, string | undefined>): string {
+  function fillAll(text: string, ctx?: Partial<Record<string, string>>): string {
     return fillMine(text)
       .replace(/\{(企业名|联系人名|行业|城市)\}/g, (_m, k: string) => {
         const v = ctx?.[k]?.trim();
