@@ -169,7 +169,6 @@ const searchSchema = z.object({
       "unassigned",
       "mine",
       "my_todo",
-      "due_soon",
       "high_intent",
       "needs_human",
     ])
