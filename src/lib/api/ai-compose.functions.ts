@@ -16,6 +16,12 @@ const InputSchema = z.object({
   myName: z.string().max(40).optional(),
   /** 示例收件方（用于让模型知道占位符的语义） */
   sampleEnterprise: z.string().max(120).optional(),
+  /** 收件方真实信息（literal 模式下直接写入文案） */
+  sampleContact: z.string().max(80).optional(),
+  sampleIndustry: z.string().max(80).optional(),
+  sampleCity: z.string().max(80).optional(),
+  /** true = 不使用任何花括号占位符，直接输出可发送的成品文案 */
+  literal: z.boolean().optional(),
 });
 
 export const generateAiContent = createServerFn({ method: "POST" })
@@ -41,8 +47,25 @@ export const generateAiContent = createServerFn({ method: "POST" })
       ...spec.rules.map((r, i) => `${i + 1}. ${r}`),
       `【禁止】${spec.bans.join("；")}。`,
       limitHint,
-      `在文案中合理使用以下占位符（保留花括号原样，发送时会被替换）：`,
-      `{企业名} {联系人名} {行业} {城市} {我的公司} {我的姓名}`,
+      ...(data.literal
+        ? [
+            `【重要】绝对不要输出任何花括号占位符（如 {企业名}{联系人名}{行业}{城市}{我的公司}{我的姓名}），也不要出现方括号/下划线等待填写标记。`,
+            `我方信息：公司「${data.myCompany ?? ""}」，联系人「${data.myName ?? ""}」，请直接写入文案。`,
+            data.sampleEnterprise || data.sampleContact || data.sampleIndustry || data.sampleCity
+              ? `对方信息（如提供则直接写入，未提供的信息一律不要提及、不要留空位）：${[
+                  data.sampleContact ? `联系人「${data.sampleContact}」` : "",
+                  data.sampleEnterprise ? `企业「${data.sampleEnterprise}」` : "",
+                  data.sampleIndustry ? `行业「${data.sampleIndustry}」` : "",
+                  data.sampleCity ? `城市「${data.sampleCity}」` : "",
+                ]
+                  .filter(Boolean)
+                  .join("，")}。`
+              : `未提供对方具体信息，请使用不指名的通用称呼与表述，不要编造对方公司名、城市或行业。`,
+          ]
+        : [
+            `在文案中合理使用以下占位符（保留花括号原样，发送时会被替换）：`,
+            `{企业名} {联系人名} {行业} {城市} {我的公司} {我的姓名}`,
+          ]),
       isEmail
         ? `严格输出 JSON：{"subject": "邮件主题（≤60字）","content": "邮件正文（纯文本，含换行）"}。不要解释，不要 Markdown。`
         : `只输出${spec.label}正文本身。不要 JSON，不要 Markdown，不要解释，不要引号包裹，不要输出任何前后缀说明。`,
