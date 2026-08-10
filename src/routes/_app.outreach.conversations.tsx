@@ -1408,34 +1408,8 @@ function ThreadDetail({
             )}
             AI 生成回复（中文）
           </Button>
-          <QuickTemplateMenu
-            channel={thread.channel}
-            disabled={!!winInfo?.closed}
-            onPick={(body) => {
-              setReply(body);
-              setTranslated("");
-            }}
-          />
         </div>
-        {winInfo?.closed && templates.length > 0 ? (
-          <div className="space-y-2">
-            <div className="grid grid-cols-1 gap-2">
-              {templates.map((t) => (
-                <button
-                  key={t.id}
-                  onClick={() => setSelectedTpl(t.id)}
-                  className={cn(
-                    "text-left rounded-md border bg-background p-3 hover:border-primary transition-colors",
-                    selectedTpl === t.id && "border-primary ring-1 ring-primary/40",
-                  )}
-                >
-                  <div className="text-xs font-medium mb-1">{t.name}</div>
-                  <div className="text-xs text-muted-foreground whitespace-pre-wrap">{t.body}</div>
-                </button>
-              ))}
-            </div>
-          </div>
-        ) : needsTranslation ? (
+        {needsTranslation ? (
           <div className="grid gap-2 md:grid-cols-2">
             {/* 左：中文原文 */}
             <div className="space-y-1">
@@ -1579,12 +1553,10 @@ function ThreadDetail({
             onClick={() => doSend(false)}
             disabled={
               sending ||
-              (winInfo?.closed && templates.length > 0 && !selectedTpl) ||
-              (winInfo?.closed && templates.length === 0) ||
+              !!winInfo?.closed ||
               (!winInfo?.closed && translationStale) ||
               (!winInfo?.closed && !sendContent.trim())
             }
-
             className="gap-1.5"
           >
             {sending ? (
@@ -1592,11 +1564,7 @@ function ThreadDetail({
             ) : (
               <Send className="h-4 w-4" />
             )}
-            {winInfo?.closed && templates.length > 0
-              ? "发送模板消息"
-              : needsTranslation
-                ? `发送${targetLang.zh}译文`
-                : "发送回复"}
+            {needsTranslation ? `发送${targetLang.zh}译文` : "发送回复"}
           </Button>
           <Button
             variant="outline"
@@ -1604,13 +1572,11 @@ function ThreadDetail({
               setReply("");
               setTranslated("");
               setTranslatedFrom("");
-              setSelectedTpl("");
-
               if (typeof window !== "undefined")
                 window.localStorage.removeItem(draftKey);
               setDraftSavedAt(null);
             }}
-            disabled={(!reply && !translated && !selectedTpl) || sending}
+            disabled={(!reply && !translated) || sending}
           >
             清空
           </Button>
@@ -1640,56 +1606,6 @@ function formatHm(ms: number) {
 
 function ActionBar({ thread }: { thread: Thread }) {
   return _ActionBar({ thread });
-}
-
-function QuickTemplateMenu({
-  channel,
-  disabled,
-  onPick,
-}: {
-  channel: Channel;
-  disabled?: boolean;
-  onPick: (body: string) => void;
-}) {
-  const smsTpls = channel === "sms" ? getApprovedSmsTemplates() : [];
-  const list: { id: string; name: string; body: string }[] =
-    channel === "email"
-      ? EMAIL_QUICK_REPLIES
-      : channel === "sms"
-        ? smsTpls.map((t) => ({ id: t.id, name: t.name, body: t.content }))
-        : [];
-  return (
-    <DropdownMenu>
-      <DropdownMenuTrigger asChild>
-        <Button
-          variant="ghost"
-          size="sm"
-          className="gap-1 h-7"
-          disabled={disabled || list.length === 0}
-        >
-          <FileText className="h-3.5 w-3.5" />
-          模板
-        </Button>
-      </DropdownMenuTrigger>
-      <DropdownMenuContent align="end" className="w-72">
-        <DropdownMenuLabel className="text-[11px] text-muted-foreground">
-          {channel === "email" ? "邮件快捷回复" : "短信审核通过模板"}
-        </DropdownMenuLabel>
-        {list.map((t) => (
-          <DropdownMenuItem
-            key={t.id}
-            className="flex flex-col items-start gap-0.5 py-2"
-            onClick={() => onPick(t.body)}
-          >
-            <span className="text-xs font-medium">{t.name}</span>
-            <span className="text-[11px] text-muted-foreground line-clamp-2">
-              {t.body}
-            </span>
-          </DropdownMenuItem>
-        ))}
-      </DropdownMenuContent>
-    </DropdownMenu>
-  );
 }
 
 function _ActionBar({ thread }: { thread: Thread }) {
