@@ -536,7 +536,6 @@ function NewTplDialog({
 }) {
   const [name, setName] = useState(initial?.name ?? "");
   const [channel, setChannel] = useState<Tpl["channel"]>(initial?.channel ?? "marketing");
-  const [locale, setLocale] = useState(initial?.locale ?? "zh-CN");
   const [content, setContent] = useState(initial?.content ?? "");
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const isEdit = !!initial;
@@ -545,7 +544,6 @@ function NewTplDialog({
     if (!open) return;
     setName(initial?.name ?? "");
     setChannel(initial?.channel ?? "marketing");
-    setLocale(initial?.locale ?? "zh-CN");
     setContent(initial?.content ?? "");
   }, [open, initial]);
 
@@ -580,7 +578,7 @@ function NewTplDialog({
       toast.error("营销类模板必须包含退订提示（STOP / 退订 / TD）");
       return;
     }
-    onSubmit({ name: name.trim(), channel, locale, content: content.trim() });
+    onSubmit({ name: name.trim(), channel, locale: "zh-CN", content: content.trim() });
     setName("");
     setContent("");
     onOpenChange(false);
@@ -619,31 +617,16 @@ function NewTplDialog({
                 placeholder="例：首触 · 产品介绍 EN"
               />
             </div>
-            <div className="grid grid-cols-2 gap-3">
-              <div>
-                <label className="text-xs text-muted-foreground">模板类型</label>
-                <Select value={channel} onValueChange={(v) => setChannel(v as Tpl["channel"])}>
-                  <SelectTrigger className="mt-1 h-9"><SelectValue /></SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="marketing">营销</SelectItem>
-                    <SelectItem value="notification">通知</SelectItem>
-                    <SelectItem value="otp">验证码</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              <div>
-                <label className="text-xs text-muted-foreground">语言</label>
-                <Select
-                  value={locale === "multi" ? "zh-CN" : locale}
-                  onValueChange={setLocale}
-                >
-                  <SelectTrigger className="mt-1 h-9"><SelectValue /></SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="zh-CN">中文</SelectItem>
-                    <SelectItem value="en-US">英文</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
+            <div>
+              <label className="text-xs text-muted-foreground">模板类型</label>
+              <Select value={channel} onValueChange={(v) => setChannel(v as Tpl["channel"])}>
+                <SelectTrigger className="mt-1 h-9"><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="marketing">营销</SelectItem>
+                  <SelectItem value="notification">通知</SelectItem>
+                  <SelectItem value="otp">验证码</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
             <div>
               <div className="flex items-center justify-between">
@@ -655,9 +638,7 @@ function NewTplDialog({
                     <button
                       type="button"
                       onClick={() => {
-                        const hint = locale === "en-US"
-                          ? " Reply STOP to opt out."
-                          : " 回复T退订";
+                        const hint = " 回复T退订";
                         const el = textareaRef.current;
                         const base = content.replace(/\s+$/, "");
                         const next = base + hint;
