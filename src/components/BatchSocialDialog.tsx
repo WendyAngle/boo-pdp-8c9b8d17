@@ -543,45 +543,38 @@ export function BatchSocialDialog({
             <ComposeFormatHint channel="social" platform={platform} />
 
 
-            <div className="flex flex-wrap items-center gap-1.5">
-              <span className="text-xs text-muted-foreground">插入变量：</span>
-              {MESSAGE_VARIABLES.map((v) => (
-                <button
-                  key={v}
-                  type="button"
-                  onClick={() => insertVarAt(v)}
-                  className="rounded border bg-background px-1.5 py-0.5 text-[11px] font-mono text-primary hover:bg-primary/10"
-                >
-                  {`{${v}}`}
-                </button>
-              ))}
-            </div>
-
-            <div className="space-y-1">
-              <Label className="text-xs text-muted-foreground">私信内容 *</Label>
-              <Textarea
-                ref={contentRef}
-                value={content}
-                onChange={(e) => setContent(e.target.value)}
-                rows={6}
-                maxLength={4096}
-                placeholder={`{联系人名}您好，我是{我的公司}的{我的姓名}，看到贵司在{行业}方向的业务……`}
-              />
-              <div className="text-[11px] text-muted-foreground">
-                {content.length} / 4096 字
+            <div className="grid gap-0 lg:grid-cols-2 lg:divide-x rounded-md border overflow-hidden">
+              <div className="space-y-2 p-3">
+                <div className="flex h-8 items-center">
+                  <Label className="text-xs text-muted-foreground">中文原文 *</Label>
+                </div>
+                <Textarea
+                  ref={contentRef}
+                  value={content}
+                  onChange={(e) => setContent(e.target.value)}
+                  rows={10}
+                  maxLength={4096}
+                  placeholder={`您好，我是××公司的×××，看到贵司在××方向的业务……`}
+                />
+                <div className="text-[11px] text-muted-foreground">
+                  {content.length} / 4096 字
+                </div>
               </div>
+
+              {/* 目标语言文案（实际发送内容） */}
+              <TargetLangSection
+                source={content}
+                lang={targetLang}
+                onLangChange={setTargetLang}
+                value={translated}
+                onChange={setTranslated}
+                rows={10}
+                kindLabel="私信"
+                bare
+              />
             </div>
           </section>
 
-          {/* 目标语言文案（实际发送内容） */}
-          <TargetLangSection
-            source={content}
-            lang={targetLang}
-            onLangChange={setTargetLang}
-            value={translated}
-            onChange={setTranslated}
-            kindLabel="私信"
-          />
 
 
 
