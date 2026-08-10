@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState, type MouseEvent, type ReactNode }
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import {
   Star,
+  KeyRound,
   ChevronRight,
   Calendar as CalendarIcon,
   Building2,
@@ -34,6 +35,7 @@ import {
   CheckCircle2,
 } from "lucide-react";
 import { Card } from "@/components/ui/card";
+import { UnlockedPanel } from "@/components/favorites/UnlockedPanel";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -107,6 +109,9 @@ import {
 
 
 export const Route = createFileRoute("/_app/outreach/favorites")({
+  validateSearch: (search: Record<string, unknown>) => ({
+    tab: search.tab === "unlocked" ? ("unlocked" as const) : ("favorites" as const),
+  }),
   head: () => ({ meta: [{ title: "出海大数据平台 · 收藏 | 出海大数据平台" }] }),
   component: FavoritesPage,
 });
@@ -151,6 +156,7 @@ function fmtDateKey(d: Date) {
 }
 
 function FavoritesPage() {
+  const { tab } = Route.useSearch();
   const all = useFavorites();
   useEffect(() => {
     seedDemoFavoritesIfEmpty();
@@ -548,6 +554,37 @@ function FavoritesPage() {
         </div>
       </section>
 
+      {/* 视图切换 */}
+      <div className="flex items-center gap-2 border-b">
+        {([
+          { key: "favorites" as const, label: "我的收藏", icon: Star },
+          { key: "unlocked" as const, label: "已解锁客户", icon: KeyRound },
+        ]).map((t) => {
+          const Icon = t.icon;
+          const active = tab === t.key;
+          return (
+            <Link
+              key={t.key}
+              to="/outreach/favorites"
+              search={{ tab: t.key }}
+              className={cn(
+                "inline-flex items-center gap-1.5 px-3 py-2 text-sm border-b-2 -mb-px transition-colors",
+                active
+                  ? "border-primary text-primary font-medium"
+                  : "border-transparent text-muted-foreground hover:text-foreground",
+              )}
+            >
+              <Icon className="h-4 w-4" />
+              {t.label}
+            </Link>
+          );
+        })}
+      </div>
+
+      {tab === "unlocked" ? (
+        <UnlockedPanel />
+      ) : (
+      <>
       {/* 筛选 */}
       <Card className="p-4 space-y-3">
         <div className="flex flex-wrap items-center gap-2">
@@ -865,6 +902,8 @@ function FavoritesPage() {
             />
           ))}
         </div>
+      )}
+      </>
       )}
 
       {/* 未配置邮箱提示 */}
