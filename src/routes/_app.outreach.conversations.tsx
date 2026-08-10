@@ -31,12 +31,11 @@ import {
   ShieldAlert,
   AlertTriangle,
   UserCheck,
-  
+
   Zap,
   Pin,
   Hand,
   ChevronDown as ChevronDownIcon,
-  FileText,
   User as UserIcon,
 } from "lucide-react";
 import { Card } from "@/components/ui/card";
@@ -92,7 +91,6 @@ import {
 import { generateAiContent } from "@/lib/api/ai-compose.functions";
 import { translateMessage } from "@/lib/api/ai-translate.functions";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
-import { getApprovedSmsTemplates } from "@/lib/sms-templates-store";
 
 import { IntelPanel } from "@/components/outreach/IntelPanel";
 import { scoreIntent } from "@/lib/ai-intent-score";
@@ -108,29 +106,6 @@ import { resolveThreadProfile } from "@/lib/thread-profile";
 
 
 
-/** 邮件场景的快捷回复模板（Phase 1 hardcoded） */
-const EMAIL_QUICK_REPLIES: { id: string; name: string; body: string }[] = [
-  {
-    id: "eq_thanks",
-    name: "致谢 · 确认收到",
-    body: "Hi,\n\nThanks for your reply — noted with thanks. I'll get back to you shortly with the details.\n\nBest regards,",
-  },
-  {
-    id: "eq_quote",
-    name: "报价 · 请提供需求",
-    body: "Hi,\n\nHappy to prepare a formal quote. Could you share:\n1) Target SKUs / quantities\n2) Destination port & Incoterm\n3) Expected shipment date\n\nBest,",
-  },
-  {
-    id: "eq_meeting",
-    name: "邀约 · 30 分钟电话",
-    body: "Hi,\n\nWould you have 30 minutes this week for a quick call? Please share 2-3 slots that work for you and I'll confirm.\n\nBest,",
-  },
-  {
-    id: "eq_followup",
-    name: "跟进 · 二次触达",
-    body: "Hi,\n\nJust following up on my previous email — let me know if you'd like more information or a sample.\n\nBest,",
-  },
-];
 
 import {
   useThreadSenderResolver,
@@ -190,16 +165,6 @@ function channelTooltip(ch: Channel) {
   return CHANNEL_LABEL[ch];
 }
 
-/** WhatsApp / Facebook HSM 演示模板 */
-const HSM_TEMPLATES: Record<string, { id: string; name: string; body: string }[]> = {
-  whatsapp: [
-    { id: "wa_hello", name: "welcome_intro", body: "Hi {{1}}, thanks for reaching out to us earlier. Would this be a good time to continue our conversation?" },
-    { id: "wa_quote", name: "quote_followup", body: "Hi {{1}}, following up on the quote we shared for {{2}}. Let me know if you'd like to schedule a call." },
-  ],
-  facebook: [
-    { id: "fb_update", name: "CONFIRMED_EVENT_UPDATE", body: "Reminder: your appointment on {{1}} is confirmed." },
-  ],
-};
 
 type ViewKey = NonNullable<z.infer<typeof searchSchema>["view"]>;
 
