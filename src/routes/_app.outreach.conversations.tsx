@@ -101,6 +101,9 @@ import {
   threadGroup,
   assignThread,
   previousAssigneeIds,
+  updateThreadProfile,
+  addThreadNote,
+  removeThreadNote,
 } from "@/lib/inbox-store";
 import { generateAiContent } from "@/lib/api/ai-compose.functions";
 import { translateMessage } from "@/lib/api/ai-translate.functions";
@@ -109,7 +112,7 @@ import { getApprovedSmsTemplates } from "@/lib/sms-templates-store";
 
 import { IntelPanel } from "@/components/outreach/IntelPanel";
 import { scoreIntent } from "@/lib/ai-intent-score";
-import { Target as TargetIcon, PanelRightClose, PanelRightOpen, Languages } from "lucide-react";
+import { Target as TargetIcon, PanelRightClose, PanelRightOpen, Languages, Pencil } from "lucide-react";
 import {
   detectThreadLanguage,
   detectLanguage,
