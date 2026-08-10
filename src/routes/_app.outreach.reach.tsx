@@ -55,13 +55,8 @@ import {
   Inbox as InboxIcon,
   MessageCircleReply,
   Users,
-  
-  Facebook,
-  Music2,
   MessageSquare,
 } from "lucide-react";
-import { useSocialAccounts, friendRemaining } from "@/data/social-accounts";
-import { poolAverageHealth } from "@/lib/social-account-health";
 import { CreateReachTaskDialog } from "@/components/outreach/CreateReachTaskDialog";
 import { ManagedEmailReachDialog } from "@/components/outreach/ManagedEmailReachDialog";
 import { ManagedEmailBatches } from "@/components/outreach/ManagedEmailBatches";
