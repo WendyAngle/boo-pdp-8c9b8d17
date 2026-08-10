@@ -1808,14 +1808,6 @@ function formatHm(ms: number) {
   return `${h}h ${m}m`;
 }
 
-function formatShort(ms: number) {
-  const total = Math.max(0, Math.floor(ms / 60000));
-  if (total < 60) return `${total}m`;
-  const h = Math.floor(total / 60);
-  if (h < 24) return `${h}h`;
-  return `${Math.floor(h / 24)}d`;
-}
-
 function ActionBar({ thread }: { thread: Thread }) {
   return _ActionBar({ thread });
 }
