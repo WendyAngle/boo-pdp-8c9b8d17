@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
-import { Sparkles, Loader2, Eye, Send, Zap, Wand2, Languages, Package, X, Plus, Check } from "lucide-react";
+import { Sparkles, Loader2, Send, Zap, Wand2, Languages, Package, X, Plus, Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -130,7 +130,6 @@ export function CreateReachTaskDialog({
   /** 目标语言译文（实际发送内容） */
   const [translated, setTranslated] = useState("");
   const [targetLang, setTargetLang] = useState<string>("en");
-  const [previewIdx, setPreviewIdx] = useState(0);
 
   const [aiUsed, setAiUsed] = useState(false);
   const [aiLoading, setAiLoading] = useState(false);
