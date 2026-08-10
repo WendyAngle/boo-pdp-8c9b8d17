@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   Send,
   Sparkles,
@@ -34,11 +34,7 @@ import {
 } from "@/components/ui/select";
 import { cn } from "@/lib/utils";
 
-import {
-  MESSAGE_VARIABLES,
-  renderTemplate,
-  type Recipient,
-} from "@/lib/message-vars";
+import { renderTemplate, type Recipient } from "@/lib/message-vars";
 import {
   createReach,
   costForSocialPlatform,
@@ -49,6 +45,7 @@ import { useCurrentUser } from "@/lib/current-user";
 import { ComposeFormatHint } from "@/components/outreach/ComposeFormatHint";
 import { generateAiContent } from "@/lib/api/ai-compose.functions";
 import { TargetLangSection } from "@/components/outreach/TargetLangSection";
+import { AutoVarFillHint } from "@/components/outreach/AutoVarFillHint";
 
 export type ReachPlatform = "Facebook" | "TikTok";
 export const REACH_PLATFORMS: ReachPlatform[] = ["Facebook", "TikTok"];
@@ -219,22 +216,6 @@ export function BatchSocialPlatformDialog({
   
   const grandTotal = sendTotal;
 
-  const contentRef = useRef<HTMLTextAreaElement | null>(null);
-  function insertVarAt(v: string) {
-    const token = `{${v}}`;
-    const el = contentRef.current;
-    const s = content;
-    if (!el) return setContent(s + token);
-    const start = el.selectionStart ?? s.length;
-    const end = el.selectionEnd ?? s.length;
-    setContent(s.slice(0, start) + token + s.slice(end));
-    requestAnimationFrame(() => {
-      el.focus();
-      const pos = start + token.length;
-      el.setSelectionRange(pos, pos);
-    });
-  }
-
   /** 实际发送内容：有译文则发译文 */
   const sendContent = (translated.trim() || content).trim();
   const previewJob = jobs[Math.min(previewIdx, Math.max(0, jobs.length - 1))];
@@ -351,19 +332,17 @@ export function BatchSocialPlatformDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-3xl max-h-[92vh] overflow-y-auto">
+      <DialogContent className="max-w-5xl max-h-[92vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Users className="h-5 w-5 text-primary" />
-            批量社媒私信 · 待执行任务 {filteredJobs.length}
+            批量社媒私信
             <Badge variant="secondary" className="ml-1 font-normal">
-              已选 {jobs.length}
+              待执行 {jobs.length}
             </Badge>
           </DialogTitle>
           <DialogDescription className="text-xs">
-            向选中的目标分发私信，支持手动添加和删除。超出当日额度将顺延至次日。
-            <br />
-            目标来源：待执行任务（当前共 {filteredJobs.length} 个账号）
+            向下列目标分发私信，可手动添加或删除；超出当日额度的部分自动顺延至次日。
           </DialogDescription>
         </DialogHeader>
 
