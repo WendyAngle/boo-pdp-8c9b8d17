@@ -75,6 +75,8 @@ import { useCurrentUser } from "@/lib/current-user";
 import { ComposeFormatHint } from "@/components/outreach/ComposeFormatHint";
 import { generateAiContent } from "@/lib/api/ai-compose.functions";
 import { TargetLangSection } from "@/components/outreach/TargetLangSection";
+import { useMyInfoGuard } from "@/lib/my-info-guard";
+
 
 /** 目标候选人（收藏 → 社媒收件人） */
 export interface SocialCandidate extends Recipient {
