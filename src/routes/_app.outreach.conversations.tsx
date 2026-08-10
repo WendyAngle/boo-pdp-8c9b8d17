@@ -656,7 +656,6 @@ function ThreadRow({
         "w-full text-left px-4 py-3 border-b hover:bg-muted/40 transition-colors block",
         active && "bg-primary/5 border-l-2 border-l-primary",
         !active && isUnread && "border-l-2 border-l-rose-500 bg-rose-50/40",
-        !active && !isUnread && isPending && "border-l-2 border-l-amber-400 bg-amber-50/30",
         woken && "bg-amber-50/60",
       )}
     >
