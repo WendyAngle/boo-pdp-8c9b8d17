@@ -437,8 +437,8 @@ export function UnlockedPanel() {
       : fmtDate(dateRange.from)
     : "解锁时间";
 
+  // 平铺模式：按日期分桶，每条联系方式一张卡片
   const groupedByDate = useMemo(() => {
-    // First bucket contacts by date, then optionally aggregate by owner within each day
     const byDate = new Map<string, UnlockedContact[]>();
     for (const c of filtered) {
       const k = dateKeyOf(c.unlock_time);
@@ -447,50 +447,50 @@ export function UnlockedPanel() {
     }
     const out: { dateKey: string; count: number; groups: ContactGroup[] }[] = [];
     for (const [dateKey, list] of byDate.entries()) {
-      let groups: ContactGroup[];
-      if (aggregate === "owner") {
-        const map = new Map<string, ContactGroup>();
-        for (const c of list) {
-          const k = `${c.owner_type}:${c.owner_id}`;
-          let g = map.get(k);
-          if (!g) {
-            g = {
-              key: `${dateKey}:${k}`,
-              owner_type: c.owner_type,
-              owner_id: c.owner_id,
-              owner_name: c.owner_name,
-              parent_ref: c.parent_ref,
-              contacts: [],
-              latestUnlock: 0,
-            };
-            map.set(k, g);
-          }
-          g.contacts.push(c);
-          if (!g.parent_ref && c.parent_ref) g.parent_ref = c.parent_ref;
-          if (c.unlock_time > g.latestUnlock) g.latestUnlock = c.unlock_time;
-        }
-        groups = Array.from(map.values()).sort(
-          (a, b) => b.latestUnlock - a.latestUnlock,
-        );
-      } else {
-        // Flat: one card per contact
-        groups = list
-          .slice()
-          .sort((a, b) => b.unlock_time - a.unlock_time)
-          .map((c) => ({
-            key: `${dateKey}:${c.owner_type}:${c.owner_id}:${c.contact_type}:${c.contact_value}`,
-            owner_type: c.owner_type,
-            owner_id: c.owner_id,
-            owner_name: c.owner_name,
-            parent_ref: c.parent_ref,
-            contacts: [c],
-            latestUnlock: c.unlock_time,
-          }));
-      }
+      const groups = list
+        .slice()
+        .sort((a, b) => b.unlock_time - a.unlock_time)
+        .map((c) => ({
+          key: `${dateKey}:${c.owner_type}:${c.owner_id}:${c.contact_type}:${c.contact_value}`,
+          owner_type: c.owner_type,
+          owner_id: c.owner_id,
+          owner_name: c.owner_name,
+          parent_ref: c.parent_ref,
+          contacts: [c],
+          latestUnlock: c.unlock_time,
+        }));
       out.push({ dateKey, count: list.length, groups });
     }
     return out.sort((a, b) => (a.dateKey < b.dateKey ? 1 : -1));
-  }, [filtered, aggregate]);
+  }, [filtered]);
+
+  // 聚合模式：跨日期合并为一张企业 / 人物卡片，卡片内再按日期展示
+  const ownerGroups = useMemo(() => {
+    const map = new Map<string, ContactGroup>();
+    for (const c of filtered) {
+      const k = `${c.owner_type}:${c.owner_id}`;
+      let g = map.get(k);
+      if (!g) {
+        g = {
+          key: k,
+          owner_type: c.owner_type,
+          owner_id: c.owner_id,
+          owner_name: c.owner_name,
+          parent_ref: c.parent_ref,
+          contacts: [],
+          latestUnlock: 0,
+        };
+        map.set(k, g);
+      }
+      g.contacts.push(c);
+      if (!g.parent_ref && c.parent_ref) g.parent_ref = c.parent_ref;
+      if (c.unlock_time > g.latestUnlock) g.latestUnlock = c.unlock_time;
+    }
+    const list = Array.from(map.values());
+    for (const g of list) g.contacts.sort((a, b) => b.unlock_time - a.unlock_time);
+    return list.sort((a, b) => b.latestUnlock - a.latestUnlock);
+  }, [filtered]);
+
 
   return (
     <TooltipProvider delayDuration={150}>
