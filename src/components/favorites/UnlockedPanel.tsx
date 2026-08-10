@@ -218,12 +218,25 @@ function GroupCard({
   g,
   revealed,
   onToggle,
+  groupByDate = false,
 }: {
   g: ContactGroup;
   revealed: Set<string>;
   onToggle: (key: string) => void;
+  groupByDate?: boolean;
 }) {
   const isPerson = g.owner_type === "person";
+  const dateBuckets = (() => {
+    if (!groupByDate) return null;
+    const m = new Map<string, UnlockedContact[]>();
+    for (const c of g.contacts) {
+      const k = dateKeyOf(c.unlock_time);
+      if (!m.has(k)) m.set(k, []);
+      m.get(k)!.push(c);
+    }
+    return Array.from(m.entries()).sort((a, b) => (a[0] < b[0] ? 1 : -1));
+  })();
+
   const enterpriseRef = isPerson ? g.parent_ref : undefined;
   const enterpriseLink = isPerson
     ? enterpriseRef
