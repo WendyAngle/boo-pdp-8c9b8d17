@@ -1,5 +1,7 @@
 import { toast } from "sonner";
 
+import type { VarContext } from "@/lib/message-vars";
+
 import { useLeadProfile } from "@/lib/lead-profile";
 import { useCurrentUser } from "@/lib/current-user";
 
@@ -45,10 +47,10 @@ export function useMyInfoGuard() {
    * 兜底清理：AI 仍然吐出占位符时，用目标客户资料直接替换；
    * 目标资料缺失的占位符整体移除，避免把 {行业} 这类变量发出去。
    */
-  function fillAll(text: string, ctx?: Partial<Record<string, string>>): string {
+  function fillAll(text: string, ctx?: VarContext): string {
     return fillMine(text)
       .replace(/\{(企业名|联系人名|行业|城市)\}/g, (_m, k: string) => {
-        const v = ctx?.[k]?.trim();
+        const v = ctx?.[k as keyof VarContext]?.trim();
         if (v) return v;
         return k === "联系人名" ? "您好" : "";
       })
