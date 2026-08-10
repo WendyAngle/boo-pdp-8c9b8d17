@@ -87,7 +87,6 @@ import {
   GROUP_LABEL,
   TEAM_MEMBERS,
   memberById,
-  threadGroup,
   updateThreadProfile,
   addThreadNote,
   removeThreadNote,
