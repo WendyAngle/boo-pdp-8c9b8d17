@@ -391,7 +391,7 @@ function InboxPage() {
             </>
           )}
         </div>
-        {/* 统一筛选面板：渠道 / 类型 / 状态 / 搜索 */}
+        {/* 统一筛选面板：渠道 / 类型 / 搜索 */}
         <div className="ml-2 flex items-center gap-1.5 shrink-0">
           <Select value={ch} onValueChange={(v) => goto({ ch: v as typeof ch, tid: undefined })}>
             <SelectTrigger className="h-8 text-xs w-[128px]">
