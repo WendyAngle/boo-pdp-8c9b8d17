@@ -215,7 +215,15 @@ export function ComposeSendDialog({
 
   const subjectRef = useRef<HTMLInputElement | null>(null);
   const contentRef = useRef<HTMLTextAreaElement | null>(null);
+  // 退订预检：Dialog 打开即计算，用于顶部非阻塞横幅
+  const suppressedRecipients = useMemo(() => {
+    const kind = isEmail ? "email" : "phone";
+    return recipients.filter((r) => isSuppressed(kind, r.address));
+  }, [recipients, isEmail]);
 
+  /** 实际发送内容：有译文则发译文 */
+  const sendSubject = (translatedSubject.trim() || subject).trim();
+  const sendContent = (translated.trim() || content).trim();
 
   const missingContact = useMemo(
     () => recipients.filter((r) => !r.ctx.联系人名 || !r.ctx.联系人名.trim()).length,
