@@ -105,8 +105,8 @@ export function TargetLangSection({
         );
       }
       const [body, subj] = await Promise.all(jobs);
-      onChange(body?.content ?? "");
-      if (hasSubject) onSubjectChange?.(subj?.content ?? "");
+      onChange(unwrapBraces(body?.content ?? ""));
+      if (hasSubject) onSubjectChange?.(unwrapBraces(subj?.content ?? ""));
       setSnapshot(`${sourceSubject ?? ""}\u0000${src}`);
       toast.success(`已翻译为${target.zh}（免费）`);
     } catch (e) {
