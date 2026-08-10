@@ -413,16 +413,8 @@ export function BatchSocialPlatformDialog({
               </div>
             )}
 
-            <div className="grid grid-cols-2 gap-2 text-xs">
-              <StatCell
-                tone="sky"
-                label="Facebook"
-                value={groups.Facebook.length}
-              />
-              <StatCell tone="violet" label="TikTok" value={groups.TikTok.length} />
-            </div>
-
             {/* 目标列表滚动展示 */}
+
             <div className="mt-3 max-h-40 overflow-y-auto border-t pt-2 space-y-1.5 pr-1">
               {filteredJobs.length === 0 ? (
                 <div className="text-center py-4 text-xs text-muted-foreground">
