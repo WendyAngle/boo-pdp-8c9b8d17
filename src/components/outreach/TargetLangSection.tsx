@@ -37,6 +37,7 @@ export function TargetLangSection({
   rows = 6,
   kindLabel = "文案",
   className,
+  bare = false,
 }: {
   /** 中文原文正文 */
   source: string;
@@ -51,6 +52,8 @@ export function TargetLangSection({
   rows?: number;
   kindLabel?: string;
   className?: string;
+  /** 融入外层统一区域：去掉自身边框与背景 */
+  bare?: boolean;
 }) {
   const callTranslate = useServerFn(translateMessage);
   const [loading, setLoading] = useState(false);
@@ -116,15 +119,19 @@ export function TargetLangSection({
 
   return (
     <section
-      className={`space-y-2 rounded-md border border-primary/25 bg-primary/[0.03] p-3 ${className ?? ""}`}
+      className={`space-y-2 p-3 ${
+        bare ? "bg-primary/[0.03]" : "rounded-md border border-primary/25 bg-primary/[0.03]"
+      } ${className ?? ""}`}
     >
       <div className="flex items-center justify-between gap-2">
         <Label className="text-sm font-medium flex items-center gap-2">
           <Languages className="h-4 w-4 text-primary" />
-          目标语言{kindLabel}
-          <Badge variant="outline" className="font-normal text-[10px]">
-            实际发送内容
-          </Badge>
+          {bare ? "实际发送内容" : `目标语言${kindLabel}`}
+          {!bare && (
+            <Badge variant="outline" className="font-normal text-[10px]">
+              实际发送内容
+            </Badge>
+          )}
         </Label>
         <div className="flex items-center gap-2">
           <Select
