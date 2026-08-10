@@ -290,6 +290,7 @@ export function BatchSocialDialog({
 
   async function handleAiGenerate() {
     if (aiLoading) return;
+    if (!myInfo.ensure()) return;
     setAiLoading(true);
     try {
       const sample = verified[0] ?? candidates[0];
@@ -303,12 +304,17 @@ export function BatchSocialDialog({
           languageName: "中文",
           myCompany: profile.companyName,
           myName: user.name,
+          literal: true,
           sampleEnterprise: sample?.ctx.企业名,
+          sampleContact: sample?.ctx.联系人名,
+          sampleIndustry: sample?.ctx.行业,
+          sampleCity: sample?.ctx.城市,
         },
       });
-      if (res.content) setContent(res.content);
+      if (res.content) setContent(myInfo.fillAll(res.content, sample?.ctx));
       setAiUsed(true);
       toast.success(`AI 已生成 ${platform} 首次接触文案`);
+
     } catch (e) {
       const msg = e instanceof Error ? e.message : String(e);
       toast.error("AI 生成失败", { description: msg });
