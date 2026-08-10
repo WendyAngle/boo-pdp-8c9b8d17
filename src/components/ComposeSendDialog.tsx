@@ -760,51 +760,6 @@ export function ComposeSendDialog({
           </section>
 
 
-          {/* 预览 */}
-
-          {recipients.length > 0 && (
-            <section className="space-y-2 rounded-md border bg-muted/30 p-3">
-              <div className="flex items-center justify-between">
-                <Label className="text-xs font-medium flex items-center gap-1">
-                  <Eye className="h-3.5 w-3.5" />
-                  预览（变量已替换）
-                  <span className="ml-1 inline-flex h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" />
-                  <span className="text-[10px] font-normal text-muted-foreground">
-                    实时同步
-                  </span>
-                  {null}
-                </Label>
-                {recipients.length > 1 && (
-                  <Select
-                    value={String(previewIdx)}
-                    onValueChange={(v) => setPreviewIdx(Number(v))}
-                  >
-                    <SelectTrigger className="h-7 w-[180px] text-xs">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {recipients.map((r, i) => (
-                        <SelectItem key={r.key} value={String(i)}>
-                          第 {i + 1} 条 · {r.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                )}
-              </div>
-              {isEmail && (
-                <div className="text-xs">
-                  <span className="text-muted-foreground">主题：</span>
-                  <span className="font-medium">{previewSubject || "—"}</span>
-                </div>
-              )}
-              <div className="text-xs whitespace-pre-wrap text-foreground/90 max-h-40 overflow-y-auto">
-                {previewContent || (
-                  <span className="text-muted-foreground">（暂无内容）</span>
-                )}
-              </div>
-            </section>
-          )}
 
           {/* 费用 */}
           <section className="rounded-md border border-rose-200 bg-rose-50 p-3 text-xs space-y-1 dark:border-rose-900/50 dark:bg-rose-950/30">
