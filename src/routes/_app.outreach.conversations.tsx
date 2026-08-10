@@ -770,27 +770,6 @@ function ThreadRow({
               }
               return null;
             })()}
-            {(() => {
-              if (thread.meta.humanTakeover) {
-                return null; // humanTakeover 已在标题行显示"接管中"
-              }
-              if (!thread.meta.assigneeId) {
-                return (
-                  <Badge
-                    variant="outline"
-                    className="ml-auto h-4 py-0 px-1.5 text-[10px] bg-amber-50 text-amber-700 border-amber-200"
-                  >
-                    未分配
-                  </Badge>
-                );
-              }
-              return (
-                <span className="ml-auto text-[10px] inline-flex items-center gap-0.5">
-                  <UserCheck className="h-2.5 w-2.5" />
-                  {memberById(thread.meta.assigneeId)?.name}
-                </span>
-              );
-            })()}
           </div>
         </div>
       </div>
