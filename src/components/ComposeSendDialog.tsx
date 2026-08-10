@@ -5,7 +5,6 @@ import {
   Mailbox as MailboxIcon,
   X,
   Loader2,
-  Eye,
   Trash2,
   ShieldOff,
 } from "lucide-react";
@@ -44,7 +43,6 @@ import {
 import { FileText, ShieldCheck, ShieldAlert } from "lucide-react";
 
 import {
-  MESSAGE_VARIABLES,
   renderTemplate,
   smsSegments,
   myContext,
@@ -71,6 +69,7 @@ import { useCurrentUser } from "@/lib/current-user";
 import { ComposeFormatHint } from "@/components/outreach/ComposeFormatHint";
 import { generateAiContent } from "@/lib/api/ai-compose.functions";
 import { TargetLangSection } from "@/components/outreach/TargetLangSection";
+import { useMyInfoGuard } from "@/lib/my-info-guard";
 
 
 export type ComposeChannel = "email" | "phone";
@@ -116,6 +115,7 @@ export function ComposeSendDialog({
   const my = myContext(profile, user);
   const callGenerate = useServerFn(generateAiContent);
   const ledger = useLedger();
+  const myInfo = useMyInfoGuard();
 
   const [recipients, setRecipients] = useState<Recipient[]>(incomingRecipients);
   /** 记录初始进入弹窗时被自动过滤的数量，用于维持“已自动过滤”文案的稳定性 */
@@ -124,7 +124,6 @@ export function ComposeSendDialog({
   const [content, setContent] = useState("");
   const [aiUsed, setAiUsed] = useState(false);
   const [senderId, setSenderId] = useState<string>("");
-  const [previewIdx, setPreviewIdx] = useState(0);
   const [aiLoading, setAiLoading] = useState(false);
   /** 目标语言（发送语言）代码 */
   const [targetLang, setTargetLang] = useState<string>("en");
@@ -191,7 +190,6 @@ export function ComposeSendDialog({
       setInitialFilteredCount(0);
     }
     setManualInput("");
-    setPreviewIdx(0);
     setSubject("");
     setContent("");
     setAiUsed(false);
@@ -217,60 +215,15 @@ export function ComposeSendDialog({
 
   const subjectRef = useRef<HTMLInputElement | null>(null);
   const contentRef = useRef<HTMLTextAreaElement | null>(null);
-  const [focusField, setFocusField] = useState<"subject" | "content">(
-    isEmail ? "subject" : "content",
-  );
-
-  function insertVarAt(field: "subject" | "content", v: string) {
-    const token = `{${v}}`;
-    if (field === "subject") {
-      const el = subjectRef.current;
-      const s = subject;
-      if (!el) return setSubject(s + token);
-      const start = el.selectionStart ?? s.length;
-      const end = el.selectionEnd ?? s.length;
-      const next = s.slice(0, start) + token + s.slice(end);
-      setSubject(next);
-      requestAnimationFrame(() => {
-        el.focus();
-        const pos = start + token.length;
-        el.setSelectionRange(pos, pos);
-      });
-    } else {
-      const el = contentRef.current;
-      const s = content;
-      if (!el) return setContent(s + token);
-      const start = el.selectionStart ?? s.length;
-      const end = el.selectionEnd ?? s.length;
-      const next = s.slice(0, start) + token + s.slice(end);
-      setContent(next);
-      requestAnimationFrame(() => {
-        el.focus();
-        const pos = start + token.length;
-        el.setSelectionRange(pos, pos);
-      });
-    }
-  }
-
-  const previewRecipient = recipients[Math.min(previewIdx, recipients.length - 1)];
-
   // 退订预检：Dialog 打开即计算，用于顶部非阻塞横幅
-  const suppressedRecipients = useMemo(
-    () => {
-      const kind = isEmail ? "email" : "phone";
-      return recipients.filter((r) => isSuppressed(kind, r.address));
-    },
-    [recipients, isEmail],
-  );
+  const suppressedRecipients = useMemo(() => {
+    const kind = isEmail ? "email" : "phone";
+    return recipients.filter((r) => isSuppressed(kind, r.address));
+  }, [recipients, isEmail]);
+
   /** 实际发送内容：有译文则发译文 */
   const sendSubject = (translatedSubject.trim() || subject).trim();
   const sendContent = (translated.trim() || content).trim();
-  const previewSubject = previewRecipient
-    ? renderTemplate(sendSubject, previewRecipient.ctx)
-    : "";
-  const previewContent = previewRecipient
-    ? renderTemplate(sendContent, previewRecipient.ctx)
-    : "";
 
   const missingContact = useMemo(
     () => recipients.filter((r) => !r.ctx.联系人名 || !r.ctx.联系人名.trim()).length,
@@ -389,6 +342,7 @@ export function ComposeSendDialog({
 
   async function handleAiGenerate() {
     if (aiLoading) return;
+    if (!myInfo.ensure()) return;
     setAiLoading(true);
     try {
       const sample = recipients[0];
@@ -399,14 +353,17 @@ export function ComposeSendDialog({
           tone: "friendly",
           language: "zh",
           languageName: "中文",
-
           myCompany: profile.companyName,
           myName: user.name,
+          literal: true,
           sampleEnterprise: sample?.ctx.企业名,
+          sampleContact: sample?.ctx.联系人名,
+          sampleIndustry: sample?.ctx.行业,
+          sampleCity: sample?.ctx.城市,
         },
       });
-      if (isEmail && res.subject) setSubject(res.subject);
-      if (res.content) setContent(res.content);
+      if (isEmail && res.subject) setSubject(myInfo.fillAll(res.subject, sample?.ctx));
+      if (res.content) setContent(myInfo.fillAll(res.content, sample?.ctx));
       setAiUsed(true);
       // AI 生成 → 视为未报备草稿
       if (!isEmail) {
@@ -424,7 +381,7 @@ export function ComposeSendDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-3xl max-h-[92vh] overflow-y-auto">
+      <DialogContent className="max-w-5xl max-h-[92vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Send className="h-5 w-5 text-primary" />
@@ -679,7 +636,7 @@ export function ComposeSendDialog({
                 <SmsTemplatePicker
                   currentId={smsTemplateId}
                   onPick={(id, name, c) => {
-                    setContent(c);
+                    setContent(myInfo.fillAll(c, recipients[0]?.ctx));
                     setSmsTemplateId(id);
                     setSmsTemplateName(name);
                     setAiUsed(false);
@@ -688,139 +645,78 @@ export function ComposeSendDialog({
               </div>
             )}
 
-            {/* 变量插入 */}
-            <div className={cn("flex flex-wrap items-center gap-1.5", !isEmail && "hidden")}>
-              <span className="text-xs text-muted-foreground">
-                插入变量（光标处插入到{focusField === "subject" ? "主题" : "正文"}）：
-              </span>
-              {MESSAGE_VARIABLES.map((v) => (
-                <button
-                  key={v}
-                  type="button"
-                  onClick={() => insertVarAt(focusField, v)}
-                  className="rounded border bg-background px-1.5 py-0.5 text-[11px] font-mono text-primary hover:bg-primary/10"
-                >
-                  {`{${v}}`}
-                </button>
-              ))}
-            </div>
+            <div className="grid gap-0 lg:grid-cols-2 lg:divide-x rounded-md border overflow-hidden">
+              <div className="space-y-2 p-3">
+                <div className="flex h-8 items-center">
+                  <Label className="text-xs text-muted-foreground">中文原文 *</Label>
+                </div>
 
-            {isEmail && (
-              <div className="space-y-1">
-                <Label className="text-xs text-muted-foreground">主题 *</Label>
-                <Input
-                  ref={subjectRef}
-                  value={subject}
-                  onChange={(e) => setSubject(e.target.value)}
-                  onFocus={() => setFocusField("subject")}
-                  maxLength={120}
-                  placeholder="例：{企业名}，关于 {行业} 出口合作的提案"
+                {isEmail && (
+                  <div className="space-y-1">
+                    <Label className="text-xs text-muted-foreground">主题 *</Label>
+                    <Input
+                      ref={subjectRef}
+                      value={subject}
+                      onChange={(e) => setSubject(e.target.value)}
+                      maxLength={120}
+                      placeholder="例：关于出口合作的提案"
+                    />
+                  </div>
+                )}
+
+                <Textarea
+                  ref={contentRef}
+                  value={content}
+                  readOnly={!isEmail}
+                  className={cn(!isEmail && "bg-muted/40 cursor-not-allowed")}
+                  onChange={(e) => {
+                    if (!isEmail) return;
+                    setContent(e.target.value);
+                  }}
+                  rows={isEmail ? 8 : 6}
+                  maxLength={isEmail ? 5000 : 300}
+                  placeholder={
+                    isEmail
+                      ? "您好，我是××公司的×××……"
+                      : "您好，我是××公司的×××……"
+                  }
                 />
-              </div>
-            )}
-
-            <div className="space-y-1">
-              <Label className="text-xs text-muted-foreground">
-                {isEmail ? "正文 *" : "短信内容 *（模板内容不可编辑）"}
-              </Label>
-              <Textarea
-                ref={contentRef}
-                value={content}
-                readOnly={!isEmail}
-                className={cn(!isEmail && "bg-muted/40 cursor-not-allowed")}
-                onChange={(e) => {
-                  if (!isEmail) return;
-                  setContent(e.target.value);
-                }}
-                onFocus={() => setFocusField("content")}
-                rows={isEmail ? 8 : 5}
-                maxLength={isEmail ? 5000 : 300}
-                placeholder={
-                  isEmail
-                    ? "你好 {联系人名}，我是 {我的公司} 的 {我的姓名}……"
-                    : "{联系人名}您好，我是{我的公司}的{我的姓名}……"
-                }
-              />
-              <div className="flex items-center justify-between text-[11px] text-muted-foreground">
-                <span>
-                  {content.length} / {isEmail ? 5000 : 300} 字
-                  {!isEmail && content && (
-                    <span className="ml-2">
-                      · 拆分 {smsSegments(content)} 条
+                <div className="flex items-center justify-between text-[11px] text-muted-foreground">
+                  <span>
+                    {content.length} / {isEmail ? 5000 : 300} 字
+                    {!isEmail && content && (
+                      <span className="ml-2">· 拆分 {smsSegments(content)} 条</span>
+                    )}
+                  </span>
+                  {missingContact > 0 && (
+                    <span className="text-amber-600">
+                      {missingContact} 条记录缺少联系人名，将以「您好」代替
                     </span>
                   )}
-                </span>
-                {missingContact > 0 && (
-                  <span className="text-amber-600">
-                    {missingContact} 条记录缺少联系人名，将以「您好」代替
-                  </span>
+                </div>
+                {!isEmail && content.trim().length > 0 && (
+                  <ComplianceStrip templateName={smsTemplateName} />
                 )}
               </div>
-              {!isEmail && content.trim().length > 0 && (
-                <ComplianceStrip templateName={smsTemplateName} />
-              )}
+
+              {/* 目标语言文案（实际发送内容） */}
+              <TargetLangSection
+                source={content}
+                sourceSubject={isEmail ? subject : undefined}
+                lang={targetLang}
+                onLangChange={setTargetLang}
+                value={translated}
+                onChange={setTranslated}
+                subjectValue={isEmail ? translatedSubject : undefined}
+                onSubjectChange={isEmail ? setTranslatedSubject : undefined}
+                rows={isEmail ? 8 : 6}
+                kindLabel={isEmail ? "邮件" : "短信"}
+                bare
+              />
             </div>
           </section>
 
-          {/* 目标语言文案（实际发送内容） */}
-          <TargetLangSection
-            source={content}
-            sourceSubject={isEmail ? subject : undefined}
-            lang={targetLang}
-            onLangChange={setTargetLang}
-            value={translated}
-            onChange={setTranslated}
-            subjectValue={isEmail ? translatedSubject : undefined}
-            onSubjectChange={isEmail ? setTranslatedSubject : undefined}
-            rows={isEmail ? 8 : 5}
-            kindLabel={isEmail ? "邮件" : "短信"}
-          />
 
-          {/* 预览 */}
-
-          {recipients.length > 0 && (
-            <section className="space-y-2 rounded-md border bg-muted/30 p-3">
-              <div className="flex items-center justify-between">
-                <Label className="text-xs font-medium flex items-center gap-1">
-                  <Eye className="h-3.5 w-3.5" />
-                  预览（变量已替换）
-                  <span className="ml-1 inline-flex h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" />
-                  <span className="text-[10px] font-normal text-muted-foreground">
-                    实时同步
-                  </span>
-                  {null}
-                </Label>
-                {recipients.length > 1 && (
-                  <Select
-                    value={String(previewIdx)}
-                    onValueChange={(v) => setPreviewIdx(Number(v))}
-                  >
-                    <SelectTrigger className="h-7 w-[180px] text-xs">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {recipients.map((r, i) => (
-                        <SelectItem key={r.key} value={String(i)}>
-                          第 {i + 1} 条 · {r.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                )}
-              </div>
-              {isEmail && (
-                <div className="text-xs">
-                  <span className="text-muted-foreground">主题：</span>
-                  <span className="font-medium">{previewSubject || "—"}</span>
-                </div>
-              )}
-              <div className="text-xs whitespace-pre-wrap text-foreground/90 max-h-40 overflow-y-auto">
-                {previewContent || (
-                  <span className="text-muted-foreground">（暂无内容）</span>
-                )}
-              </div>
-            </section>
-          )}
 
           {/* 费用 */}
           <section className="rounded-md border border-rose-200 bg-rose-50 p-3 text-xs space-y-1 dark:border-rose-900/50 dark:bg-rose-950/30">

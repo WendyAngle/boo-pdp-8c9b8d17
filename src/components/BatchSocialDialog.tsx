@@ -3,7 +3,6 @@ import {
   Send,
   Sparkles,
   Loader2,
-  Eye,
   X,
   CheckCircle2,
   XCircle,
@@ -40,7 +39,6 @@ import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
 
 import {
-  MESSAGE_VARIABLES,
   renderTemplate,
   myContext,
   type Recipient,
@@ -75,6 +73,8 @@ import { useCurrentUser } from "@/lib/current-user";
 import { ComposeFormatHint } from "@/components/outreach/ComposeFormatHint";
 import { generateAiContent } from "@/lib/api/ai-compose.functions";
 import { TargetLangSection } from "@/components/outreach/TargetLangSection";
+import { useMyInfoGuard } from "@/lib/my-info-guard";
+
 
 /** 目标候选人（收藏 → 社媒收件人） */
 export interface SocialCandidate extends Recipient {
@@ -104,11 +104,12 @@ export function BatchSocialDialog({
   const user = useCurrentUser();
   const callGenerate = useServerFn(generateAiContent);
   const ledger = useLedger();
+  const myInfo = useMyInfoGuard();
+
 
   const [candidates, setCandidates] = useState<SocialCandidate[]>(incoming);
   const [content, setContent] = useState("");
   const [aiUsed, setAiUsed] = useState(false);
-  const [previewIdx, setPreviewIdx] = useState(0);
   const [aiLoading, setAiLoading] = useState(false);
   /** 目标语言（发送语言）代码 */
   const [targetLang, setTargetLang] = useState<string>("en");
@@ -120,7 +121,6 @@ export function BatchSocialDialog({
     setCandidates(incoming);
     setContent("");
     setAiUsed(false);
-    setPreviewIdx(0);
     setTargetLang("en");
     setTranslated("");
     // 打开即自动校验（跳过已缓存）
@@ -188,28 +188,9 @@ export function BatchSocialDialog({
   const grandTotal = sendTotal + viewCostTotal;
 
   const contentRef = useRef<HTMLTextAreaElement | null>(null);
-  function insertVarAt(v: string) {
-    const token = `{${v}}`;
-    const el = contentRef.current;
-    const s = content;
-    if (!el) return setContent(s + token);
-    const start = el.selectionStart ?? s.length;
-    const end = el.selectionEnd ?? s.length;
-    const next = s.slice(0, start) + token + s.slice(end);
-    setContent(next);
-    requestAnimationFrame(() => {
-      el.focus();
-      const pos = start + token.length;
-      el.setSelectionRange(pos, pos);
-    });
-  }
 
   /** 实际发送内容：有译文则发译文 */
   const sendContent = (translated.trim() || content).trim();
-  const previewRecipient = verified[Math.min(previewIdx, Math.max(0, verified.length - 1))];
-  const previewContent = previewRecipient
-    ? renderTemplate(sendContent, previewRecipient.ctx)
-    : "";
 
   const noPool = capacity === 0;
   const canSend =
@@ -290,6 +271,7 @@ export function BatchSocialDialog({
 
   async function handleAiGenerate() {
     if (aiLoading) return;
+    if (!myInfo.ensure()) return;
     setAiLoading(true);
     try {
       const sample = verified[0] ?? candidates[0];
@@ -303,12 +285,17 @@ export function BatchSocialDialog({
           languageName: "中文",
           myCompany: profile.companyName,
           myName: user.name,
+          literal: true,
           sampleEnterprise: sample?.ctx.企业名,
+          sampleContact: sample?.ctx.联系人名,
+          sampleIndustry: sample?.ctx.行业,
+          sampleCity: sample?.ctx.城市,
         },
       });
-      if (res.content) setContent(res.content);
+      if (res.content) setContent(myInfo.fillAll(res.content, sample?.ctx));
       setAiUsed(true);
       toast.success(`AI 已生成 ${platform} 首次接触文案`);
+
     } catch (e) {
       const msg = e instanceof Error ? e.message : String(e);
       toast.error("AI 生成失败", { description: msg });
@@ -319,7 +306,7 @@ export function BatchSocialDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-3xl max-h-[92vh] overflow-y-auto">
+      <DialogContent className="max-w-5xl max-h-[92vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <MessageCircle className="h-5 w-5 text-emerald-600" />
@@ -543,81 +530,41 @@ export function BatchSocialDialog({
             <ComposeFormatHint channel="social" platform={platform} />
 
 
-            <div className="flex flex-wrap items-center gap-1.5">
-              <span className="text-xs text-muted-foreground">插入变量：</span>
-              {MESSAGE_VARIABLES.map((v) => (
-                <button
-                  key={v}
-                  type="button"
-                  onClick={() => insertVarAt(v)}
-                  className="rounded border bg-background px-1.5 py-0.5 text-[11px] font-mono text-primary hover:bg-primary/10"
-                >
-                  {`{${v}}`}
-                </button>
-              ))}
-            </div>
-
-            <div className="space-y-1">
-              <Label className="text-xs text-muted-foreground">私信内容 *</Label>
-              <Textarea
-                ref={contentRef}
-                value={content}
-                onChange={(e) => setContent(e.target.value)}
-                rows={6}
-                maxLength={4096}
-                placeholder={`{联系人名}您好，我是{我的公司}的{我的姓名}，看到贵司在{行业}方向的业务……`}
-              />
-              <div className="text-[11px] text-muted-foreground">
-                {content.length} / 4096 字
+            <div className="grid gap-0 lg:grid-cols-2 lg:divide-x rounded-md border overflow-hidden">
+              <div className="space-y-2 p-3">
+                <div className="flex h-8 items-center">
+                  <Label className="text-xs text-muted-foreground">中文原文 *</Label>
+                </div>
+                <Textarea
+                  ref={contentRef}
+                  value={content}
+                  onChange={(e) => setContent(e.target.value)}
+                  rows={10}
+                  maxLength={4096}
+                  placeholder={`您好，我是××公司的×××，看到贵司在××方向的业务……`}
+                />
+                <div className="text-[11px] text-muted-foreground">
+                  {content.length} / 4096 字
+                </div>
               </div>
+
+              {/* 目标语言文案（实际发送内容） */}
+              <TargetLangSection
+                source={content}
+                lang={targetLang}
+                onLangChange={setTargetLang}
+                value={translated}
+                onChange={setTranslated}
+                rows={10}
+                kindLabel="私信"
+                bare
+              />
             </div>
           </section>
 
-          {/* 目标语言文案（实际发送内容） */}
-          <TargetLangSection
-            source={content}
-            lang={targetLang}
-            onLangChange={setTargetLang}
-            value={translated}
-            onChange={setTranslated}
-            kindLabel="私信"
-          />
 
-          {/* 预览 */}
 
-          {verified.length > 0 && (
-            <section className="space-y-2 rounded-md border bg-muted/30 p-3">
-              <div className="flex items-center justify-between">
-                <Label className="text-xs font-medium flex items-center gap-1">
-                  <Eye className="h-3.5 w-3.5" />
-                  预览（变量已替换）
-                  {null}
-                </Label>
-                {verified.length > 1 && (
-                  <Select
-                    value={String(previewIdx)}
-                    onValueChange={(v) => setPreviewIdx(Number(v))}
-                  >
-                    <SelectTrigger className="h-7 w-[200px] text-xs">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {verified.map((r, i) => (
-                        <SelectItem key={r.key} value={String(i)}>
-                          第 {i + 1} 条 · {r.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                )}
-              </div>
-              <div className="text-xs whitespace-pre-wrap text-foreground/90 max-h-40 overflow-y-auto">
-                {previewContent || (
-                  <span className="text-muted-foreground">（暂无内容）</span>
-                )}
-              </div>
-            </section>
-          )}
+
 
           {/* 费用 */}
           <section className="rounded-md border border-rose-200 bg-rose-50 p-3 text-xs space-y-1">
