@@ -692,11 +692,6 @@ function ThreadRow({
             >
               {thread.targetName}
             </span>
-            {isPending && !isUnread && (
-              <Badge className="h-4 py-0 px-1.5 text-[10px] font-medium shrink-0 whitespace-nowrap bg-amber-500 hover:bg-amber-500 text-white">
-                跟进中
-              </Badge>
-            )}
             {woken && (
               <Badge className="text-[10px] py-0 px-1 h-4 bg-amber-500 hover:bg-amber-500">
                 已唤醒
