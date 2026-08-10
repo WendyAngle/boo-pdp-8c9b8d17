@@ -102,7 +102,6 @@ import {
   threadGroup,
   assignThread,
   previousAssigneeIds,
-  slaInfo,
 } from "@/lib/inbox-store";
 import { generateAiContent } from "@/lib/api/ai-compose.functions";
 import { translateMessage } from "@/lib/api/ai-translate.functions";
