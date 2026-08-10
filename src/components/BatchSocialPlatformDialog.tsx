@@ -522,7 +522,6 @@ export function BatchSocialPlatformDialog({
               />
             </div>
           </section>
-          )}
 
           {/* 费用 */}
           <section className="rounded-md border border-rose-200 bg-rose-50 p-3 text-xs space-y-1">
