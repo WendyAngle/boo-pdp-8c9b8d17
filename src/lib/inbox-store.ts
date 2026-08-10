@@ -214,6 +214,8 @@ interface ThreadMeta {
     targetName?: string;
     counterpartyAddress?: string;
     contactPerson?: string;
+    email?: string;
+    company?: string;
     phone?: string;
     website?: string;
     country?: string;
