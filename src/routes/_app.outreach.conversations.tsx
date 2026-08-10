@@ -93,7 +93,6 @@ import {
   TEAM_MEMBERS,
   memberById,
   threadGroup,
-  previousAssigneeIds,
   updateThreadProfile,
   addThreadNote,
   removeThreadNote,
