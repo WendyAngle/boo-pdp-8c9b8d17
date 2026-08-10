@@ -16,6 +16,12 @@ const InputSchema = z.object({
   myName: z.string().max(40).optional(),
   /** 示例收件方（用于让模型知道占位符的语义） */
   sampleEnterprise: z.string().max(120).optional(),
+  /** 收件方真实信息（literal 模式下直接写入文案） */
+  sampleContact: z.string().max(80).optional(),
+  sampleIndustry: z.string().max(80).optional(),
+  sampleCity: z.string().max(80).optional(),
+  /** true = 不使用任何花括号占位符，直接输出可发送的成品文案 */
+  literal: z.boolean().optional(),
 });
 
 export const generateAiContent = createServerFn({ method: "POST" })
