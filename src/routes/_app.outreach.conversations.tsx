@@ -338,25 +338,15 @@ function InboxPage() {
           t.meta.assigneeId === CURRENT_TEAM_USER_ID &&
           (t.meta.status === "pending" || t.meta.status === "snoozed"),
       );
-    else if (view === "due_soon")
-      list = list.filter((t) => {
-        const s = slaInfo(t);
-        return !!s && (s.overdue || s.approaching);
-      });
     else if (view === "high_intent")
       list = list.filter((t) => scoreIntent(t).band === "high");
     else if (view === "needs_human")
       list = list.filter(
-        (t) => {
-          if (t.meta.humanTakeover) return false;
-          const sla = slaInfo(t);
-          return (
-            t.meta.aiIntent === "complaint" ||
+        (t) =>
+          !t.meta.humanTakeover &&
+          (t.meta.aiIntent === "complaint" ||
             t.meta.aiIntent === "unsubscribe" ||
-            !t.meta.assigneeId ||
-            (!!sla && sla.overdue)
-          );
-        },
+            !t.meta.assigneeId),
       );
     if (q.trim()) {
       const kw = q.trim().toLowerCase();
