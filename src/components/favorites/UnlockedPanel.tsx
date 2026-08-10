@@ -663,6 +663,18 @@ export function UnlockedPanel() {
             前往「客户发现」查看企业联系方式后，将自动出现在此处。
           </div>
         </Card>
+      ) : aggregate === "owner" ? (
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 items-start">
+          {ownerGroups.map((g) => (
+            <GroupCard
+              key={g.key}
+              g={g}
+              revealed={revealed}
+              onToggle={toggleReveal}
+              groupByDate
+            />
+          ))}
+        </div>
       ) : (
         <div className="space-y-6">
           {groupedByDate.map(({ dateKey, count, groups }) => (
@@ -698,6 +710,7 @@ export function UnlockedPanel() {
           ))}
         </div>
       )}
+
 
       <AlertDialog open={confirmOpen} onOpenChange={setConfirmOpen}>
         <AlertDialogContent>
