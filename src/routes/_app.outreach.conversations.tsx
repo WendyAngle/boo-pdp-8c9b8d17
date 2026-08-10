@@ -1857,10 +1857,140 @@ function _ActionBar({ thread }: { thread: Thread }) {
   return __ActionBarImpl({ thread });
 }
 
+function ProfileEditor({ thread }: { thread: Thread }) {
+  const p = thread.meta.profile ?? {};
+  const [editing, setEditing] = useState(false);
+  const [form, setForm] = useState({
+    targetName: p.targetName ?? thread.targetName,
+    counterpartyAddress: p.counterpartyAddress ?? thread.counterpartyAddress,
+    contactPerson: p.contactPerson ?? "",
+    phone: p.phone ?? "",
+    website: p.website ?? "",
+    country: p.country ?? "",
+  });
+  const [note, setNote] = useState("");
+  const notes = thread.meta.notes ?? [];
+
+  const fields: Array<[keyof typeof form, string]> = [
+    ["targetName", "客户名称"],
+    ["counterpartyAddress", "联系方式"],
+    ["contactPerson", "对接人"],
+    ["phone", "电话"],
+    ["website", "官网"],
+    ["country", "国家/地区"],
+  ];
+
+  return (
+    <div className="space-y-3">
+      <div className="rounded-md border bg-card p-4 space-y-3">
+        <div className="flex items-center gap-2">
+          <span className="text-sm font-medium">客户资料</span>
+          <div className="ml-auto flex items-center gap-1.5">
+            {editing ? (
+              <>
+                <Button
+                  size="sm"
+                  className="h-7"
+                  onClick={() => {
+                    updateThreadProfile(thread.id, form);
+                    setEditing(false);
+                    toast.success("客户资料已保存");
+                  }}
+                >
+                  保存
+                </Button>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="h-7"
+                  onClick={() => setEditing(false)}
+                >
+                  取消
+                </Button>
+              </>
+            ) : (
+              <Button size="sm" variant="outline" className="h-7 gap-1" onClick={() => setEditing(true)}>
+                <Pencil className="h-3.5 w-3.5" />
+                编辑
+              </Button>
+            )}
+          </div>
+        </div>
+        <div className="grid gap-3 sm:grid-cols-2">
+          {fields.map(([k, label]) => (
+            <div key={k} className="space-y-1">
+              <div className="text-xs text-muted-foreground">{label}</div>
+              {editing ? (
+                <Input
+                  value={form[k]}
+                  onChange={(e) => setForm((f) => ({ ...f, [k]: e.target.value }))}
+                  className="h-8 text-sm"
+                />
+              ) : (
+                <div className="text-sm">{form[k] || <span className="text-muted-foreground">—</span>}</div>
+              )}
+            </div>
+          ))}
+        </div>
+      </div>
+
+      <div className="rounded-md border bg-card p-4 space-y-3">
+        <div className="text-sm font-medium">备注</div>
+        <div className="flex items-start gap-2">
+          <Textarea
+            rows={2}
+            value={note}
+            onChange={(e) => setNote(e.target.value)}
+            placeholder="记录客户偏好、报价进展等…"
+            className="resize-none text-sm"
+          />
+          <Button
+            size="sm"
+            className="h-8 shrink-0"
+            disabled={!note.trim()}
+            onClick={() => {
+              addThreadNote(thread.id, note);
+              setNote("");
+              toast.success("备注已添加");
+            }}
+          >
+            添加
+          </Button>
+        </div>
+        {notes.length === 0 ? (
+          <div className="text-xs text-muted-foreground">暂无备注</div>
+        ) : (
+          <div className="space-y-2">
+            {notes
+              .slice()
+              .reverse()
+              .map((n) => (
+                <div key={n.id} className="rounded-md border bg-muted/30 p-2.5 text-sm">
+                  <div className="flex items-center gap-2 text-[11px] text-muted-foreground">
+                    <span>{n.by}</span>
+                    <span>· {formatDateTime(n.at)}</span>
+                    <button
+                      className="ml-auto hover:text-foreground"
+                      onClick={() => removeThreadNote(thread.id, n.id)}
+                    >
+                      删除
+                    </button>
+                  </div>
+                  <div className="mt-1 whitespace-pre-wrap">{n.text}</div>
+                </div>
+              ))}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
 function ProfilePanel({ thread }: { thread: Thread }) {
   const resolveSenderForPanel = useThreadSenderResolver();
   return (
     <div className="space-y-3 text-sm">
+      <ProfileEditor thread={thread} />
       {(() => {
         const sender = resolveSenderForPanel(thread);
         const link =
