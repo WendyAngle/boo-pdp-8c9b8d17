@@ -789,7 +789,6 @@ function ThreadDetail({
   const [translatedFrom, setTranslatedFrom] = useState("");
   const [translating, setTranslating] = useState(false);
   const [sending, setSending] = useState(false);
-  const [selectedTpl, setSelectedTpl] = useState<string>("");
   const [draftSavedAt, setDraftSavedAt] = useState<string | null>(null);
   const draftKey = `boo:inbox:draft:${thread.id}`;
   // 切换会话：从 localStorage 恢复该会话的草稿
@@ -844,8 +843,6 @@ function ThreadDetail({
     const leftMs = exp - Date.now();
     return { winH, leftMs, closed: leftMs <= 0 };
   }, [thread.channel, thread.meta.windowExpiresAt]);
-
-  const templates = HSM_TEMPLATES[thread.channel] ?? [];
 
   async function aiGenerate() {
     setAiLoading(true);
@@ -923,10 +920,7 @@ function ThreadDetail({
   }
 
   function doSend(aiGen = false) {
-    const content = winInfo?.closed && templates.length
-      ? templates.find((t) => t.id === selectedTpl)?.body ?? sendContent
-      : sendContent;
-    if (!content.trim()) {
+    if (!sendContent.trim()) {
       toast.error(needsTranslation ? "请先生成目标语言译文" : "请输入回复内容");
       return;
     }
@@ -934,7 +928,7 @@ function ThreadDetail({
     setTimeout(() => {
       sendReply({
         threadId: thread.id,
-        content: content.trim(),
+        content: sendContent.trim(),
         fromAddress: thread.senderEmail || "outreach@bytetech.cn",
         subject: thread.messages[0]?.subject
           ? `Re: ${thread.messages[0].subject.replace(/^Re:\s*/i, "")}`
@@ -944,13 +938,12 @@ function ThreadDetail({
       });
 
       setReply("");
-      setSelectedTpl("");
       setTranslated("");
       setTranslatedFrom("");
       if (typeof window !== "undefined") window.localStorage.removeItem(draftKey);
       setDraftSavedAt(null);
       setSending(false);
-      toast.success(winInfo?.closed ? "已通过 HSM 模板发送" : "回复已发送");
+      toast.success("回复已发送");
     }, 400);
   }
 
@@ -1380,12 +1373,7 @@ function ThreadDetail({
             <ShieldAlert className="h-3.5 w-3.5 shrink-0" />
             {winInfo.closed ? (
               <span>
-                {CHANNEL_LABEL[thread.channel]} 客服窗口已关闭，
-                {thread.channel === "whatsapp"
-                  ? "请从下方选择已审核的 HSM 模板发送。"
-                  : thread.channel === "facebook"
-                    ? "需附合规消息标签（如 CONFIRMED_EVENT_UPDATE）。"
-                    : "窗口外禁止外发消息。"}
+                {CHANNEL_LABEL[thread.channel]} 客服窗口已关闭，窗口外禁止外发消息。
               </span>
             ) : (
               <span>
