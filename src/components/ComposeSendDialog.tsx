@@ -5,7 +5,6 @@ import {
   Mailbox as MailboxIcon,
   X,
   Loader2,
-  Eye,
   Trash2,
   ShieldOff,
 } from "lucide-react";
@@ -44,7 +43,6 @@ import {
 import { FileText, ShieldCheck, ShieldAlert } from "lucide-react";
 
 import {
-  MESSAGE_VARIABLES,
   renderTemplate,
   smsSegments,
   myContext,
@@ -117,6 +115,7 @@ export function ComposeSendDialog({
   const my = myContext(profile, user);
   const callGenerate = useServerFn(generateAiContent);
   const ledger = useLedger();
+  const myInfo = useMyInfoGuard();
 
   const [recipients, setRecipients] = useState<Recipient[]>(incomingRecipients);
   /** 记录初始进入弹窗时被自动过滤的数量，用于维持“已自动过滤”文案的稳定性 */
@@ -125,7 +124,6 @@ export function ComposeSendDialog({
   const [content, setContent] = useState("");
   const [aiUsed, setAiUsed] = useState(false);
   const [senderId, setSenderId] = useState<string>("");
-  const [previewIdx, setPreviewIdx] = useState(0);
   const [aiLoading, setAiLoading] = useState(false);
   /** 目标语言（发送语言）代码 */
   const [targetLang, setTargetLang] = useState<string>("en");
@@ -192,7 +190,6 @@ export function ComposeSendDialog({
       setInitialFilteredCount(0);
     }
     setManualInput("");
-    setPreviewIdx(0);
     setSubject("");
     setContent("");
     setAiUsed(false);
@@ -218,60 +215,7 @@ export function ComposeSendDialog({
 
   const subjectRef = useRef<HTMLInputElement | null>(null);
   const contentRef = useRef<HTMLTextAreaElement | null>(null);
-  const [focusField, setFocusField] = useState<"subject" | "content">(
-    isEmail ? "subject" : "content",
-  );
 
-  function insertVarAt(field: "subject" | "content", v: string) {
-    const token = `{${v}}`;
-    if (field === "subject") {
-      const el = subjectRef.current;
-      const s = subject;
-      if (!el) return setSubject(s + token);
-      const start = el.selectionStart ?? s.length;
-      const end = el.selectionEnd ?? s.length;
-      const next = s.slice(0, start) + token + s.slice(end);
-      setSubject(next);
-      requestAnimationFrame(() => {
-        el.focus();
-        const pos = start + token.length;
-        el.setSelectionRange(pos, pos);
-      });
-    } else {
-      const el = contentRef.current;
-      const s = content;
-      if (!el) return setContent(s + token);
-      const start = el.selectionStart ?? s.length;
-      const end = el.selectionEnd ?? s.length;
-      const next = s.slice(0, start) + token + s.slice(end);
-      setContent(next);
-      requestAnimationFrame(() => {
-        el.focus();
-        const pos = start + token.length;
-        el.setSelectionRange(pos, pos);
-      });
-    }
-  }
-
-  const previewRecipient = recipients[Math.min(previewIdx, recipients.length - 1)];
-
-  // 退订预检：Dialog 打开即计算，用于顶部非阻塞横幅
-  const suppressedRecipients = useMemo(
-    () => {
-      const kind = isEmail ? "email" : "phone";
-      return recipients.filter((r) => isSuppressed(kind, r.address));
-    },
-    [recipients, isEmail],
-  );
-  /** 实际发送内容：有译文则发译文 */
-  const sendSubject = (translatedSubject.trim() || subject).trim();
-  const sendContent = (translated.trim() || content).trim();
-  const previewSubject = previewRecipient
-    ? renderTemplate(sendSubject, previewRecipient.ctx)
-    : "";
-  const previewContent = previewRecipient
-    ? renderTemplate(sendContent, previewRecipient.ctx)
-    : "";
 
   const missingContact = useMemo(
     () => recipients.filter((r) => !r.ctx.联系人名 || !r.ctx.联系人名.trim()).length,
