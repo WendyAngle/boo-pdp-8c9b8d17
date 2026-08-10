@@ -55,13 +55,8 @@ import {
   Inbox as InboxIcon,
   MessageCircleReply,
   Users,
-  
-  Facebook,
-  Music2,
   MessageSquare,
 } from "lucide-react";
-import { useSocialAccounts, friendRemaining } from "@/data/social-accounts";
-import { poolAverageHealth } from "@/lib/social-account-health";
 import { CreateReachTaskDialog } from "@/components/outreach/CreateReachTaskDialog";
 import { ManagedEmailReachDialog } from "@/components/outreach/ManagedEmailReachDialog";
 import { ManagedEmailBatches } from "@/components/outreach/ManagedEmailBatches";
@@ -176,13 +171,6 @@ function ReachPage() {
   }, [reachRows]);
 
 
-  // 社媒账号池运营指标（替代原积分口径，突出触达任务本身的执行能力）
-  const accounts = useSocialAccounts();
-  const fbRemain = friendRemaining(accounts, "Facebook");
-  const ttRemain = friendRemaining(accounts, "TikTok");
-  const poolHealth = poolAverageHealth(accounts);
-  const usableAccounts = accounts.filter((a) => a.status === "正常").length;
-
   const replyTotal = useMemo(
     () =>
       reachRows.reduce((n, r) => {
@@ -294,26 +282,6 @@ function ReachPage() {
             </div>
           </div>
 
-        </div>
-        <div className="mt-3 flex flex-wrap items-center gap-4 text-xs text-white/85">
-          <span className="inline-flex items-center gap-1">
-            <Facebook className="h-3.5 w-3.5" />
-            Facebook 今日加友剩余
-            <span className="font-semibold tabular-nums">{fbRemain}</span>
-          </span>
-          <span className="inline-flex items-center gap-1">
-            <Music2 className="h-3.5 w-3.5" />
-            TikTok 今日加友剩余
-            <span className="font-semibold tabular-nums">{ttRemain}</span>
-          </span>
-          <span className="inline-flex items-center gap-1">
-            账号池平均健康度
-            <span className="font-semibold tabular-nums">{poolHealth}</span>
-          </span>
-          <span className="inline-flex items-center gap-1">
-            可用社媒账号
-            <span className="font-semibold tabular-nums">{usableAccounts}</span>
-          </span>
         </div>
         <div className="relative mt-3 flex flex-wrap items-center gap-2">
 
