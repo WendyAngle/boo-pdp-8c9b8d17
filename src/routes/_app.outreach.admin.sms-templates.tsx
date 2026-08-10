@@ -638,9 +638,7 @@ function NewTplDialog({
                     <button
                       type="button"
                       onClick={() => {
-                        const hint = locale === "en-US"
-                          ? " Reply STOP to opt out."
-                          : " 回复T退订";
+                        const hint = " 回复T退订";
                         const el = textareaRef.current;
                         const base = content.replace(/\s+$/, "");
                         const next = base + hint;
