@@ -728,7 +728,6 @@ export function CreateReachTaskDialog({
                 </span>
               </div>
             </div>
-            </div>
 
             {/* 目标语言译文（实际发送内容） */}
             <section className="space-y-2 rounded-md border border-primary/25 bg-primary/[0.03] p-3">
@@ -781,7 +780,7 @@ export function CreateReachTaskDialog({
             <Textarea
               value={translated}
               onChange={(e) => setTranslated(e.target.value)}
-              rows={6}
+              rows={10}
               placeholder={`选择目标语言后点击「翻译」，此处展示 ${
                 targetLangOpt?.zh ?? "目标语言"
               }文案，可手动修改`}
