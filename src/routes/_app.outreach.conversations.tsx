@@ -1878,34 +1878,59 @@ function _ActionBar({ thread }: { thread: Thread }) {
   return __ActionBarImpl({ thread });
 }
 
-function ProfileEditor({ thread }: { thread: Thread }) {
+function ProfileEditor({
+  thread,
+  footer,
+}: {
+  thread: Thread;
+  footer?: React.ReactNode;
+}) {
   const p = thread.meta.profile ?? {};
   const [editing, setEditing] = useState(false);
   const [form, setForm] = useState({
     targetName: p.targetName ?? thread.targetName,
-    counterpartyAddress: p.counterpartyAddress ?? thread.counterpartyAddress,
-    contactPerson: p.contactPerson ?? "",
-    phone: p.phone ?? "",
+    email:
+      p.email ?? (thread.channel === "email" ? thread.counterpartyAddress : ""),
+    phone:
+      p.phone ?? (thread.channel === "sms" ? thread.counterpartyAddress : ""),
+    company: p.company ?? thread.parentRef?.name ?? "",
     website: p.website ?? "",
     country: p.country ?? "",
   });
   const [note, setNote] = useState("");
   const notes = thread.meta.notes ?? [];
 
-  const fields: Array<[keyof typeof form, string]> = [
-    ["targetName", "客户名称"],
-    ["counterpartyAddress", "联系方式"],
-    ["contactPerson", "对接人"],
-    ["phone", "电话"],
-    ["website", "官网"],
-    ["country", "国家/地区"],
+  const fields: Array<[keyof typeof form, string, string]> = [
+    ["targetName", "客户名称", "客户 / 联系人名称"],
+    ["email", "联系邮箱", "name@company.com"],
+    ["phone", "联系电话", "+86 138…"],
+    ["company", "所属企业", "企业名称"],
+    ["website", "企业官网", "https://"],
+    ["country", "国家/地区", "如：德国"],
   ];
 
   return (
     <div className="space-y-3">
       <div className="rounded-md border bg-card p-4 space-y-3">
         <div className="flex items-center gap-2">
+          {thread.targetKind === "enterprise" ? (
+            <Building2 className="h-4 w-4 text-muted-foreground" />
+          ) : (
+            <UserRound className="h-4 w-4 text-muted-foreground" />
+          )}
           <span className="text-sm font-medium">客户资料</span>
+          <Badge variant="outline" className="h-5 py-0 px-1.5 text-[10px]">
+            {CHANNEL_LABEL[thread.channel]}
+          </Badge>
+          {thread.isFriend && (
+            <Badge
+              variant="outline"
+              className="h-5 py-0 px-1.5 text-[10px] gap-0.5 bg-violet-50 text-violet-700 border-violet-200"
+            >
+              <UserCheck className="h-2.5 w-2.5" />
+              好友
+            </Badge>
+          )}
           <div className="ml-auto flex items-center gap-1.5">
             {editing ? (
               <>
@@ -1937,23 +1962,33 @@ function ProfileEditor({ thread }: { thread: Thread }) {
             )}
           </div>
         </div>
-        <div className="grid gap-3 sm:grid-cols-2">
-          {fields.map(([k, label]) => (
+        <div className="grid gap-x-4 gap-y-2.5 sm:grid-cols-2">
+          {fields.map(([k, label, ph]) => (
             <div key={k} className="space-y-1">
               <div className="text-xs text-muted-foreground">{label}</div>
               {editing ? (
                 <Input
                   value={form[k]}
+                  placeholder={ph}
                   onChange={(e) => setForm((f) => ({ ...f, [k]: e.target.value }))}
                   className="h-8 text-sm"
                 />
               ) : (
-                <div className="text-sm">{form[k] || <span className="text-muted-foreground">—</span>}</div>
+                <div className="text-sm break-all">
+                  {form[k] || <span className="text-muted-foreground">—</span>}
+                </div>
               )}
             </div>
           ))}
         </div>
+        {thread.meta.assigneeId && (
+          <div className="text-xs text-muted-foreground">
+            当前跟进：{memberById(thread.meta.assigneeId)?.name}
+          </div>
+        )}
+        {footer && <div className="border-t pt-3">{footer}</div>}
       </div>
+
 
       <div className="rounded-md border bg-card p-4 space-y-3">
         <div className="text-sm font-medium">备注</div>
@@ -2007,11 +2042,97 @@ function ProfileEditor({ thread }: { thread: Thread }) {
   );
 }
 
+function ProfileDocLinks({ thread }: { thread: Thread }) {
+  const profile = resolveThreadProfile(thread);
+  return (
+    <div className="space-y-2">
+        <div className="text-xs text-muted-foreground">客户档案</div>
+
+        {profile.kind === "enterprise" && (
+          <Link
+            to="/outreach/enterprise/$id"
+            params={{ id: profile.id }}
+            className="text-sm text-primary hover:underline inline-flex items-center gap-1"
+          >
+            打开企业详情 · {profile.name}
+            <ChevronRight className="h-3.5 w-3.5" />
+          </Link>
+        )}
+
+        {profile.kind === "contact" && (
+          <div className="space-y-1.5">
+            <Link
+              to="/outreach/enterprise/$id/contact/$idx"
+              params={{ id: profile.entId, idx: profile.idx }}
+              className="text-sm text-primary hover:underline inline-flex items-center gap-1"
+            >
+              打开联系人详情 · {profile.name}
+              <ChevronRight className="h-3.5 w-3.5" />
+            </Link>
+            <div>
+              <Link
+                to="/outreach/enterprise/$id"
+                params={{ id: profile.entId }}
+                className="text-xs text-muted-foreground hover:text-primary hover:underline inline-flex items-center gap-1"
+              >
+                所属企业：{profile.entName}
+                <ChevronRight className="h-3 w-3" />
+              </Link>
+            </div>
+          </div>
+        )}
+
+        {profile.kind === "social" && (
+          <div className="space-y-2">
+            <div className="text-xs text-muted-foreground leading-relaxed">
+              该客户来自社媒触达任务，为 {profile.platform} 平台账号，企业名录中暂无对应档案。
+            </div>
+            <div className="text-xs">
+              <span className="text-muted-foreground">平台账号：</span>
+              <span className="font-mono">{profile.handle}</span>
+            </div>
+            {thread.socialSignals && (
+              <div className="text-xs text-muted-foreground">
+                粉丝 {thread.socialSignals.followers ?? "—"} · 内容{" "}
+                {thread.socialSignals.postsCount ?? "—"} 条
+                {thread.socialSignals.accountAgeDays != null
+                  ? ` · 注册 ${thread.socialSignals.accountAgeDays} 天`
+                  : ""}
+              </div>
+            )}
+            <div className="flex flex-wrap gap-3 pt-0.5">
+              <Link
+                to="/outreach/reach"
+                className="text-sm text-primary hover:underline inline-flex items-center gap-1"
+              >
+                查看触达任务
+                <ChevronRight className="h-3.5 w-3.5" />
+              </Link>
+              <Link
+                to="/outreach/social/accounts"
+                className="text-sm text-primary hover:underline inline-flex items-center gap-1"
+              >
+                查看社媒账号
+                <ChevronRight className="h-3.5 w-3.5" />
+              </Link>
+            </div>
+          </div>
+        )}
+
+        {profile.kind === "external" && (
+          <div className="text-xs text-muted-foreground leading-relaxed">
+            {profile.reason}，暂无可跳转的完整档案。可在「企业名录」检索同名客户后收藏，再回到本会话继续跟进。
+          </div>
+        )}
+    </div>
+  );
+}
+
 function ProfilePanel({ thread }: { thread: Thread }) {
   const resolveSenderForPanel = useThreadSenderResolver();
   return (
     <div className="space-y-3 text-sm">
-      <ProfileEditor thread={thread} />
+      <ProfileEditor thread={thread} footer={<ProfileDocLinks thread={thread} />} />
       {(() => {
         const sender = resolveSenderForPanel(thread);
         const link =
@@ -2070,47 +2191,6 @@ function ProfilePanel({ thread }: { thread: Thread }) {
           </div>
         );
       })()}
-
-      <div className="rounded-md border bg-card p-4 space-y-2">
-        <div className="flex items-center gap-2 text-xs text-muted-foreground">
-          {thread.targetKind === "enterprise" ? (
-            <Building2 className="h-3.5 w-3.5" />
-          ) : (
-            <UserRound className="h-3.5 w-3.5" />
-          )}
-          <span>{thread.targetKind === "enterprise" ? "企业" : "联系人"}</span>
-        </div>
-        <div className="text-base font-semibold">{thread.targetName}</div>
-        {thread.parentRef && (
-          <div className="text-xs text-muted-foreground">
-            所属：{thread.parentRef.name}
-          </div>
-        )}
-        <div className="text-xs">
-          <span className="text-muted-foreground">联系方式：</span>
-          <span className="font-mono">{thread.counterpartyAddress}</span>
-        </div>
-        <div className="text-xs">
-          <span className="text-muted-foreground">渠道：</span>
-          {CHANNEL_LABEL[thread.channel]}
-          {thread.isFriend && (
-            <Badge
-              variant="outline"
-              className="ml-1.5 h-4 py-0 px-1.5 text-[10px] gap-0.5 bg-violet-50 text-violet-700 border-violet-200"
-            >
-              <UserCheck className="h-2.5 w-2.5" />
-              好友{thread.friendSource ? ` · ${thread.friendSource}` : ""}
-            </Badge>
-          )}
-        </div>
-
-        {thread.meta.assigneeId && (
-          <div className="text-xs">
-            <span className="text-muted-foreground">当前跟进：</span>
-            {memberById(thread.meta.assigneeId)?.name}
-          </div>
-        )}
-      </div>
 
       {/* 目标客户来源与原因 */}
       {(() => {
@@ -2177,91 +2257,6 @@ function ProfilePanel({ thread }: { thread: Thread }) {
         );
       })()}
 
-      {(() => {
-        const profile = resolveThreadProfile(thread);
-        return (
-          <div className="rounded-md border bg-card p-4 space-y-2">
-            <div className="text-xs text-muted-foreground">客户档案</div>
-
-            {profile.kind === "enterprise" && (
-              <Link
-                to="/outreach/enterprise/$id"
-                params={{ id: profile.id }}
-                className="text-sm text-primary hover:underline inline-flex items-center gap-1"
-              >
-                打开企业详情 · {profile.name}
-                <ChevronRight className="h-3.5 w-3.5" />
-              </Link>
-            )}
-
-            {profile.kind === "contact" && (
-              <div className="space-y-1.5">
-                <Link
-                  to="/outreach/enterprise/$id/contact/$idx"
-                  params={{ id: profile.entId, idx: profile.idx }}
-                  className="text-sm text-primary hover:underline inline-flex items-center gap-1"
-                >
-                  打开联系人详情 · {profile.name}
-                  <ChevronRight className="h-3.5 w-3.5" />
-                </Link>
-                <div>
-                  <Link
-                    to="/outreach/enterprise/$id"
-                    params={{ id: profile.entId }}
-                    className="text-xs text-muted-foreground hover:text-primary hover:underline inline-flex items-center gap-1"
-                  >
-                    所属企业：{profile.entName}
-                    <ChevronRight className="h-3 w-3" />
-                  </Link>
-                </div>
-              </div>
-            )}
-
-            {profile.kind === "social" && (
-              <div className="space-y-2">
-                <div className="text-xs text-muted-foreground leading-relaxed">
-                  该客户来自社媒触达任务，为 {profile.platform} 平台账号，企业名录中暂无对应档案。
-                </div>
-                <div className="text-xs">
-                  <span className="text-muted-foreground">平台账号：</span>
-                  <span className="font-mono">{profile.handle}</span>
-                </div>
-                {thread.socialSignals && (
-                  <div className="text-xs text-muted-foreground">
-                    粉丝 {thread.socialSignals.followers ?? "—"} · 内容{" "}
-                    {thread.socialSignals.postsCount ?? "—"} 条
-                    {thread.socialSignals.accountAgeDays != null
-                      ? ` · 注册 ${thread.socialSignals.accountAgeDays} 天`
-                      : ""}
-                  </div>
-                )}
-                <div className="flex flex-wrap gap-3 pt-0.5">
-                  <Link
-                    to="/outreach/reach"
-                    className="text-sm text-primary hover:underline inline-flex items-center gap-1"
-                  >
-                    查看触达任务
-                    <ChevronRight className="h-3.5 w-3.5" />
-                  </Link>
-                  <Link
-                    to="/outreach/social/accounts"
-                    className="text-sm text-primary hover:underline inline-flex items-center gap-1"
-                  >
-                    查看社媒账号
-                    <ChevronRight className="h-3.5 w-3.5" />
-                  </Link>
-                </div>
-              </div>
-            )}
-
-            {profile.kind === "external" && (
-              <div className="text-xs text-muted-foreground leading-relaxed">
-                {profile.reason}，暂无可跳转的完整档案。可在「企业名录」检索同名客户后收藏，再回到本会话继续跟进。
-              </div>
-            )}
-          </div>
-        );
-      })()}
 
     </div>
   );
