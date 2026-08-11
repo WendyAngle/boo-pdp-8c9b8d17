@@ -502,7 +502,14 @@ function ReachPage() {
 
                   <TableCell className="max-w-[280px]">
                     <div className="flex items-center gap-1.5">
-                      <span className="font-medium">{g.name}</span>
+                      <Link
+                        to="/outreach/reach-task/$taskKey"
+                        params={{ taskKey: g.key }}
+                        className="font-medium text-primary hover:underline"
+                        title="查看任务详情"
+                      >
+                        {g.name}
+                      </Link>
                       {g.aiGenerated && (
                         <Badge variant="secondary" className="gap-1 font-normal shrink-0">
                           <Sparkles className="h-3 w-3 text-primary" />
@@ -514,6 +521,7 @@ function ReachPage() {
                       创建于 {fmtTime(g.createdAt)}
                     </div>
                   </TableCell>
+
                   <TableCell>
                     <ChannelBadge channel={g.channel} platform={g.platform} />
                   </TableCell>
