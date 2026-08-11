@@ -37,7 +37,9 @@ export function EnterpriseEnrichButton({ enterprise }: { enterprise: Enterprise 
       toast.success("数据补全完成，页面已同步更新");
     });
     if (ok) {
-      toast.success("操作成功，数据获取中，约30s后刷新可查看最新数据");
+      toast.success("操作成功，数据获取中，约30s后刷新可查看最新数据", {
+        style: { whiteSpace: "nowrap" },
+      });
     }
   };
 
@@ -53,7 +55,7 @@ export function EnterpriseEnrichButton({ enterprise }: { enterprise: Enterprise 
         {running ? (
           <>
             <Loader2 className="h-4 w-4 animate-spin" />
-            采集中 · 约 {remain}s
+            采集中 · 约 {remain}秒
           </>
         ) : (
           <>
