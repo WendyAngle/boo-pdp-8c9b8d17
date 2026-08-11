@@ -37,6 +37,9 @@ import { MaskedField } from "@/components/MaskedField";
 import { ReachButton } from "@/components/ReachButton";
 import { WhatsAppReachButton } from "@/components/WhatsAppReachButton";
 import { RecentCommsCapsule } from "@/components/outreach/RecentCommsCapsule";
+import { EnterpriseEnrichButton } from "@/components/outreach/EnterpriseEnrichButton";
+import { applyPatch, useEnrich } from "@/lib/enterprise-enrich";
+
 
 export const Route = createFileRoute("/_app/outreach/enterprise/$id/")({
   head: ({ params }) => ({
@@ -65,8 +68,11 @@ export const Route = createFileRoute("/_app/outreach/enterprise/$id/")({
 });
 
 function EnterpriseDetailPage() {
-  const { enterprise: e } = Route.useLoaderData() as { enterprise: Enterprise };
+  const { enterprise: base } = Route.useLoaderData() as { enterprise: Enterprise };
+  const enrichRec = useEnrich(base.id);
+  const e = applyPatch(base, enrichRec);
   return (
+
     <div className="p-8 space-y-6">
       {/* 面包屑 */}
       <div className="flex items-center justify-between">
@@ -85,6 +91,8 @@ function EnterpriseDetailPage() {
           </span>
         </div>
         <div className="flex items-center gap-2">
+          <EnterpriseEnrichButton enterprise={e} />
+
           <FavoriteToggle
             kind="enterprise"
             refId={e.id}
