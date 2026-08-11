@@ -16,6 +16,7 @@ import {
   EyeOff,
   Info,
   Sparkles,
+  Loader2,
 } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -656,5 +657,22 @@ function ChannelBadge({ channel, platform }: { channel: ReachChannel; platform?:
       <Icon className="h-3.5 w-3.5 text-muted-foreground" />
       <span className="font-medium text-foreground">{label}</span>
     </span>
+  );
+}
+
+function TaskStatusBadge({ status }: { status: "completed" | "running" }) {
+  if (status === "running") {
+    return (
+      <Badge variant="outline" className="gap-1 font-normal bg-amber-50 text-amber-700 border-amber-200">
+        <Loader2 className="h-3 w-3 animate-spin" />
+        执行中
+      </Badge>
+    );
+  }
+  return (
+    <Badge variant="outline" className="gap-1 font-normal bg-emerald-50 text-emerald-700 border-emerald-200">
+      <CheckCircle2 className="h-3 w-3" />
+      已完成
+    </Badge>
   );
 }
