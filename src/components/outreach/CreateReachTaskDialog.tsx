@@ -381,7 +381,7 @@ export function CreateReachTaskDialog({
       keywords: kws,
       products: promoProducts,
       targetCap,
-      accounts: availableAccounts.map((a) => a.handle ?? a.name),
+      accounts: availableAccounts.map((a) => a.handle || a.displayName),
       targetSource: "系统按推广产品与关键词自动搜索",
       sendMode: "创建后立即执行",
       schedule: "创建后立即执行",
