@@ -65,8 +65,11 @@ export const Route = createFileRoute("/_app/outreach/enterprise/$id/")({
 });
 
 function EnterpriseDetailPage() {
-  const { enterprise: e } = Route.useLoaderData() as { enterprise: Enterprise };
+  const { enterprise: base } = Route.useLoaderData() as { enterprise: Enterprise };
+  const enrichRec = useEnrich(base.id);
+  const e = applyPatch(base, enrichRec);
   return (
+
     <div className="p-8 space-y-6">
       {/* 面包屑 */}
       <div className="flex items-center justify-between">
