@@ -237,7 +237,7 @@ export function BatchSocialPlatformDialog({
       action: "私信",
       targetCap: targetCount,
       targetSource: "「我的收藏」勾选目标",
-      sendMode: sendModeLabel,
+      sendMode: "系统按账号额度自动排期发送",
       schedule:
         deferredCount > 0
           ? "当日额度用尽部分顺延次日 09:00 继续执行"
