@@ -16,6 +16,7 @@ import {
   EyeOff,
   Info,
   Sparkles,
+  Loader2,
 } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -84,6 +85,7 @@ type TaskGroup = {
   aiGenerated: boolean;
   createdAt: string;
   lastAt: string;
+  status: "completed" | "running";
 };
 
 
@@ -182,6 +184,19 @@ function ReachPage() {
   const replyRate =
     reachRows.length === 0 ? 0 : Math.round((replyTotal / reachRows.length) * 100);
 
+  // 根据全量 ledger 判断每个任务 key 是否仍有未执行完毕的记录
+  const runningKeys = useMemo(() => {
+    const set = new Set<string>();
+    for (const r of ledger) {
+      if (r.kind !== "reach") continue;
+      const s = getReachStatus(r, now);
+      if (s === "pending" || s === "in_progress") {
+        set.add(groupKeyOf(r));
+      }
+    }
+    return set;
+  }, [ledger, now]);
+
   // 任务视图：把逐条触达成功记录按「任务」聚合
   const taskGroups = useMemo(() => {
     const map = new Map<string, TaskGroup>();
@@ -205,6 +220,7 @@ function ReachPage() {
           aiGenerated: false,
           createdAt: r.createdAt,
           lastAt: r.createdAt,
+          status: runningKeys.has(key) ? "running" : "completed",
         };
         map.set(key, g);
       }
@@ -216,7 +232,7 @@ function ReachPage() {
       if (r.createdAt > g.lastAt) g.lastAt = r.createdAt;
     }
     return [...map.values()].sort((a, b) => (a.lastAt < b.lastAt ? 1 : -1));
-  }, [filtered, threadByKey]);
+  }, [filtered, threadByKey, runningKeys]);
 
 
   const taskPageData = useMemo(
@@ -492,6 +508,7 @@ function ReachPage() {
                 <TableHead className="w-[150px]">渠道 / 平台</TableHead>
                 <TableHead className="w-[90px]">动作</TableHead>
                 <TableHead className="w-[110px]">目标数</TableHead>
+                <TableHead className="w-[100px]">任务状态</TableHead>
                 <TableHead className="w-[170px]">创建时间</TableHead>
               </TableRow>
             </TableHeader>
@@ -543,6 +560,10 @@ function ReachPage() {
                       {g.total}
                       <Users className="h-3.5 w-3.5" />
                     </Link>
+                  </TableCell>
+
+                  <TableCell>
+                    <TaskStatusBadge status={g.status} />
                   </TableCell>
 
                   <TableCell className="font-mono tabular-nums text-xs text-muted-foreground whitespace-nowrap">
@@ -636,5 +657,22 @@ function ChannelBadge({ channel, platform }: { channel: ReachChannel; platform?:
       <Icon className="h-3.5 w-3.5 text-muted-foreground" />
       <span className="font-medium text-foreground">{label}</span>
     </span>
+  );
+}
+
+function TaskStatusBadge({ status }: { status: "completed" | "running" }) {
+  if (status === "running") {
+    return (
+      <Badge variant="outline" className="gap-1 font-normal bg-amber-50 text-amber-700 border-amber-200">
+        <Loader2 className="h-3 w-3 animate-spin" />
+        执行中
+      </Badge>
+    );
+  }
+  return (
+    <Badge variant="outline" className="gap-1 font-normal bg-emerald-50 text-emerald-700 border-emerald-200">
+      <CheckCircle2 className="h-3 w-3" />
+      已完成
+    </Badge>
   );
 }
