@@ -144,8 +144,11 @@ export function useFavorite(
   refId: string,
   payload: FavoritePayload,
 ) {
-  useSyncExternalStore(subscribe, getVersion, getVersion);
-  const favored = isFavorited(kind, refId);
+  const favored = useSyncExternalStore(
+    subscribe,
+    () => isFavorited(kind, refId),
+    () => false,
+  );
   const toggle = useCallback(() => {
     toggleFavorite(kind, refId, payload);
     // payload is referenced by caller; if it changes ad-hoc that's fine
