@@ -183,6 +183,19 @@ function ReachPage() {
   const replyRate =
     reachRows.length === 0 ? 0 : Math.round((replyTotal / reachRows.length) * 100);
 
+  // 根据全量 ledger 判断每个任务 key 是否仍有未执行完毕的记录
+  const runningKeys = useMemo(() => {
+    const set = new Set<string>();
+    for (const r of ledger) {
+      if (r.kind !== "reach") continue;
+      const s = getReachStatus(r, now);
+      if (s === "pending" || s === "in_progress") {
+        set.add(groupKeyOf(r));
+      }
+    }
+    return set;
+  }, [ledger, now]);
+
   // 任务视图：把逐条触达成功记录按「任务」聚合
   const taskGroups = useMemo(() => {
     const map = new Map<string, TaskGroup>();
@@ -206,6 +219,7 @@ function ReachPage() {
           aiGenerated: false,
           createdAt: r.createdAt,
           lastAt: r.createdAt,
+          status: runningKeys.has(key) ? "running" : "completed",
         };
         map.set(key, g);
       }
@@ -217,7 +231,7 @@ function ReachPage() {
       if (r.createdAt > g.lastAt) g.lastAt = r.createdAt;
     }
     return [...map.values()].sort((a, b) => (a.lastAt < b.lastAt ? 1 : -1));
-  }, [filtered, threadByKey]);
+  }, [filtered, threadByKey, runningKeys]);
 
 
   const taskPageData = useMemo(
