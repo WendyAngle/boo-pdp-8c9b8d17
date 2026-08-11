@@ -4,7 +4,6 @@ import {
   ArrowLeft,
   Sparkles,
   Users,
-  MessageSquare,
   Mail,
   Phone,
   Globe,
@@ -32,7 +31,6 @@ import {
   getReachStatus,
   seedDemoLedgerIfEmpty,
   REACH_CHANNEL_LABEL,
-  type LedgerEntry,
   type ReachChannel,
 } from "@/lib/credits-ledger";
 import { groupKeyOf, reachAction, taskNameOf } from "@/lib/reach-tasks";
@@ -379,6 +377,3 @@ function Kpi({
     </div>
   );
 }
-
-void MessageSquare;
-void LedgerEntry;
