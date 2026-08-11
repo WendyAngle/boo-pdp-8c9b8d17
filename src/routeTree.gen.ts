@@ -43,6 +43,7 @@ import { Route as AppOutreachSocialReachRouteImport } from './routes/_app.outrea
 import { Route as AppOutreachSocialFriendsRouteImport } from './routes/_app.outreach.social.friends'
 import { Route as AppOutreachSocialDmRouteImport } from './routes/_app.outreach.social.dm'
 import { Route as AppOutreachSocialAccountsRouteImport } from './routes/_app.outreach.social.accounts'
+import { Route as AppOutreachReachTaskTaskKeyRouteImport } from './routes/_app.outreach.reach-task.$taskKey'
 import { Route as AppOutreachProductsHsRouteImport } from './routes/_app.outreach.products.$hs'
 import { Route as AppOutreachEnterpriseIdRouteImport } from './routes/_app.outreach.enterprise.$id'
 import { Route as AppOutreachAdminVoiceTemplatesRouteImport } from './routes/_app.outreach.admin.voice-templates'
@@ -242,6 +243,12 @@ const AppOutreachSocialAccountsRoute =
     path: '/outreach/social/accounts',
     getParentRoute: () => AppRoute,
   } as any)
+const AppOutreachReachTaskTaskKeyRoute =
+  AppOutreachReachTaskTaskKeyRouteImport.update({
+    id: '/outreach/reach-task/$taskKey',
+    path: '/outreach/reach-task/$taskKey',
+    getParentRoute: () => AppRoute,
+  } as any)
 const AppOutreachProductsHsRoute = AppOutreachProductsHsRouteImport.update({
   id: '/outreach/products/$hs',
   path: '/outreach/products/$hs',
@@ -397,6 +404,7 @@ export interface FileRoutesByFullPath {
   '/outreach/admin/voice-templates': typeof AppOutreachAdminVoiceTemplatesRoute
   '/outreach/enterprise/$id': typeof AppOutreachEnterpriseIdRouteWithChildren
   '/outreach/products/$hs': typeof AppOutreachProductsHsRoute
+  '/outreach/reach-task/$taskKey': typeof AppOutreachReachTaskTaskKeyRoute
   '/outreach/social/accounts': typeof AppOutreachSocialAccountsRoute
   '/outreach/social/dm': typeof AppOutreachSocialDmRoute
   '/outreach/social/friends': typeof AppOutreachSocialFriendsRoute
@@ -449,6 +457,7 @@ export interface FileRoutesByTo {
   '/outreach/admin/sms-templates': typeof AppOutreachAdminSmsTemplatesRoute
   '/outreach/admin/voice-templates': typeof AppOutreachAdminVoiceTemplatesRoute
   '/outreach/products/$hs': typeof AppOutreachProductsHsRoute
+  '/outreach/reach-task/$taskKey': typeof AppOutreachReachTaskTaskKeyRoute
   '/outreach/social/accounts': typeof AppOutreachSocialAccountsRoute
   '/outreach/social/dm': typeof AppOutreachSocialDmRoute
   '/outreach/social/friends': typeof AppOutreachSocialFriendsRoute
@@ -505,6 +514,7 @@ export interface FileRoutesById {
   '/_app/outreach/admin/voice-templates': typeof AppOutreachAdminVoiceTemplatesRoute
   '/_app/outreach/enterprise/$id': typeof AppOutreachEnterpriseIdRouteWithChildren
   '/_app/outreach/products/$hs': typeof AppOutreachProductsHsRoute
+  '/_app/outreach/reach-task/$taskKey': typeof AppOutreachReachTaskTaskKeyRoute
   '/_app/outreach/social/accounts': typeof AppOutreachSocialAccountsRoute
   '/_app/outreach/social/dm': typeof AppOutreachSocialDmRoute
   '/_app/outreach/social/friends': typeof AppOutreachSocialFriendsRoute
@@ -562,6 +572,7 @@ export interface FileRouteTypes {
     | '/outreach/admin/voice-templates'
     | '/outreach/enterprise/$id'
     | '/outreach/products/$hs'
+    | '/outreach/reach-task/$taskKey'
     | '/outreach/social/accounts'
     | '/outreach/social/dm'
     | '/outreach/social/friends'
@@ -614,6 +625,7 @@ export interface FileRouteTypes {
     | '/outreach/admin/sms-templates'
     | '/outreach/admin/voice-templates'
     | '/outreach/products/$hs'
+    | '/outreach/reach-task/$taskKey'
     | '/outreach/social/accounts'
     | '/outreach/social/dm'
     | '/outreach/social/friends'
@@ -669,6 +681,7 @@ export interface FileRouteTypes {
     | '/_app/outreach/admin/voice-templates'
     | '/_app/outreach/enterprise/$id'
     | '/_app/outreach/products/$hs'
+    | '/_app/outreach/reach-task/$taskKey'
     | '/_app/outreach/social/accounts'
     | '/_app/outreach/social/dm'
     | '/_app/outreach/social/friends'
@@ -933,6 +946,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppOutreachSocialAccountsRouteImport
       parentRoute: typeof AppRoute
     }
+    '/_app/outreach/reach-task/$taskKey': {
+      id: '/_app/outreach/reach-task/$taskKey'
+      path: '/outreach/reach-task/$taskKey'
+      fullPath: '/outreach/reach-task/$taskKey'
+      preLoaderRoute: typeof AppOutreachReachTaskTaskKeyRouteImport
+      parentRoute: typeof AppRoute
+    }
     '/_app/outreach/products/$hs': {
       id: '/_app/outreach/products/$hs'
       path: '/outreach/products/$hs'
@@ -1183,6 +1203,7 @@ interface AppRouteChildren {
   AppOutreachAdminSmsTemplatesRoute: typeof AppOutreachAdminSmsTemplatesRoute
   AppOutreachAdminVoiceTemplatesRoute: typeof AppOutreachAdminVoiceTemplatesRoute
   AppOutreachProductsHsRoute: typeof AppOutreachProductsHsRoute
+  AppOutreachReachTaskTaskKeyRoute: typeof AppOutreachReachTaskTaskKeyRoute
   AppOutreachSocialAccountsRoute: typeof AppOutreachSocialAccountsRoute
   AppOutreachSocialDmRoute: typeof AppOutreachSocialDmRoute
   AppOutreachSocialFriendsRoute: typeof AppOutreachSocialFriendsRoute
@@ -1230,6 +1251,7 @@ const AppRouteChildren: AppRouteChildren = {
   AppOutreachAdminSmsTemplatesRoute: AppOutreachAdminSmsTemplatesRoute,
   AppOutreachAdminVoiceTemplatesRoute: AppOutreachAdminVoiceTemplatesRoute,
   AppOutreachProductsHsRoute: AppOutreachProductsHsRoute,
+  AppOutreachReachTaskTaskKeyRoute: AppOutreachReachTaskTaskKeyRoute,
   AppOutreachSocialAccountsRoute: AppOutreachSocialAccountsRoute,
   AppOutreachSocialDmRoute: AppOutreachSocialDmRoute,
   AppOutreachSocialFriendsRoute: AppOutreachSocialFriendsRoute,

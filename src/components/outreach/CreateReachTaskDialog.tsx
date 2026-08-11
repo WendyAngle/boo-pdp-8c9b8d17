@@ -28,6 +28,7 @@ import { type SocialTaskPlatform } from "@/lib/social-tasks";
 import { useSocialAccounts } from "@/data/social-accounts";
 import { useCreditBalance, spendCredits } from "@/lib/credits-balance";
 import { COST_SOCIAL_DM, createSocialReachBatch } from "@/lib/credits-ledger";
+import { saveReachTaskConfig } from "@/lib/reach-task-config";
 
 import { LANGUAGES, langByCode } from "@/lib/lang-detect";
 import { useLeadProfile, saveProfile } from "@/lib/lead-profile";
@@ -370,6 +371,25 @@ export function CreateReachTaskDialog({
       content: sendContent,
       aiGenerated: aiUsed,
       action: "私信",
+    });
+    saveReachTaskConfig({
+      taskKey: `s:${name.trim()}:${platform}`,
+      type: "social_prospecting",
+      platform,
+      action: "私信",
+      region,
+      keywords: kws,
+      products: promoProducts,
+      targetCap,
+      accounts: availableAccounts.map((a) => a.handle || a.displayName),
+      targetSource: "系统按推广产品与关键词自动搜索",
+      sendMode: "创建后立即执行",
+      schedule: "创建后立即执行",
+      sourceZh: content.trim(),
+      targetLang,
+      sendContent,
+      aiGenerated: aiUsed,
+      costPerTarget: COST_SOCIAL_DM,
     });
     toast.success(
       `已创建触达任务，生成 ${targetCap} 条触达记录，共扣 ${sendCost.toLocaleString()} 积分（AI 生成与翻译免费）`,

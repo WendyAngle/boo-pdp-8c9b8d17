@@ -9,6 +9,7 @@ import {
   Info,
 } from "lucide-react";
 import { useServerFn } from "@tanstack/react-start";
+import { saveReachTaskConfig } from "@/lib/reach-task-config";
 import { toast } from "sonner";
 
 import {
@@ -228,6 +229,24 @@ export function BatchSocialPlatformDialog({
         ...(i >= capacity ? { scheduledAt: scheduled } : {}),
       });
       n++;
+    });
+    saveReachTaskConfig({
+      taskKey: `s:${taskName}:${jobs[0]?.platform ?? ""}`,
+      type: "social_dm",
+      platform: jobs[0]?.platform,
+      action: "私信",
+      targetCap: targetCount,
+      targetSource: "「我的收藏」勾选目标",
+      sendMode: "系统按账号额度自动排期发送",
+      schedule:
+        deferredCount > 0
+          ? "当日额度用尽部分顺延次日 09:00 继续执行"
+          : "创建后立即执行",
+      sourceZh: content.trim(),
+      targetLang,
+      sendContent,
+      aiGenerated: aiUsed,
+      costPerTarget: unit,
     });
     onOpenChange(false);
     toast.success(`已加入触达队列：${n} 条社媒私信`, {
