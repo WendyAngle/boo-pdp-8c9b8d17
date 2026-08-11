@@ -84,6 +84,7 @@ type TaskGroup = {
   aiGenerated: boolean;
   createdAt: string;
   lastAt: string;
+  status: "completed" | "running";
 };
 
 
