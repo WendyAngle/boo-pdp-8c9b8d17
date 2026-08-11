@@ -2,7 +2,6 @@ import { useEffect, useState } from "react";
 import { Sparkles, Loader2, CheckCircle2, AlertCircle } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import {
   Dialog,
@@ -16,7 +15,6 @@ import type { Enterprise } from "@/data/enterprises";
 import {
   ENRICH_DURATION_MS,
   ENRICH_FIELD_LABEL,
-  missingFields,
   startEnrich,
   useEnrich,
   type EnrichFieldKey,
@@ -48,15 +46,13 @@ function FieldChips({
 
 /**
  * 企业数据补全入口
- * - 详情页右上角常驻按钮，缺失字段数以角标提示
- * - 点击先弹窗确认（说明将采集哪些字段、预计 30s、可离开页面）
- * - 采集中按钮转为进度态；完成后 toast 提示并弹出结果摘要
+ * - 详情页右上角常驻按钮，统一主按钮样式
+ * - 点击后直接提交采集任务，toast 提示用户约 30 秒后刷新查看
+ * - 采集中按钮转为进度态；完成后弹出结果摘要
  */
 export function EnterpriseEnrichButton({ enterprise }: { enterprise: Enterprise }) {
   const rec = useEnrich(enterprise.id);
   const running = rec?.status === "running";
-  const missing = missingFields(enterprise);
-  const [confirmOpen, setConfirmOpen] = useState(false);
   const [resultOpen, setResultOpen] = useState(false);
   const [tick, setTick] = useState(0);
 
@@ -72,7 +68,6 @@ export function EnterpriseEnrichButton({ enterprise }: { enterprise: Enterprise 
   void tick;
 
   const launch = () => {
-    setConfirmOpen(false);
     const ok = startEnrich(enterprise, (r) => {
       if (r.filled.length > 0) {
         toast.success(`数据补全完成，已补充 ${r.filled.length} 项信息`, {
@@ -84,17 +79,19 @@ export function EnterpriseEnrichButton({ enterprise }: { enterprise: Enterprise 
       }
       setResultOpen(true);
     });
-    if (ok) toast("已提交采集任务，预计 30 秒返回结果，可继续浏览其他页面");
+    if (ok) {
+      toast.success("操作成功，数据获取中，约30s后刷新可查看最新数据");
+    }
   };
 
   return (
     <>
       <Button
         size="sm"
-        variant={missing.length > 0 ? "default" : "outline"}
+        variant="default"
         className="gap-1.5"
         disabled={running}
-        onClick={() => (missing.length === 0 ? launch() : setConfirmOpen(true))}
+        onClick={launch}
       >
         {running ? (
           <>
@@ -105,14 +102,6 @@ export function EnterpriseEnrichButton({ enterprise }: { enterprise: Enterprise 
           <>
             <Sparkles className="h-4 w-4" />
             补全企业数据
-            {missing.length > 0 && (
-              <Badge
-                variant="secondary"
-                className="ml-0.5 h-5 px-1.5 text-[11px] font-medium"
-              >
-                缺 {missing.length} 项
-              </Badge>
-            )}
           </>
         )}
       </Button>
@@ -122,34 +111,6 @@ export function EnterpriseEnrichButton({ enterprise }: { enterprise: Enterprise 
           <Progress value={pct} className="h-1.5" />
         </div>
       )}
-
-      {/* 确认弹窗 */}
-      <Dialog open={confirmOpen} onOpenChange={setConfirmOpen}>
-        <DialogContent className="sm:max-w-md">
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
-              <Sparkles className="h-4 w-4 text-primary" />
-              补全企业数据
-            </DialogTitle>
-            <DialogDescription>
-              系统将从公开渠道采集该企业的缺失信息，预计需要 30
-              秒。任务在后台执行，你可以关闭弹窗继续浏览，完成后会收到提示。
-            </DialogDescription>
-          </DialogHeader>
-          <div className="space-y-2">
-            <div className="text-xs text-muted-foreground">
-              本次将尝试补全以下 {missing.length} 项：
-            </div>
-            <FieldChips keys={missing} tone="muted" />
-          </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setConfirmOpen(false)}>
-              取消
-            </Button>
-            <Button onClick={launch}>开始采集</Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
 
       {/* 结果弹窗 */}
       <Dialog open={resultOpen} onOpenChange={setResultOpen}>
