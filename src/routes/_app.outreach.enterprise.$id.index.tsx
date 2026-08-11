@@ -37,6 +37,9 @@ import { MaskedField } from "@/components/MaskedField";
 import { ReachButton } from "@/components/ReachButton";
 import { WhatsAppReachButton } from "@/components/WhatsAppReachButton";
 import { RecentCommsCapsule } from "@/components/outreach/RecentCommsCapsule";
+import { EnterpriseEnrichButton } from "@/components/outreach/EnterpriseEnrichButton";
+import { applyPatch, useEnrich } from "@/lib/enterprise-enrich";
+
 
 export const Route = createFileRoute("/_app/outreach/enterprise/$id/")({
   head: ({ params }) => ({
