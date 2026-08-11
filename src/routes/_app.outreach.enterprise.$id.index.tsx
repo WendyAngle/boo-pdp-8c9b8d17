@@ -91,6 +91,8 @@ function EnterpriseDetailPage() {
           </span>
         </div>
         <div className="flex items-center gap-2">
+          <EnterpriseEnrichButton enterprise={base} />
+
           <FavoriteToggle
             kind="enterprise"
             refId={e.id}
