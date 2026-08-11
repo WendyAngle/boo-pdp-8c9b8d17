@@ -507,6 +507,7 @@ function ReachPage() {
                 <TableHead className="w-[150px]">渠道 / 平台</TableHead>
                 <TableHead className="w-[90px]">动作</TableHead>
                 <TableHead className="w-[110px]">目标数</TableHead>
+                <TableHead className="w-[100px]">任务状态</TableHead>
                 <TableHead className="w-[170px]">创建时间</TableHead>
               </TableRow>
             </TableHeader>
@@ -558,6 +559,10 @@ function ReachPage() {
                       {g.total}
                       <Users className="h-3.5 w-3.5" />
                     </Link>
+                  </TableCell>
+
+                  <TableCell>
+                    <TaskStatusBadge status={g.status} />
                   </TableCell>
 
                   <TableCell className="font-mono tabular-nums text-xs text-muted-foreground whitespace-nowrap">
