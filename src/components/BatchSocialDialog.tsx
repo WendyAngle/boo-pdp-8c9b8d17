@@ -479,12 +479,35 @@ export function BatchSocialDialog({
               <div className="flex items-center justify-between gap-2">
                 <Label className="text-xs text-muted-foreground">
                   目标账号（{candidates.length}）
+                  {lockedTargets.length > 0 && (
+                    <span className="ml-1 text-muted-foreground/80">
+                      · {lockedTargets.length} 位{unlockFieldLabel}未解锁，默认脱敏展示
+                    </span>
+                  )}
                 </Label>
-                <span className="inline-flex items-center gap-1 text-[11px] text-muted-foreground">
-                  <Info className="h-3 w-3" />
-                  号码默认脱敏，点击 👁 首次查看 -{COST_VIEW_PHONE} 积分，永久解锁；成功发送后自动解锁
-                </span>
+                <div className="flex items-center gap-2">
+                  <span className="inline-flex items-center gap-1 text-[11px] text-muted-foreground">
+                    <Info className="h-3 w-3" />
+                    点击 👁 单条解锁 -{unitView} 积分；成功发送后自动解锁
+                  </span>
+                  {lockedTargets.length > 0 && (
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      className="h-7 text-xs"
+                      onClick={() => {
+                        setUnlockAllAck(false);
+                        setUnlockAllOpen(true);
+                      }}
+                    >
+                      <Unlock className="h-3.5 w-3.5 mr-1" />
+                      全部解锁 · -{lockedTargets.length * unitView}
+                    </Button>
+                  )}
+                </div>
               </div>
+
               <div className="flex flex-wrap gap-1.5 rounded-md border bg-muted/20 p-2 max-h-32 overflow-y-auto">
                 {candidates.map((c) => {
                   const st = normalizePhone(c.address)
