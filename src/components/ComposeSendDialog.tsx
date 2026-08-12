@@ -46,7 +46,6 @@ import {
 import { FileText, ShieldCheck, ShieldAlert } from "lucide-react";
 
 import {
-  renderTemplate,
   smsSegments,
   myContext,
   type Recipient,
@@ -72,14 +71,8 @@ import { useCurrentUser } from "@/lib/current-user";
 import { ComposeFormatHint } from "@/components/outreach/ComposeFormatHint";
 import { generateAiContent } from "@/lib/api/ai-compose.functions";
 import { TargetLangSection } from "@/components/outreach/TargetLangSection";
-import { SendPreviewConfirm } from "@/components/outreach/SendPreviewConfirm";
 import { useMyInfoGuard } from "@/lib/my-info-guard";
 import { maskContact } from "@/lib/mask-contact";
-import {
-  PreviewTargetPicker,
-  VarUsageHint,
-  type PreviewTarget,
-} from "@/components/outreach/MultiTargetVars";
 import { Checkbox } from "@/components/ui/checkbox";
 
 
@@ -150,10 +143,6 @@ export function ComposeSendDialog({
 
   /** 手动添加收件人输入框 */
   const [manualInput, setManualInput] = useState("");
-  /** 多目标时的预览目标下标（仅影响展示，不改模板、不产生费用） */
-  const [previewIdx, setPreviewIdx] = useState(0);
-  /** 发送前抽样确认层（多目标） */
-  const [confirmOpen, setConfirmOpen] = useState(false);
 
   function addManualRecipients() {
     const raw = manualInput
@@ -207,7 +196,6 @@ export function ComposeSendDialog({
       setInitialFilteredCount(0);
     }
     setManualInput("");
-    setPreviewIdx(0);
     setSubject("");
     setContent("");
     setAiUsed(false);
@@ -243,30 +231,10 @@ export function ComposeSendDialog({
   const sendSubject = (translatedSubject.trim() || subject).trim();
   const sendContent = (translated.trim() || content).trim();
 
-  /** 多目标 = 模板模式：文案保留变量，发送时按各目标分别渲染 */
-  const multi = recipients.length > 1;
-  const previewTargets: PreviewTarget[] = useMemo(
-    () => recipients.map((r) => ({ key: r.key, name: r.name, ctx: r.ctx })),
-    [recipients],
-  );
-  const previewTarget =
-    previewTargets[Math.min(previewIdx, Math.max(0, previewTargets.length - 1))];
-
-  const missingContact = useMemo(
-    () => recipients.filter((r) => !r.ctx.联系人名 || !r.ctx.联系人名.trim()).length,
-    [recipients],
-  );
-
   // 费用合计
   const unit = costForChannel(isEmail ? "email" : "phone");
-  const segments = isEmail
-    ? 1
-    : Math.max(
-        1,
-        ...(recipients.length > 0
-          ? recipients.map((r) => smsSegments(renderTemplate(sendContent, r.ctx)))
-          : [smsSegments(sendContent || "")]),
-      );
+  const segments = isEmail ? 1 : smsSegments(sendContent || "");
+
   const sendCostPerRecipient = isEmail ? unit : unit * segments;
   const sendTotal = recipients.length * sendCostPerRecipient;
 
@@ -373,8 +341,9 @@ export function ComposeSendDialog({
     }
     let n = 0;
     for (const r of active) {
-      const finalSubject = isEmail ? renderTemplate(sendSubject, r.ctx) : undefined;
-      const finalContent = renderTemplate(sendContent, r.ctx);
+      const finalSubject = isEmail ? sendSubject : undefined;
+      const finalContent = sendContent;
+
       // 未解锁时先扣查看费并永久解锁（幂等）；手动添加的地址无需解锁
       if (!isManualRecipient(r)) {
         performReachAutoUnlocks({
@@ -427,10 +396,6 @@ export function ComposeSendDialog({
 
   function handleSend() {
     if (!canSend) return;
-    if (multi) {
-      setConfirmOpen(true);
-      return;
-    }
     doSend();
   }
 
@@ -439,7 +404,6 @@ export function ComposeSendDialog({
     if (!myInfo.ensure()) return;
     setAiLoading(true);
     try {
-      const sample = recipients[0];
       const res = await callGenerate({
         data: {
           channel: isEmail ? "email" : "sms",
@@ -449,14 +413,10 @@ export function ComposeSendDialog({
           languageName: "中文",
           myCompany: profile.companyName,
           myName: user.name,
-          literal: !multi,
-          sampleEnterprise: sample?.ctx.企业名,
-          sampleContact: multi ? undefined : sample?.ctx.联系人名,
-          sampleIndustry: multi ? undefined : sample?.ctx.行业,
-          sampleCity: multi ? undefined : sample?.ctx.城市,
+          literal: true,
         },
       });
-      const post = (t: string) => (multi ? myInfo.fillMine(t) : myInfo.fillAll(t, sample?.ctx));
+      const post = (t: string) => myInfo.fillAll(t);
       if (isEmail && res.subject) setSubject(post(res.subject));
       if (res.content) setContent(post(res.content));
       setAiUsed(true);
@@ -465,12 +425,10 @@ export function ComposeSendDialog({
         setSmsTemplateId(null);
         setSmsTemplateName(null);
       }
-      toast.success(
-        `AI 已生成${isEmail ? "邮件" : "短信"}首次接触文案`,
-        multi
-          ? { description: `文案含目标变量，发送时按 ${recipients.length} 个目标分别替换` }
-          : undefined,
-      );
+      toast.success(`AI 已生成${isEmail ? "邮件" : "短信"}首次接触文案`, {
+        description: "文案基于我方企业与产品信息生成，全部目标发送同一内容",
+      });
+
     } catch (e) {
       const msg = e instanceof Error ? e.message : String(e);
       toast.error("AI 生成失败", { description: msg });
@@ -782,9 +740,8 @@ export function ComposeSendDialog({
                 <SmsTemplatePicker
                   currentId={smsTemplateId}
                   onPick={(id, name, c) => {
-                    setContent(
-                      multi ? myInfo.fillMine(c) : myInfo.fillAll(c, recipients[0]?.ctx),
-                    );
+                    setContent(myInfo.fillAll(c));
+
                     setSmsTemplateId(id);
                     setSmsTemplateName(name);
                     setAiUsed(false);
@@ -836,13 +793,7 @@ export function ComposeSendDialog({
                       <span className="ml-2">· 拆分 {smsSegments(content)} 条</span>
                     )}
                   </span>
-                  {missingContact > 0 && (
-                    <span className="text-amber-600">
-                      {missingContact} 条记录缺少联系人名，将以「您好」代替
-                    </span>
-                  )}
                 </div>
-                <VarUsageHint template={content} targets={previewTargets} />
                 {!isEmail && content.trim().length > 0 && (
                   <ComplianceStrip templateName={smsTemplateName} />
                 )}
@@ -861,17 +812,8 @@ export function ComposeSendDialog({
                 rows={isEmail ? 8 : 6}
                 kindLabel={isEmail ? "邮件" : "短信"}
                 bare
-                keepVars={multi}
-                previewCtx={multi ? previewTarget?.ctx : undefined}
-                previewLabel={previewTarget?.name}
-                headerExtra={
-                  <PreviewTargetPicker
-                    targets={previewTargets}
-                    index={previewIdx}
-                    onChange={setPreviewIdx}
-                  />
-                }
               />
+
             </div>
           </section>
 
@@ -935,15 +877,8 @@ export function ComposeSendDialog({
         </DialogFooter>
       </DialogContent>
 
-      <SendPreviewConfirm
-        open={confirmOpen}
-        onOpenChange={setConfirmOpen}
-        targets={previewTargets}
-        content={sendContent}
-        subject={isEmail ? sendSubject : undefined}
-        costLabel={`-${grandTotal}`}
-        onConfirm={doSend}
-      />
+
+
 
       {/* 全部解锁 · 二次确认 */}
       <Dialog open={unlockAllOpen} onOpenChange={setUnlockAllOpen}>

@@ -36,7 +36,7 @@ import {
 } from "@/components/ui/select";
 import { cn } from "@/lib/utils";
 
-import { renderTemplate, type Recipient } from "@/lib/message-vars";
+import { type Recipient } from "@/lib/message-vars";
 import {
   createReach,
   costForSocialPlatform,
@@ -53,12 +53,6 @@ import { useCurrentUser } from "@/lib/current-user";
 import { ComposeFormatHint } from "@/components/outreach/ComposeFormatHint";
 import { generateAiContent } from "@/lib/api/ai-compose.functions";
 import { TargetLangSection } from "@/components/outreach/TargetLangSection";
-import { SendPreviewConfirm } from "@/components/outreach/SendPreviewConfirm";
-import {
-  PreviewTargetPicker,
-  VarUsageHint,
-  type PreviewTarget,
-} from "@/components/outreach/MultiTargetVars";
 import { useMyInfoGuard } from "@/lib/my-info-guard";
 
 export type ReachPlatform = "Facebook" | "TikTok";
@@ -125,10 +119,6 @@ export function BatchSocialPlatformDialog({
   // 内部维护的完整目标列表（含外部传入和手动添加的）
   const [internalCandidates, setInternalCandidates] = useState<PlatformCandidate[]>([]);
   const [isAdding, setIsAdding] = useState(false);
-  /** 多目标预览下标（仅展示，不改模板、不产生费用） */
-  const [previewIdx, setPreviewIdx] = useState(0);
-  /** 发送前抽样确认层（多目标） */
-  const [confirmOpen, setConfirmOpen] = useState(false);
   const [newTarget, setNewTarget] = useState({ name: "", handle: "", platform: "Facebook" as ReachPlatform });
 
   useEffect(() => {
@@ -141,7 +131,6 @@ export function BatchSocialPlatformDialog({
     setInternalCandidates(initialCandidates);
     setRemovedJobKeys(new Set());
     setIsAdding(false);
-    setPreviewIdx(0);
   }, [open, initialCandidates]);
 
   const allCandidates = internalCandidates;
@@ -182,19 +171,8 @@ export function BatchSocialPlatformDialog({
 
   const jobs = filteredJobs;
 
-  /** 多目标 = 模板模式：文案保留变量，发送时按各目标分别渲染 */
-  const previewTargets: PreviewTarget[] = useMemo(
-    () =>
-      jobs.map((j) => ({
-        key: j.key,
-        name: `${j.candidate.name}（${j.platform}）`,
-        ctx: j.candidate.ctx,
-      })),
-    [jobs],
-  );
-  const multi = previewTargets.length > 1;
-  const previewTarget =
-    previewTargets[Math.min(previewIdx, Math.max(0, previewTargets.length - 1))];
+
+
 
 
   /** 状态正常的执行账号（用于展示数量） */
@@ -302,10 +280,6 @@ export function BatchSocialPlatformDialog({
 
   function handleSend() {
     if (!canSend) return;
-    if (multi) {
-      setConfirmOpen(true);
-      return;
-    }
     doSend();
   }
 
@@ -335,7 +309,7 @@ export function BatchSocialPlatformDialog({
         platform: job.platform,
         detail: job.handle,
         subject: taskName, // 使用 subject 存储任务名称以便聚合
-        content: renderTemplate(sendContent, r.ctx),
+        content: sendContent,
         aiGenerated: aiUsed,
         cost: unit,
         userCreated: true,
@@ -410,8 +384,6 @@ export function BatchSocialPlatformDialog({
     if (!myInfo.ensure()) return;
     setAiLoading(true);
     try {
-      const sample = jobs[0]?.candidate ?? allCandidates[0];
-      const multiNow = multi;
       const res = await callGenerate({
         data: {
           channel: "social",
@@ -422,24 +394,15 @@ export function BatchSocialPlatformDialog({
           languageName: "中文",
           myCompany: profile.companyName,
           myName: user.name,
-          literal: !multiNow,
-          sampleEnterprise: sample?.ctx.企业名,
-          sampleContact: multiNow ? undefined : sample?.ctx.联系人名,
-          sampleIndustry: multiNow ? undefined : sample?.ctx.行业,
-          sampleCity: multiNow ? undefined : sample?.ctx.城市,
+          literal: true,
         },
       });
       if (res.content)
-        setContent(
-          multiNow ? myInfo.fillMine(res.content) : myInfo.fillAll(res.content, sample?.ctx),
-        );
+        setContent(myInfo.fillAll(res.content));
       setAiUsed(true);
-      toast.success(
-        "AI 已生成社媒首次接触文案",
-        multiNow
-          ? { description: `文案含目标变量，发送时按 ${previewTargets.length} 个目标分别替换` }
-          : undefined,
-      );
+      toast.success("AI 已生成社媒首次接触文案", {
+        description: "文案基于我方企业与产品信息生成，全部目标发送同一内容",
+      });
     } catch (e) {
       const msg = e instanceof Error ? e.message : String(e);
       toast.error("AI 生成失败", { description: msg });
@@ -679,12 +642,11 @@ export function BatchSocialPlatformDialog({
                   onChange={(e) => setContent(e.target.value)}
                   rows={10}
                   maxLength={4096}
-                  placeholder={`{联系人名}您好，我是{我的公司}的{我的姓名}，看到贵司在{行业}方向的业务……`}
+                  placeholder={`您好，我是××公司的×××，我们主要提供……`}
                 />
                 <div className="text-[11px] text-muted-foreground">
                   {content.length} / 4096 字
                 </div>
-                <VarUsageHint template={content} targets={previewTargets} />
               </div>
 
               {/* 目标语言文案（实际发送内容） */}
@@ -697,16 +659,6 @@ export function BatchSocialPlatformDialog({
                 rows={10}
                 kindLabel="私信"
                 bare
-                keepVars={multi}
-                previewCtx={multi ? previewTarget?.ctx : undefined}
-                previewLabel={previewTarget?.name}
-                headerExtra={
-                  <PreviewTargetPicker
-                    targets={previewTargets}
-                    index={previewIdx}
-                    onChange={setPreviewIdx}
-                  />
-                }
               />
             </div>
           </section>
@@ -755,14 +707,6 @@ export function BatchSocialPlatformDialog({
         </DialogFooter>
       </DialogContent>
 
-      <SendPreviewConfirm
-        open={confirmOpen}
-        onOpenChange={setConfirmOpen}
-        targets={previewTargets}
-        content={sendContent}
-        costLabel={`-${grandTotal}`}
-        onConfirm={doSend}
-      />
 
       {/* 全部解锁 · 二次确认 */}
       <Dialog open={unlockAllOpen} onOpenChange={setUnlockAllOpen}>
