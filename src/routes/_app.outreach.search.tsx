@@ -302,7 +302,7 @@ function SearchPage() {
         </div>
 
         {/* 复合搜索栏：输入 + 国家 + 进出口商 + 搜索 */}
-        <div className="relative mx-auto mt-10 max-w-4xl">
+        <div className="relative mx-auto mt-10 max-w-[950px]">
           <div className="rounded-2xl bg-white shadow-[0_18px_60px_-20px_rgba(56,189,248,0.45)] ring-1 ring-white/80 focus-within:ring-primary/60 transition-all overflow-hidden">
             <div className="flex items-center gap-1 h-16 px-2">
               <Search className="h-5 w-5 text-muted-foreground shrink-0 ml-3" />
