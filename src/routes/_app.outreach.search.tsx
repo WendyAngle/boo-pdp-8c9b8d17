@@ -426,20 +426,20 @@ function SearchPage() {
         </div>
 
         {/* 顶部横幅 */}
-        <div className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-cyan-500 to-sky-500 px-6 py-5 text-white shadow-md mb-6">
-          <div className="relative z-10 flex items-center justify-between gap-3">
-            <div className="flex items-center gap-3">
-              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-white/20">
+        <div className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-cyan-500 to-sky-500 px-4 sm:px-6 py-5 text-white shadow-md mb-6">
+          <div className="relative z-10 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <div className="flex min-w-0 items-center gap-3">
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-white/20">
                 <Lightbulb className="h-5 w-5 text-white" />
               </div>
-              <div>
-                <h1 className="text-xl font-bold">商机线索</h1>
-                <p className="text-sm text-white/90">基于全球贸易数据，精准定位潜在客户</p>
+              <div className="min-w-0">
+                <h1 className="text-lg sm:text-xl font-bold truncate">商机线索</h1>
+                <p className="text-sm text-white/90 truncate">基于全球贸易数据，精准定位潜在客户</p>
               </div>
             </div>
             <button
               onClick={backToSearch}
-              className="inline-flex items-center gap-1.5 rounded-lg bg-white/20 px-3 py-2 text-sm font-medium text-white ring-1 ring-white/40 hover:bg-white/30 transition-colors"
+              className="inline-flex items-center justify-center gap-1.5 rounded-lg bg-white/20 px-3 py-2 text-sm font-medium text-white ring-1 ring-white/40 hover:bg-white/30 transition-colors shrink-0"
             >
               <ArrowLeft className="h-4 w-4" />
               返回搜索
