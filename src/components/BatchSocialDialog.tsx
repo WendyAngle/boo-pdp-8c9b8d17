@@ -41,7 +41,6 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { cn } from "@/lib/utils";
 
 import {
-  renderTemplate,
   myContext,
   type Recipient,
 } from "@/lib/message-vars";
@@ -272,12 +271,6 @@ export function BatchSocialDialog({
     );
   }
 
-  /** 多目标 = 模板模式 */
-  const previewTargets: PreviewTarget[] = useMemo(() => {
-    const list = verified.length > 0 ? verified : candidates;
-    return list.map((c) => ({ key: c.key, name: c.name, ctx: c.ctx }));
-  }, [verified, candidates]);
-  const multi = previewTargets.length > 1;
 
   function handleSend() {
     if (!canSend) return;

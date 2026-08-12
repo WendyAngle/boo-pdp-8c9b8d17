@@ -36,7 +36,7 @@ import {
 } from "@/components/ui/select";
 import { cn } from "@/lib/utils";
 
-import { renderTemplate, type Recipient } from "@/lib/message-vars";
+import { type Recipient } from "@/lib/message-vars";
 import {
   createReach,
   costForSocialPlatform,
