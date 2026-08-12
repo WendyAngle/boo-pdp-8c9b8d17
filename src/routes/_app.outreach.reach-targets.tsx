@@ -438,7 +438,7 @@ function TargetCard({
             ) : (
               <UserCheck className="h-2.5 w-2.5" />
             )}
-            {recommended ? "系统推荐" : "自主选择"}
+            {recommended ? "系统推荐" : manualAdd ? "手动添加" : "自主选择"}
           </Badge>
           {recommended && reason.matchScore != null && (
             <span className="ml-auto text-[11px] font-medium tabular-nums text-violet-700">
