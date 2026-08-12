@@ -72,8 +72,10 @@ import { useCurrentUser } from "@/lib/current-user";
 import { ComposeFormatHint } from "@/components/outreach/ComposeFormatHint";
 import { generateAiContent } from "@/lib/api/ai-compose.functions";
 import { TargetLangSection } from "@/components/outreach/TargetLangSection";
+import { useMyInfoGuard } from "@/lib/my-info-guard";
 import { maskContact } from "@/lib/mask-contact";
 import { Checkbox } from "@/components/ui/checkbox";
+
 
 
 
