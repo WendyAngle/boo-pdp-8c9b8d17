@@ -46,7 +46,6 @@ import {
 import { FileText, ShieldCheck, ShieldAlert } from "lucide-react";
 
 import {
-  renderTemplate,
   smsSegments,
   myContext,
   type Recipient,
@@ -72,14 +71,8 @@ import { useCurrentUser } from "@/lib/current-user";
 import { ComposeFormatHint } from "@/components/outreach/ComposeFormatHint";
 import { generateAiContent } from "@/lib/api/ai-compose.functions";
 import { TargetLangSection } from "@/components/outreach/TargetLangSection";
-import { SendPreviewConfirm } from "@/components/outreach/SendPreviewConfirm";
 import { useMyInfoGuard } from "@/lib/my-info-guard";
 import { maskContact } from "@/lib/mask-contact";
-import {
-  PreviewTargetPicker,
-  VarUsageHint,
-  type PreviewTarget,
-} from "@/components/outreach/MultiTargetVars";
 import { Checkbox } from "@/components/ui/checkbox";
 
 
@@ -150,10 +143,6 @@ export function ComposeSendDialog({
 
   /** 手动添加收件人输入框 */
   const [manualInput, setManualInput] = useState("");
-  /** 多目标时的预览目标下标（仅影响展示，不改模板、不产生费用） */
-  const [previewIdx, setPreviewIdx] = useState(0);
-  /** 发送前抽样确认层（多目标） */
-  const [confirmOpen, setConfirmOpen] = useState(false);
 
   function addManualRecipients() {
     const raw = manualInput
@@ -207,7 +196,6 @@ export function ComposeSendDialog({
       setInitialFilteredCount(0);
     }
     setManualInput("");
-    setPreviewIdx(0);
     setSubject("");
     setContent("");
     setAiUsed(false);
@@ -242,11 +230,6 @@ export function ComposeSendDialog({
   /** 实际发送内容：有译文则发译文 */
   const sendSubject = (translatedSubject.trim() || subject).trim();
   const sendContent = (translated.trim() || content).trim();
-
-  const missingContact = useMemo(
-    () => recipients.filter((r) => !r.ctx.联系人名 || !r.ctx.联系人名.trim()).length,
-    [recipients],
-  );
 
   // 费用合计
   const unit = costForChannel(isEmail ? "email" : "phone");
@@ -810,11 +793,6 @@ export function ComposeSendDialog({
                       <span className="ml-2">· 拆分 {smsSegments(content)} 条</span>
                     )}
                   </span>
-                  {missingContact > 0 && (
-                    <span className="text-amber-600">
-                      {missingContact} 条记录缺少联系人名，将以「您好」代替
-                    </span>
-                  )}
                 </div>
                 {!isEmail && content.trim().length > 0 && (
                   <ComplianceStrip templateName={smsTemplateName} />
