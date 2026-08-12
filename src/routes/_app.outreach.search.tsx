@@ -594,7 +594,7 @@ function SearchPage() {
         </div>
 
         {/* 数据指标卡片 */}
-        <div className="mt-16 grid grid-cols-1 gap-5 md:grid-cols-3">
+        <div className="mt-10 lg:mt-14 grid grid-cols-1 gap-4 sm:gap-5 md:grid-cols-3">
           <StatCard icon={Globe2} tone="from-cyan-400 to-sky-500" kpi="239+" title="覆盖国家/地区" sub="全球主要贸易体" />
           <StatCard icon={Building2} tone="from-emerald-400 to-teal-500" kpi="2亿+" title="全球企业" sub="全球进出口企业" />
           <StatCard icon={Users2} tone="from-sky-400 to-indigo-500" kpi="10亿+" title="全球联系人" sub="全球联系人统计" />
