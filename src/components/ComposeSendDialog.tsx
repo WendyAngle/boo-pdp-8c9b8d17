@@ -7,10 +7,13 @@ import {
   Loader2,
   Trash2,
   ShieldOff,
+  Eye,
+  Unlock,
 } from "lucide-react";
 import { useServerFn } from "@tanstack/react-start";
 import { useNavigate } from "@tanstack/react-router";
 import { toast } from "sonner";
+
 
 import {
   Dialog,
@@ -70,6 +73,10 @@ import { ComposeFormatHint } from "@/components/outreach/ComposeFormatHint";
 import { generateAiContent } from "@/lib/api/ai-compose.functions";
 import { TargetLangSection } from "@/components/outreach/TargetLangSection";
 import { useMyInfoGuard } from "@/lib/my-info-guard";
+import { maskContact } from "@/lib/mask-contact";
+import { Checkbox } from "@/components/ui/checkbox";
+
+
 
 
 export type ComposeChannel = "email" | "phone";
@@ -255,8 +262,64 @@ export function ComposeSendDialog({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [recipients, isEmail, ledger]);
 
-  
+  /** 单条解锁单价 */
+  const unitView = isEmail ? COST_VIEW_EMAIL : COST_VIEW_PHONE;
+
+  /** 尚未解锁明文的收件人 key 集合（手动添加的除外） */
+  const lockedKeys = useMemo(() => {
+    const s = new Set<string>();
+    for (const r of recipients) {
+      if (isManualRecipient(r)) continue;
+      const bd = computeReachBreakdown(
+        { targetKind: r.targetKind, targetId: r.targetId },
+        isEmail ? "email" : "phone",
+        undefined,
+        { reachCostOverride: 0 },
+      );
+      if (bd.viewCost > 0) s.add(r.key);
+    }
+    return s;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [recipients, isEmail, ledger]);
+
+  /** 主动解锁明文：立即扣费、永久有效（幂等） */
+  function unlockOne(r: Recipient) {
+    performReachAutoUnlocks({
+      targetKind: r.targetKind,
+      targetId: r.targetId,
+      targetName: r.name,
+      parentRef: r.parentRef,
+      detail: r.address,
+      fields: isEmail ? [{ field: "email" }] : [{ field: "phone" }],
+    });
+    toast.success(`已解锁 ${r.name} 的${isEmail ? "邮箱" : "电话"}`, {
+      description: `扣除 ${unitView} 积分，永久有效`,
+    });
+  }
+
+  const [unlockAllOpen, setUnlockAllOpen] = useState(false);
+  const [unlockAllAck, setUnlockAllAck] = useState(false);
+  function unlockAll() {
+    const targets = recipients.filter((r) => lockedKeys.has(r.key));
+    targets.forEach((r) =>
+      performReachAutoUnlocks({
+        targetKind: r.targetKind,
+        targetId: r.targetId,
+        targetName: r.name,
+        parentRef: r.parentRef,
+        detail: r.address,
+        fields: isEmail ? [{ field: "email" }] : [{ field: "phone" }],
+      }),
+    );
+    setUnlockAllOpen(false);
+    setUnlockAllAck(false);
+    toast.success(`已解锁 ${targets.length} 位联系人的明文`, {
+      description: `扣除 ${targets.length * unitView} 积分，永久有效`,
+    });
+  }
+
   const grandTotal = sendTotal + viewCostTotal;
+
 
   // 发件邮箱日发上限剩余额度（仅邮件）
   const remainingQuota =
@@ -398,9 +461,14 @@ export function ComposeSendDialog({
         <div className="space-y-5">
           {/* 收件人 */}
           <section className="space-y-2">
-            <div className="flex items-center justify-between">
+            <div className="flex items-center justify-between gap-2">
               <Label className="text-xs text-muted-foreground">
                 收件人（{recipients.length}）
+                {lockedKeys.size > 0 && (
+                  <span className="ml-1 text-muted-foreground/80">
+                    · {lockedKeys.size} 位{isEmail ? "邮箱" : "电话"}未解锁，默认脱敏展示
+                  </span>
+                )}
               </Label>
               {recipients.length === 0 ? (
                 <span className="text-xs text-rose-600">
@@ -409,14 +477,32 @@ export function ComposeSendDialog({
                     : "暂无收件人，可在下方手动添加"}
                 </span>
               ) : (
-                initialFilteredCount > 0 && (
-                  <span className="text-xs text-amber-600">
-                    已自动过滤 {initialFilteredCount} 条无
-                    {isEmail ? "邮箱" : "电话"}的数据
-                  </span>
-                )
+                <div className="flex items-center gap-2">
+                  {initialFilteredCount > 0 && (
+                    <span className="text-xs text-amber-600">
+                      已自动过滤 {initialFilteredCount} 条无
+                      {isEmail ? "邮箱" : "电话"}的数据
+                    </span>
+                  )}
+                  {lockedKeys.size > 0 && (
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      className="h-7 text-xs"
+                      onClick={() => {
+                        setUnlockAllAck(false);
+                        setUnlockAllOpen(true);
+                      }}
+                    >
+                      <Unlock className="h-3.5 w-3.5 mr-1" />
+                      全部解锁 · -{lockedKeys.size * unitView}
+                    </Button>
+                  )}
+                </div>
               )}
             </div>
+
             {suppressedRecipients.length > 0 && (
               <div className="rounded-md border border-amber-300 bg-amber-50 px-3 py-2 text-xs text-amber-900">
                 <div className="flex items-start gap-2">
@@ -435,7 +521,11 @@ export function ComposeSendDialog({
                             key={r.key}
                             className="inline-flex items-center gap-1 rounded border border-amber-200 bg-white/70 px-1.5 py-0.5 font-mono text-[11px]"
                           >
-                            {r.name} · {r.address}
+                            {r.name} ·{" "}
+                            {lockedKeys.has(r.key)
+                              ? maskContact(isEmail ? "email" : "phone", r.address)
+                              : r.address}
+
                           </span>
                         ))}
                       </div>
@@ -446,34 +536,53 @@ export function ComposeSendDialog({
             )}
             {recipients.length > 0 && (
               <div className="flex flex-wrap gap-1.5 rounded-md border bg-muted/30 p-2 max-h-28 overflow-y-auto">
-                {recipients.map((r) => (
-                  <span
-                    key={r.key}
-                    className="inline-flex items-center gap-1 rounded-md border bg-background px-2 py-0.5 text-xs"
-                  >
-                    <span className="font-medium">{r.name}</span>
-                    <span className="text-muted-foreground font-mono">
-                      · {r.address}
-                    </span>
-                    {isManualRecipient(r) && (
-                      <Badge variant="secondary" className="h-4 px-1 text-[10px]">
-                        手动
-                      </Badge>
-                    )}
-                    <button
-                      type="button"
-                      onClick={() =>
-                        setRecipients((prev) => prev.filter((x) => x.key !== r.key))
-                      }
-                      className="ml-0.5 text-muted-foreground hover:text-rose-600"
-                      aria-label="移除"
+                {recipients.map((r) => {
+                  const manual = isManualRecipient(r);
+                  const locked = !manual && lockedKeys.has(r.key);
+                  return (
+                    <span
+                      key={r.key}
+                      className="inline-flex items-center gap-1 rounded-md border bg-background px-2 py-0.5 text-xs"
                     >
-                      <X className="h-3 w-3" />
-                    </button>
-                  </span>
-                ))}
+                      <span className="font-medium">{r.name}</span>
+                      <span className="text-muted-foreground font-mono">
+                        ·{" "}
+                        {locked
+                          ? maskContact(isEmail ? "email" : "phone", r.address)
+                          : r.address}
+                      </span>
+                      {manual && (
+                        <Badge variant="secondary" className="h-4 px-1 text-[10px]">
+                          手动
+                        </Badge>
+                      )}
+                      {locked && (
+                        <button
+                          type="button"
+                          onClick={() => unlockOne(r)}
+                          className="ml-0.5 inline-flex items-center gap-0.5 rounded border border-primary/30 bg-primary/5 px-1 text-[10px] font-medium text-primary hover:bg-primary/10"
+                          title={`解锁明文，扣 ${unitView} 积分（永久有效）`}
+                        >
+                          <Eye className="h-3 w-3" />
+                          {unitView}
+                        </button>
+                      )}
+                      <button
+                        type="button"
+                        onClick={() =>
+                          setRecipients((prev) => prev.filter((x) => x.key !== r.key))
+                        }
+                        className="ml-0.5 text-muted-foreground hover:text-rose-600"
+                        aria-label="移除"
+                      >
+                        <X className="h-3 w-3" />
+                      </button>
+                    </span>
+                  );
+                })}
               </div>
             )}
+
             {/* 手动添加收件人 */}
             <div className="flex items-center gap-2">
               <Input
@@ -730,13 +839,12 @@ export function ComposeSendDialog({
               <span className="font-medium">{sendTotal} 积分</span>
             </div>
             {viewCostTotal > 0 && (() => {
-              const unitView = isEmail ? COST_VIEW_EMAIL : COST_VIEW_PHONE;
               const unlockCount = Math.round(viewCostTotal / unitView);
               const alreadyCount = recipients.length - unlockCount;
               return (
                 <div className="flex justify-between">
                   <span className="text-muted-foreground">
-                    自动解锁查看{isEmail ? "邮箱" : "电话"}（{unlockCount} 位未解锁
+                    发送后解锁{isEmail ? "邮箱" : "电话"}（{unlockCount} 位未解锁
                     收件人 × {unitView} 积分
                     {alreadyCount > 0 ? `，另 ${alreadyCount} 位已解锁免费` : ""}
                     ，永久生效）
@@ -745,6 +853,7 @@ export function ComposeSendDialog({
                 </div>
               );
             })()}
+
             <div className="flex justify-between border-t border-rose-200/70 pt-1 dark:border-rose-900/50">
               <span className="font-semibold text-rose-700 dark:text-rose-300">
                 合计
@@ -776,8 +885,40 @@ export function ComposeSendDialog({
         </DialogFooter>
       </DialogContent>
 
-
+      {/* 全部解锁 · 二次确认 */}
+      <Dialog open={unlockAllOpen} onOpenChange={setUnlockAllOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>解锁全部明文{isEmail ? "邮箱" : "电话"}</DialogTitle>
+            <DialogDescription>
+              将为 {lockedKeys.size} 位未解锁收件人一次性解锁明文，扣除{" "}
+              <span className="font-semibold text-rose-600">
+                {lockedKeys.size * unitView}
+              </span>{" "}
+              积分，解锁后永久有效、不可撤销。批量群发本身无需解锁即可发送。
+            </DialogDescription>
+          </DialogHeader>
+          <label className="flex items-start gap-2 text-sm">
+            <Checkbox
+              checked={unlockAllAck}
+              onCheckedChange={(v) => setUnlockAllAck(v === true)}
+              className="mt-0.5"
+            />
+            <span>我已知晓将立即扣除 {lockedKeys.size * unitView} 积分</span>
+          </label>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setUnlockAllOpen(false)}>
+              取消
+            </Button>
+            <Button disabled={!unlockAllAck} onClick={unlockAll}>
+              <Unlock className="h-4 w-4" />
+              确认解锁
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </Dialog>
+
   );
 }
 
