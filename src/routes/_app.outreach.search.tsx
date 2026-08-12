@@ -279,25 +279,31 @@ function SearchPage() {
           : "rounded-2xl bg-white shadow-[0_18px_60px_-20px_rgba(56,189,248,0.45)] ring-1 ring-white/80 focus-within:ring-primary/60 transition-all overflow-hidden"
       }
     >
-      <div className={`flex items-center gap-1 px-2 ${isResults ? "h-14" : "h-16"}`}>
-        <Search className="h-5 w-5 text-muted-foreground shrink-0 ml-3" />
-        <Input
-          ref={inputRef}
-          value={kw}
-          onChange={(e) => setKw(e.target.value)}
-          onKeyDown={onKeyDown}
-          placeholder={isResults ? "商品关键词或HS Code、公司名称等" : PLACEHOLDER}
-          className="border-0 shadow-none focus-visible:ring-0 text-base h-12 px-2 placeholder:text-muted-foreground/70 flex-1 min-w-0"
-        />
-        {kw && (
-          <button
-            onClick={() => setKw("")}
-            className="rounded-full p-1.5 text-muted-foreground hover:bg-muted/60 shrink-0"
-            aria-label="清空"
-          >
-            <XIcon className="h-4 w-4" />
-          </button>
-        )}
+      <div
+        className={`grid grid-cols-[minmax(0,1fr)_auto] items-center gap-1 px-2 py-2 sm:flex sm:flex-wrap sm:items-center ${
+          isResults ? "sm:min-h-[56px]" : "sm:min-h-[64px]"
+        }`}
+      >
+        <div className="flex min-w-0 items-center gap-1">
+          <Search className="h-5 w-5 text-muted-foreground shrink-0 ml-3" />
+          <Input
+            ref={inputRef}
+            value={kw}
+            onChange={(e) => setKw(e.target.value)}
+            onKeyDown={onKeyDown}
+            placeholder={isResults ? "商品关键词或HS Code、公司名称等" : PLACEHOLDER}
+            className="border-0 shadow-none focus-visible:ring-0 text-base h-12 px-2 placeholder:text-muted-foreground/70 flex-1 min-w-0"
+          />
+          {kw && (
+            <button
+              onClick={() => setKw("")}
+              className="rounded-full p-1.5 text-muted-foreground hover:bg-muted/60 shrink-0"
+              aria-label="清空"
+            >
+              <XIcon className="h-4 w-4" />
+            </button>
+          )}
+        </div>
 
         {/* 桌面端过滤 */}
         <div className="hidden md:flex items-center shrink-0">
@@ -339,7 +345,7 @@ function SearchPage() {
 
         <button
           onClick={() => go(kw)}
-          className="inline-flex h-[calc(100%-10px)] items-center gap-2 rounded-xl bg-primary px-3 md:px-6 text-sm font-medium text-primary-foreground hover:bg-primary/90 shrink-0 mr-1"
+          className="inline-flex h-10 sm:h-[calc(100%-10px)] items-center gap-2 rounded-xl bg-primary px-3 md:px-6 text-sm font-medium text-primary-foreground hover:bg-primary/90 shrink-0 mr-1"
         >
           <Search className="h-4 w-4" />
           <span className="hidden md:inline">搜索</span>
@@ -402,17 +408,17 @@ function SearchPage() {
     return (
       <div className="min-h-full bg-[#f6f8fb] p-4 sm:p-6 lg:p-8">
         {/* 面包屑 + 返回 */}
-        <div className="mb-5 flex items-center justify-between gap-3">
-          <div className="flex items-center gap-2 text-sm text-muted-foreground">
-            <span>客户发现 /</span>
-            <button onClick={backToSearch} className="text-foreground/80 hover:text-primary">
+        <div className="mb-5 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex min-w-0 items-center gap-2 text-sm text-muted-foreground truncate">
+            <span className="shrink-0">客户发现 /</span>
+            <button onClick={backToSearch} className="text-foreground/80 hover:text-primary shrink-0">
               商机线索
             </button>
-            <span>/ 搜索结果</span>
+            <span className="truncate">/ 搜索结果</span>
           </div>
           <button
             onClick={backToSearch}
-            className="inline-flex items-center gap-1.5 rounded-lg bg-white px-3 py-1.5 text-sm text-slate-700 ring-1 ring-slate-200 shadow-sm hover:text-primary hover:ring-primary/40 transition-colors"
+            className="inline-flex items-center justify-center gap-1.5 rounded-lg bg-white px-3 py-1.5 text-sm text-slate-700 ring-1 ring-slate-200 shadow-sm hover:text-primary hover:ring-primary/40 transition-colors shrink-0"
           >
             <ArrowLeft className="h-4 w-4" />
             返回搜索
@@ -420,20 +426,20 @@ function SearchPage() {
         </div>
 
         {/* 顶部横幅 */}
-        <div className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-cyan-500 to-sky-500 px-6 py-5 text-white shadow-md mb-6">
-          <div className="relative z-10 flex items-center justify-between gap-3">
-            <div className="flex items-center gap-3">
-              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-white/20">
+        <div className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-cyan-500 to-sky-500 px-4 sm:px-6 py-5 text-white shadow-md mb-6">
+          <div className="relative z-10 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <div className="flex min-w-0 items-center gap-3">
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-white/20">
                 <Lightbulb className="h-5 w-5 text-white" />
               </div>
-              <div>
-                <h1 className="text-xl font-bold">商机线索</h1>
-                <p className="text-sm text-white/90">基于全球贸易数据，精准定位潜在客户</p>
+              <div className="min-w-0">
+                <h1 className="text-lg sm:text-xl font-bold truncate">商机线索</h1>
+                <p className="text-sm text-white/90 truncate">基于全球贸易数据，精准定位潜在客户</p>
               </div>
             </div>
             <button
               onClick={backToSearch}
-              className="inline-flex items-center gap-1.5 rounded-lg bg-white/20 px-3 py-2 text-sm font-medium text-white ring-1 ring-white/40 hover:bg-white/30 transition-colors"
+              className="inline-flex items-center justify-center gap-1.5 rounded-lg bg-white/20 px-3 py-2 text-sm font-medium text-white ring-1 ring-white/40 hover:bg-white/30 transition-colors shrink-0"
             >
               <ArrowLeft className="h-4 w-4" />
               返回搜索
@@ -455,14 +461,14 @@ function SearchPage() {
         </div>
 
         {/* 结果统计 */}
-        <div className="flex items-center justify-between mb-4">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between mb-4">
           <div className="flex items-center gap-3 text-sm text-slate-600">
-            <span>
+            <span className="truncate">
               查询完成，找到{" "}
               <span className="font-semibold text-slate-900">{RESULTS.length}</span> 条线索
             </span>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex flex-wrap items-center gap-2">
             {importer && (
               <Badge variant="secondary" className="bg-white text-slate-600 ring-1 ring-slate-200">
                 进口商
@@ -526,17 +532,17 @@ function SearchPage() {
       <div className="pointer-events-none absolute inset-x-0 top-0 h-[520px] bg-[radial-gradient(60%_60%_at_50%_0%,rgba(56,189,248,0.18),transparent_70%)]" />
       <div className="pointer-events-none absolute -left-1/4 top-1/3 h-[480px] w-[120%] rotate-[-6deg] bg-[linear-gradient(90deg,transparent,rgba(186,230,253,0.55),transparent)] blur-2xl" />
 
-      <div className="relative w-full max-w-6xl px-6 py-10">
+      <div className="relative w-full max-w-6xl px-4 sm:px-6 py-8 sm:py-10">
         <div className="text-center">
-          <h1 className="text-4xl md:text-5xl font-bold tracking-tight text-slate-900">
+          <h1 className="text-2xl sm:text-4xl md:text-5xl font-bold tracking-tight text-slate-900">
             悦意出海大数据平台 · 商机线索
           </h1>
-          <p className="mt-4 text-base md:text-lg text-slate-500">
+          <p className="mt-3 sm:mt-4 text-sm sm:text-base md:text-lg text-slate-500">
             从商品、HS 编码到企业，发现全球贸易机会
           </p>
         </div>
 
-        <div className="relative mx-auto mt-10 max-w-[1400px]">
+        <div className="relative mx-auto mt-8 sm:mt-10 max-w-full">
           {searchBar}
           {countryChips}
 
@@ -549,11 +555,11 @@ function SearchPage() {
                   <button
                     key={r}
                     onClick={() => go(r)}
-                    className="group inline-flex max-w-[280px] items-center gap-1 rounded-full bg-white/80 px-3 py-1 text-sm text-slate-700 ring-1 ring-slate-200 hover:ring-primary/50 hover:text-primary transition-colors"
+                    className="group inline-flex max-w-[200px] sm:max-w-[280px] items-center gap-1 rounded-full bg-white/80 px-3 py-1 text-sm text-slate-700 ring-1 ring-slate-200 hover:ring-primary/50 hover:text-primary transition-colors"
                   >
                     <span className="truncate">{r}</span>
                     <XIcon
-                      className="h-3 w-3 text-muted-foreground/60 opacity-0 group-hover:opacity-100 hover:text-foreground"
+                      className="h-3 w-3 text-muted-foreground/60 opacity-0 group-hover:opacity-100 hover:text-foreground shrink-0"
                       onClick={(e) => {
                         e.stopPropagation();
                         removeRecent(r);
@@ -593,7 +599,7 @@ function SearchPage() {
         </div>
 
         {/* 数据指标卡片 */}
-        <div className="mt-16 grid grid-cols-1 gap-5 md:grid-cols-3">
+        <div className="mt-10 sm:mt-16 grid grid-cols-1 gap-4 sm:gap-5 md:grid-cols-3">
           <StatCard icon={Globe2} tone="from-cyan-400 to-sky-500" kpi="239+" title="覆盖国家/地区" sub="全球主要贸易体" />
           <StatCard icon={Building2} tone="from-emerald-400 to-teal-500" kpi="2亿+" title="全球企业" sub="全球进出口企业" />
           <StatCard icon={Users2} tone="from-sky-400 to-indigo-500" kpi="10亿+" title="全球联系人" sub="全球联系人统计" />
@@ -618,16 +624,16 @@ function StatCard({
   sub: string;
 }) {
   return (
-    <div className="group relative overflow-hidden rounded-2xl bg-white/70 backdrop-blur-sm p-6 ring-1 ring-white/80 shadow-[0_18px_50px_-30px_rgba(15,23,42,0.25)] transition-transform hover:-translate-y-0.5">
+    <div className="group relative overflow-hidden rounded-2xl bg-white/70 backdrop-blur-sm p-4 sm:p-6 ring-1 ring-white/80 shadow-[0_18px_50px_-30px_rgba(15,23,42,0.25)] transition-transform hover:-translate-y-0.5">
       <div className="flex items-center gap-3">
         <div
-          className={`flex h-11 w-11 items-center justify-center rounded-xl bg-gradient-to-br ${tone} text-white shadow-md shadow-sky-200/60`}
+          className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br ${tone} text-white shadow-md shadow-sky-200/60`}
         >
           <Icon className="h-5 w-5" />
         </div>
-        <div className="text-base font-medium text-slate-700">{title}</div>
+        <div className="text-sm sm:text-base font-medium text-slate-700 truncate">{title}</div>
       </div>
-      <div className="mt-5 text-4xl font-bold tracking-tight text-slate-900">{kpi}</div>
+      <div className="mt-4 sm:mt-5 text-3xl sm:text-4xl font-bold tracking-tight text-slate-900">{kpi}</div>
       <div className="mt-2 flex items-center gap-1.5 text-sm text-muted-foreground">
         <span className="inline-block h-1.5 w-1.5 rounded-full bg-primary" />
         {sub}
