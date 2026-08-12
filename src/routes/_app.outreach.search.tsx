@@ -265,6 +265,11 @@ function SearchPage() {
 
   const isResults = query !== null;
 
+  const backToSearch = () => {
+    setQuery(null);
+    setKw("");
+  };
+
   /* ---------- 复合搜索栏（两态共用） ---------- */
   const searchBar = (
     <div
@@ -452,16 +457,6 @@ function SearchPage() {
         {/* 结果统计 */}
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-3 text-sm text-slate-600">
-            <button
-              onClick={() => {
-                setQuery(null);
-                setKw("");
-              }}
-              className="inline-flex items-center gap-1 rounded-md px-2 py-1 text-slate-600 hover:bg-white hover:text-primary ring-1 ring-transparent hover:ring-slate-200"
-            >
-              <ArrowLeft className="h-4 w-4" />
-              返回搜索
-            </button>
             <span>
               查询完成，找到{" "}
               <span className="font-semibold text-slate-900">{RESULTS.length}</span> 条线索
