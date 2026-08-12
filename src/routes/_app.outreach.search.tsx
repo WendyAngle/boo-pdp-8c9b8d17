@@ -285,7 +285,7 @@ function SearchPage() {
       <div className="pointer-events-none absolute inset-x-0 top-0 h-[520px] bg-[radial-gradient(60%_60%_at_50%_0%,rgba(56,189,248,0.18),transparent_70%)]" />
       <div className="pointer-events-none absolute -left-1/4 top-1/3 h-[480px] w-[120%] rotate-[-6deg] bg-[linear-gradient(90deg,transparent,rgba(186,230,253,0.55),transparent)] blur-2xl" />
 
-      <div className="relative mx-auto max-w-6xl px-6 pt-16 pb-24">
+      <div className="relative mx-auto max-w-6xl xl:max-w-[1800px] px-6 pt-16 pb-24">
         {/* 面包屑 */}
         <div className="text-xs text-muted-foreground/80 mb-10">
           出海大数据平台 / <span className="text-foreground/80">商机线索</span>
@@ -302,7 +302,7 @@ function SearchPage() {
         </div>
 
         {/* 复合搜索栏：输入 + 国家 + 进出口商 + 搜索 */}
-        <div className="relative mx-auto mt-10 max-w-4xl">
+        <div className="relative mx-auto mt-10 max-w-4xl md:max-w-6xl xl:max-w-[1700px]">
           <div className="rounded-2xl bg-white shadow-[0_18px_60px_-20px_rgba(56,189,248,0.45)] ring-1 ring-white/80 focus-within:ring-primary/60 transition-all overflow-hidden">
             <div className="flex items-center gap-1 h-16 px-2">
               <Search className="h-5 w-5 text-muted-foreground shrink-0 ml-3" />
