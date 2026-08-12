@@ -1503,6 +1503,8 @@ interface DemoSeed {
   assigneeId?: string;
   tags?: string[];
   socialSignals?: SocialSignals;
+  /** 是否由用户手动添加（非系统推荐/非企业库选择） */
+  manualAdd?: boolean;
 }
 
 const DEMO_SEEDS: DemoSeed[] = [
