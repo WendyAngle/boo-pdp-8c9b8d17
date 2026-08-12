@@ -48,6 +48,14 @@ export function getTargetReason(thread: Thread): TargetReason {
   const isSocial = SOCIAL_CHANNELS.has(thread.channel);
 
   if (!isSocial) {
+    if (thread.manualAdd) {
+      return {
+        mode: "manual",
+        summary: "手动添加：由团队成员手动录入并创建触达任务",
+        origin: "在「客户发现」中手动添加目标客户信息后，直接发起触达",
+        factors: [],
+      };
+    }
     const kind = thread.targetKind === "enterprise" ? "企业" : "人物";
     return {
       mode: "manual",
