@@ -669,10 +669,23 @@ export function BatchSocialPlatformDialog({
                 其中 {deferredCount} 条顺延至明日 09:00 执行
               </div>
             )}
+            {viewCostTotal > 0 && (
+              <div className="flex justify-between">
+                <span className="text-muted-foreground">
+                  发送后解锁社媒账号（{lockedJobKeys.size} 个未解锁 × {unitView} 积分，永久生效）
+                </span>
+                <span className="font-medium">{viewCostTotal} 积分</span>
+              </div>
+            )}
             <div className="flex justify-between border-t border-rose-200/70 pt-1">
               <span className="font-semibold text-rose-700">合计</span>
               <span className="font-semibold text-rose-700">{grandTotal} 积分</span>
             </div>
+            {viewCostTotal > 0 && (
+              <div className="text-[11px] text-rose-700/80 pt-0.5">
+                触达完成后，对应社媒账号将永久解锁，后续查看/再次触达不再收取查看费。
+              </div>
+            )}
           </section>
         </div>
 
@@ -686,6 +699,40 @@ export function BatchSocialPlatformDialog({
           </Button>
         </DialogFooter>
       </DialogContent>
+
+      {/* 全部解锁 · 二次确认 */}
+      <Dialog open={unlockAllOpen} onOpenChange={setUnlockAllOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>解锁全部明文社媒账号</DialogTitle>
+            <DialogDescription>
+              将为 {lockedJobKeys.size} 个未解锁账号一次性解锁明文，扣除{" "}
+              <span className="font-semibold text-rose-600">
+                {lockedJobKeys.size * unitView}
+              </span>{" "}
+              积分，解锁后永久有效、不可撤销。批量群发本身无需解锁即可发送。
+            </DialogDescription>
+          </DialogHeader>
+          <label className="flex items-start gap-2 text-sm">
+            <Checkbox
+              checked={unlockAllAck}
+              onCheckedChange={(v) => setUnlockAllAck(v === true)}
+              className="mt-0.5"
+            />
+            <span>我已知晓将立即扣除 {lockedJobKeys.size * unitView} 积分</span>
+          </label>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setUnlockAllOpen(false)}>
+              取消
+            </Button>
+            <Button disabled={!unlockAllAck} onClick={unlockAll}>
+              <Unlock className="h-4 w-4" />
+              确认解锁
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </Dialog>
+
   );
 }
