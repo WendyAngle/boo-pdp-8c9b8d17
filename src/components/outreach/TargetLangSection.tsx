@@ -272,7 +272,7 @@ export function TargetLangSection({
       <div className="flex items-center justify-between text-[11px]">
         <span className="text-muted-foreground">
           {value.trim()
-            ? `全部目标将以${opt?.zh ?? ""}发送 · 模板 ${value.trim().length} 字`
+            ? `${previewing ? "全部目标均" : ""}将以${opt?.zh ?? ""}发送 · ${value.trim().length} 字`
             : "未翻译时，将直接发送中文原文"}
         </span>
         {stale && (
