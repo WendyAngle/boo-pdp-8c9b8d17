@@ -53,6 +53,11 @@ import { useCurrentUser } from "@/lib/current-user";
 import { ComposeFormatHint } from "@/components/outreach/ComposeFormatHint";
 import { generateAiContent } from "@/lib/api/ai-compose.functions";
 import { TargetLangSection } from "@/components/outreach/TargetLangSection";
+import {
+  PreviewTargetPicker,
+  VarUsageHint,
+  type PreviewTarget,
+} from "@/components/outreach/MultiTargetVars";
 import { useMyInfoGuard } from "@/lib/my-info-guard";
 
 export type ReachPlatform = "Facebook" | "TikTok";
@@ -119,6 +124,8 @@ export function BatchSocialPlatformDialog({
   // 内部维护的完整目标列表（含外部传入和手动添加的）
   const [internalCandidates, setInternalCandidates] = useState<PlatformCandidate[]>([]);
   const [isAdding, setIsAdding] = useState(false);
+  /** 多目标预览下标（仅展示，不改模板、不产生费用） */
+  const [previewIdx, setPreviewIdx] = useState(0);
   const [newTarget, setNewTarget] = useState({ name: "", handle: "", platform: "Facebook" as ReachPlatform });
 
   useEffect(() => {
@@ -131,6 +138,7 @@ export function BatchSocialPlatformDialog({
     setInternalCandidates(initialCandidates);
     setRemovedJobKeys(new Set());
     setIsAdding(false);
+    setPreviewIdx(0);
   }, [open, initialCandidates]);
 
   const allCandidates = internalCandidates;
@@ -376,6 +384,7 @@ export function BatchSocialPlatformDialog({
     setAiLoading(true);
     try {
       const sample = jobs[0]?.candidate ?? allCandidates[0];
+      const multiNow = multi;
       const res = await callGenerate({
         data: {
           channel: "social",
@@ -386,16 +395,24 @@ export function BatchSocialPlatformDialog({
           languageName: "中文",
           myCompany: profile.companyName,
           myName: user.name,
-          literal: true,
+          literal: !multiNow,
           sampleEnterprise: sample?.ctx.企业名,
-          sampleContact: sample?.ctx.联系人名,
-          sampleIndustry: sample?.ctx.行业,
-          sampleCity: sample?.ctx.城市,
+          sampleContact: multiNow ? undefined : sample?.ctx.联系人名,
+          sampleIndustry: multiNow ? undefined : sample?.ctx.行业,
+          sampleCity: multiNow ? undefined : sample?.ctx.城市,
         },
       });
-      if (res.content) setContent(myInfo.fillAll(res.content, sample?.ctx));
+      if (res.content)
+        setContent(
+          multiNow ? myInfo.fillMine(res.content) : myInfo.fillAll(res.content, sample?.ctx),
+        );
       setAiUsed(true);
-      toast.success("AI 已生成社媒首次接触文案");
+      toast.success(
+        "AI 已生成社媒首次接触文案",
+        multiNow
+          ? { description: `文案含目标变量，发送时按 ${previewTargets.length} 个目标分别替换` }
+          : undefined,
+      );
     } catch (e) {
       const msg = e instanceof Error ? e.message : String(e);
       toast.error("AI 生成失败", { description: msg });
@@ -640,6 +657,7 @@ export function BatchSocialPlatformDialog({
                 <div className="text-[11px] text-muted-foreground">
                   {content.length} / 4096 字
                 </div>
+                <VarUsageHint template={content} targets={previewTargets} />
               </div>
 
               {/* 目标语言文案（实际发送内容） */}
@@ -652,6 +670,16 @@ export function BatchSocialPlatformDialog({
                 rows={10}
                 kindLabel="私信"
                 bare
+                keepVars={multi}
+                previewCtx={multi ? previewTarget?.ctx : undefined}
+                previewLabel={previewTarget?.name}
+                headerExtra={
+                  <PreviewTargetPicker
+                    targets={previewTargets}
+                    index={previewIdx}
+                    onChange={setPreviewIdx}
+                  />
+                }
               />
             </div>
           </section>
