@@ -285,7 +285,7 @@ function SearchPage() {
       <div className="pointer-events-none absolute inset-x-0 top-0 h-[520px] bg-[radial-gradient(60%_60%_at_50%_0%,rgba(56,189,248,0.18),transparent_70%)]" />
       <div className="pointer-events-none absolute -left-1/4 top-1/3 h-[480px] w-[120%] rotate-[-6deg] bg-[linear-gradient(90deg,transparent,rgba(186,230,253,0.55),transparent)] blur-2xl" />
 
-      <div className="relative mx-auto max-w-6xl px-6 pt-16 pb-24">
+      <div className="relative mx-auto max-w-6xl xl:max-w-[1800px] px-6 pt-16 pb-24">
         {/* 面包屑 */}
         <div className="text-xs text-muted-foreground/80 mb-10">
           出海大数据平台 / <span className="text-foreground/80">商机线索</span>
