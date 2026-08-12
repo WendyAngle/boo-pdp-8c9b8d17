@@ -145,9 +145,9 @@ function SearchPage() {
   const recent = useMemo(() => loadRecent(), [recentTick]);
   const inputRef = useRef<HTMLInputElement>(null);
 
-  useState(() => {
+  useEffect(() => {
     setMounted(true);
-  });
+  }, []);
 
   const filteredCountries = useMemo(() => {
     const q = countryKw.trim().toLowerCase();
