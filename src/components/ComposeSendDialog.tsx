@@ -461,9 +461,14 @@ export function ComposeSendDialog({
         <div className="space-y-5">
           {/* 收件人 */}
           <section className="space-y-2">
-            <div className="flex items-center justify-between">
+            <div className="flex items-center justify-between gap-2">
               <Label className="text-xs text-muted-foreground">
                 收件人（{recipients.length}）
+                {lockedKeys.size > 0 && (
+                  <span className="ml-1 text-muted-foreground/80">
+                    · {lockedKeys.size} 位{isEmail ? "邮箱" : "电话"}未解锁，默认脱敏展示
+                  </span>
+                )}
               </Label>
               {recipients.length === 0 ? (
                 <span className="text-xs text-rose-600">
@@ -472,14 +477,32 @@ export function ComposeSendDialog({
                     : "暂无收件人，可在下方手动添加"}
                 </span>
               ) : (
-                initialFilteredCount > 0 && (
-                  <span className="text-xs text-amber-600">
-                    已自动过滤 {initialFilteredCount} 条无
-                    {isEmail ? "邮箱" : "电话"}的数据
-                  </span>
-                )
+                <div className="flex items-center gap-2">
+                  {initialFilteredCount > 0 && (
+                    <span className="text-xs text-amber-600">
+                      已自动过滤 {initialFilteredCount} 条无
+                      {isEmail ? "邮箱" : "电话"}的数据
+                    </span>
+                  )}
+                  {lockedKeys.size > 0 && (
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      className="h-7 text-xs"
+                      onClick={() => {
+                        setUnlockAllAck(false);
+                        setUnlockAllOpen(true);
+                      }}
+                    >
+                      <Unlock className="h-3.5 w-3.5 mr-1" />
+                      全部解锁 · -{lockedKeys.size * unitView}
+                    </Button>
+                  )}
+                </div>
               )}
             </div>
+
             {suppressedRecipients.length > 0 && (
               <div className="rounded-md border border-amber-300 bg-amber-50 px-3 py-2 text-xs text-amber-900">
                 <div className="flex items-start gap-2">
