@@ -262,7 +262,8 @@ export interface Thread {
   isFriend?: boolean;
   /** 好友来源任务名（isFriend 时可用） */
   friendSource?: string;
-
+  /** 是否由用户手动添加（非系统推荐/非企业库选择） */
+  manualAdd?: boolean;
 }
 
 /* -------------------- Storage -------------------- */
