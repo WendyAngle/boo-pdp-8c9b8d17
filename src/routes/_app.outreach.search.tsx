@@ -546,7 +546,7 @@ function SearchPage() {
           {countryChips}
 
           {/* 最近搜索 / 热门 */}
-          <div className="mt-6 space-y-3">
+          <div className="space-y-3" style={{ marginTop: "clamp(0.75rem,2vh,1.5rem)" }}>
             {mounted && recent.length > 0 && (
               <div className="flex flex-wrap items-center gap-2">
                 <span className="text-sm text-muted-foreground shrink-0">最近搜索：</span>
@@ -598,7 +598,7 @@ function SearchPage() {
         </div>
 
         {/* 数据指标卡片 */}
-        <div className="mt-10 lg:mt-14 grid grid-cols-1 gap-4 sm:gap-5 md:grid-cols-3">
+        <div className="grid grid-cols-1 gap-4 sm:gap-5 md:grid-cols-3" style={{ marginTop: "clamp(1rem,4vh,3.5rem)" }}>
           <StatCard icon={Globe2} tone="from-cyan-400 to-sky-500" kpi="239+" title="覆盖国家/地区" sub="全球主要贸易体" />
           <StatCard icon={Building2} tone="from-emerald-400 to-teal-500" kpi="2亿+" title="全球企业" sub="全球进出口企业" />
           <StatCard icon={Users2} tone="from-sky-400 to-indigo-500" kpi="10亿+" title="全球联系人" sub="全球联系人统计" />
@@ -623,7 +623,7 @@ function StatCard({
   sub: string;
 }) {
   return (
-    <div className="group relative overflow-hidden rounded-2xl bg-white/70 backdrop-blur-sm p-6 ring-1 ring-white/80 shadow-[0_18px_50px_-30px_rgba(15,23,42,0.25)] transition-transform hover:-translate-y-0.5">
+    <div className="group relative overflow-hidden rounded-2xl bg-white/70 backdrop-blur-sm p-4 sm:p-5 lg:p-6 ring-1 ring-white/80 shadow-[0_18px_50px_-30px_rgba(15,23,42,0.25)] transition-transform hover:-translate-y-0.5">
       <div className="flex items-center gap-3">
         <div
           className={`flex h-11 w-11 items-center justify-center rounded-xl bg-gradient-to-br ${tone} text-white shadow-md shadow-sky-200/60`}
@@ -632,7 +632,7 @@ function StatCard({
         </div>
         <div className="text-base font-medium text-slate-700">{title}</div>
       </div>
-      <div className="mt-5 text-4xl font-bold tracking-tight text-slate-900">{kpi}</div>
+      <div className="mt-3 lg:mt-5 text-3xl lg:text-4xl font-bold tracking-tight text-slate-900">{kpi}</div>
       <div className="mt-2 flex items-center gap-1.5 text-sm text-muted-foreground">
         <span className="inline-block h-1.5 w-1.5 rounded-full bg-primary" />
         {sub}
