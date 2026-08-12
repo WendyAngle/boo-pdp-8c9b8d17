@@ -184,8 +184,55 @@ export function BatchSocialDialog({
     return total;
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [verified, sendableCount, platform, ledger]);
-  
+
+  /** 单条解锁单价 */
+  const unitView = platform === "WhatsApp" ? COST_VIEW_PHONE : COST_VIEW_SOCIAL;
+  const unlockFieldLabel = platform === "WhatsApp" ? "电话" : `${platform} 账号`;
+
+  /** 尚未解锁明文的目标（用于批量解锁） */
+  const lockedTargets = useMemo(
+    () =>
+      candidates.filter((c) => {
+        if (!c.address) return false;
+        const bd = computeReachBreakdown(
+          { targetKind: c.targetKind, targetId: c.targetId },
+          "social",
+          platform,
+          { reachCostOverride: 0 },
+        );
+        return bd.viewCost > 0;
+      }),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [candidates, platform, ledger],
+  );
+
+  const [unlockAllOpen, setUnlockAllOpen] = useState(false);
+  const [unlockAllAck, setUnlockAllAck] = useState(false);
+  function unlockAll() {
+    const targets = lockedTargets;
+    const fields: AutoUnlockField[] =
+      platform === "WhatsApp"
+        ? [{ field: "phone" }]
+        : [{ field: "social", subKey: platform }];
+    targets.forEach((r) =>
+      performReachAutoUnlocks({
+        targetKind: r.targetKind,
+        targetId: r.targetId,
+        targetName: r.name,
+        parentRef: r.parentRef,
+        detail: r.address,
+        fields,
+      }),
+    );
+    setUnlockAllOpen(false);
+    setUnlockAllAck(false);
+    toast.success(`已解锁 ${targets.length} 位联系人的明文`, {
+      description: `扣除 ${targets.length * unitView} 积分，永久有效`,
+    });
+  }
+
   const grandTotal = sendTotal + viewCostTotal;
+
 
   const contentRef = useRef<HTMLTextAreaElement | null>(null);
 
