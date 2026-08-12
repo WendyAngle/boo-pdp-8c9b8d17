@@ -1546,6 +1546,7 @@ const DEMO_SEEDS: DemoSeed[] = [
     lastInboundZh: "有兴趣，请把产品目录发给我。",
     hoursAgo: 5,
     aiIntent: "interested",
+    manualAdd: true,
   },
   {
     id: "demo:fb:1",
