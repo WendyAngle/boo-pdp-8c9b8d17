@@ -19,14 +19,17 @@ export function useMyInfoGuard() {
   const companyName = profile.companyName?.trim() ?? "";
   const myName = user.name?.trim() ?? "";
 
+  // AI 文案基于企业信息推荐，必填：企业名称、主营业务、主要产品、目标市场
   const missing: string[] = [];
-  if (!companyName) missing.push("公司名称");
-  if (!myName) missing.push("联系人姓名");
+  if (!companyName) missing.push("企业名称");
+  if (!(profile.industries?.length > 0)) missing.push("主营业务");
+  if (!(profile.mainProducts?.length > 0)) missing.push("主要产品");
+  if (!(profile.targetCountries?.length > 0)) missing.push("目标市场");
 
   function ensure(): boolean {
     if (missing.length === 0) return true;
-    toast.error(`企业信息不完整：缺少${missing.join("、")}`, {
-      description: "请先到「企业信息」补充后再生成文案。",
+    toast.error("基于企业信息推荐，当前企业信息不完善，请先完善企业信息", {
+      description: `缺少：${missing.join("、")}`,
       action: {
         label: "去完善",
         onClick: () => {
