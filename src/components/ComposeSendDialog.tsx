@@ -839,13 +839,12 @@ export function ComposeSendDialog({
               <span className="font-medium">{sendTotal} 积分</span>
             </div>
             {viewCostTotal > 0 && (() => {
-              const unitView = isEmail ? COST_VIEW_EMAIL : COST_VIEW_PHONE;
               const unlockCount = Math.round(viewCostTotal / unitView);
               const alreadyCount = recipients.length - unlockCount;
               return (
                 <div className="flex justify-between">
                   <span className="text-muted-foreground">
-                    自动解锁查看{isEmail ? "邮箱" : "电话"}（{unlockCount} 位未解锁
+                    发送后解锁{isEmail ? "邮箱" : "电话"}（{unlockCount} 位未解锁
                     收件人 × {unitView} 积分
                     {alreadyCount > 0 ? `，另 ${alreadyCount} 位已解锁免费` : ""}
                     ，永久生效）
@@ -854,6 +853,7 @@ export function ComposeSendDialog({
                 </div>
               );
             })()}
+
             <div className="flex justify-between border-t border-rose-200/70 pt-1 dark:border-rose-900/50">
               <span className="font-semibold text-rose-700 dark:text-rose-300">
                 合计
