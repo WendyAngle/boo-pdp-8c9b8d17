@@ -51,8 +51,10 @@ export function getTargetReason(thread: Thread): TargetReason {
     if (thread.manualAdd) {
       return {
         mode: "manual",
-        summary: "手动添加：由团队成员手动录入并创建触达任务",
-        origin: "在「客户发现」中手动添加目标客户信息后，直接发起触达",
+        summary:
+          "手动添加：在批量发邮件、批量发短信或批量社媒私信时，手动录入的非平台内/非社媒触达系统选择的目标",
+        origin:
+          "通过批量触达弹窗手动添加联系人（非企业名录、非社媒拓客任务推荐），直接发起触达",
         factors: [],
       };
     }
