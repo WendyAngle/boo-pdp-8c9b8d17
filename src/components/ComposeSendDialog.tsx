@@ -446,34 +446,53 @@ export function ComposeSendDialog({
             )}
             {recipients.length > 0 && (
               <div className="flex flex-wrap gap-1.5 rounded-md border bg-muted/30 p-2 max-h-28 overflow-y-auto">
-                {recipients.map((r) => (
-                  <span
-                    key={r.key}
-                    className="inline-flex items-center gap-1 rounded-md border bg-background px-2 py-0.5 text-xs"
-                  >
-                    <span className="font-medium">{r.name}</span>
-                    <span className="text-muted-foreground font-mono">
-                      · {r.address}
-                    </span>
-                    {isManualRecipient(r) && (
-                      <Badge variant="secondary" className="h-4 px-1 text-[10px]">
-                        手动
-                      </Badge>
-                    )}
-                    <button
-                      type="button"
-                      onClick={() =>
-                        setRecipients((prev) => prev.filter((x) => x.key !== r.key))
-                      }
-                      className="ml-0.5 text-muted-foreground hover:text-rose-600"
-                      aria-label="移除"
+                {recipients.map((r) => {
+                  const manual = isManualRecipient(r);
+                  const locked = !manual && lockedKeys.has(r.key);
+                  return (
+                    <span
+                      key={r.key}
+                      className="inline-flex items-center gap-1 rounded-md border bg-background px-2 py-0.5 text-xs"
                     >
-                      <X className="h-3 w-3" />
-                    </button>
-                  </span>
-                ))}
+                      <span className="font-medium">{r.name}</span>
+                      <span className="text-muted-foreground font-mono">
+                        ·{" "}
+                        {locked
+                          ? maskContact(isEmail ? "email" : "phone", r.address)
+                          : r.address}
+                      </span>
+                      {manual && (
+                        <Badge variant="secondary" className="h-4 px-1 text-[10px]">
+                          手动
+                        </Badge>
+                      )}
+                      {locked && (
+                        <button
+                          type="button"
+                          onClick={() => unlockOne(r)}
+                          className="ml-0.5 inline-flex items-center gap-0.5 rounded border border-primary/30 bg-primary/5 px-1 text-[10px] font-medium text-primary hover:bg-primary/10"
+                          title={`解锁明文，扣 ${unitView} 积分（永久有效）`}
+                        >
+                          <Eye className="h-3 w-3" />
+                          {unitView}
+                        </button>
+                      )}
+                      <button
+                        type="button"
+                        onClick={() =>
+                          setRecipients((prev) => prev.filter((x) => x.key !== r.key))
+                        }
+                        className="ml-0.5 text-muted-foreground hover:text-rose-600"
+                        aria-label="移除"
+                      >
+                        <X className="h-3 w-3" />
+                      </button>
+                    </span>
+                  );
+                })}
               </div>
             )}
+
             {/* 手动添加收件人 */}
             <div className="flex items-center gap-2">
               <Input
