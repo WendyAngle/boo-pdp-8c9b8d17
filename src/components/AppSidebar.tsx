@@ -5,7 +5,7 @@ import { AccountMenu } from "@/components/account/AccountMenu";
 import { useSidebarBadge } from "@/lib/inbox-store";
 
 type Leaf = { label: string; to: string; icon?: typeof Users };
-type Group = { label: string; to?: string; icon?: typeof Users; divider?: boolean; children: Leaf[] };
+type Group = { label: string; to?: string; icon?: typeof Users; divider?: boolean; children: (Leaf | Group)[] };
 type Root = { label: string; icon: typeof ShieldCheck; children: Group[] };
 
 /** 侧边栏合拢态下展示的分组图标 */
