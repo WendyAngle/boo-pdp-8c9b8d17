@@ -118,22 +118,27 @@ export function TargetLangSection({
     const target = langByCode(code);
     if (!target) return;
     setLoading(true);
+    const bodyProt = keepVars ? protectVars(src) : { text: src, map: [] as string[] };
+    const rawSubject = (sourceSubject ?? "").trim();
+    const subjProt = keepVars
+      ? protectVars(rawSubject)
+      : { text: rawSubject, map: [] as string[] };
     try {
       const jobs: Promise<{ content: string }>[] = [
         callTranslate({
           data: {
-            text: src,
+            text: bodyProt.text,
             targetLanguageName: target.en,
             sourceLanguageName: "Chinese (Simplified)",
             tone: "friendly",
           },
         }),
       ];
-      if (hasSubject && (sourceSubject ?? "").trim()) {
+      if (hasSubject && rawSubject) {
         jobs.push(
           callTranslate({
             data: {
-              text: (sourceSubject ?? "").trim(),
+              text: subjProt.text,
               targetLanguageName: target.en,
               sourceLanguageName: "Chinese (Simplified)",
               tone: "friendly",
@@ -142,10 +147,13 @@ export function TargetLangSection({
         );
       }
       const [body, subj] = await Promise.all(jobs);
-      onChange(unwrapBraces(body?.content ?? ""));
-      if (hasSubject) onSubjectChange?.(unwrapBraces(subj?.content ?? ""));
+      const clean = (t: string, map: string[]) =>
+        keepVars ? restoreVars(t, map) : unwrapBraces(t);
+      onChange(clean(body?.content ?? "", bodyProt.map));
+      if (hasSubject) onSubjectChange?.(clean(subj?.content ?? "", subjProt.map));
       setSnapshot(`${sourceSubject ?? ""}\u0000${src}`);
       toast.success(`已翻译为${target.zh}（免费）`);
+
     } catch (e) {
       const msg = e instanceof Error ? e.message : String(e);
       toast.error("翻译失败", { description: msg });
