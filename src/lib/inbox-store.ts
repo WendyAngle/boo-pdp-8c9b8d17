@@ -262,7 +262,8 @@ export interface Thread {
   isFriend?: boolean;
   /** 好友来源任务名（isFriend 时可用） */
   friendSource?: string;
-
+  /** 是否由用户手动添加（非系统推荐/非企业库选择） */
+  manualAdd?: boolean;
 }
 
 /* -------------------- Storage -------------------- */
@@ -1502,6 +1503,8 @@ interface DemoSeed {
   assigneeId?: string;
   tags?: string[];
   socialSignals?: SocialSignals;
+  /** 是否由用户手动添加（非系统推荐/非企业库选择） */
+  manualAdd?: boolean;
 }
 
 const DEMO_SEEDS: DemoSeed[] = [
@@ -1517,6 +1520,7 @@ const DEMO_SEEDS: DemoSeed[] = [
     hoursAgo: 2,
     aiIntent: "quote",
     tags: ["高意向"],
+    manualAdd: true,
   },
   {
     id: "demo:wa:2",
@@ -1542,6 +1546,7 @@ const DEMO_SEEDS: DemoSeed[] = [
     lastInboundZh: "有兴趣，请把产品目录发给我。",
     hoursAgo: 5,
     aiIntent: "interested",
+    manualAdd: true,
   },
   {
     id: "demo:fb:1",
@@ -1846,6 +1851,7 @@ export function getDemoSocialThreads(): Thread[] {
       lastDirection: (meta.extraMessages[meta.extraMessages.length - 1]?.direction ??
         "inbound") as "inbound" | "outbound",
       socialSignals: s.socialSignals,
+      manualAdd: s.manualAdd,
     };
   });
 }
