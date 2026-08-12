@@ -179,6 +179,24 @@ export function TargetLangSection({
           )}
         </Label>
         <div className="flex items-center gap-2">
+          {canPreview && (
+            <div className="flex rounded-md border p-0.5">
+              {(["edit", "preview"] as const).map((m) => (
+                <button
+                  key={m}
+                  type="button"
+                  onClick={() => setMode(m)}
+                  className={`rounded px-2 py-0.5 text-[11px] transition-colors ${
+                    mode === m
+                      ? "bg-primary text-primary-foreground"
+                      : "text-muted-foreground hover:text-foreground"
+                  }`}
+                >
+                  {m === "edit" ? "编辑" : "预览成品"}
+                </button>
+              ))}
+            </div>
+          )}
           <Select
             value={lang}
             onValueChange={(v) => {
@@ -216,25 +234,56 @@ export function TargetLangSection({
         </div>
       </div>
 
-      {hasSubject && (
-        <div className="space-y-1">
-          <Label className="text-xs text-muted-foreground">主题（译文）</Label>
-          <Input
-            value={subjectValue}
-            onChange={(e) => onSubjectChange?.(e.target.value)}
-            placeholder={`翻译后此处展示${opt?.zh ?? "目标语言"}主题，可手动修改`}
-          />
+      {previewing && (
+        <div className="flex items-center justify-between gap-2">
+          <span className="text-[11px] text-muted-foreground">
+            {previewLabel ? `${previewLabel} 将收到` : "该目标将收到"}
+          </span>
+          {headerExtra}
         </div>
       )}
 
-      <Textarea
-        value={value}
-        onChange={(e) => onChange(e.target.value)}
-        rows={rows}
-        placeholder={`选择目标语言后点击「翻译」，此处展示${
-          opt?.zh ?? "目标语言"
-        }${kindLabel}，可手动修改`}
-      />
+      {hasSubject &&
+        (previewing ? (
+          <div className="text-xs">
+            <span className="text-muted-foreground">主题：</span>
+            <span className="font-medium">
+              {renderTemplate(
+                (subjectValue ?? "").trim() || (sourceSubject ?? ""),
+                previewCtx!,
+              ) || "—"}
+            </span>
+          </div>
+        ) : (
+          <div className="space-y-1">
+            <Label className="text-xs text-muted-foreground">主题（译文）</Label>
+            <Input
+              value={subjectValue}
+              onChange={(e) => onSubjectChange?.(e.target.value)}
+              placeholder={`翻译后此处展示${opt?.zh ?? "目标语言"}主题，可手动修改`}
+            />
+          </div>
+        ))}
+
+      {previewing ? (
+        <div
+          className="rounded-md border bg-background/70 p-2 text-xs whitespace-pre-wrap leading-relaxed overflow-y-auto"
+          style={{ minHeight: rows * 22 }}
+        >
+          {renderTemplate(value.trim() || source, previewCtx!) || (
+            <span className="text-muted-foreground">（暂无内容）</span>
+          )}
+        </div>
+      ) : (
+        <Textarea
+          value={value}
+          onChange={(e) => onChange(e.target.value)}
+          rows={rows}
+          placeholder={`选择目标语言后点击「翻译」，此处展示${
+            opt?.zh ?? "目标语言"
+          }${kindLabel}，可手动修改`}
+        />
+      )}
       <div className="flex items-center justify-between text-[11px]">
         <span className="text-muted-foreground">
           {value.trim()
@@ -246,30 +295,6 @@ export function TargetLangSection({
         )}
       </div>
 
-      {keepVars && previewCtx && (
-        <div className="rounded-md border border-primary/20 bg-background/70 p-2 space-y-1">
-          <div className="flex items-center justify-between gap-2">
-            <span className="text-[11px] font-medium">
-              {previewLabel ? `${previewLabel} 将收到` : "该目标将收到"}
-            </span>
-            {headerExtra}
-          </div>
-          {hasSubject && (
-            <div className="text-[11px]">
-              <span className="text-muted-foreground">主题：</span>
-              <span className="font-medium">
-                {renderTemplate((subjectValue ?? "").trim() || (sourceSubject ?? ""), previewCtx) ||
-                  "—"}
-              </span>
-            </div>
-          )}
-          <p className="text-xs whitespace-pre-wrap leading-relaxed max-h-32 overflow-y-auto">
-            {renderTemplate(value.trim() || source, previewCtx) || (
-              <span className="text-muted-foreground">（暂无内容）</span>
-            )}
-          </p>
-        </div>
-      )}
     </section>
 
   );
