@@ -430,7 +430,7 @@ function SearchPage() {
 
           {/* 最近搜索 / 热门 */}
           <div className="mt-6 space-y-3">
-            {recent.length > 0 && (
+            {mounted && recent.length > 0 && (
               <div className="flex flex-wrap items-center gap-2">
                 <span className="text-sm text-muted-foreground shrink-0">最近搜索：</span>
                 {recent.slice(0, 6).map((r) => (
