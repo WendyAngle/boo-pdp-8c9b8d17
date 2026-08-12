@@ -79,7 +79,7 @@ export function PreviewTargetPicker({
 
 /**
  * 多目标变量提示（轻量版）：编辑框下方一行小字，点击展开明细。
- * 单目标时不展示（保持原有"成品文案"体验）。
+ * 仅在文案确实用到变量时展示；未用变量时不做任何提示（避免误报）。
  */
 export function VarUsageHint({
   template,
@@ -92,9 +92,9 @@ export function VarUsageHint({
 }) {
   const [open, setOpen] = useState(false);
   if (targets.length < 2) return null;
-  const used = extractVars(template).filter(
-    (v) => v !== "我的公司" && v !== "我的姓名",
-  );
+  const used = extractVars(template);
+  if (used.length === 0) return null;
+  const perTarget = used.filter((v) => v !== "我的公司" && v !== "我的姓名");
   const missing = missingVarCounts(template, targets.map((t) => t.ctx)).filter(
     (m) => m.variable !== "我的公司" && m.variable !== "我的姓名",
   );
@@ -108,11 +108,11 @@ export function VarUsageHint({
         className="flex items-center gap-1 text-muted-foreground hover:text-foreground transition-colors"
       >
         <Users className="h-3 w-3" />
-        {used.length > 0 ? (
-          <span>{used.length} 个变量按目标替换</span>
-        ) : (
-          <span className="text-amber-600">未使用变量 · 所有目标内容相同</span>
-        )}
+        <span>
+          {perTarget.length > 0
+            ? `${perTarget.length} 个变量按目标替换`
+            : `${used.length} 个变量自动填充`}
+        </span>
         {missingTotal > 0 && (
           <span className="text-amber-600">· {missingTotal} 处缺值将兜底</span>
         )}
@@ -120,6 +120,7 @@ export function VarUsageHint({
           className={cn("h-3 w-3 transition-transform", open && "rotate-180")}
         />
       </button>
+
       {open && (
         <div className="mt-1 space-y-1 rounded-md border bg-muted/40 p-2">
           {used.length > 0 && (

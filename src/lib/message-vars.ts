@@ -23,7 +23,7 @@ export interface VarContext {
   我的姓名?: string;
 }
 
-const VAR_RE = /\{(企业名|联系人名|行业|城市|我的公司|我的姓名)\}/g;
+const VAR_RE = /[{｛]\s*(企业名|联系人名|行业|城市|我的公司|我的姓名)\s*[}｝]/g;
 
 /** 变量缺值时的兜底词；未列出的变量（行业/城市）缺值时整体删除 */
 export const VAR_FALLBACK: Partial<Record<MessageVariable, string>> = {

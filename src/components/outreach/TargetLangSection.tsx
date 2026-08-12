@@ -31,7 +31,7 @@ function unwrapBraces(text: string): string {
 }
 
 /** 模板模式：翻译前把变量换成安全记号，翻译后还原，避免模型改写/丢失花括号 */
-const PROTECT_RE = /\{(企业名|联系人名|行业|城市|我的公司|我的姓名)\}/g;
+const PROTECT_RE = /[{｛]\s*(企业名|联系人名|行业|城市|我的公司|我的姓名)\s*[}｝]/g;
 function protectVars(s: string): { text: string; map: string[] } {
   const map: string[] = [];
   const text = s.replace(PROTECT_RE, (m) => {
