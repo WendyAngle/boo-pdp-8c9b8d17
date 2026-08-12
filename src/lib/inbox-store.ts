@@ -1520,6 +1520,7 @@ const DEMO_SEEDS: DemoSeed[] = [
     hoursAgo: 2,
     aiIntent: "quote",
     tags: ["高意向"],
+    manualAdd: true,
   },
   {
     id: "demo:wa:2",
