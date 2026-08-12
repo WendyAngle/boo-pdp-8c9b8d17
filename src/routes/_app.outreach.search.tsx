@@ -365,15 +365,15 @@ function SearchPage() {
 
               <button
                 onClick={() => go(kw)}
-                className="inline-flex h-[calc(100%-10px)] items-center gap-2 rounded-xl bg-primary px-6 text-sm font-medium text-primary-foreground hover:bg-primary/90 shrink-0 mr-1"
+                className="inline-flex h-[calc(100%-10px)] items-center gap-2 rounded-xl bg-primary px-3 md:px-6 text-sm font-medium text-primary-foreground hover:bg-primary/90 shrink-0 mr-1"
               >
                 <Search className="h-4 w-4" />
-                搜索
+                <span className="hidden md:inline">搜索</span>
               </button>
             </div>
 
             {/* 移动端过滤行 */}
-            <div className="md:hidden flex flex-wrap items-center gap-2 px-4 py-3 border-t border-slate-100">
+            <div className="md:hidden flex flex-col gap-2 px-4 py-3 border-t border-slate-100">
               <CountryFilter
                 countries={countries}
                 setCountries={setCountries}
@@ -383,26 +383,31 @@ function SearchPage() {
                 countryLabel={countryLabel}
                 align="start"
               >
-                <button className="inline-flex h-10 items-center justify-between rounded-lg bg-white px-3 text-sm text-slate-700 ring-1 ring-slate-200 hover:ring-primary/50 transition-colors min-w-[160px]">
-                  <span className="truncate">{countryLabel}</span>
+                <button className="inline-flex h-10 w-full items-center justify-between rounded-lg bg-white px-3 text-sm text-slate-700 ring-1 ring-slate-200 hover:ring-primary/50 transition-colors">
+                  <span className="flex items-center gap-1.5 truncate">
+                    <Globe2 className="h-4 w-4 text-muted-foreground shrink-0" />
+                    {countryLabel}
+                  </span>
                   <ChevronDown className="h-4 w-4 text-muted-foreground shrink-0" />
                 </button>
               </CountryFilter>
 
-              <label className="inline-flex h-10 items-center gap-2 rounded-lg bg-white px-3 text-sm text-slate-700 ring-1 ring-slate-200 cursor-pointer">
-                <Checkbox
-                  checked={importer}
-                  onCheckedChange={(v) => setImporter(v === true)}
-                />
-                进口商
-              </label>
-              <label className="inline-flex h-10 items-center gap-2 rounded-lg bg-white px-3 text-sm text-slate-700 ring-1 ring-slate-200 cursor-pointer">
-                <Checkbox
-                  checked={exporter}
-                  onCheckedChange={(v) => setExporter(v === true)}
-                />
-                出口商
-              </label>
+              <div className="flex items-center gap-2">
+                <label className="inline-flex flex-1 h-10 items-center justify-center gap-2 rounded-lg bg-white px-2 text-sm text-slate-700 ring-1 ring-slate-200 cursor-pointer whitespace-nowrap">
+                  <Checkbox
+                    checked={importer}
+                    onCheckedChange={(v) => setImporter(v === true)}
+                  />
+                  进口商
+                </label>
+                <label className="inline-flex flex-1 h-10 items-center justify-center gap-2 rounded-lg bg-white px-2 text-sm text-slate-700 ring-1 ring-slate-200 cursor-pointer whitespace-nowrap">
+                  <Checkbox
+                    checked={exporter}
+                    onCheckedChange={(v) => setExporter(v === true)}
+                  />
+                  出口商
+                </label>
+              </div>
             </div>
           </div>
 
