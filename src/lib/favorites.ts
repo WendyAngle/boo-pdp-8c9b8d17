@@ -135,9 +135,16 @@ export function getAllFavorites(): FavoriteRecord[] {
 }
 
 export function useFavorites(): FavoriteRecord[] {
+  // 服务端与首帧 hydration 返回空列表，避免 SSR/CSR 文本不一致
+  const hydrated = useSyncExternalStore(
+    subscribe,
+    () => true,
+    () => false,
+  );
   useSyncExternalStore(subscribe, getVersion, getVersion);
-  return getAllFavorites();
+  return hydrated ? getAllFavorites() : [];
 }
+
 
 export function useFavorite(
   kind: FavoriteKind,
