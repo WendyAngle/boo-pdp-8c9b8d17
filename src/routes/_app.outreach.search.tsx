@@ -215,137 +215,132 @@ function SearchPage() {
           </p>
         </div>
 
-        {/* 搜索框 */}
+        {/* 复合搜索栏：输入 + 国家 + 进出口商 + 搜索 */}
         <div className="relative mx-auto mt-10 max-w-4xl">
-          <div className="flex items-center gap-2 rounded-2xl bg-white pl-5 h-16 overflow-hidden shadow-[0_18px_60px_-20px_rgba(56,189,248,0.45)] ring-1 ring-white/80 focus-within:ring-primary/60 transition-all">
-            <Search className="h-5 w-5 text-muted-foreground shrink-0 self-center" />
-            <Input
-              ref={inputRef}
-              value={kw}
-              onChange={(e) => setKw(e.target.value)}
-              onKeyDown={onKeyDown}
-              placeholder={PLACEHOLDER}
-              className="border-0 shadow-none focus-visible:ring-0 text-base h-12 px-0 placeholder:text-muted-foreground/70"
-            />
-            {kw && (
-              <button
-                onClick={() => setKw("")}
-                className="rounded-full p-1.5 text-muted-foreground hover:bg-muted/60 shrink-0 self-center"
-                aria-label="清空"
-              >
-                <XIcon className="h-4 w-4" />
-              </button>
-            )}
-            <button
-              onClick={() => go(kw)}
-              className="inline-flex h-full items-center gap-2 rounded-none bg-primary px-8 text-sm font-medium text-primary-foreground hover:bg-primary/90 shrink-0"
-            >
-              <Search className="h-4 w-4" />
-              搜索
-            </button>
-          </div>
+          <div className="rounded-2xl bg-white shadow-[0_18px_60px_-20px_rgba(56,189,248,0.45)] ring-1 ring-white/80 focus-within:ring-primary/60 transition-all overflow-hidden">
+            <div className="flex items-center gap-1 h-16 px-2">
+              <Search className="h-5 w-5 text-muted-foreground shrink-0 ml-3" />
+              <Input
+                ref={inputRef}
+                value={kw}
+                onChange={(e) => setKw(e.target.value)}
+                onKeyDown={onKeyDown}
+                placeholder={PLACEHOLDER}
+                className="border-0 shadow-none focus-visible:ring-0 text-base h-12 px-2 placeholder:text-muted-foreground/70 flex-1 min-w-0"
+              />
+              {kw && (
+                <button
+                  onClick={() => setKw("")}
+                  className="rounded-full p-1.5 text-muted-foreground hover:bg-muted/60 shrink-0"
+                  aria-label="清空"
+                >
+                  <XIcon className="h-4 w-4" />
+                </button>
+              )}
 
-          {/* 过滤条件：国家 + 进出口商 */}
-          <div className="mt-4 flex flex-wrap items-center gap-3">
-            <Popover>
-              <PopoverTrigger asChild>
-                <button className="inline-flex h-10 w-[240px] items-center justify-between rounded-lg bg-white px-3 text-sm text-slate-700 ring-1 ring-slate-200 hover:ring-primary/50 transition-colors">
+              {/* 桌面端过滤 */}
+              <div className="hidden md:flex items-center shrink-0">
+                <div className="h-6 w-px bg-slate-200 mx-1" />
+                <CountryFilter
+                  countries={countries}
+                  setCountries={setCountries}
+                  countryKw={countryKw}
+                  setCountryKw={setCountryKw}
+                  filteredCountries={filteredCountries}
+                  countryLabel={countryLabel}
+                  align="end"
+                >
+                  <button className="inline-flex h-10 items-center gap-1.5 rounded-lg px-3 text-sm text-slate-700 hover:bg-slate-50 transition-colors max-w-[140px]">
+                    <Globe2 className="h-4 w-4 text-muted-foreground shrink-0" />
+                    <span className="truncate">{countryLabel}</span>
+                    <ChevronDown className="h-4 w-4 text-muted-foreground shrink-0" />
+                  </button>
+                </CountryFilter>
+
+                <div className="h-6 w-px bg-slate-200 mx-1" />
+
+                <label className="inline-flex h-10 items-center gap-2 rounded-lg px-3 text-sm text-slate-700 hover:bg-slate-50 transition-colors cursor-pointer whitespace-nowrap">
+                  <Checkbox
+                    checked={importer}
+                    onCheckedChange={(v) => setImporter(v === true)}
+                  />
+                  进口商
+                </label>
+                <label className="inline-flex h-10 items-center gap-2 rounded-lg px-3 text-sm text-slate-700 hover:bg-slate-50 transition-colors cursor-pointer whitespace-nowrap">
+                  <Checkbox
+                    checked={exporter}
+                    onCheckedChange={(v) => setExporter(v === true)}
+                  />
+                  出口商
+                </label>
+
+                <div className="h-6 w-px bg-slate-200 mx-1" />
+              </div>
+
+              <button
+                onClick={() => go(kw)}
+                className="inline-flex h-[calc(100%-10px)] items-center gap-2 rounded-xl bg-primary px-6 text-sm font-medium text-primary-foreground hover:bg-primary/90 shrink-0 mr-1"
+              >
+                <Search className="h-4 w-4" />
+                搜索
+              </button>
+            </div>
+
+            {/* 移动端过滤行 */}
+            <div className="md:hidden flex flex-wrap items-center gap-2 px-4 py-3 border-t border-slate-100">
+              <CountryFilter
+                countries={countries}
+                setCountries={setCountries}
+                countryKw={countryKw}
+                setCountryKw={setCountryKw}
+                filteredCountries={filteredCountries}
+                countryLabel={countryLabel}
+                align="start"
+              >
+                <button className="inline-flex h-10 items-center justify-between rounded-lg bg-white px-3 text-sm text-slate-700 ring-1 ring-slate-200 hover:ring-primary/50 transition-colors min-w-[160px]">
                   <span className="truncate">{countryLabel}</span>
                   <ChevronDown className="h-4 w-4 text-muted-foreground shrink-0" />
                 </button>
-              </PopoverTrigger>
-              <PopoverContent align="start" className="w-[280px] p-0">
-                <div className="p-2 border-b">
-                  <div className="relative">
-                    <Search className="absolute left-2 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
-                    <Input
-                      value={countryKw}
-                      onChange={(e) => setCountryKw(e.target.value)}
-                      placeholder="搜索国家"
-                      className="h-9 pl-7 text-sm"
-                    />
-                  </div>
-                </div>
-                <div className="max-h-72 overflow-y-auto py-1">
-                  {filteredCountries.length === 0 && (
-                    <div className="px-3 py-6 text-center text-sm text-muted-foreground">
-                      无匹配国家
-                    </div>
-                  )}
-                  {filteredCountries.map((c) => {
-                    const checked = countries.includes(c);
-                    return (
-                      <button
-                        key={c}
-                        onClick={() => toggleCountry(c)}
-                        className="flex w-full items-center gap-2 px-3 py-2 text-sm hover:bg-muted/60"
-                      >
-                        <span
-                          className={`flex h-4 w-4 items-center justify-center rounded border ${
-                            checked
-                              ? "border-primary bg-primary text-primary-foreground"
-                              : "border-slate-300"
-                          }`}
-                        >
-                          {checked && <Check className="h-3 w-3" />}
-                        </span>
-                        <span className="truncate">{c}</span>
-                      </button>
-                    );
-                  })}
-                </div>
-                {countries.length > 0 && (
-                  <div className="flex items-center justify-between border-t px-3 py-2">
-                    <span className="text-xs text-muted-foreground">
-                      已选 {countries.length} 个
-                    </span>
-                    <button
-                      onClick={() => setCountries([])}
-                      className="text-xs text-primary hover:underline"
-                    >
-                      清空
-                    </button>
-                  </div>
-                )}
-              </PopoverContent>
-            </Popover>
+              </CountryFilter>
 
-            <label className="inline-flex h-10 items-center gap-2 rounded-lg bg-white px-3 text-sm text-slate-700 ring-1 ring-slate-200 cursor-pointer">
-              <Checkbox
-                checked={importer}
-                onCheckedChange={(v) => setImporter(v === true)}
-              />
-              进口商
-            </label>
-            <label className="inline-flex h-10 items-center gap-2 rounded-lg bg-white px-3 text-sm text-slate-700 ring-1 ring-slate-200 cursor-pointer">
-              <Checkbox
-                checked={exporter}
-                onCheckedChange={(v) => setExporter(v === true)}
-              />
-              出口商
-            </label>
-
-            {countries.length > 0 && (
-              <div className="flex flex-wrap items-center gap-1.5">
-                {countries.slice(0, 4).map((c) => (
-                  <Badge
-                    key={c}
-                    variant="secondary"
-                    className="gap-1 bg-primary/8 text-primary"
-                  >
-                    {c}
-                    <XIcon
-                      className="h-3 w-3 cursor-pointer"
-                      onClick={() => toggleCountry(c)}
-                    />
-                  </Badge>
-                ))}
-                {countries.length > 4 && (
-                  <Badge variant="secondary">+{countries.length - 4}</Badge>
-                )}
-              </div>
-            )}
+              <label className="inline-flex h-10 items-center gap-2 rounded-lg bg-white px-3 text-sm text-slate-700 ring-1 ring-slate-200 cursor-pointer">
+                <Checkbox
+                  checked={importer}
+                  onCheckedChange={(v) => setImporter(v === true)}
+                />
+                进口商
+              </label>
+              <label className="inline-flex h-10 items-center gap-2 rounded-lg bg-white px-3 text-sm text-slate-700 ring-1 ring-slate-200 cursor-pointer">
+                <Checkbox
+                  checked={exporter}
+                  onCheckedChange={(v) => setExporter(v === true)}
+                />
+                出口商
+              </label>
+            </div>
           </div>
+
+          {/* 已选国家标签 */}
+          {countries.length > 0 && (
+            <div className="mt-3 flex flex-wrap items-center gap-1.5">
+              {countries.slice(0, 6).map((c) => (
+                <Badge
+                  key={c}
+                  variant="secondary"
+                  className="gap-1 bg-primary/8 text-primary"
+                >
+                  {c}
+                  <XIcon
+                    className="h-3 w-3 cursor-pointer"
+                    onClick={() => toggleCountry(c)}
+                  />
+                </Badge>
+              ))}
+              {countries.length > 6 && (
+                <Badge variant="secondary">+{countries.length - 6}</Badge>
+              )}
+            </div>
+          )}
 
           {/* 最近搜索 / 热门 */}
           <div className="mt-6 space-y-3">
