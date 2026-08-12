@@ -28,6 +28,21 @@ function unwrapBraces(text: string): string {
     .replace(/[ \t]{2,}/g, " ");
 }
 
+/** 模板模式：翻译前把变量换成安全记号，翻译后还原，避免模型改写/丢失花括号 */
+const PROTECT_RE = /\{(企业名|联系人名|行业|城市|我的公司|我的姓名)\}/g;
+function protectVars(s: string): { text: string; map: string[] } {
+  const map: string[] = [];
+  const text = s.replace(PROTECT_RE, (m) => {
+    map.push(m);
+    return `[[V${map.length - 1}]]`;
+  });
+  return { text, map };
+}
+function restoreVars(s: string, map: string[]): string {
+  return s.replace(/\[\[\s*V\s*(\d+)\s*\]\]/gi, (_m, i: string) => map[Number(i)] ?? "");
+}
+
+
 
 /**
  * 「目标语言文案」板块（与 触达任务-新建社媒触达任务 弹窗一致）：
