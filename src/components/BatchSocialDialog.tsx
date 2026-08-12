@@ -12,6 +12,7 @@ import {
   MessageCircle,
   ServerCog,
   Info,
+  Unlock,
 } from "lucide-react";
 import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
@@ -36,6 +37,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
+import { Checkbox } from "@/components/ui/checkbox";
 import { cn } from "@/lib/utils";
 
 import {
@@ -184,8 +186,55 @@ export function BatchSocialDialog({
     return total;
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [verified, sendableCount, platform, ledger]);
-  
+
+  /** 单条解锁单价 */
+  const unitView = platform === "WhatsApp" ? COST_VIEW_PHONE : COST_VIEW_SOCIAL;
+  const unlockFieldLabel = platform === "WhatsApp" ? "电话" : `${platform} 账号`;
+
+  /** 尚未解锁明文的目标（用于批量解锁） */
+  const lockedTargets = useMemo(
+    () =>
+      candidates.filter((c) => {
+        if (!c.address) return false;
+        const bd = computeReachBreakdown(
+          { targetKind: c.targetKind, targetId: c.targetId },
+          "social",
+          platform,
+          { reachCostOverride: 0 },
+        );
+        return bd.viewCost > 0;
+      }),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [candidates, platform, ledger],
+  );
+
+  const [unlockAllOpen, setUnlockAllOpen] = useState(false);
+  const [unlockAllAck, setUnlockAllAck] = useState(false);
+  function unlockAll() {
+    const targets = lockedTargets;
+    const fields: AutoUnlockField[] =
+      platform === "WhatsApp"
+        ? [{ field: "phone" }]
+        : [{ field: "social", subKey: platform }];
+    targets.forEach((r) =>
+      performReachAutoUnlocks({
+        targetKind: r.targetKind,
+        targetId: r.targetId,
+        targetName: r.name,
+        parentRef: r.parentRef,
+        detail: r.address,
+        fields,
+      }),
+    );
+    setUnlockAllOpen(false);
+    setUnlockAllAck(false);
+    toast.success(`已解锁 ${targets.length} 位联系人的明文`, {
+      description: `扣除 ${targets.length * unitView} 积分，永久有效`,
+    });
+  }
+
   const grandTotal = sendTotal + viewCostTotal;
+
 
   const contentRef = useRef<HTMLTextAreaElement | null>(null);
 
@@ -432,12 +481,35 @@ export function BatchSocialDialog({
               <div className="flex items-center justify-between gap-2">
                 <Label className="text-xs text-muted-foreground">
                   目标账号（{candidates.length}）
+                  {lockedTargets.length > 0 && (
+                    <span className="ml-1 text-muted-foreground/80">
+                      · {lockedTargets.length} 位{unlockFieldLabel}未解锁，默认脱敏展示
+                    </span>
+                  )}
                 </Label>
-                <span className="inline-flex items-center gap-1 text-[11px] text-muted-foreground">
-                  <Info className="h-3 w-3" />
-                  号码默认脱敏，点击 👁 首次查看 -{COST_VIEW_PHONE} 积分，永久解锁；成功发送后自动解锁
-                </span>
+                <div className="flex items-center gap-2">
+                  <span className="inline-flex items-center gap-1 text-[11px] text-muted-foreground">
+                    <Info className="h-3 w-3" />
+                    点击 👁 单条解锁 -{unitView} 积分；成功发送后自动解锁
+                  </span>
+                  {lockedTargets.length > 0 && (
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      className="h-7 text-xs"
+                      onClick={() => {
+                        setUnlockAllAck(false);
+                        setUnlockAllOpen(true);
+                      }}
+                    >
+                      <Unlock className="h-3.5 w-3.5 mr-1" />
+                      全部解锁 · -{lockedTargets.length * unitView}
+                    </Button>
+                  )}
+                </div>
               </div>
+
               <div className="flex flex-wrap gap-1.5 rounded-md border bg-muted/20 p-2 max-h-32 overflow-y-auto">
                 {candidates.map((c) => {
                   const st = normalizePhone(c.address)
@@ -617,6 +689,39 @@ export function BatchSocialDialog({
           </Button>
         </DialogFooter>
       </DialogContent>
+
+      {/* 全部解锁 · 二次确认 */}
+      <Dialog open={unlockAllOpen} onOpenChange={setUnlockAllOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>解锁全部明文{unlockFieldLabel}</DialogTitle>
+            <DialogDescription>
+              将为 {lockedTargets.length} 位未解锁目标一次性解锁明文，扣除{" "}
+              <span className="font-semibold text-rose-600">
+                {lockedTargets.length * unitView}
+              </span>{" "}
+              积分，解锁后永久有效、不可撤销。批量群发本身无需解锁即可发送。
+            </DialogDescription>
+          </DialogHeader>
+          <label className="flex items-start gap-2 text-sm">
+            <Checkbox
+              checked={unlockAllAck}
+              onCheckedChange={(v) => setUnlockAllAck(v === true)}
+              className="mt-0.5"
+            />
+            <span>我已知晓将立即扣除 {lockedTargets.length * unitView} 积分</span>
+          </label>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setUnlockAllOpen(false)}>
+              取消
+            </Button>
+            <Button disabled={!unlockAllAck} onClick={unlockAll}>
+              <Unlock className="h-4 w-4" />
+              确认解锁
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </Dialog>
   );
 }
