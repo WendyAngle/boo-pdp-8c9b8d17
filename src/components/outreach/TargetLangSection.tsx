@@ -98,6 +98,10 @@ export function TargetLangSection({
   const [snapshot, setSnapshot] = useState("");
   const hasSubject = typeof subjectValue === "string" && !!onSubjectChange;
   const opt = langByCode(lang);
+  /** 多目标模板模式下：编辑 / 预览成品 两种视图，避免常驻预览块 */
+  const [mode, setMode] = useState<"edit" | "preview">("edit");
+  const canPreview = !!(keepVars && previewCtx);
+  const previewing = canPreview && mode === "preview";
 
   // 原文清空时同步清空译文
   useEffect(() => {
