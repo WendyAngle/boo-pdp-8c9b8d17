@@ -17,6 +17,8 @@ import {
 } from "@/components/ui/select";
 import { LANGUAGES, langByCode } from "@/lib/lang-detect";
 import { translateMessage } from "@/lib/api/ai-translate.functions";
+import { renderTemplate, type VarContext } from "@/lib/message-vars";
+
 
 /** 目标语言候选（中文为原文，故排除） */
 export const TARGET_LANGS = LANGUAGES.filter((l) => l.code !== "zh");
