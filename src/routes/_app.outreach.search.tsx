@@ -2,27 +2,42 @@ import { useMemo, useRef, useState } from "react";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import {
   Search,
-  Package,
   Building2,
   Globe2,
   Users2,
   X as XIcon,
   TrendingUp,
-  Hash,
-  User,
+  ChevronDown,
+  Check,
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Badge } from "@/components/ui/badge";
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/_app/outreach/search")({
-  head: () => ({ meta: [{ title: "出海大数据平台 · 搜索 | 出海大数据平台" }] }),
+  head: () => ({
+    meta: [
+      { title: "商机线索 · 全球贸易搜索 | 出海大数据平台" },
+      {
+        name: "description",
+        content:
+          "按商品关键词、HS Code 或公司名称检索全球贸易商机，可筛选国家与进出口商角色。",
+      },
+      { property: "og:title", content: "商机线索 · 全球贸易搜索" },
+      {
+        property: "og:description",
+        content: "按商品关键词、HS Code 或公司名称检索全球贸易商机。",
+      },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary_large_image" },
+    ],
+  }),
   component: SearchPage,
 });
 
@@ -34,7 +49,8 @@ function loadRecent(): string[] {
   if (typeof window === "undefined") return [];
   try {
     const raw = localStorage.getItem(RECENT_KEY);
-    if (!raw) return ["铝材", "钢材", "铝合金门窗", "apple", "疏浚船、灯船、消防船及起重船等特种工程船舶"];
+    if (!raw)
+      return ["铝材", "钢材", "铝合金门窗", "apple", "850760 锂电池"];
     const arr = JSON.parse(raw);
     return Array.isArray(arr) ? arr.filter((x) => typeof x === "string") : [];
   } catch {
@@ -62,59 +78,113 @@ function clearRecent() {
 /* ------------------------------- 热门搜索（mock） ------------------------------- */
 const HOT_SEARCHES = ["花岗岩", "光伏组件", "新能源汽车", "锂电池", "680100", "germany"];
 
-/* ------------------------------- 搜索类型 ------------------------------- */
-type SearchScope = "product" | "hs" | "enterprise" | "person";
-
-const SCOPES: {
-  key: SearchScope;
-  label: string;
-  icon: typeof Package;
-  placeholder: string;
-}[] = [
-  { key: "product", label: "商品描述", icon: Package, placeholder: "输入商品名称或描述关键词" },
-  { key: "hs", label: "HS编码", icon: Hash, placeholder: "输入 HS 编码（4 位及以上数字）" },
-  { key: "enterprise", label: "企业名称/描述", icon: Building2, placeholder: "输入企业名称或描述关键词" },
-  { key: "person", label: "人物姓名/描述", icon: User, placeholder: "输入联系人姓名或描述关键词" },
+/* ------------------------------- 国家列表 ------------------------------- */
+const COUNTRIES = [
+  "安道尔",
+  "阿拉伯联合酋长国",
+  "阿富汗",
+  "安提瓜和巴布达",
+  "安圭拉",
+  "阿尔巴尼亚",
+  "亚美尼亚",
+  "库拉索",
+  "安哥拉",
+  "阿根廷",
+  "奥地利",
+  "澳大利亚",
+  "巴西",
+  "比利时",
+  "加拿大",
+  "瑞士",
+  "智利",
+  "中国",
+  "哥伦比亚",
+  "捷克",
+  "德国",
+  "丹麦",
+  "埃及",
+  "西班牙",
+  "法国",
+  "英国",
+  "印度",
+  "印度尼西亚",
+  "意大利",
+  "日本",
+  "韩国",
+  "墨西哥",
+  "马来西亚",
+  "荷兰",
+  "尼日利亚",
+  "菲律宾",
+  "波兰",
+  "葡萄牙",
+  "俄罗斯",
+  "沙特阿拉伯",
+  "瑞典",
+  "新加坡",
+  "泰国",
+  "土耳其",
+  "美国",
+  "越南",
+  "南非",
 ];
+
+const PLACEHOLDER =
+  '商品关键词或HS Code、公司名称等，支持逗号/分号/顿号/换行或中英文空格，如"850760 锂电池"';
 
 /* ============================== 页面 ============================== */
 function SearchPage() {
   const navigate = useNavigate();
   const [kw, setKw] = useState("");
-  const [scope, setScope] = useState<SearchScope>("product");
+  const [countries, setCountries] = useState<string[]>([]);
+  const [countryKw, setCountryKw] = useState("");
+  const [importer, setImporter] = useState(true);
+  const [exporter, setExporter] = useState(true);
   const [recentTick, setRecentTick] = useState(0);
   const recent = useMemo(() => loadRecent(), [recentTick]);
   const inputRef = useRef<HTMLInputElement>(null);
 
-  const currentScope = SCOPES.find((s) => s.key === scope) ?? SCOPES[0];
+  const filteredCountries = useMemo(() => {
+    const q = countryKw.trim().toLowerCase();
+    if (!q) return COUNTRIES;
+    return COUNTRIES.filter((c) => c.toLowerCase().includes(q));
+  }, [countryKw]);
 
-  const go = (s: SearchScope, keyword: string) => {
+  const countryLabel =
+    countries.length === 0
+      ? "全部国家"
+      : countries.length === 1
+        ? countries[0]
+        : `已选 ${countries.length} 个国家`;
+
+  const toggleCountry = (c: string) =>
+    setCountries((prev) =>
+      prev.includes(c) ? prev.filter((x) => x !== c) : [...prev, c],
+    );
+
+  const go = (keyword: string) => {
     const k = keyword.trim();
     if (!k) {
       toast.error("请输入搜索关键词");
       return;
     }
-    if (s === "hs" && !/^\d{4,}$/.test(k)) {
-      toast.error("HS 编码需为 4 位及以上数字");
+    if (!importer && !exporter) {
+      toast.error("请至少选择进口商或出口商");
       return;
     }
     pushRecent(k);
     setRecentTick((n) => n + 1);
-    if (s === "person") {
-      navigate({ to: "/outreach/leads" });
-    } else if (s === "enterprise") {
-      navigate({ to: "/outreach/enterprise", search: { q: k } as never });
-    } else if (s === "hs") {
+    if (/^\d{4,}$/.test(k)) {
       navigate({ to: "/outreach/products/$hs", params: { hs: k } });
     } else {
-      navigate({ to: "/outreach/products" });
+      navigate({ to: "/outreach/enterprise", search: { q: k } as never });
     }
   };
 
   const onKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === "Enter") {
       e.preventDefault();
-      go(scope, kw);
+      go(kw);
     }
   };
 
@@ -127,48 +197,29 @@ function SearchPage() {
       <div className="relative mx-auto max-w-6xl px-6 pt-16 pb-24">
         {/* 面包屑 */}
         <div className="text-xs text-muted-foreground/80 mb-10">
-          出海大数据平台 / <span className="text-foreground/80">搜索</span>
+          出海大数据平台 / <span className="text-foreground/80">商机线索</span>
         </div>
 
         {/* 标题 */}
         <div className="text-center">
           <h1 className="text-4xl md:text-5xl font-bold tracking-tight text-slate-900">
-            出海大数据平台大数据平台
+            商机线索
           </h1>
           <p className="mt-4 text-base md:text-lg text-slate-500">
-            从商品、市场到企业，发现全球贸易机会
+            从商品、HS 编码到企业，发现全球贸易机会
           </p>
         </div>
 
         {/* 搜索框 */}
-        <div className="relative mx-auto mt-10 max-w-3xl">
-          <div className="flex items-center gap-2 rounded-2xl bg-white pl-2 h-16 overflow-hidden shadow-[0_18px_60px_-20px_rgba(56,189,248,0.45)] ring-1 ring-white/80 focus-within:ring-primary/60 transition-all">
-            <Select value={scope} onValueChange={(v) => setScope(v as SearchScope)}>
-              <SelectTrigger className="h-11 w-[200px] border-0 bg-transparent shadow-none hover:bg-transparent focus:ring-0 focus:ring-offset-0 rounded-none text-sm font-medium text-slate-700 shrink-0 whitespace-nowrap px-3">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent align="start" className="min-w-[200px]">
-                {SCOPES.map((s) => {
-                  const Icon = s.icon;
-                  return (
-                    <SelectItem key={s.key} value={s.key}>
-                      <span className="inline-flex items-center gap-2">
-                        <Icon className="h-4 w-4 text-muted-foreground" />
-                        {s.label}
-                      </span>
-                    </SelectItem>
-                  );
-                })}
-              </SelectContent>
-            </Select>
-            <div className="w-px bg-slate-200 shrink-0 self-center h-8" />
-            <Search className="h-5 w-5 text-muted-foreground shrink-0 ml-1 self-center" />
+        <div className="relative mx-auto mt-10 max-w-4xl">
+          <div className="flex items-center gap-2 rounded-2xl bg-white pl-5 h-16 overflow-hidden shadow-[0_18px_60px_-20px_rgba(56,189,248,0.45)] ring-1 ring-white/80 focus-within:ring-primary/60 transition-all">
+            <Search className="h-5 w-5 text-muted-foreground shrink-0 self-center" />
             <Input
               ref={inputRef}
               value={kw}
               onChange={(e) => setKw(e.target.value)}
               onKeyDown={onKeyDown}
-              placeholder={currentScope.placeholder}
+              placeholder={PLACEHOLDER}
               className="border-0 shadow-none focus-visible:ring-0 text-base h-12 px-0 placeholder:text-muted-foreground/70"
             />
             {kw && (
@@ -181,70 +232,171 @@ function SearchPage() {
               </button>
             )}
             <button
-              onClick={() => go(scope, kw)}
-              className="h-full rounded-none bg-primary px-8 text-sm font-medium text-primary-foreground hover:bg-primary/90 shrink-0"
+              onClick={() => go(kw)}
+              className="inline-flex h-full items-center gap-2 rounded-none bg-primary px-8 text-sm font-medium text-primary-foreground hover:bg-primary/90 shrink-0"
             >
+              <Search className="h-4 w-4" />
               搜索
             </button>
           </div>
 
-          {/* 最近搜索 / 热门 */}
-          <div className="mt-6 space-y-3">
-              {recent.length > 0 && (
-                <div className="flex flex-wrap items-center gap-2">
-                  <span className="text-sm text-muted-foreground shrink-0">最近搜索：</span>
-                  {recent.slice(0, 6).map((r) => (
+          {/* 过滤条件：国家 + 进出口商 */}
+          <div className="mt-4 flex flex-wrap items-center gap-3">
+            <Popover>
+              <PopoverTrigger asChild>
+                <button className="inline-flex h-10 w-[240px] items-center justify-between rounded-lg bg-white px-3 text-sm text-slate-700 ring-1 ring-slate-200 hover:ring-primary/50 transition-colors">
+                  <span className="truncate">{countryLabel}</span>
+                  <ChevronDown className="h-4 w-4 text-muted-foreground shrink-0" />
+                </button>
+              </PopoverTrigger>
+              <PopoverContent align="start" className="w-[280px] p-0">
+                <div className="p-2 border-b">
+                  <div className="relative">
+                    <Search className="absolute left-2 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
+                    <Input
+                      value={countryKw}
+                      onChange={(e) => setCountryKw(e.target.value)}
+                      placeholder="搜索国家"
+                      className="h-9 pl-7 text-sm"
+                    />
+                  </div>
+                </div>
+                <div className="max-h-72 overflow-y-auto py-1">
+                  {filteredCountries.length === 0 && (
+                    <div className="px-3 py-6 text-center text-sm text-muted-foreground">
+                      无匹配国家
+                    </div>
+                  )}
+                  {filteredCountries.map((c) => {
+                    const checked = countries.includes(c);
+                    return (
+                      <button
+                        key={c}
+                        onClick={() => toggleCountry(c)}
+                        className="flex w-full items-center gap-2 px-3 py-2 text-sm hover:bg-muted/60"
+                      >
+                        <span
+                          className={`flex h-4 w-4 items-center justify-center rounded border ${
+                            checked
+                              ? "border-primary bg-primary text-primary-foreground"
+                              : "border-slate-300"
+                          }`}
+                        >
+                          {checked && <Check className="h-3 w-3" />}
+                        </span>
+                        <span className="truncate">{c}</span>
+                      </button>
+                    );
+                  })}
+                </div>
+                {countries.length > 0 && (
+                  <div className="flex items-center justify-between border-t px-3 py-2">
+                    <span className="text-xs text-muted-foreground">
+                      已选 {countries.length} 个
+                    </span>
                     <button
-                      key={r}
-                      onClick={() => {
-                        setKw(r);
-                        inputRef.current?.focus();
-                      }}
-                      className="group inline-flex max-w-[280px] items-center gap-1 rounded-full bg-white/80 px-3 py-1 text-sm text-slate-700 ring-1 ring-slate-200 hover:ring-primary/50 hover:text-primary transition-colors"
-                    >
-                      <span className="truncate">{r}</span>
-                      <XIcon
-                        className="h-3 w-3 text-muted-foreground/60 opacity-0 group-hover:opacity-100 hover:text-foreground"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          removeRecent(r);
-                          setRecentTick((n) => n + 1);
-                        }}
-                      />
-                    </button>
-                  ))}
-                  {recent.length > 0 && (
-                    <button
-                      onClick={() => {
-                        clearRecent();
-                        setRecentTick((n) => n + 1);
-                      }}
-                      className="text-xs text-muted-foreground/70 hover:text-foreground ml-1"
+                      onClick={() => setCountries([])}
+                      className="text-xs text-primary hover:underline"
                     >
                       清空
                     </button>
-                  )}
-                </div>
-              )}
+                  </div>
+                )}
+              </PopoverContent>
+            </Popover>
+
+            <label className="inline-flex h-10 items-center gap-2 rounded-lg bg-white px-3 text-sm text-slate-700 ring-1 ring-slate-200 cursor-pointer">
+              <Checkbox
+                checked={importer}
+                onCheckedChange={(v) => setImporter(v === true)}
+              />
+              进口商
+            </label>
+            <label className="inline-flex h-10 items-center gap-2 rounded-lg bg-white px-3 text-sm text-slate-700 ring-1 ring-slate-200 cursor-pointer">
+              <Checkbox
+                checked={exporter}
+                onCheckedChange={(v) => setExporter(v === true)}
+              />
+              出口商
+            </label>
+
+            {countries.length > 0 && (
+              <div className="flex flex-wrap items-center gap-1.5">
+                {countries.slice(0, 4).map((c) => (
+                  <Badge
+                    key={c}
+                    variant="secondary"
+                    className="gap-1 bg-primary/8 text-primary"
+                  >
+                    {c}
+                    <XIcon
+                      className="h-3 w-3 cursor-pointer"
+                      onClick={() => toggleCountry(c)}
+                    />
+                  </Badge>
+                ))}
+                {countries.length > 4 && (
+                  <Badge variant="secondary">+{countries.length - 4}</Badge>
+                )}
+              </div>
+            )}
+          </div>
+
+          {/* 最近搜索 / 热门 */}
+          <div className="mt-6 space-y-3">
+            {recent.length > 0 && (
               <div className="flex flex-wrap items-center gap-2">
-                <span className="inline-flex items-center gap-1 text-sm text-muted-foreground shrink-0">
-                  <TrendingUp className="h-3.5 w-3.5 text-primary" />
-                  热门搜索：
-                </span>
-                {HOT_SEARCHES.map((h) => (
+                <span className="text-sm text-muted-foreground shrink-0">最近搜索：</span>
+                {recent.slice(0, 6).map((r) => (
                   <button
-                    key={h}
+                    key={r}
                     onClick={() => {
-                      setKw(h);
+                      setKw(r);
                       inputRef.current?.focus();
                     }}
-                    className="rounded-full bg-primary/8 px-3 py-1 text-sm text-primary/90 hover:bg-primary/12 transition-colors"
-                    style={{ backgroundColor: "rgba(20,184,166,0.08)" }}
+                    className="group inline-flex max-w-[280px] items-center gap-1 rounded-full bg-white/80 px-3 py-1 text-sm text-slate-700 ring-1 ring-slate-200 hover:ring-primary/50 hover:text-primary transition-colors"
                   >
-                    {h}
+                    <span className="truncate">{r}</span>
+                    <XIcon
+                      className="h-3 w-3 text-muted-foreground/60 opacity-0 group-hover:opacity-100 hover:text-foreground"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        removeRecent(r);
+                        setRecentTick((n) => n + 1);
+                      }}
+                    />
                   </button>
                 ))}
+                <button
+                  onClick={() => {
+                    clearRecent();
+                    setRecentTick((n) => n + 1);
+                  }}
+                  className="text-xs text-muted-foreground/70 hover:text-foreground ml-1"
+                >
+                  清空
+                </button>
               </div>
+            )}
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="inline-flex items-center gap-1 text-sm text-muted-foreground shrink-0">
+                <TrendingUp className="h-3.5 w-3.5 text-primary" />
+                热门搜索：
+              </span>
+              {HOT_SEARCHES.map((h) => (
+                <button
+                  key={h}
+                  onClick={() => {
+                    setKw(h);
+                    inputRef.current?.focus();
+                  }}
+                  className="rounded-full px-3 py-1 text-sm text-primary/90 hover:bg-primary/12 transition-colors"
+                  style={{ backgroundColor: "rgba(20,184,166,0.08)" }}
+                >
+                  {h}
+                </button>
+              ))}
+            </div>
           </div>
         </div>
 
