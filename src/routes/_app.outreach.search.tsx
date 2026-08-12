@@ -141,8 +141,13 @@ function SearchPage() {
   const [importer, setImporter] = useState(true);
   const [exporter, setExporter] = useState(true);
   const [recentTick, setRecentTick] = useState(0);
+  const [mounted, setMounted] = useState(false);
   const recent = useMemo(() => loadRecent(), [recentTick]);
   const inputRef = useRef<HTMLInputElement>(null);
+
+  useState(() => {
+    setMounted(true);
+  });
 
   const filteredCountries = useMemo(() => {
     const q = countryKw.trim().toLowerCase();
