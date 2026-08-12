@@ -25,7 +25,13 @@ const menu: Root[] = [
       {
         label: "客户发现",
         children: [
-          { label: "商机线索", to: "/outreach/search" },
+          {
+            label: "商机线索",
+            to: "/outreach/search",
+            children: [
+              { label: "商机线索结果页", to: "/outreach/search-results" },
+            ],
+          },
           { label: "企业名录", to: "/outreach/enterprise" },
           { label: "商品目录", to: "/outreach/products" },
           { label: "浏览足迹", to: "/outreach/footprints" },
@@ -100,7 +106,7 @@ export function AppSidebar() {
       { label: "商机线索", to: "/outreach/search", icon: Search },
       ...menu[0].children.map((g) => ({
         label: g.label,
-        to: g.children[0]?.to ?? "/outreach/search",
+        to: g.to ?? g.children[0]?.to ?? "/outreach/search",
         icon: groupIcons[g.label] ?? FolderTree,
       })),
       { label: "管理后台", to: menu[1].children[0]?.to ?? "/outreach/search", icon: ShieldCheck },
