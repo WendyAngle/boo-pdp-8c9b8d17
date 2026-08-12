@@ -179,6 +179,21 @@ export function BatchSocialPlatformDialog({
 
   const jobs = filteredJobs;
 
+  /** 多目标 = 模板模式：文案保留变量，发送时按各目标分别渲染 */
+  const previewTargets: PreviewTarget[] = useMemo(
+    () =>
+      jobs.map((j) => ({
+        key: j.key,
+        name: `${j.candidate.name}（${j.platform}）`,
+        ctx: j.candidate.ctx,
+      })),
+    [jobs],
+  );
+  const multi = previewTargets.length > 1;
+  const previewTarget =
+    previewTargets[Math.min(previewIdx, Math.max(0, previewTargets.length - 1))];
+
+
   /** 状态正常的执行账号（用于展示数量） */
   const normalAccounts = useMemo(
     () => accounts.filter((a) => a.status === "正常"),
