@@ -245,6 +245,32 @@ export function TargetLangSection({
           <span className="text-amber-600">中文原文已修改，建议重新翻译</span>
         )}
       </div>
+
+      {keepVars && previewCtx && (
+        <div className="rounded-md border border-primary/20 bg-background/70 p-2 space-y-1">
+          <div className="flex items-center justify-between gap-2">
+            <span className="text-[11px] font-medium">
+              {previewLabel ? `${previewLabel} 将收到` : "该目标将收到"}
+            </span>
+            {headerExtra}
+          </div>
+          {hasSubject && (
+            <div className="text-[11px]">
+              <span className="text-muted-foreground">主题：</span>
+              <span className="font-medium">
+                {renderTemplate((subjectValue ?? "").trim() || (sourceSubject ?? ""), previewCtx) ||
+                  "—"}
+              </span>
+            </div>
+          )}
+          <p className="text-xs whitespace-pre-wrap leading-relaxed max-h-32 overflow-y-auto">
+            {renderTemplate(value.trim() || source, previewCtx) || (
+              <span className="text-muted-foreground">（暂无内容）</span>
+            )}
+          </p>
+        </div>
+      )}
     </section>
+
   );
 }
