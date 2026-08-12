@@ -5,7 +5,7 @@ import { AccountMenu } from "@/components/account/AccountMenu";
 import { useSidebarBadge } from "@/lib/inbox-store";
 
 type Leaf = { label: string; to: string; icon?: typeof Users };
-type Group = { label: string; to?: string; icon?: typeof Users; divider?: boolean; children: Leaf[] };
+type Group = { label: string; to?: string; icon?: typeof Users; divider?: boolean; children: (Leaf | Group)[] };
 type Root = { label: string; icon: typeof ShieldCheck; children: Group[] };
 
 /** 侧边栏合拢态下展示的分组图标 */
@@ -25,7 +25,13 @@ const menu: Root[] = [
       {
         label: "客户发现",
         children: [
-          { label: "商机线索", to: "/outreach/search" },
+          {
+            label: "商机线索",
+            to: "/outreach/search",
+            children: [
+              { label: "商机线索结果页", to: "/outreach/search-results" },
+            ],
+          },
           { label: "企业名录", to: "/outreach/enterprise" },
           { label: "商品目录", to: "/outreach/products" },
           { label: "浏览足迹", to: "/outreach/footprints" },
@@ -100,7 +106,7 @@ export function AppSidebar() {
       { label: "商机线索", to: "/outreach/search", icon: Search },
       ...menu[0].children.map((g) => ({
         label: g.label,
-        to: g.children[0]?.to ?? "/outreach/search",
+        to: g.to ?? g.children[0]?.to ?? "/outreach/search",
         icon: groupIcons[g.label] ?? FolderTree,
       })),
       { label: "管理后台", to: menu[1].children[0]?.to ?? "/outreach/search", icon: ShieldCheck },
@@ -241,6 +247,61 @@ export function AppSidebar() {
                         {hasKids && gOpen && (
                           <div className="mt-0.5 ml-4 space-y-0.5 border-l border-sidebar-border pl-3">
                             {g.children.map((c) => {
+                              if ("children" in c && c.children && c.children.length > 0) {
+                                const subOpen = open[c.label] ?? true;
+                                const subActive = location.pathname === c.to;
+                                const SubIcon = c.icon;
+                                return (
+                                  <div key={c.label}>
+                                    <div className="flex items-center">
+                                      <Link
+                                        to={c.to}
+                                        className={`flex-1 flex items-center gap-2 px-3 py-1.5 rounded-md text-sm transition-colors ${
+                                          subActive
+                                            ? "bg-sidebar-accent text-sidebar-accent-foreground font-medium"
+                                            : "text-sidebar-foreground/80 hover:bg-sidebar-accent/60"
+                                        }`}
+                                      >
+                                        {SubIcon && <SubIcon className="h-3.5 w-3.5" />}
+                                        <span>{c.label}</span>
+                                      </Link>
+                                      <button
+                                        onClick={() => setOpen((s) => ({ ...s, [c.label]: !subOpen }))}
+                                        className="p-1 rounded hover:bg-sidebar-accent/60"
+                                        aria-label="toggle"
+                                      >
+                                        <ChevronDown
+                                          className={`h-3.5 w-3.5 text-muted-foreground transition-transform ${
+                                            subOpen ? "" : "-rotate-90"
+                                          }`}
+                                        />
+                                      </button>
+                                    </div>
+                                    {subOpen && (
+                                      <div className="mt-0.5 ml-4 space-y-0.5 border-l border-sidebar-border pl-3">
+                                        {c.children.map((leaf) => {
+                                          const LI = leaf.icon;
+                                          const leafActive = location.pathname === leaf.to;
+                                          return (
+                                            <Link
+                                              key={leaf.to}
+                                              to={leaf.to}
+                                              className={`flex items-center gap-2 px-3 py-1.5 rounded-md text-sm transition-colors ${
+                                                leafActive
+                                                  ? "bg-sidebar-accent text-sidebar-accent-foreground font-medium"
+                                                  : "text-sidebar-foreground/80 hover:bg-sidebar-accent/60"
+                                              }`}
+                                            >
+                                              {LI && <LI className="h-3.5 w-3.5" />}
+                                              <span>{leaf.label}</span>
+                                            </Link>
+                                          );
+                                        })}
+                                      </div>
+                                    )}
+                                  </div>
+                                );
+                              }
                               const CI = c.icon;
                               const active = location.pathname === c.to;
                               return (

@@ -15,6 +15,7 @@ import { Route as AppOutreachIndexRouteImport } from './routes/_app.outreach.ind
 import { Route as AppOutreachUsersRouteImport } from './routes/_app.outreach.users'
 import { Route as AppOutreachUnlockedRouteImport } from './routes/_app.outreach.unlocked'
 import { Route as AppOutreachSuppressionsRouteImport } from './routes/_app.outreach.suppressions'
+import { Route as AppOutreachSearchResultsRouteImport } from './routes/_app.outreach.search-results'
 import { Route as AppOutreachSearchRouteImport } from './routes/_app.outreach.search'
 import { Route as AppOutreachRechargeRouteImport } from './routes/_app.outreach.recharge'
 import { Route as AppOutreachReachTargetsRouteImport } from './routes/_app.outreach.reach-targets'
@@ -94,6 +95,12 @@ const AppOutreachSuppressionsRoute = AppOutreachSuppressionsRouteImport.update({
   path: '/outreach/suppressions',
   getParentRoute: () => AppRoute,
 } as any)
+const AppOutreachSearchResultsRoute =
+  AppOutreachSearchResultsRouteImport.update({
+    id: '/outreach/search-results',
+    path: '/outreach/search-results',
+    getParentRoute: () => AppRoute,
+  } as any)
 const AppOutreachSearchRoute = AppOutreachSearchRouteImport.update({
   id: '/outreach/search',
   path: '/outreach/search',
@@ -390,6 +397,7 @@ export interface FileRoutesByFullPath {
   '/outreach/reach-targets': typeof AppOutreachReachTargetsRoute
   '/outreach/recharge': typeof AppOutreachRechargeRoute
   '/outreach/search': typeof AppOutreachSearchRoute
+  '/outreach/search-results': typeof AppOutreachSearchResultsRoute
   '/outreach/suppressions': typeof AppOutreachSuppressionsRoute
   '/outreach/unlocked': typeof AppOutreachUnlockedRoute
   '/outreach/users': typeof AppOutreachUsersRoute
@@ -445,6 +453,7 @@ export interface FileRoutesByTo {
   '/outreach/reach-targets': typeof AppOutreachReachTargetsRoute
   '/outreach/recharge': typeof AppOutreachRechargeRoute
   '/outreach/search': typeof AppOutreachSearchRoute
+  '/outreach/search-results': typeof AppOutreachSearchResultsRoute
   '/outreach/suppressions': typeof AppOutreachSuppressionsRoute
   '/outreach/unlocked': typeof AppOutreachUnlockedRoute
   '/outreach/users': typeof AppOutreachUsersRoute
@@ -500,6 +509,7 @@ export interface FileRoutesById {
   '/_app/outreach/reach-targets': typeof AppOutreachReachTargetsRoute
   '/_app/outreach/recharge': typeof AppOutreachRechargeRoute
   '/_app/outreach/search': typeof AppOutreachSearchRoute
+  '/_app/outreach/search-results': typeof AppOutreachSearchResultsRoute
   '/_app/outreach/suppressions': typeof AppOutreachSuppressionsRoute
   '/_app/outreach/unlocked': typeof AppOutreachUnlockedRoute
   '/_app/outreach/users': typeof AppOutreachUsersRoute
@@ -558,6 +568,7 @@ export interface FileRouteTypes {
     | '/outreach/reach-targets'
     | '/outreach/recharge'
     | '/outreach/search'
+    | '/outreach/search-results'
     | '/outreach/suppressions'
     | '/outreach/unlocked'
     | '/outreach/users'
@@ -613,6 +624,7 @@ export interface FileRouteTypes {
     | '/outreach/reach-targets'
     | '/outreach/recharge'
     | '/outreach/search'
+    | '/outreach/search-results'
     | '/outreach/suppressions'
     | '/outreach/unlocked'
     | '/outreach/users'
@@ -667,6 +679,7 @@ export interface FileRouteTypes {
     | '/_app/outreach/reach-targets'
     | '/_app/outreach/recharge'
     | '/_app/outreach/search'
+    | '/_app/outreach/search-results'
     | '/_app/outreach/suppressions'
     | '/_app/outreach/unlocked'
     | '/_app/outreach/users'
@@ -748,6 +761,13 @@ declare module '@tanstack/react-router' {
       path: '/outreach/suppressions'
       fullPath: '/outreach/suppressions'
       preLoaderRoute: typeof AppOutreachSuppressionsRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/outreach/search-results': {
+      id: '/_app/outreach/search-results'
+      path: '/outreach/search-results'
+      fullPath: '/outreach/search-results'
+      preLoaderRoute: typeof AppOutreachSearchResultsRouteImport
       parentRoute: typeof AppRoute
     }
     '/_app/outreach/search': {
@@ -1190,6 +1210,7 @@ interface AppRouteChildren {
   AppOutreachReachTargetsRoute: typeof AppOutreachReachTargetsRoute
   AppOutreachRechargeRoute: typeof AppOutreachRechargeRoute
   AppOutreachSearchRoute: typeof AppOutreachSearchRoute
+  AppOutreachSearchResultsRoute: typeof AppOutreachSearchResultsRoute
   AppOutreachSuppressionsRoute: typeof AppOutreachSuppressionsRoute
   AppOutreachUnlockedRoute: typeof AppOutreachUnlockedRoute
   AppOutreachUsersRoute: typeof AppOutreachUsersRoute
@@ -1237,6 +1258,7 @@ const AppRouteChildren: AppRouteChildren = {
   AppOutreachReachTargetsRoute: AppOutreachReachTargetsRoute,
   AppOutreachRechargeRoute: AppOutreachRechargeRoute,
   AppOutreachSearchRoute: AppOutreachSearchRoute,
+  AppOutreachSearchResultsRoute: AppOutreachSearchResultsRoute,
   AppOutreachSuppressionsRoute: AppOutreachSuppressionsRoute,
   AppOutreachUnlockedRoute: AppOutreachUnlockedRoute,
   AppOutreachUsersRoute: AppOutreachUsersRoute,
@@ -1273,13 +1295,3 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}
