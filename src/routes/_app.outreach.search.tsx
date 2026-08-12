@@ -408,17 +408,17 @@ function SearchPage() {
     return (
       <div className="min-h-full bg-[#f6f8fb] p-4 sm:p-6 lg:p-8">
         {/* 面包屑 + 返回 */}
-        <div className="mb-5 flex items-center justify-between gap-3">
-          <div className="flex items-center gap-2 text-sm text-muted-foreground">
-            <span>客户发现 /</span>
-            <button onClick={backToSearch} className="text-foreground/80 hover:text-primary">
+        <div className="mb-5 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex min-w-0 items-center gap-2 text-sm text-muted-foreground truncate">
+            <span className="shrink-0">客户发现 /</span>
+            <button onClick={backToSearch} className="text-foreground/80 hover:text-primary shrink-0">
               商机线索
             </button>
-            <span>/ 搜索结果</span>
+            <span className="truncate">/ 搜索结果</span>
           </div>
           <button
             onClick={backToSearch}
-            className="inline-flex items-center gap-1.5 rounded-lg bg-white px-3 py-1.5 text-sm text-slate-700 ring-1 ring-slate-200 shadow-sm hover:text-primary hover:ring-primary/40 transition-colors"
+            className="inline-flex items-center justify-center gap-1.5 rounded-lg bg-white px-3 py-1.5 text-sm text-slate-700 ring-1 ring-slate-200 shadow-sm hover:text-primary hover:ring-primary/40 transition-colors shrink-0"
           >
             <ArrowLeft className="h-4 w-4" />
             返回搜索
