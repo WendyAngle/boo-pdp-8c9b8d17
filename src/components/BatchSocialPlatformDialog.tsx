@@ -7,6 +7,8 @@ import {
   ServerCog,
   Users,
   Info,
+  Unlock,
+  Eye,
 } from "lucide-react";
 import { useServerFn } from "@tanstack/react-start";
 import { saveReachTaskConfig } from "@/lib/reach-task-config";
@@ -38,7 +40,13 @@ import { renderTemplate, type Recipient } from "@/lib/message-vars";
 import {
   createReach,
   costForSocialPlatform,
+  COST_VIEW_SOCIAL,
+  computeReachBreakdown,
+  performReachAutoUnlocks,
+  useLedger,
 } from "@/lib/credits-ledger";
+import { Checkbox } from "@/components/ui/checkbox";
+import { maskContact } from "@/lib/mask-contact";
 import { useSocialAccounts, type SocialAccount } from "@/data/social-accounts";
 import { useLeadProfile } from "@/lib/lead-profile";
 import { useCurrentUser } from "@/lib/current-user";
@@ -97,6 +105,7 @@ export function BatchSocialPlatformDialog({
   const profile = useLeadProfile();
   const user = useCurrentUser();
   const myInfo = useMyInfoGuard();
+  const ledger = useLedger();
   const callGenerate = useServerFn(generateAiContent);
 
   const [content, setContent] = useState("");
@@ -190,8 +199,67 @@ export function BatchSocialPlatformDialog({
   // 费用：按目标数量全额扣除（含顺延次日执行的部分）
   const unit = costForSocialPlatform("Facebook");
   const sendTotal = targetCount * unit;
-  
-  const grandTotal = sendTotal;
+
+  /** 单条解锁单价 */
+  const unitView = COST_VIEW_SOCIAL;
+  /** 手动添加的目标由用户自行提供 handle，无需解锁 */
+  const isManualJob = (j: Job) => j.candidate.targetId === "manual";
+  /** 尚未解锁明文的任务 key 集合 */
+  const lockedJobKeys = useMemo(() => {
+    const set = new Set<string>();
+    for (const j of jobs) {
+      if (isManualJob(j)) continue;
+      const bd = computeReachBreakdown(
+        { targetKind: j.candidate.targetKind, targetId: j.candidate.targetId },
+        "social",
+        j.platform,
+        { reachCostOverride: 0 },
+      );
+      if (bd.viewCost > 0) set.add(j.key);
+    }
+    return set;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [jobs, ledger]);
+
+  const viewCostTotal = lockedJobKeys.size * unitView;
+
+  function unlockJob(j: Job) {
+    performReachAutoUnlocks({
+      targetKind: j.candidate.targetKind,
+      targetId: j.candidate.targetId,
+      targetName: j.candidate.name,
+      parentRef: j.candidate.parentRef,
+      detail: j.handle,
+      fields: [{ field: "social", subKey: j.platform }],
+    });
+    toast.success(`已解锁 ${j.candidate.name} 的 ${j.platform} 账号`, {
+      description: `扣除 ${unitView} 积分，永久有效`,
+    });
+  }
+
+  const [unlockAllOpen, setUnlockAllOpen] = useState(false);
+  const [unlockAllAck, setUnlockAllAck] = useState(false);
+  function unlockAll() {
+    const targets = jobs.filter((j) => lockedJobKeys.has(j.key));
+    targets.forEach(unlockJob0);
+    function unlockJob0(j: Job) {
+      performReachAutoUnlocks({
+        targetKind: j.candidate.targetKind,
+        targetId: j.candidate.targetId,
+        targetName: j.candidate.name,
+        parentRef: j.candidate.parentRef,
+        detail: j.handle,
+        fields: [{ field: "social", subKey: j.platform }],
+      });
+    }
+    setUnlockAllOpen(false);
+    setUnlockAllAck(false);
+    toast.success(`已解锁 ${targets.length} 个社媒账号明文`, {
+      description: `扣除 ${targets.length * unitView} 积分，永久有效`,
+    });
+  }
+
+  const grandTotal = sendTotal + viewCostTotal;
 
   /** 实际发送内容：有译文则发译文 */
   const sendContent = (translated.trim() || content).trim();
@@ -213,6 +281,16 @@ export function BatchSocialPlatformDialog({
     let n = 0;
     jobs.forEach((job, i) => {
       const r = job.candidate;
+      if (r.targetId !== "manual") {
+        performReachAutoUnlocks({
+          targetKind: r.targetKind,
+          targetId: r.targetId,
+          targetName: r.name,
+          parentRef: r.parentRef,
+          detail: job.handle,
+          fields: [{ field: "social", subKey: job.platform }],
+        });
+      }
       createReach({
         targetKind: r.targetKind,
         targetId: r.targetId,
@@ -409,6 +487,28 @@ export function BatchSocialPlatformDialog({
 
             {/* 目标列表滚动展示 */}
 
+            {lockedJobKeys.size > 0 && (
+              <div className="mt-3 flex items-center justify-between gap-2 text-[11px] text-muted-foreground">
+                <span className="inline-flex items-center gap-1">
+                  <Info className="h-3 w-3" />
+                  {lockedJobKeys.size} 个账号未解锁，默认脱敏展示；发送后自动解锁
+                </span>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  className="h-7 text-xs"
+                  onClick={() => {
+                    setUnlockAllAck(false);
+                    setUnlockAllOpen(true);
+                  }}
+                >
+                  <Unlock className="h-3.5 w-3.5 mr-1" />
+                  全部解锁 · -{lockedJobKeys.size * unitView}
+                </Button>
+              </div>
+            )}
+
             <div className="mt-3 max-h-40 overflow-y-auto border-t pt-2 space-y-1.5 pr-1">
               {filteredJobs.length === 0 ? (
                 <div className="text-center py-4 text-xs text-muted-foreground">
@@ -423,8 +523,22 @@ export function BatchSocialPlatformDialog({
                         "px-1 py-0 h-4 text-[9px] font-normal",
                         j.platform === "Facebook" ? "border-sky-200 text-sky-700 bg-sky-50" : "border-violet-200 text-violet-700 bg-violet-50"
                       )}>
-                        {j.platform}: {j.handle}
+                        {j.platform}:{" "}
+                        {lockedJobKeys.has(j.key)
+                          ? maskContact("social", j.handle)
+                          : j.handle}
                       </Badge>
+                      {lockedJobKeys.has(j.key) && (
+                        <button
+                          type="button"
+                          onClick={() => unlockJob(j)}
+                          className="inline-flex items-center gap-0.5 rounded border border-primary/30 bg-primary/5 px-1 text-[10px] font-medium text-primary hover:bg-primary/10"
+                          title={`解锁明文，扣 ${unitView} 积分（永久有效）`}
+                        >
+                          <Eye className="h-3 w-3" />
+                          {unitView}
+                        </button>
+                      )}
                     </div>
                     <button 
                       onClick={() => handleRemoveJob(j.key)}
