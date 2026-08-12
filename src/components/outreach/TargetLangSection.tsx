@@ -61,6 +61,10 @@ export function TargetLangSection({
   kindLabel = "文案",
   className,
   bare = false,
+  keepVars = false,
+  previewCtx,
+  previewLabel,
+  headerExtra,
 }: {
   /** 中文原文正文 */
   source: string;
@@ -77,7 +81,15 @@ export function TargetLangSection({
   className?: string;
   /** 融入外层统一区域：去掉自身边框与背景 */
   bare?: boolean;
+  /** 模板模式（多目标）：保留 {变量} 不做去花括号处理，翻译时保护变量 */
+  keepVars?: boolean;
+  /** 模板模式下用于渲染「该目标最终收到的内容」 */
+  previewCtx?: VarContext;
+  previewLabel?: string;
+  /** 标题右侧附加内容（如预览目标切换器） */
+  headerExtra?: ReactNode;
 }) {
+
   const callTranslate = useServerFn(translateMessage);
   const [loading, setLoading] = useState(false);
   /** 译文对应的原文快照，用于「原文已修改，建议重新翻译」提示 */
