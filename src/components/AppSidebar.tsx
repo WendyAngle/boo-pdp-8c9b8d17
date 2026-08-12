@@ -25,13 +25,7 @@ const menu: Root[] = [
       {
         label: "客户发现",
         children: [
-          {
-            label: "商机线索",
-            to: "/outreach/search",
-            children: [
-              { label: "商机线索结果页", to: "/outreach/search-results" },
-            ],
-          },
+          { label: "商机线索", to: "/outreach/search" },
           { label: "企业名录", to: "/outreach/enterprise" },
           { label: "商品目录", to: "/outreach/products" },
           { label: "浏览足迹", to: "/outreach/footprints" },
