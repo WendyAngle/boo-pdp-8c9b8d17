@@ -349,9 +349,11 @@ function TargetCard({
     isFriend: t.thread?.isFriend,
     friendSource: t.thread?.friendSource,
     socialSignals: t.thread?.socialSignals,
+    manualAdd: t.thread?.manualAdd,
   } as Thread;
   const reason = getTargetReason(t.thread ?? pseudoThread);
   const recommended = reason.mode === "recommended";
+  const manualAdd = (t.thread ?? pseudoThread).manualAdd;
   const isSocial = t.channel === "social";
 
   return (
