@@ -532,17 +532,17 @@ function SearchPage() {
       <div className="pointer-events-none absolute inset-x-0 top-0 h-[520px] bg-[radial-gradient(60%_60%_at_50%_0%,rgba(56,189,248,0.18),transparent_70%)]" />
       <div className="pointer-events-none absolute -left-1/4 top-1/3 h-[480px] w-[120%] rotate-[-6deg] bg-[linear-gradient(90deg,transparent,rgba(186,230,253,0.55),transparent)] blur-2xl" />
 
-      <div className="relative w-full max-w-6xl px-6 py-10">
+      <div className="relative w-full max-w-6xl px-4 sm:px-6 py-8 sm:py-10">
         <div className="text-center">
-          <h1 className="text-4xl md:text-5xl font-bold tracking-tight text-slate-900">
+          <h1 className="text-2xl sm:text-4xl md:text-5xl font-bold tracking-tight text-slate-900">
             悦意出海大数据平台 · 商机线索
           </h1>
-          <p className="mt-4 text-base md:text-lg text-slate-500">
+          <p className="mt-3 sm:mt-4 text-sm sm:text-base md:text-lg text-slate-500">
             从商品、HS 编码到企业，发现全球贸易机会
           </p>
         </div>
 
-        <div className="relative mx-auto mt-10 max-w-[1400px]">
+        <div className="relative mx-auto mt-8 sm:mt-10 max-w-full">
           {searchBar}
           {countryChips}
 
@@ -555,11 +555,11 @@ function SearchPage() {
                   <button
                     key={r}
                     onClick={() => go(r)}
-                    className="group inline-flex max-w-[280px] items-center gap-1 rounded-full bg-white/80 px-3 py-1 text-sm text-slate-700 ring-1 ring-slate-200 hover:ring-primary/50 hover:text-primary transition-colors"
+                    className="group inline-flex max-w-[200px] sm:max-w-[280px] items-center gap-1 rounded-full bg-white/80 px-3 py-1 text-sm text-slate-700 ring-1 ring-slate-200 hover:ring-primary/50 hover:text-primary transition-colors"
                   >
                     <span className="truncate">{r}</span>
                     <XIcon
-                      className="h-3 w-3 text-muted-foreground/60 opacity-0 group-hover:opacity-100 hover:text-foreground"
+                      className="h-3 w-3 text-muted-foreground/60 opacity-0 group-hover:opacity-100 hover:text-foreground shrink-0"
                       onClick={(e) => {
                         e.stopPropagation();
                         removeRecent(r);
@@ -599,7 +599,7 @@ function SearchPage() {
         </div>
 
         {/* 数据指标卡片 */}
-        <div className="mt-16 grid grid-cols-1 gap-5 md:grid-cols-3">
+        <div className="mt-10 sm:mt-16 grid grid-cols-1 gap-4 sm:gap-5 md:grid-cols-3">
           <StatCard icon={Globe2} tone="from-cyan-400 to-sky-500" kpi="239+" title="覆盖国家/地区" sub="全球主要贸易体" />
           <StatCard icon={Building2} tone="from-emerald-400 to-teal-500" kpi="2亿+" title="全球企业" sub="全球进出口企业" />
           <StatCard icon={Users2} tone="from-sky-400 to-indigo-500" kpi="10亿+" title="全球联系人" sub="全球联系人统计" />
