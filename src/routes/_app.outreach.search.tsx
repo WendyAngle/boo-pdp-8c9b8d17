@@ -522,27 +522,31 @@ function SearchPage() {
 
   /* ============================ 首页态 ============================ */
   return (
-    <div className="relative min-h-full flex flex-col overflow-hidden bg-gradient-to-b from-cyan-50 via-sky-50/60 to-white">
+    <div className="relative h-full flex flex-col overflow-hidden bg-gradient-to-b from-cyan-50 via-sky-50/60 to-white">
       <div className="pointer-events-none absolute inset-x-0 top-0 h-[520px] bg-[radial-gradient(60%_60%_at_50%_0%,rgba(56,189,248,0.18),transparent_70%)]" />
       <div className="pointer-events-none absolute -left-1/4 top-1/3 h-[480px] w-[120%] rotate-[-6deg] bg-[linear-gradient(90deg,transparent,rgba(186,230,253,0.55),transparent)] blur-2xl" />
 
-      <div className="relative mx-auto my-auto w-full max-w-5xl px-4 py-8 sm:px-6 sm:py-10 lg:max-w-6xl">
+      <div
+        className="relative mx-auto my-auto w-full max-w-5xl px-4 sm:px-6 lg:max-w-6xl"
+        style={{ paddingTop: "clamp(0.5rem,2.5vh,2.5rem)", paddingBottom: "clamp(0.5rem,2.5vh,2.5rem)" }}
+      >
         <div className="text-center">
-          <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold tracking-tight text-slate-900">
+          <h1 className="font-bold tracking-tight text-slate-900" style={{ fontSize: "clamp(1.375rem,3.2vh,3rem)" }}>
             悦意出海大数据平台 · 商机线索
           </h1>
-          <p className="mt-3 sm:mt-4 text-sm sm:text-base lg:text-lg text-slate-500">
+          <p className="text-slate-500" style={{ marginTop: "clamp(0.25rem,1vh,1rem)", fontSize: "clamp(0.8125rem,1.5vh,1.125rem)" }}>
             从商品、HS 编码到企业，发现全球贸易机会
           </p>
         </div>
 
-        <div className="relative mx-auto mt-8 lg:mt-10 w-full">
+        <div className="relative mx-auto w-full" style={{ marginTop: "clamp(1rem,3vh,2.5rem)" }}>
+
 
           {searchBar}
           {countryChips}
 
           {/* 最近搜索 / 热门 */}
-          <div className="mt-6 space-y-3">
+          <div className="space-y-3" style={{ marginTop: "clamp(0.75rem,2vh,1.5rem)" }}>
             {mounted && recent.length > 0 && (
               <div className="flex flex-wrap items-center gap-2">
                 <span className="text-sm text-muted-foreground shrink-0">最近搜索：</span>
@@ -594,7 +598,7 @@ function SearchPage() {
         </div>
 
         {/* 数据指标卡片 */}
-        <div className="mt-10 lg:mt-14 grid grid-cols-1 gap-4 sm:gap-5 md:grid-cols-3">
+        <div className="grid grid-cols-1 gap-4 sm:gap-5 md:grid-cols-3" style={{ marginTop: "clamp(1rem,4vh,3.5rem)" }}>
           <StatCard icon={Globe2} tone="from-cyan-400 to-sky-500" kpi="239+" title="覆盖国家/地区" sub="全球主要贸易体" />
           <StatCard icon={Building2} tone="from-emerald-400 to-teal-500" kpi="2亿+" title="全球企业" sub="全球进出口企业" />
           <StatCard icon={Users2} tone="from-sky-400 to-indigo-500" kpi="10亿+" title="全球联系人" sub="全球联系人统计" />
@@ -619,7 +623,7 @@ function StatCard({
   sub: string;
 }) {
   return (
-    <div className="group relative overflow-hidden rounded-2xl bg-white/70 backdrop-blur-sm p-6 ring-1 ring-white/80 shadow-[0_18px_50px_-30px_rgba(15,23,42,0.25)] transition-transform hover:-translate-y-0.5">
+    <div className="group relative overflow-hidden rounded-2xl bg-white/70 backdrop-blur-sm p-4 sm:p-5 lg:p-6 ring-1 ring-white/80 shadow-[0_18px_50px_-30px_rgba(15,23,42,0.25)] transition-transform hover:-translate-y-0.5">
       <div className="flex items-center gap-3">
         <div
           className={`flex h-11 w-11 items-center justify-center rounded-xl bg-gradient-to-br ${tone} text-white shadow-md shadow-sky-200/60`}
@@ -628,7 +632,7 @@ function StatCard({
         </div>
         <div className="text-base font-medium text-slate-700">{title}</div>
       </div>
-      <div className="mt-5 text-4xl font-bold tracking-tight text-slate-900">{kpi}</div>
+      <div className="mt-3 lg:mt-5 text-3xl lg:text-4xl font-bold tracking-tight text-slate-900">{kpi}</div>
       <div className="mt-2 flex items-center gap-1.5 text-sm text-muted-foreground">
         <span className="inline-block h-1.5 w-1.5 rounded-full bg-primary" />
         {sub}
