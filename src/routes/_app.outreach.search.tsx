@@ -294,7 +294,7 @@ function SearchPage() {
         {/* 标题 */}
         <div className="text-center">
           <h1 className="text-4xl md:text-5xl font-bold tracking-tight text-slate-900">
-            商机线索
+            出海大数据平台 · 商机线索
           </h1>
           <p className="mt-4 text-base md:text-lg text-slate-500">
             从商品、HS 编码到企业，发现全球贸易机会
