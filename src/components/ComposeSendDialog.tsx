@@ -521,7 +521,11 @@ export function ComposeSendDialog({
                             key={r.key}
                             className="inline-flex items-center gap-1 rounded border border-amber-200 bg-white/70 px-1.5 py-0.5 font-mono text-[11px]"
                           >
-                            {r.name} · {r.address}
+                            {r.name} ·{" "}
+                            {lockedKeys.has(r.key)
+                              ? maskContact(isEmail ? "email" : "phone", r.address)
+                              : r.address}
+
                           </span>
                         ))}
                       </div>
