@@ -279,25 +279,31 @@ function SearchPage() {
           : "rounded-2xl bg-white shadow-[0_18px_60px_-20px_rgba(56,189,248,0.45)] ring-1 ring-white/80 focus-within:ring-primary/60 transition-all overflow-hidden"
       }
     >
-      <div className={`flex items-center gap-1 px-2 ${isResults ? "h-14" : "h-16"}`}>
-        <Search className="h-5 w-5 text-muted-foreground shrink-0 ml-3" />
-        <Input
-          ref={inputRef}
-          value={kw}
-          onChange={(e) => setKw(e.target.value)}
-          onKeyDown={onKeyDown}
-          placeholder={isResults ? "商品关键词或HS Code、公司名称等" : PLACEHOLDER}
-          className="border-0 shadow-none focus-visible:ring-0 text-base h-12 px-2 placeholder:text-muted-foreground/70 flex-1 min-w-0"
-        />
-        {kw && (
-          <button
-            onClick={() => setKw("")}
-            className="rounded-full p-1.5 text-muted-foreground hover:bg-muted/60 shrink-0"
-            aria-label="清空"
-          >
-            <XIcon className="h-4 w-4" />
-          </button>
-        )}
+      <div
+        className={`grid grid-cols-[minmax(0,1fr)_auto] items-center gap-1 px-2 py-2 sm:flex sm:flex-wrap sm:items-center ${
+          isResults ? "sm:min-h-[56px]" : "sm:min-h-[64px]"
+        }`}
+      >
+        <div className="flex min-w-0 items-center gap-1">
+          <Search className="h-5 w-5 text-muted-foreground shrink-0 ml-3" />
+          <Input
+            ref={inputRef}
+            value={kw}
+            onChange={(e) => setKw(e.target.value)}
+            onKeyDown={onKeyDown}
+            placeholder={isResults ? "商品关键词或HS Code、公司名称等" : PLACEHOLDER}
+            className="border-0 shadow-none focus-visible:ring-0 text-base h-12 px-2 placeholder:text-muted-foreground/70 flex-1 min-w-0"
+          />
+          {kw && (
+            <button
+              onClick={() => setKw("")}
+              className="rounded-full p-1.5 text-muted-foreground hover:bg-muted/60 shrink-0"
+              aria-label="清空"
+            >
+              <XIcon className="h-4 w-4" />
+            </button>
+          )}
+        </div>
 
         {/* 桌面端过滤 */}
         <div className="hidden md:flex items-center shrink-0">
@@ -339,7 +345,7 @@ function SearchPage() {
 
         <button
           onClick={() => go(kw)}
-          className="inline-flex h-[calc(100%-10px)] items-center gap-2 rounded-xl bg-primary px-3 md:px-6 text-sm font-medium text-primary-foreground hover:bg-primary/90 shrink-0 mr-1"
+          className="inline-flex h-10 sm:h-[calc(100%-10px)] items-center gap-2 rounded-xl bg-primary px-3 md:px-6 text-sm font-medium text-primary-foreground hover:bg-primary/90 shrink-0 mr-1"
         >
           <Search className="h-4 w-4" />
           <span className="hidden md:inline">搜索</span>
