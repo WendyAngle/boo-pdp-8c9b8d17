@@ -132,6 +132,92 @@ const COUNTRIES = [
 const PLACEHOLDER =
   '商品关键词或HS Code、公司名称等，支持逗号/分号/顿号/换行或中英文空格，如"850760 锂电池"';
 
+/* ------------------------------- 国家选择器（Popover 复用） ------------------------------- */
+function CountryFilter({
+  countries,
+  setCountries,
+  countryKw,
+  setCountryKw,
+  filteredCountries,
+  countryLabel,
+  align,
+  children,
+}: {
+  countries: string[];
+  setCountries: React.Dispatch<React.SetStateAction<string[]>>;
+  countryKw: string;
+  setCountryKw: (v: string) => void;
+  filteredCountries: string[];
+  countryLabel: string;
+  align?: "start" | "end" | "center";
+  children: React.ReactNode;
+}) {
+  const toggleCountry = (c: string) =>
+    setCountries((prev) =>
+      prev.includes(c) ? prev.filter((x) => x !== c) : [...prev, c],
+    );
+
+  return (
+    <Popover>
+      <PopoverTrigger asChild>{children}</PopoverTrigger>
+      <PopoverContent align={align} className="w-[280px] p-0">
+        <div className="p-2 border-b">
+          <div className="relative">
+            <Search className="absolute left-2 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
+            <Input
+              value={countryKw}
+              onChange={(e) => setCountryKw(e.target.value)}
+              placeholder="搜索国家"
+              className="h-9 pl-7 text-sm"
+            />
+          </div>
+        </div>
+        <div className="max-h-72 overflow-y-auto py-1">
+          {filteredCountries.length === 0 && (
+            <div className="px-3 py-6 text-center text-sm text-muted-foreground">
+              无匹配国家
+            </div>
+          )}
+          {filteredCountries.map((c) => {
+            const checked = countries.includes(c);
+            return (
+              <button
+                key={c}
+                onClick={() => toggleCountry(c)}
+                className="flex w-full items-center gap-2 px-3 py-2 text-sm hover:bg-muted/60"
+              >
+                <span
+                  className={`flex h-4 w-4 items-center justify-center rounded border ${
+                    checked
+                      ? "border-primary bg-primary text-primary-foreground"
+                      : "border-slate-300"
+                  }`}
+                >
+                  {checked && <Check className="h-3 w-3" />}
+                </span>
+                <span className="truncate">{c}</span>
+              </button>
+            );
+          })}
+        </div>
+        {countries.length > 0 && (
+          <div className="flex items-center justify-between border-t px-3 py-2">
+            <span className="text-xs text-muted-foreground">
+              已选 {countries.length} 个
+            </span>
+            <button
+              onClick={() => setCountries([])}
+              className="text-xs text-primary hover:underline"
+            >
+              清空
+            </button>
+          </div>
+        )}
+      </PopoverContent>
+    </Popover>
+  );
+}
+
 /* ============================== 页面 ============================== */
 function SearchPage() {
   const navigate = useNavigate();
