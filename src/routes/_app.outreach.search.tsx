@@ -527,10 +527,6 @@ function SearchPage() {
       <div className="pointer-events-none absolute -left-1/4 top-1/3 h-[480px] w-[120%] rotate-[-6deg] bg-[linear-gradient(90deg,transparent,rgba(186,230,253,0.55),transparent)] blur-2xl" />
 
       <div className="relative mx-auto max-w-6xl px-6 pt-16 pb-24">
-        <div className="text-xs text-muted-foreground/80 mb-10">
-          悦意出海大数据平台 / <span className="text-foreground/80">商机线索</span>
-        </div>
-
         <div className="text-center">
           <h1 className="text-4xl md:text-5xl font-bold tracking-tight text-slate-900">
             悦意出海大数据平台 · 商机线索
