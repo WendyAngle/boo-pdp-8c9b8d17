@@ -262,8 +262,64 @@ export function ComposeSendDialog({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [recipients, isEmail, ledger]);
 
-  
+  /** 单条解锁单价 */
+  const unitView = isEmail ? COST_VIEW_EMAIL : COST_VIEW_PHONE;
+
+  /** 尚未解锁明文的收件人 key 集合（手动添加的除外） */
+  const lockedKeys = useMemo(() => {
+    const s = new Set<string>();
+    for (const r of recipients) {
+      if (isManualRecipient(r)) continue;
+      const bd = computeReachBreakdown(
+        { targetKind: r.targetKind, targetId: r.targetId },
+        isEmail ? "email" : "phone",
+        undefined,
+        { reachCostOverride: 0 },
+      );
+      if (bd.viewCost > 0) s.add(r.key);
+    }
+    return s;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [recipients, isEmail, ledger]);
+
+  /** 主动解锁明文：立即扣费、永久有效（幂等） */
+  function unlockOne(r: Recipient) {
+    performReachAutoUnlocks({
+      targetKind: r.targetKind,
+      targetId: r.targetId,
+      targetName: r.name,
+      parentRef: r.parentRef,
+      detail: r.address,
+      fields: isEmail ? [{ field: "email" }] : [{ field: "phone" }],
+    });
+    toast.success(`已解锁 ${r.name} 的${isEmail ? "邮箱" : "电话"}`, {
+      description: `扣除 ${unitView} 积分，永久有效`,
+    });
+  }
+
+  const [unlockAllOpen, setUnlockAllOpen] = useState(false);
+  const [unlockAllAck, setUnlockAllAck] = useState(false);
+  function unlockAll() {
+    const targets = recipients.filter((r) => lockedKeys.has(r.key));
+    targets.forEach((r) =>
+      performReachAutoUnlocks({
+        targetKind: r.targetKind,
+        targetId: r.targetId,
+        targetName: r.name,
+        parentRef: r.parentRef,
+        detail: r.address,
+        fields: isEmail ? [{ field: "email" }] : [{ field: "phone" }],
+      }),
+    );
+    setUnlockAllOpen(false);
+    setUnlockAllAck(false);
+    toast.success(`已解锁 ${targets.length} 位联系人的明文`, {
+      description: `扣除 ${targets.length * unitView} 积分，永久有效`,
+    });
+  }
+
   const grandTotal = sendTotal + viewCostTotal;
+
 
   // 发件邮箱日发上限剩余额度（仅邮件）
   const remainingQuota =
