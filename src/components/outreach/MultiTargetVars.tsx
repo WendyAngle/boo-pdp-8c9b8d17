@@ -77,7 +77,7 @@ export function PreviewTargetPicker({
 }
 
 /**
- * 多目标变量提示：说明文案中的变量会按各目标自动替换，并统计缺值情况。
+ * 多目标变量提示（轻量版）：编辑框下方一行小字，点击展开明细。
  * 单目标时不展示（保持原有"成品文案"体验）。
  */
 export function VarUsageHint({
@@ -89,6 +89,7 @@ export function VarUsageHint({
   targets: PreviewTarget[];
   className?: string;
 }) {
+  const [open, setOpen] = useState(false);
   if (targets.length < 2) return null;
   const used = extractVars(template).filter(
     (v) => v !== "我的公司" && v !== "我的姓名",
@@ -96,44 +97,60 @@ export function VarUsageHint({
   const missing = missingVarCounts(template, targets.map((t) => t.ctx)).filter(
     (m) => m.variable !== "我的公司" && m.variable !== "我的姓名",
   );
+  const missingTotal = missing.reduce((s, m) => s + m.count, 0);
 
   return (
-    <div className={cn("space-y-1 text-[11px]", className)}>
-      <div className="flex flex-wrap items-center gap-1 text-muted-foreground">
+    <div className={cn("text-[11px]", className)}>
+      <button
+        type="button"
+        onClick={() => setOpen((v) => !v)}
+        className="flex items-center gap-1 text-muted-foreground hover:text-foreground transition-colors"
+      >
         <Users className="h-3 w-3" />
-        共 {targets.length} 个目标，
         {used.length > 0 ? (
-          <>
-            以下变量发送时按各目标自动替换：
-            {used.map((v) => (
-              <span
-                key={v}
-                className="rounded bg-primary/10 px-1 py-0.5 font-mono text-primary"
-              >
-                {`{${v}}`}
-              </span>
-            ))}
-          </>
+          <span>{used.length} 个变量按目标替换</span>
         ) : (
-          <span className="text-amber-600">
-            当前文案未使用目标变量，所有目标将收到完全相同的内容
-          </span>
+          <span className="text-amber-600">未使用变量 · 所有目标内容相同</span>
         )}
-      </div>
-      {missing.length > 0 && (
-        <div className="text-amber-600">
-          {missing
-            .map(
-              (m) =>
-                `${m.count} 个目标缺少「${m.variable}」，将${
-                  VAR_FALLBACK[m.variable]
-                    ? `以「${VAR_FALLBACK[m.variable]}」代替`
-                    : "自动省略该处表述"
-                }`,
-            )
-            .join("；")}
+        {missingTotal > 0 && (
+          <span className="text-amber-600">· {missingTotal} 处缺值将兜底</span>
+        )}
+        <ChevronDown
+          className={cn("h-3 w-3 transition-transform", open && "rotate-180")}
+        />
+      </button>
+      {open && (
+        <div className="mt-1 space-y-1 rounded-md border bg-muted/40 p-2">
+          {used.length > 0 && (
+            <div className="flex flex-wrap items-center gap-1 text-muted-foreground">
+              发送时自动替换：
+              {used.map((v) => (
+                <span
+                  key={v}
+                  className="rounded bg-primary/10 px-1 py-0.5 font-mono text-primary"
+                >
+                  {`{${v}}`}
+                </span>
+              ))}
+            </div>
+          )}
+          {missing.length > 0 && (
+            <div className="text-amber-600">
+              {missing
+                .map(
+                  (m) =>
+                    `${m.count} 个目标缺少「${m.variable}」，将${
+                      VAR_FALLBACK[m.variable]
+                        ? `以「${VAR_FALLBACK[m.variable]}」代替`
+                        : "自动省略该处表述"
+                    }`,
+                )
+                .join("；")}
+            </div>
+          )}
         </div>
       )}
     </div>
   );
 }
+
