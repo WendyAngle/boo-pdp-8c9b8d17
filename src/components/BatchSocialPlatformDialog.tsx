@@ -53,6 +53,7 @@ import { useCurrentUser } from "@/lib/current-user";
 import { ComposeFormatHint } from "@/components/outreach/ComposeFormatHint";
 import { generateAiContent } from "@/lib/api/ai-compose.functions";
 import { TargetLangSection } from "@/components/outreach/TargetLangSection";
+import { SendPreviewConfirm } from "@/components/outreach/SendPreviewConfirm";
 import {
   PreviewTargetPicker,
   VarUsageHint,
@@ -126,6 +127,8 @@ export function BatchSocialPlatformDialog({
   const [isAdding, setIsAdding] = useState(false);
   /** 多目标预览下标（仅展示，不改模板、不产生费用） */
   const [previewIdx, setPreviewIdx] = useState(0);
+  /** 发送前抽样确认层（多目标） */
+  const [confirmOpen, setConfirmOpen] = useState(false);
   const [newTarget, setNewTarget] = useState({ name: "", handle: "", platform: "Facebook" as ReachPlatform });
 
   useEffect(() => {
@@ -298,6 +301,15 @@ export function BatchSocialPlatformDialog({
   }
 
   function handleSend() {
+    if (!canSend) return;
+    if (multi) {
+      setConfirmOpen(true);
+      return;
+    }
+    doSend();
+  }
+
+  function doSend() {
     if (!canSend) return;
     const scheduled = nextDayStart();
     const taskName = `批量社媒私信 · ${filteredJobs.length}个账号`;
@@ -742,6 +754,15 @@ export function BatchSocialPlatformDialog({
           </Button>
         </DialogFooter>
       </DialogContent>
+
+      <SendPreviewConfirm
+        open={confirmOpen}
+        onOpenChange={setConfirmOpen}
+        targets={previewTargets}
+        content={sendContent}
+        costLabel={`-${grandTotal}`}
+        onConfirm={doSend}
+      />
 
       {/* 全部解锁 · 二次确认 */}
       <Dialog open={unlockAllOpen} onOpenChange={setUnlockAllOpen}>

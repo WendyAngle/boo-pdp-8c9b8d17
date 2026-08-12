@@ -75,6 +75,7 @@ import { useCurrentUser } from "@/lib/current-user";
 import { ComposeFormatHint } from "@/components/outreach/ComposeFormatHint";
 import { generateAiContent } from "@/lib/api/ai-compose.functions";
 import { TargetLangSection } from "@/components/outreach/TargetLangSection";
+import { SendPreviewConfirm } from "@/components/outreach/SendPreviewConfirm";
 import {
   PreviewTargetPicker,
   VarUsageHint,
@@ -124,6 +125,8 @@ export function BatchSocialDialog({
   const [translated, setTranslated] = useState("");
   /** 多目标预览下标（仅展示，不改模板、不产生费用） */
   const [previewIdx, setPreviewIdx] = useState(0);
+  /** 发送前抽样确认层（多目标） */
+  const [confirmOpen, setConfirmOpen] = useState(false);
 
   useEffect(() => {
     if (!open) return;
@@ -290,6 +293,15 @@ export function BatchSocialDialog({
     previewTargets[Math.min(previewIdx, Math.max(0, previewTargets.length - 1))];
 
   function handleSend() {
+    if (!canSend) return;
+    if (multi) {
+      setConfirmOpen(true);
+      return;
+    }
+    doSend();
+  }
+
+  function doSend() {
     if (!canSend) return;
     // 后台调度分派
     const dispatched = dispatchSend(platform, sendableCount);
@@ -723,6 +735,15 @@ export function BatchSocialDialog({
           </Button>
         </DialogFooter>
       </DialogContent>
+
+      <SendPreviewConfirm
+        open={confirmOpen}
+        onOpenChange={setConfirmOpen}
+        targets={previewTargets}
+        content={sendContent}
+        costLabel={`-${grandTotal}`}
+        onConfirm={doSend}
+      />
 
       {/* 全部解锁 · 二次确认 */}
       <Dialog open={unlockAllOpen} onOpenChange={setUnlockAllOpen}>
