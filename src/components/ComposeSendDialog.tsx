@@ -72,6 +72,7 @@ import { useCurrentUser } from "@/lib/current-user";
 import { ComposeFormatHint } from "@/components/outreach/ComposeFormatHint";
 import { generateAiContent } from "@/lib/api/ai-compose.functions";
 import { TargetLangSection } from "@/components/outreach/TargetLangSection";
+import { SendPreviewConfirm } from "@/components/outreach/SendPreviewConfirm";
 import { useMyInfoGuard } from "@/lib/my-info-guard";
 import { maskContact } from "@/lib/mask-contact";
 import {
@@ -151,6 +152,8 @@ export function ComposeSendDialog({
   const [manualInput, setManualInput] = useState("");
   /** 多目标时的预览目标下标（仅影响展示，不改模板、不产生费用） */
   const [previewIdx, setPreviewIdx] = useState(0);
+  /** 发送前抽样确认层（多目标） */
+  const [confirmOpen, setConfirmOpen] = useState(false);
 
   function addManualRecipients() {
     const raw = manualInput
@@ -424,6 +427,10 @@ export function ComposeSendDialog({
 
   function handleSend() {
     if (!canSend) return;
+    if (multi) {
+      setConfirmOpen(true);
+      return;
+    }
     doSend();
   }
 
@@ -927,6 +934,16 @@ export function ComposeSendDialog({
           </Button>
         </DialogFooter>
       </DialogContent>
+
+      <SendPreviewConfirm
+        open={confirmOpen}
+        onOpenChange={setConfirmOpen}
+        targets={previewTargets}
+        content={sendContent}
+        subject={isEmail ? sendSubject : undefined}
+        costLabel={`-${grandTotal}`}
+        onConfirm={doSend}
+      />
 
       {/* 全部解锁 · 二次确认 */}
       <Dialog open={unlockAllOpen} onOpenChange={setUnlockAllOpen}>
