@@ -461,14 +461,14 @@ function SearchPage() {
         </div>
 
         {/* 结果统计 */}
-        <div className="flex items-center justify-between mb-4">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between mb-4">
           <div className="flex items-center gap-3 text-sm text-slate-600">
-            <span>
+            <span className="truncate">
               查询完成，找到{" "}
               <span className="font-semibold text-slate-900">{RESULTS.length}</span> 条线索
             </span>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex flex-wrap items-center gap-2">
             {importer && (
               <Badge variant="secondary" className="bg-white text-slate-600 ring-1 ring-slate-200">
                 进口商
