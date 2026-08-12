@@ -203,8 +203,8 @@ function SearchResultsPage() {
   };
 
   return (
-    <div className="min-h-[calc(100vh-0px)] bg-[#f6f8fb]">
-      <div className="mx-auto max-w-[1400px] px-6 py-6">
+    <div className="min-h-[calc(100vh-0px)] bg-[#f6f8fb] p-4 sm:p-6 lg:p-8">
+      <div className="w-full">
         {/* 面包屑 */}
         <div className="text-sm text-muted-foreground mb-5">
           客户发现 / <span className="text-foreground/80">商机线索</span>
