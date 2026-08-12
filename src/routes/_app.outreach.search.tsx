@@ -624,16 +624,16 @@ function StatCard({
   sub: string;
 }) {
   return (
-    <div className="group relative overflow-hidden rounded-2xl bg-white/70 backdrop-blur-sm p-6 ring-1 ring-white/80 shadow-[0_18px_50px_-30px_rgba(15,23,42,0.25)] transition-transform hover:-translate-y-0.5">
+    <div className="group relative overflow-hidden rounded-2xl bg-white/70 backdrop-blur-sm p-4 sm:p-6 ring-1 ring-white/80 shadow-[0_18px_50px_-30px_rgba(15,23,42,0.25)] transition-transform hover:-translate-y-0.5">
       <div className="flex items-center gap-3">
         <div
-          className={`flex h-11 w-11 items-center justify-center rounded-xl bg-gradient-to-br ${tone} text-white shadow-md shadow-sky-200/60`}
+          className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br ${tone} text-white shadow-md shadow-sky-200/60`}
         >
           <Icon className="h-5 w-5" />
         </div>
-        <div className="text-base font-medium text-slate-700">{title}</div>
+        <div className="text-sm sm:text-base font-medium text-slate-700 truncate">{title}</div>
       </div>
-      <div className="mt-5 text-4xl font-bold tracking-tight text-slate-900">{kpi}</div>
+      <div className="mt-4 sm:mt-5 text-3xl sm:text-4xl font-bold tracking-tight text-slate-900">{kpi}</div>
       <div className="mt-2 flex items-center gap-1.5 text-sm text-muted-foreground">
         <span className="inline-block h-1.5 w-1.5 rounded-full bg-primary" />
         {sub}
