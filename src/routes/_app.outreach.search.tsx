@@ -265,6 +265,11 @@ function SearchPage() {
 
   const isResults = query !== null;
 
+  const backToSearch = () => {
+    setQuery(null);
+    setKw("");
+  };
+
   /* ---------- 复合搜索栏（两态共用） ---------- */
   const searchBar = (
     <div
@@ -396,36 +401,49 @@ function SearchPage() {
   if (isResults) {
     return (
       <div className="min-h-full bg-[#f6f8fb] p-4 sm:p-6 lg:p-8">
-        {/* 面包屑 */}
-        <div className="mb-5 flex items-center gap-2 text-sm text-muted-foreground">
-          <span>客户发现 /</span>
+        {/* 面包屑 + 返回 */}
+        <div className="mb-5 flex items-center justify-between gap-3">
+          <div className="flex items-center gap-2 text-sm text-muted-foreground">
+            <span>客户发现 /</span>
+            <button onClick={backToSearch} className="text-foreground/80 hover:text-primary">
+              商机线索
+            </button>
+            <span>/ 搜索结果</span>
+          </div>
           <button
-            onClick={() => {
-              setQuery(null);
-              setKw("");
-            }}
-            className="text-foreground/80 hover:text-primary"
+            onClick={backToSearch}
+            className="inline-flex items-center gap-1.5 rounded-lg bg-white px-3 py-1.5 text-sm text-slate-700 ring-1 ring-slate-200 shadow-sm hover:text-primary hover:ring-primary/40 transition-colors"
           >
-            商机线索
+            <ArrowLeft className="h-4 w-4" />
+            返回搜索
           </button>
-          <span>/ 搜索结果</span>
         </div>
 
         {/* 顶部横幅 */}
         <div className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-cyan-500 to-sky-500 px-6 py-5 text-white shadow-md mb-6">
-          <div className="relative z-10 flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-white/20">
-              <Lightbulb className="h-5 w-5 text-white" />
+          <div className="relative z-10 flex items-center justify-between gap-3">
+            <div className="flex items-center gap-3">
+              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-white/20">
+                <Lightbulb className="h-5 w-5 text-white" />
+              </div>
+              <div>
+                <h1 className="text-xl font-bold">商机线索</h1>
+                <p className="text-sm text-white/90">基于全球贸易数据，精准定位潜在客户</p>
+              </div>
             </div>
-            <div>
-              <h1 className="text-xl font-bold">商机线索</h1>
-              <p className="text-sm text-white/90">基于全球贸易数据，精准定位潜在客户</p>
-            </div>
+            <button
+              onClick={backToSearch}
+              className="inline-flex items-center gap-1.5 rounded-lg bg-white/20 px-3 py-2 text-sm font-medium text-white ring-1 ring-white/40 hover:bg-white/30 transition-colors"
+            >
+              <ArrowLeft className="h-4 w-4" />
+              返回搜索
+            </button>
           </div>
-          <div className="pointer-events-none absolute right-6 top-1/2 -translate-y-1/2 opacity-20">
+          <div className="pointer-events-none absolute right-40 top-1/2 -translate-y-1/2 opacity-20">
             <Globe2 className="h-24 w-24 text-white" />
           </div>
         </div>
+
 
         {/* 搜索栏 */}
         <div className="mb-4">{searchBar}{countryChips}</div>
@@ -439,16 +457,6 @@ function SearchPage() {
         {/* 结果统计 */}
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-3 text-sm text-slate-600">
-            <button
-              onClick={() => {
-                setQuery(null);
-                setKw("");
-              }}
-              className="inline-flex items-center gap-1 rounded-md px-2 py-1 text-slate-600 hover:bg-white hover:text-primary ring-1 ring-transparent hover:ring-slate-200"
-            >
-              <ArrowLeft className="h-4 w-4" />
-              返回搜索
-            </button>
             <span>
               查询完成，找到{" "}
               <span className="font-semibold text-slate-900">{RESULTS.length}</span> 条线索
