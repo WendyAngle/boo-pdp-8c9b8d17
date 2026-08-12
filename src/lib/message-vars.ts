@@ -25,14 +25,55 @@ export interface VarContext {
 
 const VAR_RE = /\{(企业名|联系人名|行业|城市|我的公司|我的姓名)\}/g;
 
-export function renderTemplate(tpl: string, ctx: VarContext): string {
-  return tpl.replace(VAR_RE, (_, k: MessageVariable) => {
-    const v = ctx[k];
-    if (v && v.trim()) return v;
-    if (k === "联系人名") return "您好";
-    return "";
-  });
+/** 变量缺值时的兜底词；未列出的变量（行业/城市）缺值时整体删除 */
+export const VAR_FALLBACK: Partial<Record<MessageVariable, string>> = {
+  联系人名: "您好",
+  企业名: "贵司",
+};
+
+/** 删除变量后可能产生的悬空标点 / 多余空白 */
+function cleanupBlanks(s: string): string {
+  return s
+    .replace(/[ \t]{2,}/g, " ")
+    .replace(/[（(]\s*[)）]/g, "")
+    .replace(/([，,、。;；:：])\s*(?=[，,、。;；:：])/g, "")
+    .replace(/(^|\n)[ \t]*[，,、。;；:：]+[ \t]*/g, "$1")
+    .replace(/[ \t]+([，,、。;；:：！？])/g, "$1")
+    .replace(/\n{3,}/g, "\n\n");
 }
+
+export function renderTemplate(tpl: string, ctx: VarContext): string {
+  const out = tpl.replace(VAR_RE, (_, k: MessageVariable) => {
+    const v = ctx[k];
+    if (v && v.trim()) return v.trim();
+    return VAR_FALLBACK[k] ?? "";
+  });
+  return cleanupBlanks(out);
+}
+
+/** 文案中实际用到的变量（去重、保持出现顺序） */
+export function extractVars(tpl: string): MessageVariable[] {
+  const out: MessageVariable[] = [];
+  for (const m of tpl.matchAll(VAR_RE)) {
+    const v = m[1] as MessageVariable;
+    if (!out.includes(v)) out.push(v);
+  }
+  return out;
+}
+
+/** 统计各变量在目标集合中缺值的条数（仅统计文案里用到的变量） */
+export function missingVarCounts(
+  tpl: string,
+  ctxs: VarContext[],
+): Array<{ variable: MessageVariable; count: number }> {
+  return extractVars(tpl)
+    .map((variable) => ({
+      variable,
+      count: ctxs.filter((c) => !c[variable] || !c[variable]!.trim()).length,
+    }))
+    .filter((x) => x.count > 0);
+}
+
 
 /** 收件人最小信息 */
 export interface Recipient {

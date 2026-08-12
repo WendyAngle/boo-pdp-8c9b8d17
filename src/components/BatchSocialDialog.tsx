@@ -75,6 +75,11 @@ import { useCurrentUser } from "@/lib/current-user";
 import { ComposeFormatHint } from "@/components/outreach/ComposeFormatHint";
 import { generateAiContent } from "@/lib/api/ai-compose.functions";
 import { TargetLangSection } from "@/components/outreach/TargetLangSection";
+import {
+  PreviewTargetPicker,
+  VarUsageHint,
+  type PreviewTarget,
+} from "@/components/outreach/MultiTargetVars";
 import { useMyInfoGuard } from "@/lib/my-info-guard";
 
 
@@ -117,6 +122,8 @@ export function BatchSocialDialog({
   const [targetLang, setTargetLang] = useState<string>("en");
   /** 目标语言译文（实际发送内容） */
   const [translated, setTranslated] = useState("");
+  /** 多目标预览下标（仅展示，不改模板、不产生费用） */
+  const [previewIdx, setPreviewIdx] = useState(0);
 
   useEffect(() => {
     if (!open) return;
@@ -125,6 +132,7 @@ export function BatchSocialDialog({
     setAiUsed(false);
     setTargetLang("en");
     setTranslated("");
+    setPreviewIdx(0);
     // 打开即自动校验（跳过已缓存）
     void verifyMany(
       incoming
@@ -272,6 +280,15 @@ export function BatchSocialDialog({
     );
   }
 
+  /** 多目标 = 模板模式 */
+  const previewTargets: PreviewTarget[] = useMemo(() => {
+    const list = verified.length > 0 ? verified : candidates;
+    return list.map((c) => ({ key: c.key, name: c.name, ctx: c.ctx }));
+  }, [verified, candidates]);
+  const multi = previewTargets.length > 1;
+  const previewTarget =
+    previewTargets[Math.min(previewIdx, Math.max(0, previewTargets.length - 1))];
+
   function handleSend() {
     if (!canSend) return;
     // 后台调度分派
@@ -334,16 +351,22 @@ export function BatchSocialDialog({
           languageName: "中文",
           myCompany: profile.companyName,
           myName: user.name,
-          literal: true,
+          literal: !multi,
           sampleEnterprise: sample?.ctx.企业名,
-          sampleContact: sample?.ctx.联系人名,
-          sampleIndustry: sample?.ctx.行业,
-          sampleCity: sample?.ctx.城市,
+          sampleContact: multi ? undefined : sample?.ctx.联系人名,
+          sampleIndustry: multi ? undefined : sample?.ctx.行业,
+          sampleCity: multi ? undefined : sample?.ctx.城市,
         },
       });
-      if (res.content) setContent(myInfo.fillAll(res.content, sample?.ctx));
+      if (res.content)
+        setContent(multi ? myInfo.fillMine(res.content) : myInfo.fillAll(res.content, sample?.ctx));
       setAiUsed(true);
-      toast.success(`AI 已生成 ${platform} 首次接触文案`);
+      toast.success(
+        `AI 已生成 ${platform} 首次接触文案`,
+        multi
+          ? { description: `文案含目标变量，发送时按 ${previewTargets.length} 个目标分别替换` }
+          : undefined,
+      );
 
     } catch (e) {
       const msg = e instanceof Error ? e.message : String(e);
@@ -618,6 +641,7 @@ export function BatchSocialDialog({
                 <div className="text-[11px] text-muted-foreground">
                   {content.length} / 4096 字
                 </div>
+                <VarUsageHint template={content} targets={previewTargets} />
               </div>
 
               {/* 目标语言文案（实际发送内容） */}
@@ -630,6 +654,16 @@ export function BatchSocialDialog({
                 rows={10}
                 kindLabel="私信"
                 bare
+                keepVars={multi}
+                previewCtx={multi ? previewTarget?.ctx : undefined}
+                previewLabel={previewTarget?.name}
+                headerExtra={
+                  <PreviewTargetPicker
+                    targets={previewTargets}
+                    index={previewIdx}
+                    onChange={setPreviewIdx}
+                  />
+                }
               />
             </div>
           </section>

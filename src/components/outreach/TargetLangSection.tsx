@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { Languages, Loader2 } from "lucide-react";
 import { toast } from "sonner";
@@ -17,6 +17,8 @@ import {
 } from "@/components/ui/select";
 import { LANGUAGES, langByCode } from "@/lib/lang-detect";
 import { translateMessage } from "@/lib/api/ai-translate.functions";
+import { renderTemplate, type VarContext } from "@/lib/message-vars";
+
 
 /** 目标语言候选（中文为原文，故排除） */
 export const TARGET_LANGS = LANGUAGES.filter((l) => l.code !== "zh");
@@ -27,6 +29,21 @@ function unwrapBraces(text: string): string {
     .replace(/[{｛]\s*([^{}｛｝\n]{0,120}?)\s*[}｝]/g, "$1")
     .replace(/[ \t]{2,}/g, " ");
 }
+
+/** 模板模式：翻译前把变量换成安全记号，翻译后还原，避免模型改写/丢失花括号 */
+const PROTECT_RE = /\{(企业名|联系人名|行业|城市|我的公司|我的姓名)\}/g;
+function protectVars(s: string): { text: string; map: string[] } {
+  const map: string[] = [];
+  const text = s.replace(PROTECT_RE, (m) => {
+    map.push(m);
+    return `[[V${map.length - 1}]]`;
+  });
+  return { text, map };
+}
+function restoreVars(s: string, map: string[]): string {
+  return s.replace(/\[\[\s*V\s*(\d+)\s*\]\]/gi, (_m, i: string) => map[Number(i)] ?? "");
+}
+
 
 
 /**
@@ -46,6 +63,10 @@ export function TargetLangSection({
   kindLabel = "文案",
   className,
   bare = false,
+  keepVars = false,
+  previewCtx,
+  previewLabel,
+  headerExtra,
 }: {
   /** 中文原文正文 */
   source: string;
@@ -62,7 +83,15 @@ export function TargetLangSection({
   className?: string;
   /** 融入外层统一区域：去掉自身边框与背景 */
   bare?: boolean;
+  /** 模板模式（多目标）：保留 {变量} 不做去花括号处理，翻译时保护变量 */
+  keepVars?: boolean;
+  /** 模板模式下用于渲染「该目标最终收到的内容」 */
+  previewCtx?: VarContext;
+  previewLabel?: string;
+  /** 标题右侧附加内容（如预览目标切换器） */
+  headerExtra?: ReactNode;
 }) {
+
   const callTranslate = useServerFn(translateMessage);
   const [loading, setLoading] = useState(false);
   /** 译文对应的原文快照，用于「原文已修改，建议重新翻译」提示 */
@@ -89,22 +118,27 @@ export function TargetLangSection({
     const target = langByCode(code);
     if (!target) return;
     setLoading(true);
+    const bodyProt = keepVars ? protectVars(src) : { text: src, map: [] as string[] };
+    const rawSubject = (sourceSubject ?? "").trim();
+    const subjProt = keepVars
+      ? protectVars(rawSubject)
+      : { text: rawSubject, map: [] as string[] };
     try {
       const jobs: Promise<{ content: string }>[] = [
         callTranslate({
           data: {
-            text: src,
+            text: bodyProt.text,
             targetLanguageName: target.en,
             sourceLanguageName: "Chinese (Simplified)",
             tone: "friendly",
           },
         }),
       ];
-      if (hasSubject && (sourceSubject ?? "").trim()) {
+      if (hasSubject && rawSubject) {
         jobs.push(
           callTranslate({
             data: {
-              text: (sourceSubject ?? "").trim(),
+              text: subjProt.text,
               targetLanguageName: target.en,
               sourceLanguageName: "Chinese (Simplified)",
               tone: "friendly",
@@ -113,10 +147,13 @@ export function TargetLangSection({
         );
       }
       const [body, subj] = await Promise.all(jobs);
-      onChange(unwrapBraces(body?.content ?? ""));
-      if (hasSubject) onSubjectChange?.(unwrapBraces(subj?.content ?? ""));
+      const clean = (t: string, map: string[]) =>
+        keepVars ? restoreVars(t, map) : unwrapBraces(t);
+      onChange(clean(body?.content ?? "", bodyProt.map));
+      if (hasSubject) onSubjectChange?.(clean(subj?.content ?? "", subjProt.map));
       setSnapshot(`${sourceSubject ?? ""}\u0000${src}`);
       toast.success(`已翻译为${target.zh}（免费）`);
+
     } catch (e) {
       const msg = e instanceof Error ? e.message : String(e);
       toast.error("翻译失败", { description: msg });
@@ -208,6 +245,32 @@ export function TargetLangSection({
           <span className="text-amber-600">中文原文已修改，建议重新翻译</span>
         )}
       </div>
+
+      {keepVars && previewCtx && (
+        <div className="rounded-md border border-primary/20 bg-background/70 p-2 space-y-1">
+          <div className="flex items-center justify-between gap-2">
+            <span className="text-[11px] font-medium">
+              {previewLabel ? `${previewLabel} 将收到` : "该目标将收到"}
+            </span>
+            {headerExtra}
+          </div>
+          {hasSubject && (
+            <div className="text-[11px]">
+              <span className="text-muted-foreground">主题：</span>
+              <span className="font-medium">
+                {renderTemplate((subjectValue ?? "").trim() || (sourceSubject ?? ""), previewCtx) ||
+                  "—"}
+              </span>
+            </div>
+          )}
+          <p className="text-xs whitespace-pre-wrap leading-relaxed max-h-32 overflow-y-auto">
+            {renderTemplate(value.trim() || source, previewCtx) || (
+              <span className="text-muted-foreground">（暂无内容）</span>
+            )}
+          </p>
+        </div>
+      )}
     </section>
+
   );
 }
