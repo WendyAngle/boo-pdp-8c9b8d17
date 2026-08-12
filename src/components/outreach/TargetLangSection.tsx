@@ -98,10 +98,8 @@ export function TargetLangSection({
   const [snapshot, setSnapshot] = useState("");
   const hasSubject = typeof subjectValue === "string" && !!onSubjectChange;
   const opt = langByCode(lang);
-  /** 多目标模板模式下：编辑 / 预览成品 两种视图，避免常驻预览块 */
-  const [mode, setMode] = useState<"edit" | "preview">("edit");
-  const canPreview = !!(keepVars && previewCtx);
-  const previewing = canPreview && mode === "preview";
+  /** 多目标模板模式下：直接展示所选目标的成品内容（不提供编辑视图） */
+  const previewing = !!(keepVars && previewCtx);
 
   // 原文清空时同步清空译文
   useEffect(() => {
@@ -183,24 +181,6 @@ export function TargetLangSection({
           )}
         </Label>
         <div className="flex items-center gap-2">
-          {canPreview && (
-            <div className="flex rounded-md border p-0.5">
-              {(["edit", "preview"] as const).map((m) => (
-                <button
-                  key={m}
-                  type="button"
-                  onClick={() => setMode(m)}
-                  className={`rounded px-2 py-0.5 text-[11px] transition-colors ${
-                    mode === m
-                      ? "bg-primary text-primary-foreground"
-                      : "text-muted-foreground hover:text-foreground"
-                  }`}
-                >
-                  {m === "edit" ? "编辑" : "预览成品"}
-                </button>
-              ))}
-            </div>
-          )}
           <Select
             value={lang}
             onValueChange={(v) => {
@@ -242,6 +222,7 @@ export function TargetLangSection({
         <div className="flex items-center justify-between gap-2">
           <span className="text-[11px] text-muted-foreground">
             {previewLabel ? `${previewLabel} 将收到` : "该目标将收到"}
+            <span className="ml-1">· 切换目标仅改变预览，全部目标均使用所选语言</span>
           </span>
           {headerExtra}
         </div>
@@ -291,7 +272,7 @@ export function TargetLangSection({
       <div className="flex items-center justify-between text-[11px]">
         <span className="text-muted-foreground">
           {value.trim()
-            ? `将以${opt?.zh ?? ""}发送 · ${value.trim().length} 字`
+            ? `全部目标将以${opt?.zh ?? ""}发送 · 模板 ${value.trim().length} 字`
             : "未翻译时，将直接发送中文原文"}
         </span>
         {stale && (
