@@ -227,6 +227,7 @@ function InboxPage() {
   const view: ViewKey = search.view ?? "all";
   const intent = search.intent ?? "all";
   const starred = search.starred ?? "all";
+  const friend = search.friend ?? "all";
   const [scorePanelOpen, setScorePanelOpen] = useState(true);
   const [mounted, setMounted] = useState(false);
   useEffect(() => setMounted(true), []);
