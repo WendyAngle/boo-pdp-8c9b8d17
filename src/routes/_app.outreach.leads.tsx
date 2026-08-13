@@ -1541,25 +1541,28 @@ function ShortcutCard({
 /* ============================ 企业信息 ============================ */
 
 const INDUSTRY_OPTIONS = [
-  "制造业",
-  "零售",
-  "物流",
-  "营销与广告",
-  "信息技术",
-  "金融服务",
-  "医疗健康",
-  "高等教育",
-  "建筑材料",
-  "钢材加工",
-  "金属制品",
-  "建筑施工",
-  "基础设施工程",
-  "房地产开发",
-  "电子商务",
-  "新能源",
-  "汽车制造",
-  "农业",
+  "消费电子通信",
+  "3C 手机配件",
+  "新能源锂电",
+  "视听数码",
+  "小家电行业",
+  "塑料家居用品",
+  "纺织服装（针织）",
+  "家具家居配件",
+  "智能家居电器",
+  "玩具母婴行业",
+  "鞋类",
+  "箱包行业",
+  "照明灯具",
+  "美妆个护",
+  "电动两轮车 / 代步车",
+  "运动户外用品",
+  "塑胶日用杂品",
+  "饰品配饰",
+  "橡胶制品",
+  "摄像安防",
 ];
+
 const COUNTRY_OPTIONS = [
   "美国",
   "中国",
@@ -1583,57 +1586,117 @@ const COUNTRY_OPTIONS = [
   "印度尼西亚",
 ];
 const PRODUCT_OPTIONS = [
-  "热轧钢板",
-  "冷轧钢板",
-  "建筑螺纹钢",
-  "镀锌钢管",
-  "焊接钢管",
-  "无缝钢管",
-  "不锈钢板材",
-  "彩涂钢板",
-  "花岗岩石材",
-  "大理石板材",
-  "石膏板",
-  "水泥",
-  "预制混凝土构件",
-  "铝型材",
-  "铜管",
-  "钢结构",
-  "彩钢瓦",
-  "防火板",
-  "保温材料",
+  "智能手机",
+  "功能手机",
+  "手机壳",
+  "数据线",
+  "充电头",
+  "耳机配件",
+  "锂离子蓄电池",
+  "充电宝",
+  "便携储能电源",
+  "蓝牙耳机",
+  "TWS 无线耳机",
+  "空气炸锅",
+  "榨汁杯",
+  "扫地机器人",
+  "吸尘器",
+  "塑料餐具",
+  "水杯",
+  "收纳盒",
+  "厨房储物制品",
+  "针织 T 恤",
+  "运动短袖",
+  "瑜伽服",
+  "休闲上衣",
+  "简易置物架",
+  "衣架",
+  "组装家具",
+  "家具五金",
+  "智能插座",
+  "LED 灯带",
+  "摄像头",
+  "人体感应灯",
+  "塑胶玩具",
+  "拼装积木",
+  "益智玩具",
+  "休闲帆布鞋",
+  "运动鞋",
+  "拖鞋",
+  "双肩包",
+  "旅行包",
+  "化妆包",
+  "收纳包",
+  "LED 装饰灯",
+  "彩灯",
+  "庭院灯",
+  "太阳能小路灯",
+  "彩妆",
+  "化妆工具",
+  "护肤套装",
+  "电动滑板车",
+  "电动自行车整车及配件",
+  "跳绳",
+  "健身小器械",
+  "露营装备",
+  "瑜伽辅具",
+  "硅胶厨具",
+  "硅胶冰格",
+  "防水配件",
+  "时尚项链",
+  "耳环",
+  "发饰",
+  "头饰",
+  "太阳镜",
+  "橡胶防滑垫",
+  "密封圈",
+  "车载橡胶配件",
+  "瑜伽垫",
+  "网络摄像头",
+  "行车记录仪",
+  "运动相机",
 ];
 const HS_CODE_OPTIONS = [
-  "721049",
-  "721020",
-  "721310",
-  "721320",
-  "730630",
-  "730690",
-  "680100",
-  "680210",
-  "680221",
-  "680223",
-  "680911",
-  "681011",
+  "851762",
+  "851769",
+  "850760",
+  "852351",
+  "850980",
+  "392410",
+  "610910",
+  "940390",
+  "854370",
+  "950300",
+  "640419",
+  "420292",
+  "940540",
+  "330499",
+  "871160",
+  "950699",
+  "392690",
+  "961590",
+  "401699",
+  "852580",
 ];
+
 const SCALE_OPTIONS = ["1-50", "51-200", "201-1000", "1000+"];
 const REVENUE_OPTIONS = ["<500 万", "500 万 - 5000 万", "5000 万 - 5 亿", ">5 亿"];
 const COMPETITOR_OPTIONS = [
-  "宝钢股份",
-  "河钢集团",
-  "沙钢集团",
-  "鞍钢集团",
-  "首钢集团",
-  "中信泰富特钢",
-  "安赛乐米塔尔",
-  "日本制铁",
-  "浦项制铁",
-  "塔塔钢铁",
-  "京德勒西南钢铁",
-  "现代制铁",
-  "纽柯钢铁",
+  "安克创新",
+  "绿联科技",
+  "公牛集团",
+  "倍思",
+  "小米生态链",
+  "漫步者",
+  "韶音科技",
+  "德尔玛",
+  "石头科技",
+  "追觅科技",
+  "贝尔金 Belkin",
+  "JBL",
+  "Sony",
 ];
+
 
 export function ProfileTab() {
   const current = useLeadProfile();
@@ -1670,7 +1733,11 @@ export function ProfileTab() {
           </Field>
         </Section>
 
-        <Section title="主营业务" icon={<Briefcase className="h-4 w-4" />}>
+        <Section
+          title="主营业务"
+          subtitle="以下为平台常见的行业、产品与 HS 编码，若没有匹配项，可在输入框直接输入后回车手动添加。"
+          icon={<Briefcase className="h-4 w-4" />}
+        >
           <Field label="所属行业（多选）">
             <MultiPick
               options={INDUSTRY_OPTIONS}
@@ -1776,7 +1843,7 @@ export function ProfileTab() {
               max={2000}
               value={draft.advantage}
               onChange={(v) => set("advantage", v)}
-              placeholder="例如：自有钢厂产能稳定、港口现货交期快 7 天、支持多语种 7×24 售后"
+              placeholder="例如：自有工厂产能稳定、深圳现货交期快 7 天、支持多语种 7×24 售后"
             />
           </Field>
         </Section>
@@ -1903,23 +1970,31 @@ export function ProfileTab() {
 
 function Section({
   title,
+  subtitle,
   icon,
   children,
 }: {
   title: string;
+  subtitle?: string;
   icon: React.ReactNode;
   children: React.ReactNode;
 }) {
   return (
     <Card className="p-5 space-y-4">
-      <div className="flex items-center gap-2 text-sm font-semibold">
-        <span className="text-primary">{icon}</span>
-        {title}
+      <div className="space-y-1">
+        <div className="flex items-center gap-2 text-sm font-semibold">
+          <span className="text-primary">{icon}</span>
+          {title}
+        </div>
+        {subtitle ? (
+          <div className="text-xs text-muted-foreground pl-6">{subtitle}</div>
+        ) : null}
       </div>
       <div className="space-y-4">{children}</div>
     </Card>
   );
 }
+
 
 function Grid2({ children }: { children: React.ReactNode }) {
   return <div className="grid grid-cols-1 md:grid-cols-2 gap-4">{children}</div>;
