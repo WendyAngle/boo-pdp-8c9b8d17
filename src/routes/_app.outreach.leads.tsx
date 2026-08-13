@@ -1682,20 +1682,21 @@ const HS_CODE_OPTIONS = [
 const SCALE_OPTIONS = ["1-50", "51-200", "201-1000", "1000+"];
 const REVENUE_OPTIONS = ["<500 万", "500 万 - 5000 万", "5000 万 - 5 亿", ">5 亿"];
 const COMPETITOR_OPTIONS = [
-  "宝钢股份",
-  "河钢集团",
-  "沙钢集团",
-  "鞍钢集团",
-  "首钢集团",
-  "中信泰富特钢",
-  "安赛乐米塔尔",
-  "日本制铁",
-  "浦项制铁",
-  "塔塔钢铁",
-  "京德勒西南钢铁",
-  "现代制铁",
-  "纽柯钢铁",
+  "安克创新",
+  "绿联科技",
+  "公牛集团",
+  "倍思",
+  "小米生态链",
+  "漫步者",
+  "韶音科技",
+  "德尔玛",
+  "石头科技",
+  "追觅科技",
+  "贝尔金 Belkin",
+  "JBL",
+  "Sony",
 ];
+
 
 export function ProfileTab() {
   const current = useLeadProfile();

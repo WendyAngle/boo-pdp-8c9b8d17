@@ -39,7 +39,7 @@ export interface QualificationItem {
 const KEY = "boo:lead:profile:v1";
 
 export const EMPTY_PROFILE: LeadProfile = {
-  companyName: "博远建材钢铁集团有限公司",
+  companyName: "博远智能科技（深圳）有限公司",
   uscc: "91330200MA2K5XQR70",
   industries: ["3C 手机配件", "新能源锂电", "视听数码"],
   mainProducts: [
