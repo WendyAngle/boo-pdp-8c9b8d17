@@ -356,9 +356,10 @@ export function CreateReachTaskDialog({
   function handleConfirm() {
     if (!name.trim()) return toast.error("请填写任务名");
     if (!keywords.trim()) return toast.error("请填写目标关键词");
-    if (targetCap <= 0) return toast.error("私信目标数量需大于 0");
-    if (!content.trim()) return toast.error("请填写私信内容");
-    if (overLimit)
+    if (targetCap <= 0)
+      return toast.error(`${needsContent ? "私信" : "加好友"}目标数量需大于 0`);
+    if (needsContent && !content.trim()) return toast.error("请填写私信内容");
+    if (needsContent && overLimit)
       return toast.error(
         `发送内容 ${sendLen} 字符，超出 ${platform} 上限 ${charLimit} 字符`,
       );
@@ -366,24 +367,27 @@ export function CreateReachTaskDialog({
       return toast.error("暂无可用账号，请先在「我的账号」中申请");
     if (balance.balance < sendCost) return toast.error("积分不足");
 
+    const action = needsContent ? "私信" : "加好友";
+    const costPerTarget = needsContent ? COST_SOCIAL_DM : COST_SOCIAL_ADD_FRIEND;
+    const finalContent = needsContent ? sendContent : "";
     const kws = keywords.split(/[,，]/).map((s) => s.trim()).filter(Boolean);
     spendCredits(sendCost);
-    // 记录落到「触达任务」列表（渠道=社媒），实际发送内容为译文（无译文则中文原文）
+    // 记录落到「触达任务」列表（渠道=社媒）
     createSocialReachBatch({
       taskName: name.trim(),
       platform,
       region,
       keywords: kws,
       count: targetCap,
-      content: sendContent,
-      aiGenerated: aiUsed,
-      action: "私信",
+      content: finalContent,
+      aiGenerated: needsContent ? aiUsed : false,
+      action,
     });
     saveReachTaskConfig({
       taskKey: `s:${name.trim()}:${platform}`,
       type: "social_prospecting",
       platform,
-      action: "私信",
+      action,
       region,
       keywords: kws,
       products: promoProducts,
@@ -394,12 +398,14 @@ export function CreateReachTaskDialog({
       schedule: "创建后立即执行",
       sourceZh: content.trim(),
       targetLang,
-      sendContent,
-      aiGenerated: aiUsed,
-      costPerTarget: COST_SOCIAL_DM,
+      sendContent: finalContent,
+      aiGenerated: needsContent ? aiUsed : false,
+      costPerTarget,
     });
     toast.success(
-      `已创建触达任务，生成 ${targetCap} 条触达记录，共扣 ${sendCost.toLocaleString()} 积分（AI 生成与翻译免费）`,
+      `已创建触达任务，生成 ${targetCap} 条触达记录，共扣 ${sendCost.toLocaleString()} 积分${
+        needsContent ? "（AI 生成与翻译免费）" : ""
+      }`,
     );
     onOpenChange(false);
   }
