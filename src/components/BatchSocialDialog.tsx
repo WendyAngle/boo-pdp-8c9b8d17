@@ -248,6 +248,18 @@ export function BatchSocialDialog({
     sendContent.length > 0 &&
     !noPool;
 
+  const disabledReason = !canSend
+    ? noPool
+      ? "暂无可用发送账号"
+      : validCount === 0
+        ? "请先添加有效发送目标"
+        : !sendContent
+          ? "请填写实际发送内容"
+          : remaining <= 0
+            ? "今日可发额度已用完"
+            : "请补全必填项"
+    : "";
+
   function handleRemoveNonVerified() {
     setCandidates((prev) =>
       prev.filter((c) => getWaStatus(c.address) === "verified"),
