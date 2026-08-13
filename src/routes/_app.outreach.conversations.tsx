@@ -248,6 +248,16 @@ function InboxPage() {
       list = list.filter((t) => (starred === "starred" ? t.meta.starred : !t.meta.starred));
     if (intent !== "all")
       list = list.filter((t) => scoreIntent(t).band === intent);
+    if (friend !== "all") {
+      list = list.filter((t) => {
+        const applied = Boolean(t.isFriend || t.friendPending || t.friendRemoved);
+        if (friend === "applied") return applied;
+        if (friend === "pending") return Boolean(t.friendPending);
+        if (friend === "removed") return Boolean(t.friendRemoved);
+        // accepted：好友申请已通过且未被解除
+        return Boolean(t.isFriend) && !t.friendPending && !t.friendRemoved;
+      });
+    }
     if (view === "unread") list = list.filter((t) => t.meta.unread > 0);
     else if (view === "pending")
       list = list.filter((t) => t.meta.status === "pending");
