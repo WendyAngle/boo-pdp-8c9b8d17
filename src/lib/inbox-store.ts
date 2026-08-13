@@ -264,6 +264,8 @@ export interface Thread {
   friendSource?: string;
   /** 已申请加好友但对方尚未通过：暂不可发起私信触达（避免风控） */
   friendPending?: boolean;
+  /** 对方已解除好友关系：不可再发私信触达（避免风控） */
+  friendRemoved?: boolean;
   /** 是否由用户手动添加（非系统推荐/非企业库选择） */
   manualAdd?: boolean;
 }
@@ -1031,6 +1033,100 @@ function getDemoFriendPendingThreads(): Thread[] {
   ];
 }
 
+/* -------------------- Facebook 已解除好友关系演示会话 -------------------- */
+
+/** 已加好友 → 互发私信 → 对方解除好友：最后一条系统记录，不可再私信 */
+function getDemoFriendRemovedThreads(): Thread[] {
+  const now = Date.now();
+  const source = "北美 · Steel Importer 加友";
+  const id = "demo:social:fb:friend-removed";
+  const base = now - 48 * 3600_000;
+  const meta = ensureMeta(id, new Date(base).toISOString());
+  const messages: ThreadMessage[] = [
+    {
+      id: "m_fb_rm_1",
+      direction: "outbound",
+      createdAt: new Date(base).toISOString(),
+      fromName: "系统",
+      fromAddress: "CloudBeauty_Official",
+      content: `已申请添加对方好友（任务来源：${source}），为避免引起风控暂不可发起私信触达。`,
+    },
+    {
+      id: "m_fb_rm_2",
+      direction: "outbound",
+      createdAt: new Date(base + 2 * 3600_000).toISOString(),
+      fromName: "系统",
+      fromAddress: "CloudBeauty_Official",
+      content: `好友申请已通过（来源任务：${source}），可直接发起私信触达。`,
+    },
+    {
+      id: "m_fb_rm_3",
+      direction: "outbound",
+      createdAt: new Date(base + 3 * 3600_000).toISOString(),
+      fromName: "你",
+      fromAddress: "CloudBeauty_Official",
+      content: "Hi, thanks for connecting. We specialize in beauty devices and would love to explore cooperation opportunities.",
+      contentZhOutbound: "您好，感谢您的通过。我们专注于美容仪器，希望有机会探讨合作。",
+      events: [{ type: "delivered", at: new Date(base + 3.1 * 3600_000).toISOString() }],
+    },
+    {
+      id: "m_fb_rm_4",
+      direction: "inbound",
+      createdAt: new Date(base + 5 * 3600_000).toISOString(),
+      fromName: "Emma Collins",
+      fromAddress: "@emma.collins",
+      content: "Thanks for reaching out. Please send your catalog and MOQ.",
+      contentZh: "感谢您的联系。请发送你们的产品目录和最小起订量。",
+    },
+    {
+      id: "m_fb_rm_5",
+      direction: "outbound",
+      createdAt: new Date(base + 6 * 3600_000).toISOString(),
+      fromName: "你",
+      fromAddress: "CloudBeauty_Official",
+      content: "Sure, here is the catalog link. Looking forward to your feedback.",
+      contentZhOutbound: "好的，这是产品目录链接。期待您的反馈。",
+      events: [{ type: "delivered", at: new Date(base + 6.1 * 3600_000).toISOString() }],
+    },
+    {
+      id: "m_fb_rm_6",
+      direction: "inbound",
+      createdAt: new Date(base + 8 * 3600_000).toISOString(),
+      fromName: "Emma Collins",
+      fromAddress: "@emma.collins",
+      content: "Not interested for now.",
+      contentZh: "暂时不感兴趣。",
+    },
+    {
+      id: "m_fb_rm_7",
+      direction: "outbound",
+      createdAt: new Date(base + 10 * 3600_000).toISOString(),
+      fromName: "系统",
+      fromAddress: "CloudBeauty_Official",
+      content: "对方已解除好友关系，请勿再发私信触达。",
+    },
+  ];
+  const last = messages[messages.length - 1];
+  return [
+    {
+      id,
+      targetKind: "contact",
+      targetId: "demo-target-fb-removed",
+      targetName: "Emma Collins",
+      channel: "facebook",
+      counterpartyAddress: "@emma.collins",
+      senderEmail: "CloudBeauty_Official",
+      messages,
+      meta,
+      lastAt: last.createdAt,
+      lastPreview: last.content.slice(0, 120),
+      lastDirection: "outbound",
+      friendRemoved: true,
+      friendSource: source,
+    },
+  ];
+}
+
 
 
 /* -------------------- 社媒好友池 → 客户触达 -------------------- */
@@ -1089,7 +1185,12 @@ export function useThreads(): Thread[] {
   // 询盘与回复模块只呈现"已有客户回复"的会话——即包含至少一条 inbound 消息。
   // 仅发出、尚未收到回复的触达在「触达」模块跟进，不进入询盘视图。
   const withReply = all.filter((t) => t.meta.inboundMessages.length > 0);
-  return sortByUrgency([...withReply, ...buildFriendThreads(tasks), ...getDemoFriendPendingThreads()]);
+  return sortByUrgency([
+    ...withReply,
+    ...buildFriendThreads(tasks),
+    ...getDemoFriendPendingThreads(),
+    ...getDemoFriendRemovedThreads(),
+  ]);
 }
 
 export function useThread(id: string): Thread | undefined {
@@ -1103,6 +1204,7 @@ export function getThreadsSnapshot(): Thread[] {
     ...all.filter((t) => t.meta.inboundMessages.length > 0),
     ...buildFriendThreads(getProspectingTasksSnapshot()),
     ...getDemoFriendPendingThreads(),
+    ...getDemoFriendRemovedThreads(),
   ]);
 }
 
