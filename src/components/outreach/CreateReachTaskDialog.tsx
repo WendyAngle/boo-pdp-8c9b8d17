@@ -467,7 +467,7 @@ export function CreateReachTaskDialog({
             </div>
             <div className="space-y-1">
               <Label className="text-xs text-muted-foreground">
-                {platform === "Facebook" ? "加好友目标数量" : "私信目标数量"} *
+                {platform === "Facebook" ? "申请加好友目标数量" : "私信目标数量"} *
               </Label>
               <Input
                 type="number"
