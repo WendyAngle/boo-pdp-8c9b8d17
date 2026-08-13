@@ -139,6 +139,8 @@ const searchSchema = z.object({
   intent: z.enum(["all", "high", "mid", "low"]).optional(),
   /** 加星过滤 */
   starred: z.enum(["all", "starred", "unstarred"]).optional(),
+  /** 好友关系过滤（社媒渠道）：全部 / 已申请加好友 / 已通过 / 待通过 / 已解除 */
+  friend: z.enum(["all", "applied", "accepted", "pending", "removed"]).optional(),
   // 从"最新沟通"胶囊中的"AI 回复"进入时，自动生成一条 AI 草稿。
   action: z.enum(["ai"]).optional(),
 });
@@ -225,6 +227,7 @@ function InboxPage() {
   const view: ViewKey = search.view ?? "all";
   const intent = search.intent ?? "all";
   const starred = search.starred ?? "all";
+  const friend = search.friend ?? "all";
   const [scorePanelOpen, setScorePanelOpen] = useState(true);
   const [mounted, setMounted] = useState(false);
   useEffect(() => setMounted(true), []);
@@ -245,6 +248,16 @@ function InboxPage() {
       list = list.filter((t) => (starred === "starred" ? t.meta.starred : !t.meta.starred));
     if (intent !== "all")
       list = list.filter((t) => scoreIntent(t).band === intent);
+    if (friend !== "all") {
+      list = list.filter((t) => {
+        const applied = Boolean(t.isFriend || t.friendPending || t.friendRemoved);
+        if (friend === "applied") return applied;
+        if (friend === "pending") return Boolean(t.friendPending);
+        if (friend === "removed") return Boolean(t.friendRemoved);
+        // accepted：好友申请已通过且未被解除
+        return Boolean(t.isFriend) && !t.friendPending && !t.friendRemoved;
+      });
+    }
     if (view === "unread") list = list.filter((t) => t.meta.unread > 0);
     else if (view === "pending")
       list = list.filter((t) => t.meta.status === "pending");
@@ -284,7 +297,7 @@ function InboxPage() {
       );
     }
     return list;
-  }, [threads, view, q, ch, intent, starred, senderKey, resolveSender]);
+  }, [threads, view, q, ch, intent, starred, friend, senderKey, resolveSender]);
 
   const currentId = search.tid ?? filtered[0]?.id;
   const current = threads.find((t) => t.id === currentId);
@@ -403,6 +416,23 @@ function InboxPage() {
               <SelectItem value="all">全部</SelectItem>
               <SelectItem value="starred">已加星</SelectItem>
               <SelectItem value="unstarred">未加星</SelectItem>
+            </SelectContent>
+          </Select>
+          <Select
+            value={friend}
+            onValueChange={(v) =>
+              goto({ friend: v as NonNullable<z.infer<typeof searchSchema>["friend"]>, tid: undefined })
+            }
+          >
+            <SelectTrigger className="h-8 text-xs w-[150px]">
+              <SelectValue placeholder="好友关系" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">好友关系：全部</SelectItem>
+              <SelectItem value="applied">已申请加好友</SelectItem>
+              <SelectItem value="accepted">对方已通过</SelectItem>
+              <SelectItem value="pending">对方待通过</SelectItem>
+              <SelectItem value="removed">对方已解除</SelectItem>
             </SelectContent>
           </Select>
         </div>
