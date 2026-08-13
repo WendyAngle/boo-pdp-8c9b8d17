@@ -245,8 +245,20 @@ export function BatchSocialDialog({
     validCount > 0 &&
     remaining > 0 &&
     !overLimit &&
-    content.trim().length > 0 &&
+    sendContent.length > 0 &&
     !noPool;
+
+  const disabledReason = !canSend
+    ? noPool
+      ? "暂无可用发送账号"
+      : validCount === 0
+        ? "请先添加有效发送目标"
+        : !sendContent
+          ? "请填写实际发送内容"
+          : remaining <= 0
+            ? "今日可发额度已用完"
+            : "请补全必填项"
+    : "";
 
   function handleRemoveNonVerified() {
     setCandidates((prev) =>
@@ -682,14 +694,17 @@ export function BatchSocialDialog({
           </section>
         </div>
 
-        <DialogFooter>
-          <Button variant="outline" onClick={() => onOpenChange(false)}>
-            取消
-          </Button>
-          <Button onClick={handleSend} disabled={!canSend} className="bg-primary">
-            <Send className="h-4 w-4" />
-            确认发送（-{grandTotal}）
-          </Button>
+        <DialogFooter className="items-center sm:justify-between">
+          <div className="text-xs text-muted-foreground">{disabledReason}</div>
+          <div className="flex gap-2">
+            <Button variant="outline" onClick={() => onOpenChange(false)}>
+              取消
+            </Button>
+            <Button onClick={handleSend} disabled={!canSend} className="bg-primary">
+              <Send className="h-4 w-4" />
+              确认发送（-{grandTotal}）
+            </Button>
+          </div>
         </DialogFooter>
       </DialogContent>
 

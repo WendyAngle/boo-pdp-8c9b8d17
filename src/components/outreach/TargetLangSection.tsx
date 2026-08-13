@@ -15,7 +15,12 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { LANGUAGES, langByCode } from "@/lib/lang-detect";
+import {
+  LANGUAGES,
+  langByCode,
+  detectLanguage,
+  type DetectedLanguage,
+} from "@/lib/lang-detect";
 import { translateMessage } from "@/lib/api/ai-translate.functions";
 
 
@@ -70,12 +75,18 @@ export function TargetLangSection({
   const [loading, setLoading] = useState(false);
   /** 译文对应的原文快照，用于「原文已修改，建议重新翻译」提示 */
   const [snapshot, setSnapshot] = useState("");
+  /** 自动识别到的实际发送内容语种 */
+  const [detected, setDetected] = useState<DetectedLanguage | null>(null);
+  const [dismissMismatch, setDismissMismatch] = useState(false);
   const hasSubject = typeof subjectValue === "string" && !!onSubjectChange;
   const opt = langByCode(lang);
 
-  // 原文清空时同步清空译文
+  /** 内容来源：译自中文原文 / 用户直接撰写 */
+  const fromTranslation = !!snapshot.trim();
+
+  // 原文清空时，仅清空「由翻译生成」的内容；用户直接撰写的内容保留
   useEffect(() => {
-    if (!source.trim() && (value || subjectValue)) {
+    if (!source.trim() && fromTranslation && (value || subjectValue)) {
       onChange("");
       onSubjectChange?.("");
       setSnapshot("");
@@ -83,12 +94,37 @@ export function TargetLangSection({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [source]);
 
+  // 实际发送内容语种自动识别（防抖）
+  useEffect(() => {
+    const text = value.trim();
+    if (text.length < 8) {
+      setDetected(null);
+      return;
+    }
+    const t = setTimeout(() => setDetected(detectLanguage(text)), 500);
+    return () => clearTimeout(t);
+  }, [value]);
+
+  // 识别结果变化时，重新允许「是否切换发送语言」提示
+  useEffect(() => {
+    setDismissMismatch(false);
+  }, [detected?.code]);
+
+  const mismatch =
+    !!detected && detected.confidence >= 60 && detected.code !== lang && !dismissMismatch;
+
   const stale =
-    !!value.trim() && snapshot.trim() !== `${sourceSubject ?? ""}\u0000${source}`.trim();
+    fromTranslation &&
+    !!value.trim() &&
+    snapshot.trim() !== `${sourceSubject ?? ""}\u0000${source}`.trim();
 
   async function translate(code = lang) {
     const src = source.trim();
-    if (!src) return toast.error("请先生成或输入中文内容");
+    if (!src) return toast.error("请先填写中文原文后再使用一键翻译");
+    if (value.trim() && !fromTranslation) {
+      const ok = window.confirm("翻译将覆盖当前已撰写的实际发送内容，是否继续？");
+      if (!ok) return;
+    }
     const target = langByCode(code);
     if (!target) return;
     setLoading(true);
@@ -139,10 +175,13 @@ export function TargetLangSection({
       <div className="flex items-center justify-between gap-2">
         <Label className="text-sm font-medium flex items-center gap-2">
           <Languages className="h-4 w-4 text-primary" />
-          {bare ? "实际发送内容" : `目标语言${kindLabel}`}
-          {!bare && (
-            <Badge variant="outline" className="font-normal text-[10px]">
-              实际发送内容
+          实际发送内容
+          <Badge variant="outline" className="font-normal text-[10px]">
+            可直接撰写任意语言
+          </Badge>
+          {detected && (
+            <Badge variant="secondary" className="font-normal text-[10px]">
+              检测语言：{detected.flag} {detected.zh}
             </Badge>
           )}
         </Label>
@@ -184,14 +223,54 @@ export function TargetLangSection({
         </div>
       </div>
 
+      {!source.trim() && (
+        <div className="text-[11px] text-muted-foreground">
+          可直接在下方撰写实际发送内容；填写中文原文后可使用「翻译」一键生成。
+        </div>
+      )}
+
+      {mismatch && detected && (
+        <div className="flex items-center justify-between gap-2 rounded border border-amber-300/60 bg-amber-50 px-2 py-1.5 text-[11px] text-amber-800 dark:bg-amber-900/20 dark:text-amber-200">
+          <span>
+            检测到内容为{detected.zh}，与当前发送语言（{opt?.zh ?? "—"}）不一致，是否改为
+            {detected.zh}？
+          </span>
+          <span className="flex shrink-0 gap-1">
+            <Button
+              type="button"
+              size="sm"
+              variant="outline"
+              className="h-6 px-2 text-[11px]"
+              onClick={() => {
+                onLangChange(detected.code);
+                setDismissMismatch(true);
+              }}
+            >
+              采用
+            </Button>
+            <Button
+              type="button"
+              size="sm"
+              variant="ghost"
+              className="h-6 px-2 text-[11px]"
+              onClick={() => setDismissMismatch(true)}
+            >
+              忽略
+            </Button>
+          </span>
+        </div>
+      )}
+
+
+
 
       {hasSubject && (
         <div className="space-y-1">
-          <Label className="text-xs text-muted-foreground">主题（译文）</Label>
+          <Label className="text-xs text-muted-foreground">主题（实际发送）</Label>
           <Input
             value={subjectValue}
             onChange={(e) => onSubjectChange?.(e.target.value)}
-            placeholder={`翻译后此处展示${opt?.zh ?? "目标语言"}主题，可手动修改`}
+            placeholder={`可直接撰写，或翻译后在此调整${opt?.zh ?? "目标语言"}主题`}
           />
         </div>
       )}
@@ -200,20 +279,23 @@ export function TargetLangSection({
         value={value}
         onChange={(e) => onChange(e.target.value)}
         rows={rows}
-        placeholder={`选择目标语言后点击「翻译」，此处展示${
-          opt?.zh ?? "目标语言"
-        }${kindLabel}，可手动修改`}
+        placeholder={`可直接撰写任意语言${kindLabel}，或填写中文原文后点击「翻译」自动生成`}
       />
       <div className="flex items-center justify-between text-[11px]">
         <span className="text-muted-foreground">
           {value.trim()
-            ? `将以${opt?.zh ?? ""}发送 · ${value.trim().length} 字`
-            : "未翻译时，将直接发送中文原文"}
+            ? `实际发送：${detected?.zh ?? opt?.zh ?? ""} · ${
+                fromTranslation ? "译自中文原文" : "直接撰写"
+              } · ${value.trim().length} 字`
+            : source.trim()
+              ? "当前为空，将直接发送中文原文（未翻译）"
+              : "请填写中文原文或直接撰写实际发送内容"}
         </span>
         {stale && (
           <span className="text-amber-600">中文原文已修改，建议重新翻译</span>
         )}
       </div>
+
 
     </section>
 
