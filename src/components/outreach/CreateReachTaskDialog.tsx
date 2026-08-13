@@ -422,7 +422,9 @@ export function CreateReachTaskDialog({
             </Badge>
           </DialogTitle>
           <DialogDescription className="text-xs">
-            由系统按推广产品与关键词自动寻找目标账号，加好友并发送私信。
+            {platform === "Facebook"
+              ? "由系统按推广产品与关键词自动寻找目标账号并发出加好友请求。"
+              : "由系统按推广产品与关键词自动寻找目标账号并发送私信。"}
             <br />
             目标来源：系统按关键词自动搜索 · 已有名单？前往「我的收藏」批量社媒私信。
           </DialogDescription>
