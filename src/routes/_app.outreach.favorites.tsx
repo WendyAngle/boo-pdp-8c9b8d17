@@ -1318,14 +1318,6 @@ function _renderMeta(record: FavoriteRecord) {
               value={m.email}
               mono
             />
-            <ReachButton
-              targetKind="contact"
-              targetId={targetId}
-              targetName={record.title}
-              parentRef={parentRef}
-              channel="email"
-              detail={m.email}
-            />
           </div>
         )}
         {m.phone && (
@@ -1339,21 +1331,6 @@ function _renderMeta(record: FavoriteRecord) {
               field="phone"
               value={m.phone}
               mono
-            />
-            <ReachButton
-              targetKind="contact"
-              targetId={targetId}
-              targetName={record.title}
-              parentRef={parentRef}
-              channel="phone"
-              detail={m.phone}
-            />
-            <WhatsAppReachButton
-              targetKind="contact"
-              targetId={targetId}
-              targetName={record.title}
-              parentRef={parentRef}
-              phone={m.phone}
             />
           </div>
         )}
