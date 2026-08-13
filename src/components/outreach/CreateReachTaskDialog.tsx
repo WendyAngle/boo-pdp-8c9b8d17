@@ -27,7 +27,11 @@ import {
 import { type SocialTaskPlatform } from "@/lib/social-tasks";
 import { useSocialAccounts } from "@/data/social-accounts";
 import { useCreditBalance, spendCredits } from "@/lib/credits-balance";
-import { COST_SOCIAL_DM, createSocialReachBatch } from "@/lib/credits-ledger";
+import {
+  COST_SOCIAL_ADD_FRIEND,
+  COST_SOCIAL_DM,
+  createSocialReachBatch,
+} from "@/lib/credits-ledger";
 import { saveReachTaskConfig } from "@/lib/reach-task-config";
 
 import { LANGUAGES, langByCode } from "@/lib/lang-detect";
@@ -225,7 +229,9 @@ export function CreateReachTaskDialog({
   const sendContent = (translated.trim() || content).trim();
 
 
-  const sendCost = targetCap * COST_SOCIAL_DM;
+  const sendCost =
+    targetCap *
+    (platform === "Facebook" ? COST_SOCIAL_ADD_FRIEND : COST_SOCIAL_DM);
   const hit = SENSITIVE_WORDS.find((w) =>
     `${content} ${translated}`.toLowerCase().includes(w.toLowerCase()),
   );
@@ -336,11 +342,12 @@ export function CreateReachTaskDialog({
     }
   }
 
+  const needsContent = platform !== "Facebook";
   const canSubmit =
     !hit &&
     !overLimit &&
     !!name.trim() &&
-    content.trim().length > 0 &&
+    (!needsContent || content.trim().length > 0) &&
     keywords.trim().length > 0 &&
     targetCap > 0 &&
     availableAccounts.length > 0 &&
@@ -349,9 +356,10 @@ export function CreateReachTaskDialog({
   function handleConfirm() {
     if (!name.trim()) return toast.error("请填写任务名");
     if (!keywords.trim()) return toast.error("请填写目标关键词");
-    if (targetCap <= 0) return toast.error("私信目标数量需大于 0");
-    if (!content.trim()) return toast.error("请填写私信内容");
-    if (overLimit)
+    if (targetCap <= 0)
+      return toast.error(`${needsContent ? "私信" : "加好友"}目标数量需大于 0`);
+    if (needsContent && !content.trim()) return toast.error("请填写私信内容");
+    if (needsContent && overLimit)
       return toast.error(
         `发送内容 ${sendLen} 字符，超出 ${platform} 上限 ${charLimit} 字符`,
       );
@@ -359,24 +367,27 @@ export function CreateReachTaskDialog({
       return toast.error("暂无可用账号，请先在「我的账号」中申请");
     if (balance.balance < sendCost) return toast.error("积分不足");
 
+    const action = needsContent ? "私信" : "加好友";
+    const costPerTarget = needsContent ? COST_SOCIAL_DM : COST_SOCIAL_ADD_FRIEND;
+    const finalContent = needsContent ? sendContent : "";
     const kws = keywords.split(/[,，]/).map((s) => s.trim()).filter(Boolean);
     spendCredits(sendCost);
-    // 记录落到「触达任务」列表（渠道=社媒），实际发送内容为译文（无译文则中文原文）
+    // 记录落到「触达任务」列表（渠道=社媒）
     createSocialReachBatch({
       taskName: name.trim(),
       platform,
       region,
       keywords: kws,
       count: targetCap,
-      content: sendContent,
-      aiGenerated: aiUsed,
-      action: "私信",
+      content: finalContent,
+      aiGenerated: needsContent ? aiUsed : false,
+      action,
     });
     saveReachTaskConfig({
       taskKey: `s:${name.trim()}:${platform}`,
       type: "social_prospecting",
       platform,
-      action: "私信",
+      action,
       region,
       keywords: kws,
       products: promoProducts,
@@ -387,12 +398,14 @@ export function CreateReachTaskDialog({
       schedule: "创建后立即执行",
       sourceZh: content.trim(),
       targetLang,
-      sendContent,
-      aiGenerated: aiUsed,
-      costPerTarget: COST_SOCIAL_DM,
+      sendContent: finalContent,
+      aiGenerated: needsContent ? aiUsed : false,
+      costPerTarget,
     });
     toast.success(
-      `已创建触达任务，生成 ${targetCap} 条触达记录，共扣 ${sendCost.toLocaleString()} 积分（AI 生成与翻译免费）`,
+      `已创建触达任务，生成 ${targetCap} 条触达记录，共扣 ${sendCost.toLocaleString()} 积分${
+        needsContent ? "（AI 生成与翻译免费）" : ""
+      }`,
     );
     onOpenChange(false);
   }
@@ -409,7 +422,9 @@ export function CreateReachTaskDialog({
             </Badge>
           </DialogTitle>
           <DialogDescription className="text-xs">
-            由系统按推广产品与关键词自动寻找目标账号，加好友并发送私信。
+            {platform === "Facebook"
+              ? "由系统按推广产品与关键词自动寻找目标账号并发出加好友请求。"
+              : "由系统按推广产品与关键词自动寻找目标账号并发送私信。"}
             <br />
             目标来源：系统按关键词自动搜索 · 已有名单？前往「我的收藏」批量社媒私信。
           </DialogDescription>
@@ -451,7 +466,9 @@ export function CreateReachTaskDialog({
               </Select>
             </div>
             <div className="space-y-1">
-              <Label className="text-xs text-muted-foreground">私信目标数量 *</Label>
+              <Label className="text-xs text-muted-foreground">
+                {platform === "Facebook" ? "加好友目标数量" : "私信目标数量"} *
+              </Label>
               <Input
                 type="number"
                 min={1}
@@ -677,7 +694,7 @@ export function CreateReachTaskDialog({
             )}
           </div>
 
-          {/* 撰写内容：中文原文 → 目标语言译文（一体区域） */}
+          {platform !== "Facebook" && (
           <section className="space-y-3 rounded-md border p-3">
             <div className="flex items-center justify-between">
               <Label className="text-sm font-medium flex items-center gap-2">
@@ -803,6 +820,7 @@ export function CreateReachTaskDialog({
               </div>
             </div>
           </section>
+          )}
 
 
           {overLimit && (
@@ -824,14 +842,17 @@ export function CreateReachTaskDialog({
           <section className="rounded-md border border-rose-200 bg-rose-50 p-3 text-xs space-y-1">
             <div className="flex justify-between">
               <span className="text-muted-foreground">
-                发送费用（{targetCap} 条 × {COST_SOCIAL_DM} 积分）
+                {platform === "Facebook" ? "加好友费用" : "发送费用"}（{targetCap} 条 ×{" "}
+                {platform === "Facebook" ? COST_SOCIAL_ADD_FRIEND : COST_SOCIAL_DM} 积分）
               </span>
               <span className="font-medium">{sendCost.toLocaleString()} 积分</span>
             </div>
-            <div className="flex justify-between">
-              <span className="text-muted-foreground">AI 生成 / 翻译</span>
-              <span className="font-medium text-emerald-600">免费</span>
-            </div>
+            {platform !== "Facebook" && (
+              <div className="flex justify-between">
+                <span className="text-muted-foreground">AI 生成 / 翻译</span>
+                <span className="font-medium text-emerald-600">免费</span>
+              </div>
+            )}
             <div className="flex justify-between border-t border-rose-200/70 pt-1">
               <span className="font-semibold text-rose-700">合计</span>
               <span className="font-semibold text-rose-700">-{sendCost.toLocaleString()}</span>
