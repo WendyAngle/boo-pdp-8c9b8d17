@@ -105,6 +105,11 @@ export function TargetLangSection({
     return () => clearTimeout(t);
   }, [value]);
 
+  // 识别结果变化时，重新允许「是否切换发送语言」提示
+  useEffect(() => {
+    setDismissMismatch(false);
+  }, [detected?.code]);
+
   const mismatch =
     !!detected && detected.confidence >= 60 && detected.code !== lang && !dismissMismatch;
 
