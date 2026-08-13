@@ -1152,18 +1152,18 @@ function buildFriendThreads(tasks: ProspectingTask[]): Thread[] {
     const extra: ThreadMessage[] = [];
     // Mike O'Brien 演示：好友通过后我方主动发送营销破冰私信
     if (f.id === "t2") {
-      const破冰At = new Date(new Date(at).getTime() + 10 * 60_000).toISOString();
+      const icebreakerAt = new Date(new Date(at).getTime() + 10 * 60_000).toISOString();
       extra.push({
         id: `fr_${f.id}_icebreaker`,
         direction: "outbound",
-        createdAt: 破冰At,
+        createdAt: icebreakerAt,
         fromName: "你",
         fromAddress: "@bytetech.export",
         content:
           "Hi Mike, thanks for connecting. We came across your profile in the steel import space and would love to learn more about your sourcing needs. If you're open to it, we'd be happy to share our latest catalog and competitive pricing.",
         contentZhOutbound:
           "Hi Mike，感谢通过好友请求。我们注意到您在钢材进口领域的背景，想进一步了解您的采购需求。如果您愿意，我们很乐意分享最新的产品目录和有竞争力的报价。",
-        events: [{ type: "delivered", at: new Date(new Date(破冰At).getTime() + 2 * 60_000).toISOString() }],
+        events: [{ type: "delivered", at: new Date(new Date(icebreakerAt).getTime() + 2 * 60_000).toISOString() }],
       });
     }
     const messages = [msg, ...extra, ...meta.inboundMessages, ...meta.extraMessages].sort((a, b) =>
