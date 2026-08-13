@@ -682,14 +682,17 @@ export function BatchSocialDialog({
           </section>
         </div>
 
-        <DialogFooter>
-          <Button variant="outline" onClick={() => onOpenChange(false)}>
-            取消
-          </Button>
-          <Button onClick={handleSend} disabled={!canSend} className="bg-primary">
-            <Send className="h-4 w-4" />
-            确认发送（-{grandTotal}）
-          </Button>
+        <DialogFooter className="items-center sm:justify-between">
+          <div className="text-xs text-muted-foreground">{disabledReason}</div>
+          <div className="flex gap-2">
+            <Button variant="outline" onClick={() => onOpenChange(false)}>
+              取消
+            </Button>
+            <Button onClick={handleSend} disabled={!canSend} className="bg-primary">
+              <Send className="h-4 w-4" />
+              确认发送（-{grandTotal}）
+            </Button>
+          </div>
         </DialogFooter>
       </DialogContent>
 

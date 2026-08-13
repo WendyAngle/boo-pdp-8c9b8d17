@@ -329,6 +329,23 @@ export function ComposeSendDialog({
     (isEmail || !!smsTemplateId) &&
     !overLimit;
 
+  /** 按钮禁用原因（可解释禁用态） */
+  const disabledReason = !canSend
+    ? recipients.length === 0
+      ? "请先选择收件目标"
+      : isEmail && !sender
+        ? "请选择发件邮箱"
+        : isEmail && !sendSubject
+          ? "请填写邮件主题"
+          : !sendContent
+            ? "请填写实际发送内容"
+            : !isEmail && !smsTemplateId
+              ? "请选择短信模板"
+              : overLimit
+                ? "超出发件邮箱当日发送上限"
+                : "请补全必填项"
+    : "";
+
   function doSend() {
     if (!canSend) return;
     // 过滤退订名单
@@ -862,7 +879,9 @@ export function ComposeSendDialog({
           </section>
         </div>
 
-        <DialogFooter>
+        <DialogFooter className="items-center sm:justify-between">
+          <div className="text-xs text-muted-foreground">{disabledReason}</div>
+          <div className="flex gap-2">
           <Button variant="outline" onClick={() => onOpenChange(false)}>
             取消
           </Button>
@@ -874,6 +893,7 @@ export function ComposeSendDialog({
             <Send className="h-4 w-4" />
             确认发送（-{grandTotal}）
           </Button>
+          </div>
         </DialogFooter>
       </DialogContent>
 
