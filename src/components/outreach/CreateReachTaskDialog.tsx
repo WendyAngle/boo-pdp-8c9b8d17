@@ -412,7 +412,7 @@ export function CreateReachTaskDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-5xl max-h-[92vh] overflow-y-auto">
+      <DialogContent className="max-w-6xl max-h-[92vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Zap className="h-5 w-5 text-primary" />
@@ -755,9 +755,11 @@ export function CreateReachTaskDialog({
               {/* 右：目标语言译文（实际发送内容） */}
               <div className="space-y-2 bg-primary/[0.03] p-3">
                 <div className="flex h-8 items-center justify-between gap-2">
-                  <Label className="text-xs font-medium flex items-center gap-1.5">
+                  <Label className="text-xs font-medium flex items-center gap-1.5 whitespace-nowrap">
                     <Languages className="h-3.5 w-3.5 text-primary" />
-                    实际发送内容
+                    <span className="whitespace-nowrap">
+                      实际发送内容 <span className="text-rose-500">*</span>
+                    </span>
                   </Label>
                   <div className="flex items-center gap-2">
                     <Select
