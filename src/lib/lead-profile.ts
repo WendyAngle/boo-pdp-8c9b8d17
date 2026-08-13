@@ -36,7 +36,7 @@ export interface QualificationItem {
   files: QualificationFile[];
 }
 
-const KEY = "boo:lead:profile:v1";
+const KEY = "boo:lead:profile:v2";
 
 export const EMPTY_PROFILE: LeadProfile = {
   companyName: "博远智能科技（深圳）有限公司",
