@@ -68,7 +68,6 @@ import {
 } from "@/lib/credits-ledger";
 import { useLeadProfile } from "@/lib/lead-profile";
 import { useCurrentUser } from "@/lib/current-user";
-import { ComposeFormatHint } from "@/components/outreach/ComposeFormatHint";
 import { generateAiContent } from "@/lib/api/ai-compose.functions";
 import { TargetLangSection } from "@/components/outreach/TargetLangSection";
 import { useMyInfoGuard } from "@/lib/my-info-guard";
@@ -741,9 +740,6 @@ export function ComposeSendDialog({
                 </Button>
               </div>
             </div>
-
-            <ComposeFormatHint channel={isEmail ? "email" : "sms"} />
-
 
             {!isEmail && (
               <div className="rounded-md border border-primary/30 bg-primary/5 p-2.5 space-y-1.5">
