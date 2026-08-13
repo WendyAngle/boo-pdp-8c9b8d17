@@ -229,7 +229,9 @@ export function CreateReachTaskDialog({
   const sendContent = (translated.trim() || content).trim();
 
 
-  const sendCost = targetCap * COST_SOCIAL_DM;
+  const sendCost =
+    targetCap *
+    (platform === "Facebook" ? COST_SOCIAL_ADD_FRIEND : COST_SOCIAL_DM);
   const hit = SENSITIVE_WORDS.find((w) =>
     `${content} ${translated}`.toLowerCase().includes(w.toLowerCase()),
   );
