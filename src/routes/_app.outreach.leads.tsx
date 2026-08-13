@@ -1903,23 +1903,31 @@ export function ProfileTab() {
 
 function Section({
   title,
+  subtitle,
   icon,
   children,
 }: {
   title: string;
+  subtitle?: string;
   icon: React.ReactNode;
   children: React.ReactNode;
 }) {
   return (
     <Card className="p-5 space-y-4">
-      <div className="flex items-center gap-2 text-sm font-semibold">
-        <span className="text-primary">{icon}</span>
-        {title}
+      <div className="space-y-1">
+        <div className="flex items-center gap-2 text-sm font-semibold">
+          <span className="text-primary">{icon}</span>
+          {title}
+        </div>
+        {subtitle ? (
+          <div className="text-xs text-muted-foreground pl-6">{subtitle}</div>
+        ) : null}
       </div>
       <div className="space-y-4">{children}</div>
     </Card>
   );
 }
+
 
 function Grid2({ children }: { children: React.ReactNode }) {
   return <div className="grid grid-cols-1 md:grid-cols-2 gap-4">{children}</div>;
