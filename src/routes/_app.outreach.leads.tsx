@@ -1870,7 +1870,7 @@ export function ProfileTab() {
         </Section>
 
         <Section title="竞争情报" icon={<TrendingUp className="h-4 w-4" />}>
-          <Field label="主要竞品企业（多选）">
+          <Field label="主要竞品企业（点击添加按钮后在输入框手动输入并回车添加）">
             <MultiPick
               options={COMPETITOR_OPTIONS}
               value={draft.competitors}
