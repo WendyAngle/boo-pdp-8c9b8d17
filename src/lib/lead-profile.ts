@@ -53,7 +53,7 @@ export const EMPTY_PROFILE: LeadProfile = {
   hsCodes: ["851769", "850760", "852351"],
   scale: "201-1000",
   revenue: "5000 万 - 5 亿",
-  targetCountries: ["美国", "德国", "墨西哥", "越南", "沙特阿拉伯"],
+  targetCountries: ["美国", "德国", "越南", "印度尼西亚", "菲律宾"],
   targetIndustries: ["电子商务", "零售", "消费电子通信"],
   targetScale: "",
   competitors: ["安克创新", "绿联科技", "公牛集团"],
