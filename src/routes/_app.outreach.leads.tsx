@@ -1732,7 +1732,11 @@ export function ProfileTab() {
           </Field>
         </Section>
 
-        <Section title="主营业务" icon={<Briefcase className="h-4 w-4" />}>
+        <Section
+          title="主营业务"
+          subtitle="以下为平台常见的行业、产品与 HS 编码，若没有匹配项，可在输入框直接输入后回车手动添加。"
+          icon={<Briefcase className="h-4 w-4" />}
+        >
           <Field label="所属行业（多选）">
             <MultiPick
               options={INDUSTRY_OPTIONS}
