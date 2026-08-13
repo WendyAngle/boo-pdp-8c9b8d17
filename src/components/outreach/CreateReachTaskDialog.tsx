@@ -342,11 +342,12 @@ export function CreateReachTaskDialog({
     }
   }
 
+  const needsContent = platform !== "Facebook";
   const canSubmit =
     !hit &&
     !overLimit &&
     !!name.trim() &&
-    content.trim().length > 0 &&
+    (!needsContent || content.trim().length > 0) &&
     keywords.trim().length > 0 &&
     targetCap > 0 &&
     availableAccounts.length > 0 &&
