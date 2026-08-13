@@ -262,6 +262,8 @@ export interface Thread {
   isFriend?: boolean;
   /** 好友来源任务名（isFriend 时可用） */
   friendSource?: string;
+  /** 已申请加好友但对方尚未通过：暂不可发起私信触达（避免风控） */
+  friendPending?: boolean;
   /** 是否由用户手动添加（非系统推荐/非企业库选择） */
   manualAdd?: boolean;
 }
@@ -992,6 +994,45 @@ function getDemoSocialStatusThreads(): Thread[] {
   });
 }
 
+/* -------------------- Facebook 已申请加好友（待通过）演示会话 -------------------- */
+
+/** 已申请加好友、对方尚未通过：仅一条系统记录，暂不可私信 */
+function getDemoFriendPendingThreads(): Thread[] {
+  const at = new Date(Date.now() - 6 * 3600_000).toISOString();
+  const source = "北美 · Steel Importer 加友";
+  const content = `已申请添加对方好友（任务来源：${source}），为避免引起风控暂不可发起私信触达。`;
+  const id = "demo:social:fb:friend-pending";
+  const meta = ensureMeta(id, at);
+  const msg: ThreadMessage = {
+    id: "m_fb_friend_pending",
+    direction: "outbound",
+    createdAt: at,
+    fromName: "系统",
+    fromAddress: "CloudBeauty_Official",
+    content,
+  };
+  return [
+    {
+      id,
+      targetKind: "contact",
+      targetId: "demo-target-fb-pending",
+      targetName: "Daniel Whitmore",
+      channel: "facebook",
+      counterpartyAddress: "@daniel.whitmore",
+      senderEmail: "CloudBeauty_Official",
+      messages: [msg],
+      meta,
+      lastAt: at,
+      lastPreview: content.slice(0, 120),
+      lastDirection: "outbound",
+      friendPending: true,
+      friendSource: source,
+    },
+  ];
+}
+
+
+
 /* -------------------- 社媒好友池 → 客户触达 -------------------- */
 
 /**
@@ -1048,7 +1089,7 @@ export function useThreads(): Thread[] {
   // 询盘与回复模块只呈现"已有客户回复"的会话——即包含至少一条 inbound 消息。
   // 仅发出、尚未收到回复的触达在「触达」模块跟进，不进入询盘视图。
   const withReply = all.filter((t) => t.meta.inboundMessages.length > 0);
-  return sortByUrgency([...withReply, ...buildFriendThreads(tasks)]);
+  return sortByUrgency([...withReply, ...buildFriendThreads(tasks), ...getDemoFriendPendingThreads()]);
 }
 
 export function useThread(id: string): Thread | undefined {
@@ -1061,6 +1102,7 @@ export function getThreadsSnapshot(): Thread[] {
   return sortByUrgency([
     ...all.filter((t) => t.meta.inboundMessages.length > 0),
     ...buildFriendThreads(getProspectingTasksSnapshot()),
+    ...getDemoFriendPendingThreads(),
   ]);
 }
 

@@ -937,6 +937,10 @@ function ThreadDetail({
   }
 
   function doSend(aiGen = false) {
+    if (thread.friendPending) {
+      toast.warning("当前对方还未通过好友申请，发私信可能会触发风控，待通过好友后再发送");
+      return;
+    }
     if (!sendContent.trim()) {
       toast.error(needsTranslation ? "请先生成目标语言译文" : "请输入回复内容");
       return;
