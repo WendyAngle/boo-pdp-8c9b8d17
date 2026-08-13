@@ -56,7 +56,7 @@ export const EMPTY_PROFILE: LeadProfile = {
   targetCountries: ["美国", "德国", "越南", "印度尼西亚", "菲律宾"],
   targetIndustries: ["电子商务", "零售", "消费电子通信"],
   targetScale: "",
-  competitors: ["安克创新", "绿联科技", "公牛集团"],
+  competitors: [],
   advantage: "自有工厂 + 深圳/宁波备货现货 + 7×24 中英阿俄多语客服",
 
   website: "",
