@@ -324,8 +324,8 @@ export function ComposeSendDialog({
   const canSend =
     recipients.length > 0 &&
     (!isEmail || !!sender) &&
-    (!isEmail || subject.trim().length > 0) &&
-    content.trim().length > 0 &&
+    (!isEmail || sendSubject.length > 0) &&
+    sendContent.length > 0 &&
     (isEmail || !!smsTemplateId) &&
     !overLimit;
 

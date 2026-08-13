@@ -245,7 +245,7 @@ export function BatchSocialDialog({
     validCount > 0 &&
     remaining > 0 &&
     !overLimit &&
-    content.trim().length > 0 &&
+    sendContent.length > 0 &&
     !noPool;
 
   function handleRemoveNonVerified() {

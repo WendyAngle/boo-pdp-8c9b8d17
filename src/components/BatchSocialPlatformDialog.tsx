@@ -268,7 +268,7 @@ export function BatchSocialPlatformDialog({
   /** 实际发送内容：有译文则发译文 */
   const sendContent = (translated.trim() || content).trim();
 
-  const canSend = targetCount > 0 && content.trim().length > 0;
+  const canSend = targetCount > 0 && sendContent.length > 0;
 
   /** 次日 09:00 起继续执行 */
   function nextDayStart(): string {
