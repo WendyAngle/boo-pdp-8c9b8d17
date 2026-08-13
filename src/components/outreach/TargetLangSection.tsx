@@ -218,6 +218,46 @@ export function TargetLangSection({
         </div>
       </div>
 
+      {!source.trim() && (
+        <div className="text-[11px] text-muted-foreground">
+          可直接在下方撰写实际发送内容；填写中文原文后可使用「翻译」一键生成。
+        </div>
+      )}
+
+      {mismatch && detected && (
+        <div className="flex items-center justify-between gap-2 rounded border border-amber-300/60 bg-amber-50 px-2 py-1.5 text-[11px] text-amber-800 dark:bg-amber-900/20 dark:text-amber-200">
+          <span>
+            检测到内容为{detected.zh}，与当前发送语言（{opt?.zh ?? "—"}）不一致，是否改为
+            {detected.zh}？
+          </span>
+          <span className="flex shrink-0 gap-1">
+            <Button
+              type="button"
+              size="sm"
+              variant="outline"
+              className="h-6 px-2 text-[11px]"
+              onClick={() => {
+                onLangChange(detected.code);
+                setDismissMismatch(true);
+              }}
+            >
+              采用
+            </Button>
+            <Button
+              type="button"
+              size="sm"
+              variant="ghost"
+              className="h-6 px-2 text-[11px]"
+              onClick={() => setDismissMismatch(true)}
+            >
+              忽略
+            </Button>
+          </span>
+        </div>
+      )}
+
+
+
 
       {hasSubject && (
         <div className="space-y-1">
