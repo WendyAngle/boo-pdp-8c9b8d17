@@ -62,8 +62,6 @@ import {
   type FavoriteRecord,
 } from "@/lib/favorites";
 import { MaskedField } from "@/components/MaskedField";
-import { ReachButton } from "@/components/ReachButton";
-import { WhatsAppReachButton } from "@/components/WhatsAppReachButton";
 import { FavoriteToggle } from "@/components/FavoriteToggle";
 import { findEnterprise } from "@/data/enterprises";
 import {
