@@ -619,9 +619,9 @@ export function BatchSocialDialog({
 
             <div className="grid gap-0 lg:grid-cols-2 lg:divide-x rounded-md border overflow-hidden">
               <div className="space-y-2 p-3">
-                <div className="flex h-8 items-center">
-                  <Label className="text-xs text-muted-foreground">中文原文 *</Label>
-                </div>
+              <div className="flex h-8 items-center">
+                <Label className="text-xs text-muted-foreground">中文原文</Label>
+              </div>
                 <Textarea
                   ref={contentRef}
                   value={content}

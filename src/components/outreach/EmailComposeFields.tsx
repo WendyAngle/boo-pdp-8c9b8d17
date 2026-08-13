@@ -207,7 +207,7 @@ export function EmailComposeFields({
         </div>
 
         <div className="space-y-1">
-          <Label className="text-xs text-muted-foreground">主题 *</Label>
+          <Label className="text-xs text-muted-foreground">主题</Label>
           <Input
             ref={subjectRef}
             value={value.subject}
@@ -219,7 +219,7 @@ export function EmailComposeFields({
         </div>
 
         <div className="space-y-1">
-          <Label className="text-xs text-muted-foreground">正文 *</Label>
+          <Label className="text-xs text-muted-foreground">正文</Label>
           <Textarea
             ref={contentRef}
             value={value.body}
