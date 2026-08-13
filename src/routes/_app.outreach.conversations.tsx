@@ -418,6 +418,23 @@ function InboxPage() {
               <SelectItem value="unstarred">未加星</SelectItem>
             </SelectContent>
           </Select>
+          <Select
+            value={friend}
+            onValueChange={(v) =>
+              goto({ friend: v as NonNullable<z.infer<typeof searchSchema>["friend"]>, tid: undefined })
+            }
+          >
+            <SelectTrigger className="h-8 text-xs w-[150px]">
+              <SelectValue placeholder="好友关系" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">好友关系：全部</SelectItem>
+              <SelectItem value="applied">已申请加好友</SelectItem>
+              <SelectItem value="accepted">对方已通过</SelectItem>
+              <SelectItem value="pending">对方待通过</SelectItem>
+              <SelectItem value="removed">对方已解除</SelectItem>
+            </SelectContent>
+          </Select>
         </div>
         <div className="flex-1 min-w-0 max-w-xs relative ml-1">
           <Search className="h-3.5 w-3.5 absolute left-2.5 top-1/2 -translate-y-1/2 text-muted-foreground" />
