@@ -1834,9 +1834,16 @@ export function ProfileTab() {
               addPlaceholder="输入国家或地区后回车，可添加多个"
             />
           </Field>
-          <Field label="目标客户行业（多选）">
+          <Field
+            label="目标客户行业（多选）"
+            hint={
+              draft.industries.length > 0
+                ? `已根据主营业务所属行业（${draft.industries.join("、")}）推荐下游客户行业`
+                : "请先在「主营业务」选择所属行业，可获得更精准的下游客户行业推荐"
+            }
+          >
             <MultiPick
-              options={INDUSTRY_OPTIONS}
+              options={buildTargetIndustryOptions(draft.industries)}
               value={draft.targetIndustries}
               onChange={(v) => set("targetIndustries", v)}
               allowCustom
