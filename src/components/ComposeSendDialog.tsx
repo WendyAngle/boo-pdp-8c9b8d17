@@ -68,7 +68,6 @@ import {
 } from "@/lib/credits-ledger";
 import { useLeadProfile } from "@/lib/lead-profile";
 import { useCurrentUser } from "@/lib/current-user";
-import { ComposeFormatHint } from "@/components/outreach/ComposeFormatHint";
 import { generateAiContent } from "@/lib/api/ai-compose.functions";
 import { TargetLangSection } from "@/components/outreach/TargetLangSection";
 import { useMyInfoGuard } from "@/lib/my-info-guard";
