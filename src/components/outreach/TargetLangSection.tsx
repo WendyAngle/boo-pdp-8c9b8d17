@@ -15,7 +15,12 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { LANGUAGES, langByCode } from "@/lib/lang-detect";
+import {
+  LANGUAGES,
+  langByCode,
+  detectLanguage,
+  type DetectedLanguage,
+} from "@/lib/lang-detect";
 import { translateMessage } from "@/lib/api/ai-translate.functions";
 
 
