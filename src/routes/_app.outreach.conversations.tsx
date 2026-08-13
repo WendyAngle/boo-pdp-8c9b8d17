@@ -139,6 +139,8 @@ const searchSchema = z.object({
   intent: z.enum(["all", "high", "mid", "low"]).optional(),
   /** 加星过滤 */
   starred: z.enum(["all", "starred", "unstarred"]).optional(),
+  /** 好友关系过滤（社媒渠道）：全部 / 已申请加好友 / 已通过 / 待通过 / 已解除 */
+  friend: z.enum(["all", "applied", "accepted", "pending", "removed"]).optional(),
   // 从"最新沟通"胶囊中的"AI 回复"进入时，自动生成一条 AI 草稿。
   action: z.enum(["ai"]).optional(),
 });
