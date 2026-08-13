@@ -1151,7 +1151,7 @@ function buildFriendThreads(tasks: ProspectingTask[]): Thread[] {
     };
     const extra: ThreadMessage[] = [];
     // Mike O'Brien 演示：好友通过后我方主动发送营销破冰私信
-    if (f.id === "t2") {
+    if (f.targetId === "t2") {
       const icebreakerAt = new Date(new Date(at).getTime() + 10 * 60_000).toISOString();
       extra.push({
         id: `fr_${f.id}_icebreaker`,
