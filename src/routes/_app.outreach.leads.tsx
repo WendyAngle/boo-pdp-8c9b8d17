@@ -1843,7 +1843,7 @@ export function ProfileTab() {
               max={2000}
               value={draft.advantage}
               onChange={(v) => set("advantage", v)}
-              placeholder="例如：自有钢厂产能稳定、港口现货交期快 7 天、支持多语种 7×24 售后"
+              placeholder="例如：自有工厂产能稳定、深圳现货交期快 7 天、支持多语种 7×24 售后"
             />
           </Field>
         </Section>
