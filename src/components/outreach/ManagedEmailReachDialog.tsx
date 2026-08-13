@@ -86,10 +86,8 @@ export function ManagedEmailReachDialog({
   const qtyValid = qtyNum >= min;
   const cost = useMemo(() => qtyNum * CREDIT_PER_TARGET, [qtyNum]);
   const copyReady =
-    draft.subject.trim().length > 0 &&
-    draft.body.trim().length > 0 &&
-    draft.translatedSubject.trim().length > 0 &&
-    draft.translatedBody.trim().length > 0;
+    (draft.translatedSubject.trim() || draft.subject.trim()).length > 0 &&
+    (draft.translatedBody.trim() || draft.body.trim()).length > 0;
   const canSubmit = qtyValid && product.trim() && contact.trim() && copyReady;
 
   const submit = () => {
