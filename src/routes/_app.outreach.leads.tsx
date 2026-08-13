@@ -1824,7 +1824,11 @@ export function ProfileTab() {
           </Grid2>
         </Section>
 
-        <Section title="目标市场" icon={<Target className="h-4 w-4" />}>
+        <Section
+          title="目标市场"
+          subtitle="请选择目标国家 / 地区与目标客户行业，若没有匹配项，可点击添加按钮后在输入框手动输入并回车添加。"
+          icon={<Target className="h-4 w-4" />}
+        >
           <Field label="目标国家 / 地区（多选）">
             <MultiPick
               options={COUNTRY_OPTIONS}
