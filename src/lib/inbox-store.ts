@@ -262,6 +262,8 @@ export interface Thread {
   isFriend?: boolean;
   /** 好友来源任务名（isFriend 时可用） */
   friendSource?: string;
+  /** 已申请加好友但对方尚未通过：暂不可发起私信触达（避免风控） */
+  friendPending?: boolean;
   /** 是否由用户手动添加（非系统推荐/非企业库选择） */
   manualAdd?: boolean;
 }
