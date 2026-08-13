@@ -685,6 +685,7 @@ export function CreateReachTaskDialog({
             )}
           </div>
 
+          {platform !== "Facebook" && (
           {/* 撰写内容：中文原文 → 目标语言译文（一体区域） */}
           <section className="space-y-3 rounded-md border p-3">
             <div className="flex items-center justify-between">
