@@ -812,6 +812,7 @@ export function CreateReachTaskDialog({
               </div>
             </div>
           </section>
+          )}
 
 
           {overLimit && (
