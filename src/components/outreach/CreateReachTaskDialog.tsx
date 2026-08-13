@@ -27,7 +27,11 @@ import {
 import { type SocialTaskPlatform } from "@/lib/social-tasks";
 import { useSocialAccounts } from "@/data/social-accounts";
 import { useCreditBalance, spendCredits } from "@/lib/credits-balance";
-import { COST_SOCIAL_DM, createSocialReachBatch } from "@/lib/credits-ledger";
+import {
+  COST_SOCIAL_ADD_FRIEND,
+  COST_SOCIAL_DM,
+  createSocialReachBatch,
+} from "@/lib/credits-ledger";
 import { saveReachTaskConfig } from "@/lib/reach-task-config";
 
 import { LANGUAGES, langByCode } from "@/lib/lang-detect";
