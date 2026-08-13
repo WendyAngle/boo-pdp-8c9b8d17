@@ -1102,6 +1102,7 @@ export function getThreadsSnapshot(): Thread[] {
   return sortByUrgency([
     ...all.filter((t) => t.meta.inboundMessages.length > 0),
     ...buildFriendThreads(getProspectingTasksSnapshot()),
+    ...getDemoFriendPendingThreads(),
   ]);
 }
 
