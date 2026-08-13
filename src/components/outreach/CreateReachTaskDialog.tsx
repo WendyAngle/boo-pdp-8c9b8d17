@@ -833,14 +833,17 @@ export function CreateReachTaskDialog({
           <section className="rounded-md border border-rose-200 bg-rose-50 p-3 text-xs space-y-1">
             <div className="flex justify-between">
               <span className="text-muted-foreground">
-                发送费用（{targetCap} 条 × {COST_SOCIAL_DM} 积分）
+                {platform === "Facebook" ? "加好友费用" : "发送费用"}（{targetCap} 条 ×{" "}
+                {platform === "Facebook" ? COST_SOCIAL_ADD_FRIEND : COST_SOCIAL_DM} 积分）
               </span>
               <span className="font-medium">{sendCost.toLocaleString()} 积分</span>
             </div>
-            <div className="flex justify-between">
-              <span className="text-muted-foreground">AI 生成 / 翻译</span>
-              <span className="font-medium text-emerald-600">免费</span>
-            </div>
+            {platform !== "Facebook" && (
+              <div className="flex justify-between">
+                <span className="text-muted-foreground">AI 生成 / 翻译</span>
+                <span className="font-medium text-emerald-600">免费</span>
+              </div>
+            )}
             <div className="flex justify-between border-t border-rose-200/70 pt-1">
               <span className="font-semibold text-rose-700">合计</span>
               <span className="font-semibold text-rose-700">-{sendCost.toLocaleString()}</span>
