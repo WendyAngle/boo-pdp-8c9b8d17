@@ -70,12 +70,18 @@ export function TargetLangSection({
   const [loading, setLoading] = useState(false);
   /** 译文对应的原文快照，用于「原文已修改，建议重新翻译」提示 */
   const [snapshot, setSnapshot] = useState("");
+  /** 自动识别到的实际发送内容语种 */
+  const [detected, setDetected] = useState<DetectedLanguage | null>(null);
+  const [dismissMismatch, setDismissMismatch] = useState(false);
   const hasSubject = typeof subjectValue === "string" && !!onSubjectChange;
   const opt = langByCode(lang);
 
-  // 原文清空时同步清空译文
+  /** 内容来源：译自中文原文 / 用户直接撰写 */
+  const fromTranslation = !!snapshot.trim();
+
+  // 原文清空时，仅清空「由翻译生成」的内容；用户直接撰写的内容保留
   useEffect(() => {
-    if (!source.trim() && (value || subjectValue)) {
+    if (!source.trim() && fromTranslation && (value || subjectValue)) {
       onChange("");
       onSubjectChange?.("");
       setSnapshot("");
@@ -83,12 +89,32 @@ export function TargetLangSection({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [source]);
 
+  // 实际发送内容语种自动识别（防抖）
+  useEffect(() => {
+    const text = value.trim();
+    if (text.length < 8) {
+      setDetected(null);
+      return;
+    }
+    const t = setTimeout(() => setDetected(detectLanguage(text)), 500);
+    return () => clearTimeout(t);
+  }, [value]);
+
+  const mismatch =
+    !!detected && detected.confidence >= 60 && detected.code !== lang && !dismissMismatch;
+
   const stale =
-    !!value.trim() && snapshot.trim() !== `${sourceSubject ?? ""}\u0000${source}`.trim();
+    fromTranslation &&
+    !!value.trim() &&
+    snapshot.trim() !== `${sourceSubject ?? ""}\u0000${source}`.trim();
 
   async function translate(code = lang) {
     const src = source.trim();
-    if (!src) return toast.error("请先生成或输入中文内容");
+    if (!src) return toast.error("请先填写中文原文后再使用一键翻译");
+    if (value.trim() && !fromTranslation) {
+      const ok = window.confirm("翻译将覆盖当前已撰写的实际发送内容，是否继续？");
+      if (!ok) return;
+    }
     const target = langByCode(code);
     if (!target) return;
     setLoading(true);
