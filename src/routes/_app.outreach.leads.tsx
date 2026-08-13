@@ -1735,7 +1735,7 @@ export function ProfileTab() {
 
         <Section
           title="主营业务"
-          subtitle="以下为平台常见的行业、产品与 HS 编码，若没有匹配项，可在输入框直接输入后回车手动添加。"
+          subtitle="以下为平台常见的行业、产品与 HS 编码，若没有匹配项，可点击添加按钮后在输入框手动输入并回车添加。"
           icon={<Briefcase className="h-4 w-4" />}
         >
           <Field label="所属行业（多选）">
