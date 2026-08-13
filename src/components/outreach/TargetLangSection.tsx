@@ -261,11 +261,11 @@ export function TargetLangSection({
 
       {hasSubject && (
         <div className="space-y-1">
-          <Label className="text-xs text-muted-foreground">主题（译文）</Label>
+          <Label className="text-xs text-muted-foreground">主题（实际发送）</Label>
           <Input
             value={subjectValue}
             onChange={(e) => onSubjectChange?.(e.target.value)}
-            placeholder={`翻译后此处展示${opt?.zh ?? "目标语言"}主题，可手动修改`}
+            placeholder={`可直接撰写，或翻译后在此调整${opt?.zh ?? "目标语言"}主题`}
           />
         </div>
       )}
@@ -274,20 +274,23 @@ export function TargetLangSection({
         value={value}
         onChange={(e) => onChange(e.target.value)}
         rows={rows}
-        placeholder={`选择目标语言后点击「翻译」，此处展示${
-          opt?.zh ?? "目标语言"
-        }${kindLabel}，可手动修改`}
+        placeholder={`可直接撰写任意语言${kindLabel}，或填写中文原文后点击「翻译」自动生成`}
       />
       <div className="flex items-center justify-between text-[11px]">
         <span className="text-muted-foreground">
           {value.trim()
-            ? `将以${opt?.zh ?? ""}发送 · ${value.trim().length} 字`
-            : "未翻译时，将直接发送中文原文"}
+            ? `实际发送：${detected?.zh ?? opt?.zh ?? ""} · ${
+                fromTranslation ? "译自中文原文" : "直接撰写"
+              } · ${value.trim().length} 字`
+            : source.trim()
+              ? "当前为空，将直接发送中文原文（未翻译）"
+              : "请填写中文原文或直接撰写实际发送内容"}
         </span>
         {stale && (
           <span className="text-amber-600">中文原文已修改，建议重新翻译</span>
         )}
       </div>
+
 
     </section>
 
