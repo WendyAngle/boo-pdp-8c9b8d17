@@ -264,6 +264,8 @@ export interface Thread {
   friendSource?: string;
   /** 已申请加好友但对方尚未通过：暂不可发起私信触达（避免风控） */
   friendPending?: boolean;
+  /** 对方已解除好友关系：不可再发私信触达（避免风控） */
+  friendRemoved?: boolean;
   /** 是否由用户手动添加（非系统推荐/非企业库选择） */
   manualAdd?: boolean;
 }
