@@ -170,10 +170,13 @@ export function TargetLangSection({
       <div className="flex items-center justify-between gap-2">
         <Label className="text-sm font-medium flex items-center gap-2">
           <Languages className="h-4 w-4 text-primary" />
-          {bare ? "实际发送内容" : `目标语言${kindLabel}`}
-          {!bare && (
-            <Badge variant="outline" className="font-normal text-[10px]">
-              实际发送内容
+          实际发送内容
+          <Badge variant="outline" className="font-normal text-[10px]">
+            可直接撰写任意语言
+          </Badge>
+          {detected && (
+            <Badge variant="secondary" className="font-normal text-[10px]">
+              检测语言：{detected.flag} {detected.zh}
             </Badge>
           )}
         </Label>
