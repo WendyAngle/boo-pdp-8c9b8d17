@@ -173,14 +173,16 @@ export function TargetLangSection({
       } ${className ?? ""}`}
     >
       <div className="flex items-center justify-between gap-2">
-        <Label className="text-sm font-medium flex items-center gap-2">
+        <Label className="text-sm font-medium flex items-center gap-2 whitespace-nowrap">
           <Languages className="h-4 w-4 text-primary" />
-          实际发送内容
-          <Badge variant="outline" className="font-normal text-[10px]">
+          <span className="whitespace-nowrap">
+            实际发送内容 <span className="text-rose-500">*</span>
+          </span>
+          <Badge variant="outline" className="font-normal text-[10px] whitespace-nowrap">
             可直接撰写任意语言
           </Badge>
           {detected && (
-            <Badge variant="secondary" className="font-normal text-[10px]">
+            <Badge variant="secondary" className="font-normal text-[10px] whitespace-nowrap">
               检测语言：{detected.flag} {detected.zh}
             </Badge>
           )}
