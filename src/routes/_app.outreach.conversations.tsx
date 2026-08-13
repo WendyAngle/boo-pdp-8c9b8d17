@@ -297,7 +297,7 @@ function InboxPage() {
       );
     }
     return list;
-  }, [threads, view, q, ch, intent, starred, senderKey, resolveSender]);
+  }, [threads, view, q, ch, intent, starred, friend, senderKey, resolveSender]);
 
   const currentId = search.tid ?? filtered[0]?.id;
   const current = threads.find((t) => t.id === currentId);
