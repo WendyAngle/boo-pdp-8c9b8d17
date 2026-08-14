@@ -240,36 +240,19 @@ function GroupCard({
                   <span className="text-[11px] font-medium text-muted-foreground tabular-nums">
                     {dk} · {weekdayCN(dk)}
                   </span>
-                  <span className="text-[11px] text-muted-foreground/70 tabular-nums">
-                    {list.length} 条
-                  </span>
                   <div className="flex-1 h-px bg-border/70" />
                 </div>
                 <div className="space-y-2 pl-1">
                   {list.map((c) => {
                     const key = `${c.owner_type}:${c.owner_id}:${c.contact_type}:${c.contact_value}`;
-                    return (
-                      <ContactRow
-                        key={key}
-                        c={c}
-                        revealed={revealed.has(key)}
-                        onToggle={() => onToggle(key)}
-                      />
-                    );
+                    return <ContactRow key={key} c={c} />;
                   })}
                 </div>
               </div>
             ))
           : g.contacts.map((c) => {
               const key = `${c.owner_type}:${c.owner_id}:${c.contact_type}:${c.contact_value}`;
-              return (
-                <ContactRow
-                  key={key}
-                  c={c}
-                  revealed={revealed.has(key)}
-                  onToggle={() => onToggle(key)}
-                />
-              );
+              return <ContactRow key={key} c={c} />;
             })}
       </div>
 
