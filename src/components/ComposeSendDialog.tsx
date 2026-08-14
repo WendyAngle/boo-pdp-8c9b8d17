@@ -294,6 +294,9 @@ export function ComposeSendDialog({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [allRecipients, isEmail, ledger]);
 
+  /** 已勾选且未解锁的收件人数 */
+  const lockedActiveCount = recipients.filter((r) => lockedKeys.has(r.key)).length;
+
 
   /** 主动解锁明文：立即扣费、永久有效（幂等） */
   function unlockOne(r: Recipient) {
