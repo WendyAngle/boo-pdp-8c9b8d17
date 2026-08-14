@@ -504,7 +504,7 @@ export function ComposeSendDialog({
                 )}
 
               </Label>
-              {recipients.length === 0 ? (
+              {allRecipients.length === 0 ? (
                 <span className="text-xs text-rose-600">
                   {initialFilteredCount > 0
                     ? `已选对象均无${isEmail ? "邮箱" : "电话"}，已全部过滤`
