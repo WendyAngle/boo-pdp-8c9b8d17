@@ -57,26 +57,6 @@ type ChannelFilter = "all" | "email" | "sms" | "social" | "whatsapp";
 type OwnerFilter = "all" | "enterprise" | "person";
 type AggregateMode = "none" | "owner";
 
-const REVEAL_LIMIT = 10;
-
-function maskContact(t: ContactType, v: string): string {
-  if (t === "email") {
-    const [name, domain] = v.split("@");
-    if (!domain) return v;
-    const head = name.slice(0, 1);
-    return `${head}${"*".repeat(Math.max(3, name.length - 1))}@${domain}`;
-  }
-  if (t === "phone") {
-    const digits = v.replace(/\D/g, "");
-    if (digits.length <= 4) return v;
-    const head = v.slice(0, Math.min(3, v.length - 4));
-    const tail = v.slice(-4);
-    return `${head}${"*".repeat(Math.max(4, v.length - head.length - tail.length))}${tail}`;
-  }
-  if (v.length <= 3) return v;
-  return `${v.slice(0, 2)}${"*".repeat(Math.max(3, v.length - 3))}${v.slice(-1)}`;
-}
-
 /** 显示分类：邮件 / 电话 / WhatsApp / 社媒 */
 type DisplayKind = "email" | "phone" | "whatsapp" | "social";
 
