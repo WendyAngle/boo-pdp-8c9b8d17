@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState, useCallback } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Link } from "@tanstack/react-router";
 import {
   KeyRound,
@@ -9,8 +9,6 @@ import {
   Ban,
   Building2,
   User,
-  Eye,
-  EyeOff,
   CalendarDays,
   Calendar as CalendarIcon,
   X,
@@ -39,28 +37,15 @@ import {
 } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
 import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
-import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import { toast } from "sonner";
-import { formatDateTime } from "@/lib/format-date";
 import { cn } from "@/lib/utils";
 import { ReachButton } from "@/components/ReachButton";
 import {
   useUnlockedContacts,
-  type ContactType,
   type UnlockedContact,
 } from "@/lib/unlocked-contacts";
 import { seedDemoLedgerIfEmpty } from "@/lib/credits-ledger";
@@ -71,26 +56,6 @@ import type { DateRange } from "react-day-picker";
 type ChannelFilter = "all" | "email" | "sms" | "social" | "whatsapp";
 type OwnerFilter = "all" | "enterprise" | "person";
 type AggregateMode = "none" | "owner";
-
-const REVEAL_LIMIT = 10;
-
-function maskContact(t: ContactType, v: string): string {
-  if (t === "email") {
-    const [name, domain] = v.split("@");
-    if (!domain) return v;
-    const head = name.slice(0, 1);
-    return `${head}${"*".repeat(Math.max(3, name.length - 1))}@${domain}`;
-  }
-  if (t === "phone") {
-    const digits = v.replace(/\D/g, "");
-    if (digits.length <= 4) return v;
-    const head = v.slice(0, Math.min(3, v.length - 4));
-    const tail = v.slice(-4);
-    return `${head}${"*".repeat(Math.max(4, v.length - head.length - tail.length))}${tail}`;
-  }
-  if (v.length <= 3) return v;
-  return `${v.slice(0, 2)}${"*".repeat(Math.max(3, v.length - 3))}${v.slice(-1)}`;
-}
 
 /** 显示分类：邮件 / 电话 / WhatsApp / 社媒 */
 type DisplayKind = "email" | "phone" | "whatsapp" | "social";
@@ -173,17 +138,8 @@ function ContactValue({ value }: { value: string }) {
   );
 }
 
-function ContactRow({
-  c,
-  revealed,
-  onToggle,
-}: {
-  c: UnlockedContact;
-  revealed: boolean;
-  onToggle: () => void;
-}) {
+function ContactRow({ c }: { c: UnlockedContact }) {
   const kind = toDisplayKind(c);
-  const display = revealed ? c.contact_value : maskContact(c.contact_type, c.contact_value);
   return (
     <div className="flex items-center gap-2 min-w-0">
       <span
@@ -196,33 +152,17 @@ function ContactRow({
         {KIND_LABEL[kind]}
       </span>
       <div className="flex-1 min-w-0 flex items-center gap-1">
-        <ContactValue value={display} />
+        <ContactValue value={c.contact_value} />
       </div>
-      <span className="shrink-0 text-[11px] text-muted-foreground tabular-nums">
-        {formatDateTime(new Date(c.unlock_time).toISOString())}
-      </span>
-      <button
-        type="button"
-        onClick={onToggle}
-        className="shrink-0 inline-flex h-6 w-6 items-center justify-center rounded hover:bg-muted text-muted-foreground hover:text-foreground transition-colors"
-        aria-label={revealed ? "隐藏明文" : "查看明文"}
-        title={revealed ? "隐藏明文" : "查看明文"}
-      >
-        {revealed ? <EyeOff className="h-3.5 w-3.5" /> : <Eye className="h-3.5 w-3.5" />}
-      </button>
     </div>
   );
 }
 
 function GroupCard({
   g,
-  revealed,
-  onToggle,
   groupByDate = false,
 }: {
   g: ContactGroup;
-  revealed: Set<string>;
-  onToggle: (key: string) => void;
   groupByDate?: boolean;
 }) {
   const isPerson = g.owner_type === "person";
@@ -288,7 +228,6 @@ function GroupCard({
         >
           {isPerson ? <User className="h-3 w-3" /> : <Building2 className="h-3 w-3" />}
           {isPerson ? "人物" : "企业"}
-          <span className="ml-1 tabular-nums opacity-70">· {g.contacts.length}</span>
         </span>
       </div>
 
@@ -301,36 +240,19 @@ function GroupCard({
                   <span className="text-[11px] font-medium text-muted-foreground tabular-nums">
                     {dk} · {weekdayCN(dk)}
                   </span>
-                  <span className="text-[11px] text-muted-foreground/70 tabular-nums">
-                    {list.length} 条
-                  </span>
                   <div className="flex-1 h-px bg-border/70" />
                 </div>
                 <div className="space-y-2 pl-1">
                   {list.map((c) => {
                     const key = `${c.owner_type}:${c.owner_id}:${c.contact_type}:${c.contact_value}`;
-                    return (
-                      <ContactRow
-                        key={key}
-                        c={c}
-                        revealed={revealed.has(key)}
-                        onToggle={() => onToggle(key)}
-                      />
-                    );
+                    return <ContactRow key={key} c={c} />;
                   })}
                 </div>
               </div>
             ))
           : g.contacts.map((c) => {
               const key = `${c.owner_type}:${c.owner_id}:${c.contact_type}:${c.contact_value}`;
-              return (
-                <ContactRow
-                  key={key}
-                  c={c}
-                  revealed={revealed.has(key)}
-                  onToggle={() => onToggle(key)}
-                />
-              );
+              return <ContactRow key={key} c={c} />;
             })}
       </div>
 
@@ -400,44 +322,6 @@ export function UnlockedPanel() {
   const [owner, setOwner] = useState<OwnerFilter>("all");
   const [aggregate, setAggregate] = useState<AggregateMode>("none");
   const [dateRange, setDateRange] = useState<DateRange | undefined>(undefined);
-  const [revealed, setRevealed] = useState<Set<string>>(new Set());
-  const [confirmOpen, setConfirmOpen] = useState(false);
-  const [pendingKey, setPendingKey] = useState<string | null>(null);
-  const [bulkAcked, setBulkAcked] = useState(false);
-
-  const toggleReveal = useCallback(
-    (key: string) => {
-      setRevealed((prev) => {
-        const next = new Set(prev);
-        if (next.has(key)) {
-          next.delete(key);
-          return next;
-        }
-        if (!bulkAcked && next.size >= REVEAL_LIMIT) {
-          setPendingKey(key);
-          setConfirmOpen(true);
-          return prev;
-        }
-        next.add(key);
-        return next;
-      });
-    },
-    [bulkAcked],
-  );
-
-  const confirmReveal = () => {
-    setBulkAcked(true);
-    setConfirmOpen(false);
-    if (pendingKey) {
-      setRevealed((prev) => {
-        const next = new Set(prev);
-        next.add(pendingKey);
-        return next;
-      });
-      setPendingKey(null);
-    }
-    toast.info("已开启本次会话的批量明示，请注意防止截屏泄露");
-  };
 
   const filtered = useMemo(() => {
     const kw = q.trim().toLowerCase();
@@ -666,13 +550,7 @@ export function UnlockedPanel() {
       ) : aggregate === "owner" ? (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 items-start">
           {ownerGroups.map((g) => (
-            <GroupCard
-              key={g.key}
-              g={g}
-              revealed={revealed}
-              onToggle={toggleReveal}
-              groupByDate
-            />
+            <GroupCard key={g.key} g={g} groupByDate />
           ))}
         </div>
       ) : (
@@ -698,38 +576,13 @@ export function UnlockedPanel() {
               </div>
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
                 {groups.map((g) => (
-                  <GroupCard
-                    key={g.key}
-                    g={g}
-                    revealed={revealed}
-                    onToggle={toggleReveal}
-                  />
+                  <GroupCard key={g.key} g={g} />
                 ))}
               </div>
             </div>
           ))}
         </div>
       )}
-
-
-      <AlertDialog open={confirmOpen} onOpenChange={setConfirmOpen}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>连续揭示超过 {REVEAL_LIMIT} 条</AlertDialogTitle>
-            <AlertDialogDescription>
-              为防止截屏泄露联系方式，请确认继续以明文展示。确认后本次会话内将不再提示。
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel onClick={() => setPendingKey(null)}>
-              取消
-            </AlertDialogCancel>
-            <AlertDialogAction onClick={confirmReveal}>
-              我已知晓，继续
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
     </div>
     </TooltipProvider>
   );
