@@ -277,10 +277,10 @@ export function ComposeSendDialog({
   /** 单条解锁单价 */
   const unitView = isEmail ? COST_VIEW_EMAIL : COST_VIEW_PHONE;
 
-  /** 尚未解锁明文的收件人 key 集合（手动添加的除外） */
+  /** 尚未解锁明文的收件人 key 集合（含未勾选项；手动添加的除外） */
   const lockedKeys = useMemo(() => {
     const s = new Set<string>();
-    for (const r of recipients) {
+    for (const r of allRecipients) {
       if (isManualRecipient(r)) continue;
       const bd = computeReachBreakdown(
         { targetKind: r.targetKind, targetId: r.targetId },
@@ -292,7 +292,8 @@ export function ComposeSendDialog({
     }
     return s;
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [recipients, isEmail, ledger]);
+  }, [allRecipients, isEmail, ledger]);
+
 
   /** 主动解锁明文：立即扣费、永久有效（幂等） */
   function unlockOne(r: Recipient) {
