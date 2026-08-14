@@ -518,7 +518,7 @@ export function ComposeSendDialog({
                       {isEmail ? "邮箱" : "电话"}的数据
                     </span>
                   )}
-                  {lockedKeys.size > 0 && (
+                  {lockedActiveCount > 0 && (
                     <Button
                       type="button"
                       variant="outline"
@@ -530,7 +530,7 @@ export function ComposeSendDialog({
                       }}
                     >
                       <Unlock className="h-3.5 w-3.5 mr-1" />
-                      全部解锁 · -{lockedKeys.size * unitView}
+                      全部解锁 · -{lockedActiveCount * unitView}
                     </Button>
                   )}
                 </div>
@@ -943,9 +943,9 @@ export function ComposeSendDialog({
           <DialogHeader>
             <DialogTitle>解锁全部明文{isEmail ? "邮箱" : "电话"}</DialogTitle>
             <DialogDescription>
-              将为 {lockedKeys.size} 位未解锁收件人一次性解锁明文，扣除{" "}
+              将为 {lockedActiveCount} 位未解锁收件人一次性解锁明文，扣除{" "}
               <span className="font-semibold text-rose-600">
-                {lockedKeys.size * unitView}
+                {lockedActiveCount * unitView}
               </span>{" "}
               积分，解锁后永久有效、不可撤销。批量群发本身无需解锁即可发送。
             </DialogDescription>
@@ -956,7 +956,7 @@ export function ComposeSendDialog({
               onCheckedChange={(v) => setUnlockAllAck(v === true)}
               className="mt-0.5"
             />
-            <span>我已知晓将立即扣除 {lockedKeys.size * unitView} 积分</span>
+            <span>我已知晓将立即扣除 {lockedActiveCount * unitView} 积分</span>
           </label>
           <DialogFooter>
             <Button variant="outline" onClick={() => setUnlockAllOpen(false)}>
