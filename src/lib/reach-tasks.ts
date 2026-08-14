@@ -1,4 +1,5 @@
 import type { ReachChannel } from "./credits-ledger";
+import { formatDateTime } from "./format-date";
 
 /** 从明细中提取触达动作：社媒区分「加好友 / 私信」，其余按渠道语义 */
 export function reachAction(r: {
@@ -29,7 +30,7 @@ export function groupKeyOf(r: {
     : `c:${r.channel}:${r.platform ?? ""}:${reachAction(r)}:${day}`;
 }
 
-/** 触达记录 → 任务名 */
+/** 触达记录 → 任务名（日期部分统一为 yyyy-MM-dd HH:mm:ss） */
 export function taskNameOf(r: {
   channel?: ReachChannel;
   platform?: string;
@@ -37,11 +38,11 @@ export function taskNameOf(r: {
   detail?: string;
   createdAt: string;
 }) {
-  const day = r.createdAt.slice(0, 10);
   const batchName = r.channel === "social" && r.subject ? r.subject : null;
   const action = reachAction(r);
   return (
     batchName ??
-    (r.platform ? `${r.platform}${action}` : action) + ` · ${day.slice(5)}`
+    (r.platform ? `${r.platform}${action}` : action) +
+      ` · ${formatDateTime(r.createdAt)}`
   );
 }
