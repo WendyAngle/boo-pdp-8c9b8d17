@@ -166,7 +166,7 @@ export function ComposeSendDialog({
       .map((s) => s.trim())
       .filter(Boolean);
     if (raw.length === 0) return;
-    const exists = new Set(recipients.map((r) => r.address.toLowerCase()));
+    const exists = new Set(allRecipients.map((r) => r.address.toLowerCase()));
     const added: Recipient[] = [];
     const invalid: string[] = [];
     const dup: string[] = [];
@@ -206,6 +206,7 @@ export function ComposeSendDialog({
   useEffect(() => {
     if (!open) return;
     setAllRecipients(incomingRecipients);
+    setExcludedKeys(new Set());
     if (typeof totalSelected === "number") {
       setInitialFilteredCount(Math.max(0, totalSelected - incomingRecipients.length));
     } else {
