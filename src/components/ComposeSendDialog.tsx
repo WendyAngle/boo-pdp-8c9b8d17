@@ -546,18 +546,27 @@ export function ComposeSendDialog({
               </div>
             )}
             {recipients.length > 0 && (
-              <div className="flex flex-wrap gap-1.5 rounded-md border bg-muted/30 p-2 max-h-28 overflow-y-auto">
+              <div className="max-h-52 overflow-y-auto rounded-md border bg-background divide-y">
                 {recipients.map((r) => {
                   const manual = isManualRecipient(r);
                   const locked = !manual && lockedKeys.has(r.key);
+                  const remove = () =>
+                    setRecipients((prev) => prev.filter((x) => x.key !== r.key));
                   return (
-                    <span
+                    <div
                       key={r.key}
-                      className="inline-flex items-center gap-1 rounded-md border bg-background px-2 py-0.5 text-xs"
+                      className="flex items-center gap-2.5 px-3 py-2 hover:bg-muted/40"
                     >
-                      <span className="font-medium">{r.name}</span>
-                      <span className="text-muted-foreground font-mono">
-                        ·{" "}
+                      <Checkbox checked onCheckedChange={() => remove()} />
+                      <span className="text-xs font-medium truncate max-w-[160px]">
+                        {r.name}
+                      </span>
+                      <span className="inline-flex items-center gap-1 rounded-md border border-sky-200 bg-sky-50 px-2 py-0.5 text-[11px] text-sky-700 font-mono">
+                        {isEmail ? (
+                          <Mail className="h-3 w-3" />
+                        ) : (
+                          <Phone className="h-3 w-3" />
+                        )}
                         {locked
                           ? maskContact(isEmail ? "email" : "phone", r.address)
                           : r.address}
@@ -567,32 +576,36 @@ export function ComposeSendDialog({
                           手动
                         </Badge>
                       )}
-                      {locked && (
-                        <button
-                          type="button"
-                          onClick={() => unlockOne(r)}
-                          className="ml-0.5 inline-flex items-center gap-0.5 rounded border border-primary/30 bg-primary/5 px-1 text-[10px] font-medium text-primary hover:bg-primary/10"
-                          title={`解锁明文，扣 ${unitView} 积分（永久有效）`}
-                        >
-                          <Eye className="h-3 w-3" />
-                          {unitView}
-                        </button>
-                      )}
-                      <button
-                        type="button"
-                        onClick={() =>
-                          setRecipients((prev) => prev.filter((x) => x.key !== r.key))
-                        }
-                        className="ml-0.5 text-muted-foreground hover:text-rose-600"
-                        aria-label="移除"
-                      >
-                        <X className="h-3 w-3" />
-                      </button>
-                    </span>
+                      <div className="ml-auto flex items-center gap-1">
+                        {locked && (
+                          <button
+                            type="button"
+                            onClick={() => unlockOne(r)}
+                            className="inline-flex items-center gap-1 rounded border border-primary/30 bg-primary/5 px-1.5 py-0.5 text-[11px] font-medium text-primary hover:bg-primary/10"
+                            title={`解锁明文，扣 ${unitView} 积分（永久有效）`}
+                          >
+                            <Eye className="h-3 w-3" />
+                            {unitView}
+                          </button>
+                        )}
+                        {manual && (
+                          <button
+                            type="button"
+                            onClick={remove}
+                            className="rounded p-1 text-muted-foreground hover:text-destructive hover:bg-destructive/10"
+                            aria-label="删除"
+                            title="删除该手动添加的收件人"
+                          >
+                            <Trash2 className="h-3.5 w-3.5" />
+                          </button>
+                        )}
+                      </div>
+                    </div>
                   );
                 })}
               </div>
             )}
+
 
             {/* 手动添加收件人 */}
             <div className="flex items-center gap-2">
