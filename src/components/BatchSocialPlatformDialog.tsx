@@ -524,47 +524,72 @@ export function BatchSocialPlatformDialog({
               </div>
             )}
 
-            <div className="mt-3 max-h-40 overflow-y-auto border-t pt-2 space-y-1.5 pr-1">
-              {filteredJobs.length === 0 ? (
-                <div className="text-center py-4 text-xs text-muted-foreground">
+            <div className="mt-3 max-h-52 overflow-y-auto rounded-md border bg-background divide-y">
+              {allAccountJobs.length === 0 ? (
+                <div className="text-center py-6 text-xs text-muted-foreground">
                   暂无待执行任务，请添加或从外部选择目标。
                 </div>
               ) : (
-                filteredJobs.map((j) => (
-                  <div key={j.key} className="flex items-center justify-between group py-0.5">
-                    <div className="flex items-center gap-2 flex-1 min-w-0">
-                      <span className="text-[11px] font-medium truncate max-w-[120px]">{j.candidate.name}</span>
-                      <Badge variant="outline" className={cn(
-                        "px-1 py-0 h-4 text-[9px] font-normal",
-                        j.platform === "Facebook" ? "border-sky-200 text-sky-700 bg-sky-50" : "border-violet-200 text-violet-700 bg-violet-50"
-                      )}>
-                        {j.platform}:{" "}
-                        {lockedJobKeys.has(j.key)
-                          ? maskContact("social", j.handle)
-                          : j.handle}
-                      </Badge>
-                      {lockedJobKeys.has(j.key) && (
-                        <button
-                          type="button"
-                          onClick={() => unlockJob(j)}
-                          className="inline-flex items-center gap-0.5 rounded border border-primary/30 bg-primary/5 px-1 text-[10px] font-medium text-primary hover:bg-primary/10"
-                          title={`解锁明文，扣 ${unitView} 积分（永久有效）`}
-                        >
-                          <Eye className="h-3 w-3" />
-                          {unitView}
-                        </button>
-                      )}
-                    </div>
-                    <button 
-                      onClick={() => handleRemoveJob(j.key)}
-                      className="text-muted-foreground hover:text-destructive p-0.5 opacity-0 group-hover:opacity-100 transition-opacity"
+                allAccountJobs.map((j) => {
+                  const checked = !removedJobKeys.has(j.key);
+                  const isManual = j.candidate.key.startsWith("extra-");
+                  const locked = lockedJobKeys.has(j.key);
+                  return (
+                    <div
+                      key={j.key}
+                      className="flex items-center gap-2.5 px-3 py-2 hover:bg-muted/40"
                     >
-                      <X className="h-3 w-3" />
-                    </button>
-                  </div>
-                ))
+                      <Checkbox
+                        checked={checked}
+                        onCheckedChange={(v) => toggleJob(j.key, v === true)}
+                      />
+                      <span className="text-xs font-medium truncate max-w-[160px]">
+                        {j.candidate.name}
+                      </span>
+                      <span
+                        className={cn(
+                          "inline-flex items-center gap-1 rounded-md border px-2 py-0.5 text-[11px]",
+                          j.platform === "Facebook"
+                            ? "border-sky-200 bg-sky-50 text-sky-700"
+                            : "border-violet-200 bg-violet-50 text-violet-700",
+                        )}
+                      >
+                        {j.platform === "Facebook" ? (
+                          <Facebook className="h-3 w-3" />
+                        ) : (
+                          <Music2 className="h-3 w-3" />
+                        )}
+                        {j.platform}: @{locked ? maskContact("social", j.handle) : j.handle}
+                      </span>
+                      <div className="ml-auto flex items-center gap-1">
+                        {locked && (
+                          <button
+                            type="button"
+                            onClick={() => unlockJob(j)}
+                            className="inline-flex items-center gap-1 rounded border border-primary/30 bg-primary/5 px-1.5 py-0.5 text-[11px] font-medium text-primary hover:bg-primary/10"
+                            title={`解锁明文，扣 ${unitView} 积分（永久有效）`}
+                          >
+                            <Eye className="h-3 w-3" />
+                            {unitView}
+                          </button>
+                        )}
+                        {isManual && (
+                          <button
+                            type="button"
+                            onClick={() => removeManualCandidate(j.candidate.key)}
+                            className="rounded p-1 text-muted-foreground hover:text-destructive hover:bg-destructive/10"
+                            title="删除该手动添加的目标"
+                          >
+                            <Trash2 className="h-3.5 w-3.5" />
+                          </button>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })
               )}
             </div>
+
           </section>
 
           {/* 可用执行账号 */}
