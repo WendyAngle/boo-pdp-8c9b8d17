@@ -202,7 +202,6 @@ function ReachPage() {
     const map = new Map<string, TaskGroup>();
     for (const r of filtered) {
       const action = reachAction(r);
-      const day = r.createdAt.slice(0, 10);
       const batchName = r.channel === "social" && r.subject ? r.subject : null;
       const key = groupKeyOf(r);
       let g = map.get(key);
@@ -211,7 +210,8 @@ function ReachPage() {
           key,
           name:
             batchName ??
-            (r.platform ? `${r.platform}${action}` : action) + ` · ${day.slice(5)}`,
+            (r.platform ? `${r.platform}${action}` : action) +
+              ` · ${fmtTime(r.createdAt)}`,
           channel: r.channel!,
           platform: r.platform,
           action,
