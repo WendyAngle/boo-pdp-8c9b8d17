@@ -109,7 +109,21 @@ export function BatchSocialDialog({
   const myInfo = useMyInfoGuard();
 
 
-  const [candidates, setCandidates] = useState<SocialCandidate[]>(incoming);
+  const [allCandidates, setAllCandidates] = useState<SocialCandidate[]>(incoming);
+  /** 被取消勾选（本次不发送）的目标 key，仅影响发送范围，不删除也不影响解锁状态 */
+  const [excludedKeys, setExcludedKeys] = useState<Set<string>>(new Set());
+  const candidates = useMemo(
+    () => allCandidates.filter((c) => !excludedKeys.has(c.key)),
+    [allCandidates, excludedKeys],
+  );
+  function toggleCandidate(key: string, checked: boolean) {
+    setExcludedKeys((prev) => {
+      const next = new Set(prev);
+      if (checked) next.delete(key);
+      else next.add(key);
+      return next;
+    });
+  }
   const [content, setContent] = useState("");
   const [aiUsed, setAiUsed] = useState(false);
   const [aiLoading, setAiLoading] = useState(false);
@@ -120,7 +134,8 @@ export function BatchSocialDialog({
 
   useEffect(() => {
     if (!open) return;
-    setCandidates(incoming);
+    setAllCandidates(incoming);
+    setExcludedKeys(new Set());
     setContent("");
     setAiUsed(false);
     setTargetLang("en");
@@ -194,7 +209,7 @@ export function BatchSocialDialog({
   /** 尚未解锁明文的目标（用于批量解锁） */
   const lockedTargets = useMemo(
     () =>
-      candidates.filter((c) => {
+      allCandidates.filter((c) => {
         if (!c.address) return false;
         const bd = computeReachBreakdown(
           { targetKind: c.targetKind, targetId: c.targetId },
@@ -205,7 +220,7 @@ export function BatchSocialDialog({
         return bd.viewCost > 0;
       }),
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [candidates, platform, ledger],
+    [allCandidates, platform, ledger],
   );
 
   const [unlockAllOpen, setUnlockAllOpen] = useState(false);
@@ -262,14 +277,14 @@ export function BatchSocialDialog({
     : "";
 
   function handleRemoveNonVerified() {
-    setCandidates((prev) =>
+    setAllCandidates((prev) =>
       prev.filter((c) => getWaStatus(c.address) === "verified"),
     );
   }
   function handleTrimToRemaining() {
     // 只在有效收件人里裁剪
     const keep = new Set(verified.slice(0, remaining).map((c) => c.key));
-    setCandidates((prev) =>
+    setAllCandidates((prev) =>
       prev.filter(
         (c) => keep.has(c.key) || getWaStatus(c.address) !== "verified",
       ),
@@ -492,11 +507,11 @@ export function BatchSocialDialog({
           </section>
 
           {/* 目标号列表（脱敏） */}
-          {candidates.length > 0 && (
+          {allCandidates.length > 0 && (
             <section className="space-y-2">
               <div className="flex items-center justify-between gap-2">
                 <Label className="text-xs text-muted-foreground">
-                  目标账号（{candidates.length}）
+                  目标账号（已选 {candidates.length}/{allCandidates.length}）
                   {lockedTargets.length > 0 && (
                     <span className="ml-1 text-muted-foreground/80">
                       · {lockedTargets.length} 位{unlockFieldLabel}未解锁，默认脱敏展示
@@ -527,7 +542,7 @@ export function BatchSocialDialog({
               </div>
 
               <div className="max-h-52 overflow-y-auto rounded-md border bg-background divide-y">
-                {candidates.map((c) => {
+                {allCandidates.map((c) => {
                   const st = normalizePhone(c.address)
                     ? getWaStatus(c.address)
                     : "no_number";
@@ -545,12 +560,8 @@ export function BatchSocialDialog({
                       className="flex items-center gap-2.5 px-3 py-2 hover:bg-muted/40"
                     >
                       <Checkbox
-                        checked
-                        onCheckedChange={() =>
-                          setCandidates((prev) =>
-                            prev.filter((x) => x.key !== c.key),
-                          )
-                        }
+                        checked={!excludedKeys.has(c.key)}
+                        onCheckedChange={(v) => toggleCandidate(c.key, v === true)}
                       />
                       <span className="text-xs font-medium truncate max-w-[160px]">
                         {c.name}
