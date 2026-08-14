@@ -9,7 +9,11 @@ import {
   Info,
   Unlock,
   Eye,
+  Trash2,
+  Facebook,
+  Music2,
 } from "lucide-react";
+
 import { useServerFn } from "@tanstack/react-start";
 import { saveReachTaskConfig } from "@/lib/reach-task-config";
 import { toast } from "sonner";
