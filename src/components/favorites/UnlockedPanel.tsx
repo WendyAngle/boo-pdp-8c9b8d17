@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState, useCallback } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Link } from "@tanstack/react-router";
 import {
   KeyRound,
@@ -9,8 +9,6 @@ import {
   Ban,
   Building2,
   User,
-  Eye,
-  EyeOff,
   CalendarDays,
   Calendar as CalendarIcon,
   X,
@@ -39,28 +37,15 @@ import {
 } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
 import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
-import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import { toast } from "sonner";
-import { formatDateTime } from "@/lib/format-date";
 import { cn } from "@/lib/utils";
 import { ReachButton } from "@/components/ReachButton";
 import {
   useUnlockedContacts,
-  type ContactType,
   type UnlockedContact,
 } from "@/lib/unlocked-contacts";
 import { seedDemoLedgerIfEmpty } from "@/lib/credits-ledger";
