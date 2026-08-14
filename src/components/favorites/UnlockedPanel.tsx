@@ -160,13 +160,9 @@ function ContactRow({ c }: { c: UnlockedContact }) {
 
 function GroupCard({
   g,
-  revealed,
-  onToggle,
   groupByDate = false,
 }: {
   g: ContactGroup;
-  revealed: Set<string>;
-  onToggle: (key: string) => void;
   groupByDate?: boolean;
 }) {
   const isPerson = g.owner_type === "person";
