@@ -209,7 +209,7 @@ export function BatchSocialDialog({
   /** 尚未解锁明文的目标（用于批量解锁） */
   const lockedTargets = useMemo(
     () =>
-      allCandidates.filter((c) => {
+      candidates.filter((c) => {
         if (!c.address) return false;
         const bd = computeReachBreakdown(
           { targetKind: c.targetKind, targetId: c.targetId },
@@ -220,7 +220,7 @@ export function BatchSocialDialog({
         return bd.viewCost > 0;
       }),
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [allCandidates, platform, ledger],
+    [candidates, platform, ledger],
   );
 
   const [unlockAllOpen, setUnlockAllOpen] = useState(false);
