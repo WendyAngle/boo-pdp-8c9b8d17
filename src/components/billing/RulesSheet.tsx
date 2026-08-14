@@ -8,7 +8,6 @@ import {
   MailPlus,
   MessageSquare,
   MessageCircle,
-  Sparkles,
   Undo2,
   Gift,
   ShieldAlert,
@@ -21,9 +20,6 @@ import {
   COST_REACH_SMS,
   COST_REACH_SOCIAL,
   COST_REACH_SOCIAL_WHATSAPP,
-  COST_AI_EMAIL,
-  COST_AI_SMS,
-  COST_AI_SOCIAL,
   COST_SOCIAL_ACCOUNT_PURCHASE,
 } from "@/lib/credits-ledger";
 import { Users } from "lucide-react";
