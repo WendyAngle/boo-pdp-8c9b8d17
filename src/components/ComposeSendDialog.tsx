@@ -9,6 +9,9 @@ import {
   ShieldOff,
   Eye,
   Unlock,
+  Mail,
+  Phone,
+
 } from "lucide-react";
 import { useServerFn } from "@tanstack/react-start";
 import { useNavigate } from "@tanstack/react-router";
