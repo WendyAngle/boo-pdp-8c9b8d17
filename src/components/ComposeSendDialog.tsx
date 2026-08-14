@@ -124,7 +124,22 @@ export function ComposeSendDialog({
   const ledger = useLedger();
   const myInfo = useMyInfoGuard();
 
-  const [recipients, setRecipients] = useState<Recipient[]>(incomingRecipients);
+  const [allRecipients, setAllRecipients] = useState<Recipient[]>(incomingRecipients);
+  /** 被取消勾选（本次不发送）的收件人 key，仅影响发送范围，不删除也不影响解锁状态 */
+  const [excludedKeys, setExcludedKeys] = useState<Set<string>>(new Set());
+  /** 实际参与发送与计费的收件人 */
+  const recipients = useMemo(
+    () => allRecipients.filter((r) => !excludedKeys.has(r.key)),
+    [allRecipients, excludedKeys],
+  );
+  function toggleRecipient(key: string, checked: boolean) {
+    setExcludedKeys((prev) => {
+      const next = new Set(prev);
+      if (checked) next.delete(key);
+      else next.add(key);
+      return next;
+    });
+  }
   /** 记录初始进入弹窗时被自动过滤的数量，用于维持“已自动过滤”文案的稳定性 */
   const [initialFilteredCount, setInitialFilteredCount] = useState(0);
   const [subject, setSubject] = useState("");
@@ -151,7 +166,7 @@ export function ComposeSendDialog({
       .map((s) => s.trim())
       .filter(Boolean);
     if (raw.length === 0) return;
-    const exists = new Set(recipients.map((r) => r.address.toLowerCase()));
+    const exists = new Set(allRecipients.map((r) => r.address.toLowerCase()));
     const added: Recipient[] = [];
     const invalid: string[] = [];
     const dup: string[] = [];
@@ -177,7 +192,7 @@ export function ComposeSendDialog({
         ctx: { 联系人名: name, ...my } as VarContext,
       });
     }
-    if (added.length > 0) setRecipients((prev) => [...prev, ...added]);
+    if (added.length > 0) setAllRecipients((prev) => [...prev, ...added]);
     setManualInput(invalid.join(" "));
     if (invalid.length > 0)
       toast.error(`${invalid.length} 个${isEmail ? "邮箱" : "手机号"}格式不正确`, {
@@ -190,7 +205,8 @@ export function ComposeSendDialog({
   // 重置 state 每次打开
   useEffect(() => {
     if (!open) return;
-    setRecipients(incomingRecipients);
+    setAllRecipients(incomingRecipients);
+    setExcludedKeys(new Set());
     if (typeof totalSelected === "number") {
       setInitialFilteredCount(Math.max(0, totalSelected - incomingRecipients.length));
     } else {
@@ -261,10 +277,10 @@ export function ComposeSendDialog({
   /** 单条解锁单价 */
   const unitView = isEmail ? COST_VIEW_EMAIL : COST_VIEW_PHONE;
 
-  /** 尚未解锁明文的收件人 key 集合（手动添加的除外） */
+  /** 尚未解锁明文的收件人 key 集合（含未勾选项；手动添加的除外） */
   const lockedKeys = useMemo(() => {
     const s = new Set<string>();
-    for (const r of recipients) {
+    for (const r of allRecipients) {
       if (isManualRecipient(r)) continue;
       const bd = computeReachBreakdown(
         { targetKind: r.targetKind, targetId: r.targetId },
@@ -276,7 +292,11 @@ export function ComposeSendDialog({
     }
     return s;
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [recipients, isEmail, ledger]);
+  }, [allRecipients, isEmail, ledger]);
+
+  /** 已勾选且未解锁的收件人数 */
+  const lockedActiveCount = recipients.filter((r) => lockedKeys.has(r.key)).length;
+
 
   /** 主动解锁明文：立即扣费、永久有效（幂等） */
   function unlockOne(r: Recipient) {
@@ -476,14 +496,15 @@ export function ComposeSendDialog({
           <section className="space-y-2">
             <div className="flex items-center justify-between gap-2">
               <Label className="text-xs text-muted-foreground">
-                收件人（{recipients.length}）
-                {lockedKeys.size > 0 && (
+                收件人（已选 {recipients.length}/{allRecipients.length}）
+                {lockedActiveCount > 0 && (
                   <span className="ml-1 text-muted-foreground/80">
-                    · {lockedKeys.size} 位{isEmail ? "邮箱" : "电话"}未解锁，默认脱敏展示
+                    · {lockedActiveCount} 位{isEmail ? "邮箱" : "电话"}未解锁，默认脱敏展示
                   </span>
                 )}
+
               </Label>
-              {recipients.length === 0 ? (
+              {allRecipients.length === 0 ? (
                 <span className="text-xs text-rose-600">
                   {initialFilteredCount > 0
                     ? `已选对象均无${isEmail ? "邮箱" : "电话"}，已全部过滤`
@@ -497,7 +518,7 @@ export function ComposeSendDialog({
                       {isEmail ? "邮箱" : "电话"}的数据
                     </span>
                   )}
-                  {lockedKeys.size > 0 && (
+                  {lockedActiveCount > 0 && (
                     <Button
                       type="button"
                       variant="outline"
@@ -509,7 +530,7 @@ export function ComposeSendDialog({
                       }}
                     >
                       <Unlock className="h-3.5 w-3.5 mr-1" />
-                      全部解锁 · -{lockedKeys.size * unitView}
+                      全部解锁 · -{lockedActiveCount * unitView}
                     </Button>
                   )}
                 </div>
@@ -547,19 +568,24 @@ export function ComposeSendDialog({
                 </div>
               </div>
             )}
-            {recipients.length > 0 && (
+            {allRecipients.length > 0 && (
               <div className="max-h-52 overflow-y-auto rounded-md border bg-background divide-y">
-                {recipients.map((r) => {
+                {allRecipients.map((r) => {
                   const manual = isManualRecipient(r);
                   const locked = !manual && lockedKeys.has(r.key);
+                  const checked = !excludedKeys.has(r.key);
                   const remove = () =>
-                    setRecipients((prev) => prev.filter((x) => x.key !== r.key));
+                    setAllRecipients((prev) => prev.filter((x) => x.key !== r.key));
                   return (
                     <div
                       key={r.key}
                       className="flex items-center gap-2.5 px-3 py-2 hover:bg-muted/40"
                     >
-                      <Checkbox checked onCheckedChange={() => remove()} />
+                      <Checkbox
+                        checked={checked}
+                        onCheckedChange={(v) => toggleRecipient(r.key, v === true)}
+                      />
+
                       <span className="text-xs font-medium truncate max-w-[160px]">
                         {r.name}
                       </span>
@@ -706,7 +732,7 @@ export function ComposeSendDialog({
                     <button
                       type="button"
                       onClick={() =>
-                        setRecipients((prev) => prev.slice(0, remainingQuota))
+                        setAllRecipients((prev) => prev.slice(0, remainingQuota))
                       }
                       className="shrink-0 rounded border border-rose-300 bg-white px-2 py-0.5 font-medium hover:bg-rose-100"
                     >
@@ -917,9 +943,9 @@ export function ComposeSendDialog({
           <DialogHeader>
             <DialogTitle>解锁全部明文{isEmail ? "邮箱" : "电话"}</DialogTitle>
             <DialogDescription>
-              将为 {lockedKeys.size} 位未解锁收件人一次性解锁明文，扣除{" "}
+              将为 {lockedActiveCount} 位未解锁收件人一次性解锁明文，扣除{" "}
               <span className="font-semibold text-rose-600">
-                {lockedKeys.size * unitView}
+                {lockedActiveCount * unitView}
               </span>{" "}
               积分，解锁后永久有效、不可撤销。批量群发本身无需解锁即可发送。
             </DialogDescription>
@@ -930,7 +956,7 @@ export function ComposeSendDialog({
               onCheckedChange={(v) => setUnlockAllAck(v === true)}
               className="mt-0.5"
             />
-            <span>我已知晓将立即扣除 {lockedKeys.size * unitView} 积分</span>
+            <span>我已知晓将立即扣除 {lockedActiveCount * unitView} 积分</span>
           </label>
           <DialogFooter>
             <Button variant="outline" onClick={() => setUnlockAllOpen(false)}>
