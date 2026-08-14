@@ -8,7 +8,6 @@ import {
   MailPlus,
   MessageSquare,
   MessageCircle,
-  Sparkles,
   Undo2,
   Gift,
   ShieldAlert,
@@ -21,9 +20,6 @@ import {
   COST_REACH_SMS,
   COST_REACH_SOCIAL,
   COST_REACH_SOCIAL_WHATSAPP,
-  COST_AI_EMAIL,
-  COST_AI_SMS,
-  COST_AI_SOCIAL,
   COST_SOCIAL_ACCOUNT_PURCHASE,
 } from "@/lib/credits-ledger";
 import { Users } from "lucide-react";
@@ -100,29 +96,6 @@ const REACH_RULES: Rule[] = [
   },
 ];
 
-const AI_RULES: Rule[] = [
-  {
-    tone: "sky",
-    icon: <Sparkles className="h-4 w-4" />,
-    title: "AI 生成邮件文案",
-    cost: COST_AI_EMAIL,
-    desc: "调用 AI 一键生成邮件正文，每次生成按调用计费。",
-  },
-  {
-    tone: "violet",
-    icon: <Sparkles className="h-4 w-4" />,
-    title: "AI 生成短信文案",
-    cost: COST_AI_SMS,
-    desc: "调用 AI 一键生成短信内容，每次生成按调用计费。",
-  },
-  {
-    tone: "emerald",
-    icon: <Sparkles className="h-4 w-4" />,
-    title: "AI 生成社媒文案 / 翻译",
-    cost: COST_AI_SOCIAL,
-    desc: "调用 AI 生成社媒私信中文文案及目标语言翻译，免费使用，不消耗积分、不产生消费明细。",
-  },
-];
 const SOCIAL_ACCOUNT_RULES: Rule[] = [
   {
     tone: "emerald",
@@ -170,12 +143,6 @@ export function RulesSheet({
             title="触达消耗"
             hint="每次发送均扣费，仅对有效收件人计费。"
             rules={REACH_RULES}
-          />
-          <RuleGroup
-            icon={<Sparkles className="h-3.5 w-3.5" />}
-            title="AI 文案生成"
-            hint="每次调用 AI 生成按次扣费，与后续发送分别计费。"
-            rules={AI_RULES}
           />
           <RuleGroup
             icon={<Users className="h-3.5 w-3.5" />}
