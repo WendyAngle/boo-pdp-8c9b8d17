@@ -138,17 +138,8 @@ function ContactValue({ value }: { value: string }) {
   );
 }
 
-function ContactRow({
-  c,
-  revealed,
-  onToggle,
-}: {
-  c: UnlockedContact;
-  revealed: boolean;
-  onToggle: () => void;
-}) {
+function ContactRow({ c }: { c: UnlockedContact }) {
   const kind = toDisplayKind(c);
-  const display = revealed ? c.contact_value : maskContact(c.contact_type, c.contact_value);
   return (
     <div className="flex items-center gap-2 min-w-0">
       <span
@@ -161,20 +152,8 @@ function ContactRow({
         {KIND_LABEL[kind]}
       </span>
       <div className="flex-1 min-w-0 flex items-center gap-1">
-        <ContactValue value={display} />
+        <ContactValue value={c.contact_value} />
       </div>
-      <span className="shrink-0 text-[11px] text-muted-foreground tabular-nums">
-        {formatDateTime(new Date(c.unlock_time).toISOString())}
-      </span>
-      <button
-        type="button"
-        onClick={onToggle}
-        className="shrink-0 inline-flex h-6 w-6 items-center justify-center rounded hover:bg-muted text-muted-foreground hover:text-foreground transition-colors"
-        aria-label={revealed ? "隐藏明文" : "查看明文"}
-        title={revealed ? "隐藏明文" : "查看明文"}
-      >
-        {revealed ? <EyeOff className="h-3.5 w-3.5" /> : <Eye className="h-3.5 w-3.5" />}
-      </button>
     </div>
   );
 }
