@@ -211,10 +211,10 @@ export function BatchSocialPlatformDialog({
   const unitView = COST_VIEW_SOCIAL;
   /** 手动添加的目标由用户自行提供 handle，无需解锁 */
   const isManualJob = (j: Job) => j.candidate.targetId === "manual";
-  /** 尚未解锁明文的任务 key 集合 */
+  /** 尚未解锁明文的任务 key 集合（含未勾选项，勾选状态不影响解锁状态） */
   const lockedJobKeys = useMemo(() => {
     const set = new Set<string>();
-    for (const j of jobs) {
+    for (const j of allAccountJobs) {
       if (isManualJob(j)) continue;
       const bd = computeReachBreakdown(
         { targetKind: j.candidate.targetKind, targetId: j.candidate.targetId },
@@ -226,9 +226,11 @@ export function BatchSocialPlatformDialog({
     }
     return set;
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [jobs, ledger]);
+  }, [allAccountJobs, ledger]);
 
-  const viewCostTotal = lockedJobKeys.size * unitView;
+  /** 仅统计已勾选（实际执行）的待解锁条数 */
+  const viewCostTotal = jobs.filter((j) => lockedJobKeys.has(j.key)).length * unitView;
+
 
   function unlockJob(j: Job) {
     performReachAutoUnlocks({
