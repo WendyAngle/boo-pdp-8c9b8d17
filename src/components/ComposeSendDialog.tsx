@@ -564,11 +564,12 @@ export function ComposeSendDialog({
                 </div>
               </div>
             )}
-            {recipients.length > 0 && (
+            {allRecipients.length > 0 && (
               <div className="max-h-52 overflow-y-auto rounded-md border bg-background divide-y">
-                {recipients.map((r) => {
+                {allRecipients.map((r) => {
                   const manual = isManualRecipient(r);
                   const locked = !manual && lockedKeys.has(r.key);
+                  const checked = !excludedKeys.has(r.key);
                   const remove = () =>
                     setAllRecipients((prev) => prev.filter((x) => x.key !== r.key));
                   return (
@@ -576,7 +577,11 @@ export function ComposeSendDialog({
                       key={r.key}
                       className="flex items-center gap-2.5 px-3 py-2 hover:bg-muted/40"
                     >
-                      <Checkbox checked onCheckedChange={() => remove()} />
+                      <Checkbox
+                        checked={checked}
+                        onCheckedChange={(v) => toggleRecipient(r.key, v === true)}
+                      />
+
                       <span className="text-xs font-medium truncate max-w-[160px]">
                         {r.name}
                       </span>
