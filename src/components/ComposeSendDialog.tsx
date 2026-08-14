@@ -124,7 +124,22 @@ export function ComposeSendDialog({
   const ledger = useLedger();
   const myInfo = useMyInfoGuard();
 
-  const [recipients, setRecipients] = useState<Recipient[]>(incomingRecipients);
+  const [allRecipients, setAllRecipients] = useState<Recipient[]>(incomingRecipients);
+  /** 被取消勾选（本次不发送）的收件人 key，仅影响发送范围，不删除也不影响解锁状态 */
+  const [excludedKeys, setExcludedKeys] = useState<Set<string>>(new Set());
+  /** 实际参与发送与计费的收件人 */
+  const recipients = useMemo(
+    () => allRecipients.filter((r) => !excludedKeys.has(r.key)),
+    [allRecipients, excludedKeys],
+  );
+  function toggleRecipient(key: string, checked: boolean) {
+    setExcludedKeys((prev) => {
+      const next = new Set(prev);
+      if (checked) next.delete(key);
+      else next.add(key);
+      return next;
+    });
+  }
   /** 记录初始进入弹窗时被自动过滤的数量，用于维持“已自动过滤”文案的稳定性 */
   const [initialFilteredCount, setInitialFilteredCount] = useState(0);
   const [subject, setSubject] = useState("");
