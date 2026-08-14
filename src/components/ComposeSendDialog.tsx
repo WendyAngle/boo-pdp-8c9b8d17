@@ -3,7 +3,6 @@ import {
   Send,
   Sparkles,
   Mailbox as MailboxIcon,
-  X,
   Loader2,
   Trash2,
   ShieldOff,
