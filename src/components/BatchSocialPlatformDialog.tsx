@@ -577,6 +577,11 @@ export function BatchSocialPlatformDialog({
                         )}
                         {j.platform}: @{locked ? maskContact("social", j.handle) : j.handle}
                       </span>
+                      {isManual && (
+                        <Badge variant="secondary" className="h-4 px-1 text-[10px]">
+                          手动添加
+                        </Badge>
+                      )}
                       <div className="ml-auto flex items-center gap-1">
                         {locked && (
                           <button
