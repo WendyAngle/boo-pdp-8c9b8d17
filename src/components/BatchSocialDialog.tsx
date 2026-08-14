@@ -13,6 +13,7 @@ import {
   ServerCog,
   Info,
   Unlock,
+  Phone,
 } from "lucide-react";
 import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
@@ -525,7 +526,7 @@ export function BatchSocialDialog({
                 </div>
               </div>
 
-              <div className="flex flex-wrap gap-1.5 rounded-md border bg-muted/20 p-2 max-h-32 overflow-y-auto">
+              <div className="max-h-52 overflow-y-auto rounded-md border bg-background divide-y">
                 {candidates.map((c) => {
                   const st = normalizePhone(c.address)
                     ? getWaStatus(c.address)
@@ -539,44 +540,47 @@ export function BatchSocialDialog({
                           ? "border-amber-200 bg-amber-50 text-amber-700"
                           : "border-slate-200 bg-slate-50 text-slate-600";
                   return (
-                    <span
+                    <div
                       key={c.key}
-                      className={cn(
-                        "inline-flex items-center gap-1 rounded-md border px-2 py-0.5 text-xs",
-                        tone,
-                      )}
+                      className="flex items-center gap-2.5 px-3 py-2 hover:bg-muted/40"
                     >
-                      <span className="font-medium">{c.name}</span>
-                      <span className="opacity-60">·</span>
-                      {c.address ? (
-                        <MaskedField
-                          targetKind={c.targetKind}
-                          targetId={c.targetId}
-                          targetName={c.name}
-                          parentRef={c.parentRef}
-                          field="phone"
-                          value={c.address}
-                          mono
-                        />
-                      ) : (
-                        <span className="font-mono text-muted-foreground">—</span>
-                      )}
-                      <button
-                        type="button"
-                        onClick={() =>
+                      <Checkbox
+                        checked
+                        onCheckedChange={() =>
                           setCandidates((prev) =>
                             prev.filter((x) => x.key !== c.key),
                           )
                         }
-                        className="ml-0.5 opacity-60 hover:opacity-100"
-                        aria-label="移除"
+                      />
+                      <span className="text-xs font-medium truncate max-w-[160px]">
+                        {c.name}
+                      </span>
+                      <span
+                        className={cn(
+                          "inline-flex items-center gap-1 rounded-md border px-2 py-0.5 text-[11px]",
+                          tone,
+                        )}
                       >
-                        <X className="h-3 w-3" />
-                      </button>
-                    </span>
+                        <Phone className="h-3 w-3" />
+                        {c.address ? (
+                          <MaskedField
+                            targetKind={c.targetKind}
+                            targetId={c.targetId}
+                            targetName={c.name}
+                            parentRef={c.parentRef}
+                            field="phone"
+                            value={c.address}
+                            mono
+                          />
+                        ) : (
+                          <span className="font-mono">—</span>
+                        )}
+                      </span>
+                    </div>
                   );
                 })}
               </div>
+
             </section>
           )}
 
