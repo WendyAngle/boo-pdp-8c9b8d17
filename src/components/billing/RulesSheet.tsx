@@ -145,12 +145,6 @@ export function RulesSheet({
             rules={REACH_RULES}
           />
           <RuleGroup
-            icon={<Sparkles className="h-3.5 w-3.5" />}
-            title="AI 文案生成"
-            hint="每次调用 AI 生成按次扣费，与后续发送分别计费。"
-            rules={AI_RULES}
-          />
-          <RuleGroup
             icon={<Users className="h-3.5 w-3.5" />}
             title="社媒账号"
             hint="社媒账号购买后可用于加友与私信触达。"
