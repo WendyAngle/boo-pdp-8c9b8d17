@@ -3,7 +3,6 @@ import {
   Send,
   Sparkles,
   Loader2,
-  X,
   ServerCog,
   Users,
   Info,
@@ -381,14 +380,6 @@ export function BatchSocialPlatformDialog({
     setNewTarget({ ...newTarget, name: "", handle: "" });
     setIsAdding(false);
     toast.success("已手动添加触达目标");
-  }
-
-  function handleRemoveJob(jobKey: string) {
-    setRemovedJobKeys((prev) => {
-      const next = new Set(prev);
-      next.add(jobKey);
-      return next;
-    });
   }
 
   /** 勾选 / 取消勾选某个目标账号 */
