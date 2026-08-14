@@ -493,12 +493,13 @@ export function ComposeSendDialog({
           <section className="space-y-2">
             <div className="flex items-center justify-between gap-2">
               <Label className="text-xs text-muted-foreground">
-                收件人（{recipients.length}）
-                {lockedKeys.size > 0 && (
+                收件人（已选 {recipients.length}/{allRecipients.length}）
+                {lockedActiveCount > 0 && (
                   <span className="ml-1 text-muted-foreground/80">
-                    · {lockedKeys.size} 位{isEmail ? "邮箱" : "电话"}未解锁，默认脱敏展示
+                    · {lockedActiveCount} 位{isEmail ? "邮箱" : "电话"}未解锁，默认脱敏展示
                   </span>
                 )}
+
               </Label>
               {recipients.length === 0 ? (
                 <span className="text-xs text-rose-600">
