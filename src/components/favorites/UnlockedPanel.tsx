@@ -322,44 +322,6 @@ export function UnlockedPanel() {
   const [owner, setOwner] = useState<OwnerFilter>("all");
   const [aggregate, setAggregate] = useState<AggregateMode>("none");
   const [dateRange, setDateRange] = useState<DateRange | undefined>(undefined);
-  const [revealed, setRevealed] = useState<Set<string>>(new Set());
-  const [confirmOpen, setConfirmOpen] = useState(false);
-  const [pendingKey, setPendingKey] = useState<string | null>(null);
-  const [bulkAcked, setBulkAcked] = useState(false);
-
-  const toggleReveal = useCallback(
-    (key: string) => {
-      setRevealed((prev) => {
-        const next = new Set(prev);
-        if (next.has(key)) {
-          next.delete(key);
-          return next;
-        }
-        if (!bulkAcked && next.size >= REVEAL_LIMIT) {
-          setPendingKey(key);
-          setConfirmOpen(true);
-          return prev;
-        }
-        next.add(key);
-        return next;
-      });
-    },
-    [bulkAcked],
-  );
-
-  const confirmReveal = () => {
-    setBulkAcked(true);
-    setConfirmOpen(false);
-    if (pendingKey) {
-      setRevealed((prev) => {
-        const next = new Set(prev);
-        next.add(pendingKey);
-        return next;
-      });
-      setPendingKey(null);
-    }
-    toast.info("已开启本次会话的批量明示，请注意防止截屏泄露");
-  };
 
   const filtered = useMemo(() => {
     const kw = q.trim().toLowerCase();
