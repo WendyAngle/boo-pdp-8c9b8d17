@@ -192,7 +192,7 @@ export function ComposeSendDialog({
         ctx: { 联系人名: name, ...my } as VarContext,
       });
     }
-    if (added.length > 0) setRecipients((prev) => [...prev, ...added]);
+    if (added.length > 0) setAllRecipients((prev) => [...prev, ...added]);
     setManualInput(invalid.join(" "));
     if (invalid.length > 0)
       toast.error(`${invalid.length} 个${isEmail ? "邮箱" : "手机号"}格式不正确`, {
@@ -205,7 +205,7 @@ export function ComposeSendDialog({
   // 重置 state 每次打开
   useEffect(() => {
     if (!open) return;
-    setRecipients(incomingRecipients);
+    setAllRecipients(incomingRecipients);
     if (typeof totalSelected === "number") {
       setInitialFilteredCount(Math.max(0, totalSelected - incomingRecipients.length));
     } else {
@@ -568,7 +568,7 @@ export function ComposeSendDialog({
                   const manual = isManualRecipient(r);
                   const locked = !manual && lockedKeys.has(r.key);
                   const remove = () =>
-                    setRecipients((prev) => prev.filter((x) => x.key !== r.key));
+                    setAllRecipients((prev) => prev.filter((x) => x.key !== r.key));
                   return (
                     <div
                       key={r.key}
@@ -721,7 +721,7 @@ export function ComposeSendDialog({
                     <button
                       type="button"
                       onClick={() =>
-                        setRecipients((prev) => prev.slice(0, remainingQuota))
+                        setAllRecipients((prev) => prev.slice(0, remainingQuota))
                       }
                       className="shrink-0 rounded border border-rose-300 bg-white px-2 py-0.5 font-medium hover:bg-rose-100"
                     >
