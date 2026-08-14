@@ -228,7 +228,6 @@ function GroupCard({
         >
           {isPerson ? <User className="h-3 w-3" /> : <Building2 className="h-3 w-3" />}
           {isPerson ? "人物" : "企业"}
-          <span className="ml-1 tabular-nums opacity-70">· {g.contacts.length}</span>
         </span>
       </div>
 
