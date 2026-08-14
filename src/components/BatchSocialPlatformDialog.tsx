@@ -391,6 +391,25 @@ export function BatchSocialPlatformDialog({
     });
   }
 
+  /** 勾选 / 取消勾选某个目标账号 */
+  function toggleJob(jobKey: string, checked: boolean) {
+    setRemovedJobKeys((prev) => {
+      const next = new Set(prev);
+      if (checked) next.delete(jobKey);
+      else next.add(jobKey);
+      return next;
+    });
+  }
+
+  /** 删除手动添加的目标 */
+  function removeManualCandidate(candidateKey: string) {
+    const newList = internalCandidates.filter((c) => c.key !== candidateKey);
+    setInternalCandidates(newList);
+    onCandidatesChange?.(newList);
+    toast.success("已删除手动添加的目标");
+  }
+
+
   async function handleAiGenerate() {
     if (aiLoading) return;
     if (!myInfo.ensure()) return;
