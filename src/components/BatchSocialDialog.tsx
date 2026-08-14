@@ -13,6 +13,7 @@ import {
   ServerCog,
   Info,
   Unlock,
+  Phone,
 } from "lucide-react";
 import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
