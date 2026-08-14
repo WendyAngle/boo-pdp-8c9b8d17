@@ -550,13 +550,7 @@ export function UnlockedPanel() {
       ) : aggregate === "owner" ? (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 items-start">
           {ownerGroups.map((g) => (
-            <GroupCard
-              key={g.key}
-              g={g}
-              revealed={revealed}
-              onToggle={toggleReveal}
-              groupByDate
-            />
+            <GroupCard key={g.key} g={g} groupByDate />
           ))}
         </div>
       ) : (
@@ -582,38 +576,13 @@ export function UnlockedPanel() {
               </div>
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
                 {groups.map((g) => (
-                  <GroupCard
-                    key={g.key}
-                    g={g}
-                    revealed={revealed}
-                    onToggle={toggleReveal}
-                  />
+                  <GroupCard key={g.key} g={g} />
                 ))}
               </div>
             </div>
           ))}
         </div>
       )}
-
-
-      <AlertDialog open={confirmOpen} onOpenChange={setConfirmOpen}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>连续揭示超过 {REVEAL_LIMIT} 条</AlertDialogTitle>
-            <AlertDialogDescription>
-              为防止截屏泄露联系方式，请确认继续以明文展示。确认后本次会话内将不再提示。
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel onClick={() => setPendingKey(null)}>
-              取消
-            </AlertDialogCancel>
-            <AlertDialogAction onClick={confirmReveal}>
-              我已知晓，继续
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
     </div>
     </TooltipProvider>
   );
