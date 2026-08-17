@@ -429,28 +429,6 @@ function ReachPage() {
               </SelectContent>
             </Select>
           </div>
-          <div className="flex items-center gap-2">
-            <span className="text-sm text-muted-foreground whitespace-nowrap">目标类型</span>
-            <Select
-              value={targetKind}
-              onValueChange={(v) => setTargetKind(v as typeof targetKind)}
-            >
-              <SelectTrigger className="h-9 w-[160px] bg-background">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">
-                  全部（{targetKindCounts.ent + targetKindCounts.con}）
-                </SelectItem>
-                <SelectItem value="enterprise">
-                  企业（{targetKindCounts.ent}）
-                </SelectItem>
-                <SelectItem value="contact">
-                  人物（{targetKindCounts.con}）
-                </SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
           <div className="relative flex-1 min-w-[220px]">
             <Search className="h-4 w-4 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
             <Input
@@ -460,14 +438,13 @@ function ReachPage() {
               className="pl-9 h-9 bg-background"
             />
           </div>
-          {(kw || channel !== "all" || targetKind !== "all") && (
+          {(kw || channel !== "all") && (
             <Button
               variant="ghost"
               size="sm"
               onClick={() => {
                 setKw("");
                 setChannel("all");
-                setTargetKind("all");
               }}
               className="gap-1"
             >
