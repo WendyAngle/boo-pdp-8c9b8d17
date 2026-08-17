@@ -25,6 +25,8 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { toast } from "sonner";
+import { detectCountries, detectRoles } from "@/lib/search-intent";
+
 
 export const Route = createFileRoute("/_app/outreach/search")({
   head: () => ({
