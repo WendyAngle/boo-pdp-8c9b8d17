@@ -213,6 +213,9 @@ function SearchPage() {
   const [countryKw, setCountryKw] = useState("");
   const [importer, setImporter] = useState(true);
   const [exporter, setExporter] = useState(true);
+  // 用户一旦手动调整筛选，则不再被自动匹配覆盖
+  const countryTouched = useRef(false);
+  const roleTouched = useRef(false);
   const [recentTick, setRecentTick] = useState(0);
   const [mounted, setMounted] = useState(false);
   const recent = useMemo(() => loadRecent(), [recentTick]);
@@ -221,6 +224,23 @@ function SearchPage() {
   useEffect(() => {
     setMounted(true);
   }, []);
+
+  // 根据输入内容自动匹配国家 / 进出口商角色
+  useEffect(() => {
+    const text = kw.trim();
+    if (!countryTouched.current) {
+      const hit = detectCountries(text, COUNTRIES);
+      setCountries((prev) =>
+        prev.length === hit.length && prev.every((c, i) => c === hit[i]) ? prev : hit,
+      );
+    }
+    if (!roleTouched.current) {
+      const role = detectRoles(text);
+      setImporter(role.importer);
+      setExporter(role.exporter);
+    }
+  }, [kw]);
+
 
   const filteredCountries = useMemo(() => {
     const q = countryKw.trim().toLowerCase();
