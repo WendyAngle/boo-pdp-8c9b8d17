@@ -120,9 +120,6 @@ function ReachPage() {
   const [channel, setChannel] = useState<"all" | ReachChannel | "whatsapp">(
     "all",
   );
-  const [targetKind, setTargetKind] = useState<"all" | "enterprise" | "contact">(
-    "all",
-  );
   const [kw, setKw] = useState("");
   const [page, setPage] = useState(1);
   const pageSize = 10;
@@ -139,7 +136,6 @@ function ReachPage() {
   const filtered = useMemo(() => {
     const k = kw.trim().toLowerCase();
     return reachRows.filter((r) => {
-      if (targetKind !== "all" && r.targetKind !== targetKind) return false;
       if (channel === "whatsapp") {
         if (r.channel !== "social" || r.platform !== "WhatsApp") return false;
       } else if (channel === "social") {
@@ -155,21 +151,11 @@ function ReachPage() {
         (r.platform ?? "").toLowerCase().includes(k)
       );
     });
-  }, [reachRows, channel, targetKind, kw]);
+  }, [reachRows, channel, kw]);
 
   useEffect(() => {
     setPage(1);
-  }, [channel, targetKind, kw]);
-
-  const targetKindCounts = useMemo(() => {
-    let ent = 0;
-    let con = 0;
-    for (const r of reachRows) {
-      if (r.targetKind === "enterprise") ent++;
-      else if (r.targetKind === "contact") con++;
-    }
-    return { ent, con };
-  }, [reachRows]);
+  }, [channel, kw]);
 
   const channelCounts = useMemo(() => {
     let email = 0;
