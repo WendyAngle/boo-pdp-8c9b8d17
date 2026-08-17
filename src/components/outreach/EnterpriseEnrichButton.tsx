@@ -34,10 +34,10 @@ export function EnterpriseEnrichButton({ enterprise }: { enterprise: Enterprise 
 
   const launch = () => {
     const ok = startEnrich(enterprise, () => {
-      toast.success("数据补全完成，页面已同步更新");
+      toast.success("数据已更新");
     });
     if (ok) {
-      toast.success("操作成功，数据获取中，约30s后刷新可查看最新数据", {
+      toast.success("操作成功，数据更新中，约30s后刷新可查看最新数据", {
         style: { whiteSpace: "nowrap" },
       });
     }
