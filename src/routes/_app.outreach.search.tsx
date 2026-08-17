@@ -257,10 +257,24 @@ function SearchPage() {
         ? countries[0]
         : `已选 ${countries.length} 个国家`;
 
+  const setCountriesManual: React.Dispatch<React.SetStateAction<string[]>> = (v) => {
+    countryTouched.current = true;
+    setCountries(v);
+  };
+  const setImporterManual = (v: boolean) => {
+    roleTouched.current = true;
+    setImporter(v);
+  };
+  const setExporterManual = (v: boolean) => {
+    roleTouched.current = true;
+    setExporter(v);
+  };
+
   const toggleCountry = (c: string) =>
-    setCountries((prev) =>
+    setCountriesManual((prev) =>
       prev.includes(c) ? prev.filter((x) => x !== c) : [...prev, c],
     );
+
 
   const go = (keyword: string) => {
     const k = keyword.trim();
