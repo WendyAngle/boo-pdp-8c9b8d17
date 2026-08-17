@@ -25,6 +25,8 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { toast } from "sonner";
+import { detectCountries, detectRoles } from "@/lib/search-intent";
+
 
 export const Route = createFileRoute("/_app/outreach/search")({
   head: () => ({
@@ -118,8 +120,8 @@ const COUNTRIES = [
   "沙特阿拉伯", "瑞典", "新加坡", "泰国", "土耳其", "美国", "越南", "南非",
 ];
 
-const PLACEHOLDER =
-  '商品关键词或HS Code、公司名称等，支持逗号/分号/顿号/换行或中英文空格，如"850760 锂电池"';
+const PLACEHOLDER = '请输入您要查找的内容，如"我想找德国做汽车配件的采购商"';
+
 
 /* ------------------------------- 国家选择器（Popover 复用） ------------------------------- */
 function CountryFilter({
@@ -213,6 +215,9 @@ function SearchPage() {
   const [countryKw, setCountryKw] = useState("");
   const [importer, setImporter] = useState(true);
   const [exporter, setExporter] = useState(true);
+  // 用户一旦手动调整筛选，则不再被自动匹配覆盖
+  const countryTouched = useRef(false);
+  const roleTouched = useRef(false);
   const [recentTick, setRecentTick] = useState(0);
   const [mounted, setMounted] = useState(false);
   const recent = useMemo(() => loadRecent(), [recentTick]);
@@ -221,6 +226,23 @@ function SearchPage() {
   useEffect(() => {
     setMounted(true);
   }, []);
+
+  // 根据输入内容自动匹配国家 / 进出口商角色
+  useEffect(() => {
+    const text = kw.trim();
+    if (!countryTouched.current) {
+      const hit = detectCountries(text, COUNTRIES);
+      setCountries((prev) =>
+        prev.length === hit.length && prev.every((c, i) => c === hit[i]) ? prev : hit,
+      );
+    }
+    if (!roleTouched.current) {
+      const role = detectRoles(text);
+      setImporter(role.importer);
+      setExporter(role.exporter);
+    }
+  }, [kw]);
+
 
   const filteredCountries = useMemo(() => {
     const q = countryKw.trim().toLowerCase();
@@ -235,10 +257,24 @@ function SearchPage() {
         ? countries[0]
         : `已选 ${countries.length} 个国家`;
 
+  const setCountriesManual: React.Dispatch<React.SetStateAction<string[]>> = (v) => {
+    countryTouched.current = true;
+    setCountries(v);
+  };
+  const setImporterManual = (v: boolean) => {
+    roleTouched.current = true;
+    setImporter(v);
+  };
+  const setExporterManual = (v: boolean) => {
+    roleTouched.current = true;
+    setExporter(v);
+  };
+
   const toggleCountry = (c: string) =>
-    setCountries((prev) =>
+    setCountriesManual((prev) =>
       prev.includes(c) ? prev.filter((x) => x !== c) : [...prev, c],
     );
+
 
   const go = (keyword: string) => {
     const k = keyword.trim();
@@ -304,7 +340,7 @@ function SearchPage() {
           <div className="h-6 w-px bg-slate-200 mx-1" />
           <CountryFilter
             countries={countries}
-            setCountries={setCountries}
+            setCountries={setCountriesManual}
             countryKw={countryKw}
             setCountryKw={setCountryKw}
             filteredCountries={filteredCountries}
@@ -322,14 +358,14 @@ function SearchPage() {
           <label className="inline-flex h-10 items-center gap-2 rounded-lg px-3 text-sm text-slate-700 hover:bg-slate-50 transition-colors cursor-pointer whitespace-nowrap">
             <Checkbox
               checked={importer}
-              onCheckedChange={(v) => setImporter(v === true)}
+              onCheckedChange={(v) => setImporterManual(v === true)}
             />
             进口商
           </label>
           <label className="inline-flex h-10 items-center gap-2 rounded-lg px-3 text-sm text-slate-700 hover:bg-slate-50 transition-colors cursor-pointer whitespace-nowrap">
             <Checkbox
               checked={exporter}
-              onCheckedChange={(v) => setExporter(v === true)}
+              onCheckedChange={(v) => setExporterManual(v === true)}
             />
             出口商
           </label>
@@ -350,7 +386,7 @@ function SearchPage() {
       <div className="md:hidden flex flex-col gap-2 px-4 py-3 border-t border-slate-100">
         <CountryFilter
           countries={countries}
-          setCountries={setCountries}
+          setCountries={setCountriesManual}
           countryKw={countryKw}
           setCountryKw={setCountryKw}
           filteredCountries={filteredCountries}
@@ -369,14 +405,14 @@ function SearchPage() {
           <label className="inline-flex flex-1 h-10 items-center justify-center gap-2 rounded-lg bg-white px-2 text-sm text-slate-700 ring-1 ring-slate-200 cursor-pointer whitespace-nowrap">
             <Checkbox
               checked={importer}
-              onCheckedChange={(v) => setImporter(v === true)}
+              onCheckedChange={(v) => setImporterManual(v === true)}
             />
             进口商
           </label>
           <label className="inline-flex flex-1 h-10 items-center justify-center gap-2 rounded-lg bg-white px-2 text-sm text-slate-700 ring-1 ring-slate-200 cursor-pointer whitespace-nowrap">
             <Checkbox
               checked={exporter}
-              onCheckedChange={(v) => setExporter(v === true)}
+              onCheckedChange={(v) => setExporterManual(v === true)}
             />
             出口商
           </label>
