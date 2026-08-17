@@ -635,7 +635,6 @@ function SourceNote({ title, items }: { title: string; items: React.ReactNode[] 
 }
 
 function KpiCard({
-
   icon,
   label,
   value,
@@ -644,13 +643,15 @@ function KpiCard({
   icon: React.ReactNode;
   label: string;
   value: number;
-  tone: "slate" | "amber" | "emerald" | "rose";
+  tone: "slate" | "amber" | "emerald" | "rose" | "sky" | "violet";
 }) {
   const toneMap = {
     slate: "bg-slate-50 text-slate-600 ring-slate-200",
     amber: "bg-amber-50 text-amber-600 ring-amber-200",
     emerald: "bg-emerald-50 text-emerald-600 ring-emerald-200",
     rose: "bg-rose-50 text-rose-600 ring-rose-200",
+    sky: "bg-sky-50 text-sky-600 ring-sky-200",
+    violet: "bg-violet-50 text-violet-600 ring-violet-200",
   } as const;
   return (
     <div className="rounded-xl ring-1 ring-border bg-card p-5 flex items-center gap-4">
