@@ -340,7 +340,7 @@ function SearchPage() {
           <div className="h-6 w-px bg-slate-200 mx-1" />
           <CountryFilter
             countries={countries}
-            setCountries={setCountries}
+            setCountries={setCountriesManual}
             countryKw={countryKw}
             setCountryKw={setCountryKw}
             filteredCountries={filteredCountries}
@@ -358,14 +358,14 @@ function SearchPage() {
           <label className="inline-flex h-10 items-center gap-2 rounded-lg px-3 text-sm text-slate-700 hover:bg-slate-50 transition-colors cursor-pointer whitespace-nowrap">
             <Checkbox
               checked={importer}
-              onCheckedChange={(v) => setImporter(v === true)}
+              onCheckedChange={(v) => setImporterManual(v === true)}
             />
             进口商
           </label>
           <label className="inline-flex h-10 items-center gap-2 rounded-lg px-3 text-sm text-slate-700 hover:bg-slate-50 transition-colors cursor-pointer whitespace-nowrap">
             <Checkbox
               checked={exporter}
-              onCheckedChange={(v) => setExporter(v === true)}
+              onCheckedChange={(v) => setExporterManual(v === true)}
             />
             出口商
           </label>
@@ -386,7 +386,7 @@ function SearchPage() {
       <div className="md:hidden flex flex-col gap-2 px-4 py-3 border-t border-slate-100">
         <CountryFilter
           countries={countries}
-          setCountries={setCountries}
+          setCountries={setCountriesManual}
           countryKw={countryKw}
           setCountryKw={setCountryKw}
           filteredCountries={filteredCountries}
@@ -405,14 +405,14 @@ function SearchPage() {
           <label className="inline-flex flex-1 h-10 items-center justify-center gap-2 rounded-lg bg-white px-2 text-sm text-slate-700 ring-1 ring-slate-200 cursor-pointer whitespace-nowrap">
             <Checkbox
               checked={importer}
-              onCheckedChange={(v) => setImporter(v === true)}
+              onCheckedChange={(v) => setImporterManual(v === true)}
             />
             进口商
           </label>
           <label className="inline-flex flex-1 h-10 items-center justify-center gap-2 rounded-lg bg-white px-2 text-sm text-slate-700 ring-1 ring-slate-200 cursor-pointer whitespace-nowrap">
             <Checkbox
               checked={exporter}
-              onCheckedChange={(v) => setExporter(v === true)}
+              onCheckedChange={(v) => setExporterManual(v === true)}
             />
             出口商
           </label>
