@@ -172,6 +172,17 @@ function ReachPage() {
     return { ent, con };
   }, [reachRows]);
 
+  const channelCounts = useMemo(() => {
+    let email = 0;
+    let phone = 0;
+    let social = 0;
+    for (const r of reachRows) {
+      if (r.channel === "email") email++;
+      else if (r.channel === "phone") phone++;
+      else if (r.channel === "social") social++;
+    }
+    return { email, phone, social };
+  }, [reachRows]);
 
   const replyTotal = useMemo(
     () =>
@@ -316,7 +327,7 @@ function ReachPage() {
       </section>
 
       {/* KPI */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
         <KpiCard
           icon={<CheckCircle2 className="h-5 w-5" />}
           label="触达成功"
@@ -324,22 +335,28 @@ function ReachPage() {
           tone="emerald"
         />
         <KpiCard
-          icon={<Building2 className="h-5 w-5" />}
-          label="企业目标"
-          value={targetKindCounts.ent}
-          tone="slate"
+          icon={<Mail className="h-5 w-5" />}
+          label="邮件触达"
+          value={channelCounts.email}
+          tone="sky"
         />
         <KpiCard
-          icon={<UserRound className="h-5 w-5" />}
-          label="人物目标"
-          value={targetKindCounts.con}
+          icon={<Phone className="h-5 w-5" />}
+          label="短信触达"
+          value={channelCounts.phone}
           tone="amber"
+        />
+        <KpiCard
+          icon={<Globe className="h-5 w-5" />}
+          label="社媒触达"
+          value={channelCounts.social}
+          tone="violet"
         />
         <KpiCard
           icon={<MessageCircleReply className="h-5 w-5" />}
           label="客户回复"
           value={replyTotal}
-          tone="emerald"
+          tone="rose"
         />
       </div>
 
@@ -618,7 +635,6 @@ function SourceNote({ title, items }: { title: string; items: React.ReactNode[] 
 }
 
 function KpiCard({
-
   icon,
   label,
   value,
@@ -627,13 +643,15 @@ function KpiCard({
   icon: React.ReactNode;
   label: string;
   value: number;
-  tone: "slate" | "amber" | "emerald" | "rose";
+  tone: "slate" | "amber" | "emerald" | "rose" | "sky" | "violet";
 }) {
   const toneMap = {
     slate: "bg-slate-50 text-slate-600 ring-slate-200",
     amber: "bg-amber-50 text-amber-600 ring-amber-200",
     emerald: "bg-emerald-50 text-emerald-600 ring-emerald-200",
     rose: "bg-rose-50 text-rose-600 ring-rose-200",
+    sky: "bg-sky-50 text-sky-600 ring-sky-200",
+    violet: "bg-violet-50 text-violet-600 ring-violet-200",
   } as const;
   return (
     <div className="rounded-xl ring-1 ring-border bg-card p-5 flex items-center gap-4">
