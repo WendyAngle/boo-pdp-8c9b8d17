@@ -11,10 +11,10 @@ import {
 } from "@/lib/enterprise-enrich";
 
 /**
- * 企业数据补全入口
+ * 企业数据更新入口
  * - 详情页右上角常驻按钮，统一主按钮样式
- * - 点击后直接提交采集任务，toast 提示用户约 30 秒后刷新查看
- * - 采集中按钮转为进度态；30 秒倒计时结束后自动恢复为“补全企业数据”
+ * - 点击后直接提交更新任务，toast 提示用户约 30 秒后刷新查看
+ * - 更新中按钮转为进度态；30 秒倒计时结束后自动恢复为“更新企业数据”
  */
 export function EnterpriseEnrichButton({ enterprise }: { enterprise: Enterprise }) {
   const rec = useEnrich(enterprise.id);
