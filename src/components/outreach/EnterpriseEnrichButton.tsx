@@ -11,10 +11,10 @@ import {
 } from "@/lib/enterprise-enrich";
 
 /**
- * 企业数据补全入口
+ * 企业数据更新入口
  * - 详情页右上角常驻按钮，统一主按钮样式
- * - 点击后直接提交采集任务，toast 提示用户约 30 秒后刷新查看
- * - 采集中按钮转为进度态；30 秒倒计时结束后自动恢复为“补全企业数据”
+ * - 点击后直接提交更新任务，toast 提示用户约 30 秒后刷新查看
+ * - 更新中按钮转为进度态；30 秒倒计时结束后自动恢复为“更新企业数据”
  */
 export function EnterpriseEnrichButton({ enterprise }: { enterprise: Enterprise }) {
   const rec = useEnrich(enterprise.id);
@@ -34,10 +34,10 @@ export function EnterpriseEnrichButton({ enterprise }: { enterprise: Enterprise 
 
   const launch = () => {
     const ok = startEnrich(enterprise, () => {
-      toast.success("数据补全完成，页面已同步更新");
+      toast.success("数据已更新");
     });
     if (ok) {
-      toast.success("操作成功，数据获取中，约30s后刷新可查看最新数据", {
+      toast.success("操作成功，数据更新中，约30s后刷新可查看最新数据", {
         style: { whiteSpace: "nowrap" },
       });
     }
@@ -55,12 +55,12 @@ export function EnterpriseEnrichButton({ enterprise }: { enterprise: Enterprise 
         {running ? (
           <>
             <Loader2 className="h-4 w-4 animate-spin" />
-            采集中 · 约 {remain}秒
+            更新中 · 约 {remain}秒
           </>
         ) : (
           <>
             <Sparkles className="h-4 w-4" />
-            补全企业数据
+            更新企业数据
           </>
         )}
       </Button>
