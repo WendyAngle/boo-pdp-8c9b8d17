@@ -55,12 +55,12 @@ export function EnterpriseEnrichButton({ enterprise }: { enterprise: Enterprise 
         {running ? (
           <>
             <Loader2 className="h-4 w-4 animate-spin" />
-            采集中 · 约 {remain}秒
+            更新中 · 约 {remain}秒
           </>
         ) : (
           <>
             <Sparkles className="h-4 w-4" />
-            补全企业数据
+            更新企业数据
           </>
         )}
       </Button>
