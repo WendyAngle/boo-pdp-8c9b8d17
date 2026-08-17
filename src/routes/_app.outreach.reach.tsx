@@ -162,16 +162,17 @@ function ReachPage() {
     setPage(1);
   }, [channel, targetKind, kw]);
 
-  const targetKindCounts = useMemo(() => {
-    let ent = 0;
-    let con = 0;
+  const channelCounts = useMemo(() => {
+    let email = 0;
+    let phone = 0;
+    let social = 0;
     for (const r of reachRows) {
-      if (r.targetKind === "enterprise") ent++;
-      else if (r.targetKind === "contact") con++;
+      if (r.channel === "email") email++;
+      else if (r.channel === "phone") phone++;
+      else if (r.channel === "social") social++;
     }
-    return { ent, con };
+    return { email, phone, social };
   }, [reachRows]);
-
 
   const replyTotal = useMemo(
     () =>
