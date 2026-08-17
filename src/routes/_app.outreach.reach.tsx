@@ -9,7 +9,6 @@ import {
   Search,
   X,
   Building2,
-  UserRound,
   CheckCircle2,
   Send,
   RefreshCw,
@@ -121,9 +120,6 @@ function ReachPage() {
   const [channel, setChannel] = useState<"all" | ReachChannel | "whatsapp">(
     "all",
   );
-  const [targetKind, setTargetKind] = useState<"all" | "enterprise" | "contact">(
-    "all",
-  );
   const [kw, setKw] = useState("");
   const [page, setPage] = useState(1);
   const pageSize = 10;
@@ -140,7 +136,6 @@ function ReachPage() {
   const filtered = useMemo(() => {
     const k = kw.trim().toLowerCase();
     return reachRows.filter((r) => {
-      if (targetKind !== "all" && r.targetKind !== targetKind) return false;
       if (channel === "whatsapp") {
         if (r.channel !== "social" || r.platform !== "WhatsApp") return false;
       } else if (channel === "social") {
@@ -156,21 +151,11 @@ function ReachPage() {
         (r.platform ?? "").toLowerCase().includes(k)
       );
     });
-  }, [reachRows, channel, targetKind, kw]);
+  }, [reachRows, channel, kw]);
 
   useEffect(() => {
     setPage(1);
-  }, [channel, targetKind, kw]);
-
-  const targetKindCounts = useMemo(() => {
-    let ent = 0;
-    let con = 0;
-    for (const r of reachRows) {
-      if (r.targetKind === "enterprise") ent++;
-      else if (r.targetKind === "contact") con++;
-    }
-    return { ent, con };
-  }, [reachRows]);
+  }, [channel, kw]);
 
   const channelCounts = useMemo(() => {
     let email = 0;
@@ -444,28 +429,6 @@ function ReachPage() {
               </SelectContent>
             </Select>
           </div>
-          <div className="flex items-center gap-2">
-            <span className="text-sm text-muted-foreground whitespace-nowrap">目标类型</span>
-            <Select
-              value={targetKind}
-              onValueChange={(v) => setTargetKind(v as typeof targetKind)}
-            >
-              <SelectTrigger className="h-9 w-[160px] bg-background">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">
-                  全部（{targetKindCounts.ent + targetKindCounts.con}）
-                </SelectItem>
-                <SelectItem value="enterprise">
-                  企业（{targetKindCounts.ent}）
-                </SelectItem>
-                <SelectItem value="contact">
-                  人物（{targetKindCounts.con}）
-                </SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
           <div className="relative flex-1 min-w-[220px]">
             <Search className="h-4 w-4 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
             <Input
@@ -475,14 +438,13 @@ function ReachPage() {
               className="pl-9 h-9 bg-background"
             />
           </div>
-          {(kw || channel !== "all" || targetKind !== "all") && (
+          {(kw || channel !== "all") && (
             <Button
               variant="ghost"
               size="sm"
               onClick={() => {
                 setKw("");
                 setChannel("all");
-                setTargetKind("all");
               }}
               className="gap-1"
             >
