@@ -327,7 +327,7 @@ function ReachPage() {
       </section>
 
       {/* KPI */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
         <KpiCard
           icon={<CheckCircle2 className="h-5 w-5" />}
           label="触达成功"
@@ -335,22 +335,28 @@ function ReachPage() {
           tone="emerald"
         />
         <KpiCard
-          icon={<Building2 className="h-5 w-5" />}
-          label="企业目标"
-          value={targetKindCounts.ent}
-          tone="slate"
+          icon={<Mail className="h-5 w-5" />}
+          label="邮件触达"
+          value={channelCounts.email}
+          tone="sky"
         />
         <KpiCard
-          icon={<UserRound className="h-5 w-5" />}
-          label="人物目标"
-          value={targetKindCounts.con}
+          icon={<Phone className="h-5 w-5" />}
+          label="短信触达"
+          value={channelCounts.phone}
           tone="amber"
+        />
+        <KpiCard
+          icon={<Globe className="h-5 w-5" />}
+          label="社媒触达"
+          value={channelCounts.social}
+          tone="violet"
         />
         <KpiCard
           icon={<MessageCircleReply className="h-5 w-5" />}
           label="客户回复"
           value={replyTotal}
-          tone="emerald"
+          tone="rose"
         />
       </div>
 
