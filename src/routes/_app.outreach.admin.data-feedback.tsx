@@ -49,6 +49,7 @@ import { ListPagination } from "@/components/ListPagination";
 import { formatDateTime } from "@/lib/format-date";
 import { ENTERPRISES } from "@/data/enterprises";
 import { CURRENT_USER } from "@/lib/current-user";
+import { useHydrated } from "@/hooks/use-hydrated";
 import { addCredits } from "@/lib/credits-balance";
 import { recordFeedbackReward } from "@/lib/credits-ledger";
 import {
@@ -128,6 +129,7 @@ function StatusBadge({ status }: { status: FeedbackStatus }) {
 }
 
 function DataFeedbackAdminPage() {
+  const hydrated = useHydrated();
   useEffect(() => {
     seedFeedbackDemoIfEmpty(
       ENTERPRISES.slice(0, 3).map((e) => ({
@@ -218,7 +220,7 @@ function DataFeedbackAdminPage() {
           <Card key={s.label} className="p-4">
             <div className="text-xs text-muted-foreground">{s.label}</div>
             <div className={cn("text-2xl font-semibold tabular-nums mt-1", s.tone)}>
-              {s.value}
+              {hydrated ? s.value : s.label === "采纳率" ? "0%" : 0}
             </div>
           </Card>
         ))}

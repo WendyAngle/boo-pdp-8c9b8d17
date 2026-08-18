@@ -102,6 +102,7 @@ export const Route = createFileRoute("/_app/outreach/billing")({
             "expire",
             "package_recharge",
             "recharge_refund",
+            "feedback_reward",
           ])
           .optional(),
       })
@@ -137,7 +138,8 @@ function BillingPage() {
     | "recharge"
     | "expire"
     | "package_recharge"
-    | "recharge_refund";
+    | "recharge_refund"
+    | "feedback_reward";
   const [tab, setTab] = useState<TabKey>(tabFromUrl ?? "all");
   const [kw, setKw] = useState("");
   const [dateFrom, setDateFrom] = useState<Date | undefined>(undefined);
@@ -162,6 +164,7 @@ function BillingPage() {
         if (tab === "consume" && !consumeKinds.includes(e.kind)) return false;
         else if (tab === "refund" && e.kind !== "refund") return false;
         else if (tab === "recharge" && e.kind !== "recharge") return false;
+        else if (tab === "feedback_reward" && e.kind !== "feedback_reward") return false;
         else if (tab === "expire" || tab === "package_recharge" || tab === "recharge_refund")
           return false;
       }
@@ -501,6 +504,12 @@ function BillingPage() {
                 <span className="inline-flex items-center gap-1.5">
                   <Undo2 className="h-3.5 w-3.5 text-amber-600" />
                   充值退款
+                </span>
+              </SelectItem>
+              <SelectItem value="feedback_reward">
+                <span className="inline-flex items-center gap-1.5">
+                  <BadgeCheck className="h-3.5 w-3.5 text-emerald-600" />
+                  数据反馈奖励
                 </span>
               </SelectItem>
             </SelectContent>
