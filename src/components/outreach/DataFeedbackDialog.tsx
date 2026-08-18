@@ -168,11 +168,11 @@ export function DataFeedbackDialog({ enterprise, defaultContactIndex, trigger }:
               : sourceType === "other" && !sourceNote.trim()
                 ? "请补充说明数据来源"
                 : ""
-      : !validItems.length
-        ? "请至少选择一个存在问题的字段"
-        : missingSuggested
-          ? "请填写正确值（无效/重复可不填）"
-          : !sourceType
+        : !validItems.length
+          ? "请至少选择一个存在问题的字段"
+          : missingSuggested
+            ? "请填写正确值"
+            : !sourceType
             ? "请选择数据来源"
             : needsUrl && !sourceUrl.trim()
               ? "请填写来源链接"
@@ -357,7 +357,7 @@ export function DataFeedbackDialog({ enterprise, defaultContactIndex, trigger }:
             </div>
 
             {subject === "new_contact" ? (
-              <div className="rounded-lg border bg-muted/20 p-3">
+              <div className="rounded-lg border bg-muted/20 p-3 space-y-2">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                   {NEW_CONTACT_FIELDS.map((f) => (
                     <div key={f.key} className="space-y-1">
@@ -369,7 +369,7 @@ export function DataFeedbackDialog({ enterprise, defaultContactIndex, trigger }:
                         className="h-8"
                         value={newContact[f.key] ?? ""}
                         maxLength={200}
-                        placeholder={f.required ? "必填" : "选填"}
+                        placeholder={`请输入${f.label}`}
                         onChange={(ev) =>
                           setNewContact((prev) => ({ ...prev, [f.key]: ev.target.value }))
                         }
@@ -377,6 +377,9 @@ export function DataFeedbackDialog({ enterprise, defaultContactIndex, trigger }:
                     </div>
                   ))}
                 </div>
+                <p className="text-[11px] text-muted-foreground">
+                  邮箱、电话、WhatsApp 至少填写一项，以便平台核实与后续触达。
+                </p>
               </div>
             ) : (
               <div className="space-y-2">
@@ -457,8 +460,8 @@ export function DataFeedbackDialog({ enterprise, defaultContactIndex, trigger }:
                         <div className="space-y-1">
                           <div className="text-[11px] text-muted-foreground">
                             正确值
-                            {d.issue === "invalid" && (
-                              <span className="ml-1 text-muted-foreground/70">（可不填）</span>
+                            {d.issue !== "invalid" && (
+                              <span className="text-destructive ml-0.5">*</span>
                             )}
                           </div>
                           <Input
@@ -489,7 +492,9 @@ export function DataFeedbackDialog({ enterprise, defaultContactIndex, trigger }:
 
           {/* 数据来源 */}
           <section className="space-y-2">
-            <Label className="text-xs text-muted-foreground">数据来源（必填）</Label>
+            <Label className="text-xs text-muted-foreground">
+              数据来源 <span className="text-destructive">*</span>
+            </Label>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
               <Select
                 value={sourceType}
@@ -506,21 +511,31 @@ export function DataFeedbackDialog({ enterprise, defaultContactIndex, trigger }:
                   ))}
                 </SelectContent>
               </Select>
-              <Input
-                className="h-9"
-                value={sourceUrl}
-                maxLength={300}
-                placeholder={needsUrl ? "来源链接（必填），如 https://…" : "来源链接（选填）"}
-                onChange={(ev) => setSourceUrl(ev.target.value)}
+              <div className="space-y-1">
+                <Label className="text-[11px] text-muted-foreground">
+                  来源链接 {needsUrl && <span className="text-destructive">*</span>}
+                </Label>
+                <Input
+                  className="h-8"
+                  value={sourceUrl}
+                  maxLength={300}
+                  placeholder="如 https://…"
+                  onChange={(ev) => setSourceUrl(ev.target.value)}
+                />
+              </div>
+            </div>
+            <div className="space-y-1">
+              <Label className="text-[11px] text-muted-foreground">
+                补充说明 {sourceType === "other" && <span className="text-destructive">*</span>}
+              </Label>
+              <Textarea
+                rows={3}
+                maxLength={500}
+                value={sourceNote}
+                placeholder="如何获取到该信息、核实时间、可佐证的细节等"
+                onChange={(ev) => setSourceNote(ev.target.value)}
               />
             </div>
-            <Textarea
-              rows={3}
-              maxLength={500}
-              value={sourceNote}
-              placeholder="补充说明：如何获取到该信息、核实时间、可佐证的细节等（其他来源必填）"
-              onChange={(ev) => setSourceNote(ev.target.value)}
-            />
             <p className="flex items-start gap-1.5 text-[11px] text-muted-foreground">
               <Info className="mt-0.5 h-3 w-3 shrink-0" />
               提交即表示您确认所提供内容真实合法，平台仅将其用于数据核实与更新。
