@@ -212,9 +212,14 @@ export function DataFeedbackDialog({ enterprise, defaultContactIndex, trigger }:
     >
       <DialogTrigger asChild>
         {trigger ?? (
-          <Button variant="outline" size="sm" className="gap-1.5">
+          <Button variant="outline" size="sm" className="gap-1.5 relative">
             <MessageSquareWarning className="h-4 w-4" />
             问题反馈
+            {unread > 0 && (
+              <span className="absolute -right-1 -top-1 min-w-4 h-4 px-1 rounded-full bg-destructive text-destructive-foreground text-[10px] leading-4 text-center">
+                {unread}
+              </span>
+            )}
           </Button>
         )}
       </DialogTrigger>
@@ -226,6 +231,20 @@ export function DataFeedbackDialog({ enterprise, defaultContactIndex, trigger }:
           </DialogDescription>
         </DialogHeader>
 
+        <Tabs value={tab} onValueChange={(v) => setTab(v as "submit" | "mine")}>
+          <TabsList>
+            <TabsTrigger value="submit">提交反馈</TabsTrigger>
+            <TabsTrigger value="mine" className="gap-1.5">
+              我的反馈
+              {myTickets.length > 0 && (
+                <Badge variant="secondary" className="h-4 px-1 text-[10px] font-normal">
+                  {myTickets.length}
+                </Badge>
+              )}
+            </TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="submit" className="mt-4">
         <div className="space-y-5">
           {/* 反馈对象 */}
           <section className="space-y-2">
