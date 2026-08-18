@@ -5,7 +5,7 @@
  * 并说明数据来源以便平台核实。演示实现：工单保存在 localStorage。
  */
 import { useSyncExternalStore } from "react";
-import { recordFeedbackReward } from "@/lib/credits-ledger";
+import { recordFeedbackReward, fixFeedbackRewardAmount } from "@/lib/credits-ledger";
 import { applyEnterpriseFieldOverride } from "@/lib/enterprise-overrides";
 
 export type FeedbackSubjectKind = "enterprise" | "contact" | "new_contact";
@@ -150,6 +150,21 @@ function read(): FeedbackTicket[] {
 let store: FeedbackTicket[] = read();
 let version = 0;
 const listeners = new Set<() => void>();
+
+/** 修正历史演示数据：官网纠错奖励统一为 15 积分 */
+if (typeof window !== "undefined") {
+  const needFix = store.some((t) => t.id === "FBDEMO004" && t.reward !== 15);
+  if (needFix) {
+    store = store.map((t) => (t.id === "FBDEMO004" ? { ...t, reward: 15 } : t));
+    try {
+      window.localStorage.setItem(KEY, JSON.stringify(store));
+    } catch {
+      /* noop */
+    }
+    fixFeedbackRewardAmount("FBDEMO004", 15);
+  }
+}
+
 
 function persist() {
   if (typeof window !== "undefined") {
