@@ -138,7 +138,8 @@ function BillingPage() {
     | "recharge"
     | "expire"
     | "package_recharge"
-    | "recharge_refund";
+    | "recharge_refund"
+    | "feedback_reward";
   const [tab, setTab] = useState<TabKey>(tabFromUrl ?? "all");
   const [kw, setKw] = useState("");
   const [dateFrom, setDateFrom] = useState<Date | undefined>(undefined);
