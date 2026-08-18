@@ -53,6 +53,15 @@ export interface FeedbackItem {
   issue: FeedbackIssueType;
 }
 
+export interface NewContactDraft {
+  name: string;
+  title?: string;
+  email?: string;
+  phone?: string;
+  whatsapp?: string;
+  status?: string;
+}
+
 export interface FeedbackTicket {
   id: string;
   createdAt: number;
@@ -62,6 +71,8 @@ export interface FeedbackTicket {
   /** 关联人物索引与姓名（subjectKind = contact 时） */
   contactIndex?: number;
   contactName?: string;
+  /** 新增关联人物信息（subjectKind = new_contact 时） */
+  newContact?: NewContactDraft;
   items: FeedbackItem[];
   sourceType: FeedbackSourceType;
   sourceUrl?: string;
