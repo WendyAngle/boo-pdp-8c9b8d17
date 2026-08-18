@@ -24,6 +24,7 @@ import {
   Hash,
   UserRound,
   MessageCircle,
+  MessageSquareWarning,
 } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -39,6 +40,7 @@ import { WhatsAppReachButton } from "@/components/WhatsAppReachButton";
 import { RecentCommsCapsule } from "@/components/outreach/RecentCommsCapsule";
 import { EnterpriseEnrichButton } from "@/components/outreach/EnterpriseEnrichButton";
 import { applyPatch, useEnrich } from "@/lib/enterprise-enrich";
+import { DataFeedbackDialog } from "@/components/outreach/DataFeedbackDialog";
 
 
 export const Route = createFileRoute("/_app/outreach/enterprise/$id/")({
@@ -92,6 +94,8 @@ function EnterpriseDetailPage() {
         </div>
         <div className="flex items-center gap-2">
           <EnterpriseEnrichButton enterprise={e} />
+          <DataFeedbackDialog enterprise={e} />
+
 
           <FavoriteToggle
             kind="enterprise"
@@ -459,6 +463,21 @@ function EnterpriseContactCard({
         <div className="font-medium flex-1 truncate group-hover:text-primary transition-colors">
           {c.name}
         </div>
+        <DataFeedbackDialog
+          enterprise={e}
+          defaultContactIndex={idx}
+          trigger={
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-7 w-7 text-muted-foreground hover:text-primary"
+              aria-label="反馈该人物数据问题"
+              title="问题反馈"
+            >
+              <MessageSquareWarning className="h-4 w-4" />
+            </Button>
+          }
+        />
         <FavoriteToggle
           kind="contact"
           refId={`${e.id}:${idx}`}
