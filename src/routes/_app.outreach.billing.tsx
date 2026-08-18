@@ -102,6 +102,7 @@ export const Route = createFileRoute("/_app/outreach/billing")({
             "expire",
             "package_recharge",
             "recharge_refund",
+            "feedback_reward",
           ])
           .optional(),
       })
