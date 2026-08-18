@@ -254,6 +254,17 @@ export function DataFeedbackDialog({ enterprise, defaultContactIndex, trigger }:
               >
                 关联人物
               </Button>
+              <Button
+                type="button"
+                size="sm"
+                variant={subject === "new_contact" ? "default" : "outline"}
+                onClick={() => {
+                  setSubject("new_contact");
+                  setNewContact(EMPTY_NEW_CONTACT);
+                }}
+              >
+                新增关联人物
+              </Button>
               {subject === "contact" && (
                 <Select
                   value={String(contactIdx)}
