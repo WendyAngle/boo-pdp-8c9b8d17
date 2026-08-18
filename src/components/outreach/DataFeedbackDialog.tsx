@@ -122,17 +122,32 @@ export function DataFeedbackDialog({ enterprise, defaultContactIndex, trigger }:
 
   const validItems = useMemo<FeedbackItem[]>(
     () =>
-      drafts
-        .filter((d) => d.field)
-        .map((d) => ({
-          field: d.field,
-          label: fieldDefs.find((f) => f.key === d.field)?.label ?? d.field,
-          current: currentOf(d.field),
-          suggested: d.suggested.trim(),
-          issue: d.issue,
-        })),
+      subject === "new_contact"
+        ? []
+        : drafts
+            .filter((d) => d.field)
+            .map((d) => ({
+              field: d.field,
+              label: fieldDefs.find((f) => f.key === d.field)?.label ?? d.field,
+              current: currentOf(d.field),
+              suggested: d.suggested.trim(),
+              issue: d.issue,
+            })),
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [drafts, subject, contactIdx],
+  );
+
+  const newContactFilled = useMemo(
+    () =>
+      subject === "new_contact"
+        ? Boolean(
+            newContact.name.trim() &&
+              (newContact.email?.trim() ||
+                newContact.phone?.trim() ||
+                newContact.whatsapp?.trim()),
+          )
+        : true,
+    [subject, newContact],
   );
 
   const needsUrl = sourceType ? SOURCE_NEEDS_URL.includes(sourceType) : false;
@@ -140,17 +155,30 @@ export function DataFeedbackDialog({ enterprise, defaultContactIndex, trigger }:
     (i) => i.issue !== "invalid" && !i.suggested,
   );
 
-  const disabledReason = !validItems.length
-    ? "请至少选择一个存在问题的字段"
-    : missingSuggested
-      ? "请填写正确值（无效/重复可不填）"
-      : !sourceType
-        ? "请选择数据来源"
-        : needsUrl && !sourceUrl.trim()
-          ? "请填写来源链接"
-          : sourceType === "other" && !sourceNote.trim()
-            ? "请补充说明数据来源"
-            : "";
+  const disabledReason =
+    subject === "new_contact"
+      ? !newContact.name.trim()
+        ? "请填写新增联系人姓名"
+        : !newContactFilled
+          ? "请至少填写联系邮箱、电话或 WhatsApp 中的一项"
+          : !sourceType
+            ? "请选择数据来源"
+            : needsUrl && !sourceUrl.trim()
+              ? "请填写来源链接"
+              : sourceType === "other" && !sourceNote.trim()
+                ? "请补充说明数据来源"
+                : ""
+      : !validItems.length
+        ? "请至少选择一个存在问题的字段"
+        : missingSuggested
+          ? "请填写正确值（无效/重复可不填）"
+          : !sourceType
+            ? "请选择数据来源"
+            : needsUrl && !sourceUrl.trim()
+              ? "请填写来源链接"
+              : sourceType === "other" && !sourceNote.trim()
+                ? "请补充说明数据来源"
+                : "";
 
   const onSubmit = () => {
     if (disabledReason) return;
@@ -160,6 +188,7 @@ export function DataFeedbackDialog({ enterprise, defaultContactIndex, trigger }:
       subjectKind: subject,
       contactIndex: subject === "contact" ? contactIdx : undefined,
       contactName: subject === "contact" ? contact?.name : undefined,
+      newContact: subject === "new_contact" ? newContact : undefined,
       items: validItems,
       sourceType: sourceType as FeedbackSourceType,
       sourceUrl: sourceUrl.trim() || undefined,
