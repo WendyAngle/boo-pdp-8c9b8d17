@@ -216,6 +216,7 @@ export function DataFeedbackDialog({ enterprise, defaultContactIndex, trigger }:
       sourceUrl: sourceUrl.trim() || undefined,
       sourceNote: sourceNote.trim() || undefined,
       allowContact,
+      submitter: CURRENT_USER.name,
     });
     toast.success("反馈已提交，感谢您的贡献", {
       description: "平台将在 1-3 个工作日内核实，核实通过后数据会自动更新",
