@@ -151,6 +151,21 @@ let store: FeedbackTicket[] = read();
 let version = 0;
 const listeners = new Set<() => void>();
 
+/** 修正历史演示数据：官网纠错奖励统一为 15 积分 */
+if (typeof window !== "undefined") {
+  const needFix = store.some((t) => t.id === "FBDEMO004" && t.reward !== 15);
+  if (needFix) {
+    store = store.map((t) => (t.id === "FBDEMO004" ? { ...t, reward: 15 } : t));
+    try {
+      window.localStorage.setItem(KEY, JSON.stringify(store));
+    } catch {
+      /* noop */
+    }
+    fixFeedbackRewardAmount("FBDEMO004", 15);
+  }
+}
+
+
 function persist() {
   if (typeof window !== "undefined") {
     try {
