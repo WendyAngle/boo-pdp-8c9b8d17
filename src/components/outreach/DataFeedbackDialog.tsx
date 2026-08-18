@@ -492,25 +492,27 @@ export function DataFeedbackDialog({ enterprise, defaultContactIndex, trigger }:
 
           {/* 数据来源 */}
           <section className="space-y-2">
-            <Label className="text-xs text-muted-foreground">
-              数据来源 <span className="text-destructive">*</span>
-            </Label>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
-              <Select
-                value={sourceType}
-                onValueChange={(v) => setSourceType(v as FeedbackSourceType)}
-              >
-                <SelectTrigger className="h-9">
-                  <SelectValue placeholder="请选择来源类型" />
-                </SelectTrigger>
-                <SelectContent>
-                  {SOURCE_TYPES.map((t) => (
-                    <SelectItem key={t} value={t}>
-                      {SOURCE_TYPE_LABEL[t]}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <div className="space-y-1">
+                <Label className="text-[11px] text-muted-foreground">
+                  来源类型 <span className="text-destructive">*</span>
+                </Label>
+                <Select
+                  value={sourceType}
+                  onValueChange={(v) => setSourceType(v as FeedbackSourceType)}
+                >
+                  <SelectTrigger className="h-8">
+                    <SelectValue placeholder="请选择来源类型" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {SOURCE_TYPES.map((t) => (
+                      <SelectItem key={t} value={t}>
+                        {SOURCE_TYPE_LABEL[t]}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
               <div className="space-y-1">
                 <Label className="text-[11px] text-muted-foreground">
                   来源链接 {needsUrl && <span className="text-destructive">*</span>}
