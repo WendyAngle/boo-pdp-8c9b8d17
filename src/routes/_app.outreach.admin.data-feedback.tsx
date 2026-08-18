@@ -436,7 +436,7 @@ function ReviewDialog({
     resolvedItems.some((i) => i.verdict === "reject" && !i.rejectReason) ||
     (ticket.subjectKind === "new_contact" && newVerdict === "reject" && !newReason);
   const missingValue = resolvedItems.some(
-    (i) => i.verdict === "accept" && !i.finalValue.trim(),
+    (i) => i.verdict === "accept" && !(i.finalValue ?? "").trim(),
   );
 
   const disabledReason = missingValue
