@@ -385,11 +385,18 @@ export const NEW_CONTACT_FIELDS: {
 
 /* -------------------- 演示数据 -------------------- */
 
-const SEED_FLAG = "boo:data-feedback:seeded:v1";
+const SEED_FLAG = "boo:data-feedback:seeded:v2";
 
 /** 首次进入管理后台时灌入演示工单 */
 export function seedFeedbackDemoIfEmpty(
-  samples: { id: string; name: string; email: string; phone: string; contactName?: string }[],
+  samples: {
+    id: string;
+    name: string;
+    email: string;
+    phone: string;
+    website?: string;
+    contactName?: string;
+  }[],
 ) {
   if (typeof window === "undefined") return;
   try {
