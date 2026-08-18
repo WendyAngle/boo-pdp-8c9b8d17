@@ -357,7 +357,7 @@ export function DataFeedbackDialog({ enterprise, defaultContactIndex, trigger }:
             </div>
 
             {subject === "new_contact" ? (
-              <div className="rounded-lg border bg-muted/20 p-3">
+              <div className="rounded-lg border bg-muted/20 p-3 space-y-2">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                   {NEW_CONTACT_FIELDS.map((f) => (
                     <div key={f.key} className="space-y-1">
@@ -369,7 +369,7 @@ export function DataFeedbackDialog({ enterprise, defaultContactIndex, trigger }:
                         className="h-8"
                         value={newContact[f.key] ?? ""}
                         maxLength={200}
-                        placeholder={f.required ? "必填" : "选填"}
+                        placeholder={`请输入${f.label}`}
                         onChange={(ev) =>
                           setNewContact((prev) => ({ ...prev, [f.key]: ev.target.value }))
                         }
@@ -377,6 +377,9 @@ export function DataFeedbackDialog({ enterprise, defaultContactIndex, trigger }:
                     </div>
                   ))}
                 </div>
+                <p className="text-[11px] text-muted-foreground">
+                  邮箱、电话、WhatsApp 至少填写一项，以便平台核实与后续触达。
+                </p>
               </div>
             ) : (
               <div className="space-y-2">
