@@ -100,6 +100,7 @@ export function DataFeedbackDialog({ enterprise, defaultContactIndex, trigger }:
         : NEW_CONTACT_FIELDS;
 
   const currentOf = (key: string): string => {
+    if (subject === "new_contact") return "";
     if (subject === "enterprise") return enterpriseValue(enterprise, key);
     if (!contact) return "";
     const raw = (contact as unknown as Record<string, unknown>)[key];
@@ -110,6 +111,7 @@ export function DataFeedbackDialog({ enterprise, defaultContactIndex, trigger }:
     setSubject(defaultContactIndex === undefined ? "enterprise" : "contact");
     setContactIdx(defaultContactIndex ?? 0);
     setDrafts([{ field: "", issue: "wrong", suggested: "" }]);
+    setNewContact(EMPTY_NEW_CONTACT);
     setSourceType("");
     setSourceUrl("");
     setSourceNote("");
