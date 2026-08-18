@@ -40,6 +40,10 @@ import { WhatsAppReachButton } from "@/components/WhatsAppReachButton";
 import { RecentCommsCapsule } from "@/components/outreach/RecentCommsCapsule";
 import { EnterpriseEnrichButton } from "@/components/outreach/EnterpriseEnrichButton";
 import { applyPatch, useEnrich } from "@/lib/enterprise-enrich";
+import {
+  applyOverrideToEnterprise,
+  useEnterpriseOverride,
+} from "@/lib/enterprise-overrides";
 import { DataFeedbackDialog } from "@/components/outreach/DataFeedbackDialog";
 
 
