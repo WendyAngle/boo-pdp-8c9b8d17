@@ -129,6 +129,7 @@ function StatusBadge({ status }: { status: FeedbackStatus }) {
 }
 
 function DataFeedbackAdminPage() {
+  const hydrated = useHydrated();
   useEffect(() => {
     seedFeedbackDemoIfEmpty(
       ENTERPRISES.slice(0, 3).map((e) => ({
