@@ -387,7 +387,7 @@ export const NEW_CONTACT_FIELDS: {
 
 /* -------------------- 演示数据 -------------------- */
 
-const SEED_FLAG = "boo:data-feedback:seeded:v2";
+const SEED_FLAG = "boo:data-feedback:seeded:v3";
 
 /** 首次进入管理后台时灌入演示工单 */
 export function seedFeedbackDemoIfEmpty(
@@ -517,7 +517,7 @@ export function seedFeedbackDemoIfEmpty(
       submitter: "莫文蔚",
       reviewer: "运营-李珊",
       reviewedAt,
-      reward: 22,
+      reward: 15,
       reviewNote: "已核验新官网主体一致，采纳。",
       readByUser: false,
     });
@@ -535,7 +535,7 @@ export function seedFeedbackDemoIfEmpty(
       ticketId: "FBDEMO004",
       enterpriseId: a.id,
       enterpriseName: a.name,
-      credits: 22,
+      credits: 15,
       note: "企业官网 · 采纳",
     });
   }
