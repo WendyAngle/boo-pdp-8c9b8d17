@@ -61,6 +61,15 @@ interface Draft {
 const ISSUE_TYPES: FeedbackIssueType[] = ["wrong", "outdated", "missing", "invalid"];
 const SOURCE_TYPES = Object.keys(SOURCE_TYPE_LABEL) as FeedbackSourceType[];
 
+const EMPTY_NEW_CONTACT: NewContactDraft = {
+  name: "",
+  title: "",
+  email: "",
+  phone: "",
+  whatsapp: "",
+  status: "",
+};
+
 function enterpriseValue(e: Enterprise, key: string): string {
   const raw = (e as unknown as Record<string, unknown>)[key];
   if (Array.isArray(raw)) return raw.join("、");
@@ -76,13 +85,19 @@ export function DataFeedbackDialog({ enterprise, defaultContactIndex, trigger }:
   const [drafts, setDrafts] = useState<Draft[]>([
     { field: "", issue: "wrong", suggested: "" },
   ]);
+  const [newContact, setNewContact] = useState<NewContactDraft>(EMPTY_NEW_CONTACT);
   const [sourceType, setSourceType] = useState<FeedbackSourceType | "">("");
   const [sourceUrl, setSourceUrl] = useState("");
   const [sourceNote, setSourceNote] = useState("");
   const [allowContact, setAllowContact] = useState(true);
 
   const contact = enterprise.contacts[contactIdx];
-  const fieldDefs = subject === "enterprise" ? ENTERPRISE_FEEDBACK_FIELDS : CONTACT_FEEDBACK_FIELDS;
+  const fieldDefs =
+    subject === "enterprise"
+      ? ENTERPRISE_FEEDBACK_FIELDS
+      : subject === "contact"
+        ? CONTACT_FEEDBACK_FIELDS
+        : NEW_CONTACT_FIELDS;
 
   const currentOf = (key: string): string => {
     if (subject === "enterprise") return enterpriseValue(enterprise, key);
