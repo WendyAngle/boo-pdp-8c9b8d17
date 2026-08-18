@@ -168,11 +168,11 @@ export function DataFeedbackDialog({ enterprise, defaultContactIndex, trigger }:
               : sourceType === "other" && !sourceNote.trim()
                 ? "请补充说明数据来源"
                 : ""
-      : !validItems.length
-        ? "请至少选择一个存在问题的字段"
-        : missingSuggested
-          ? "请填写正确值（无效/重复可不填）"
-          : !sourceType
+        : !validItems.length
+          ? "请至少选择一个存在问题的字段"
+          : missingSuggested
+            ? "请填写正确值"
+            : !sourceType
             ? "请选择数据来源"
             : needsUrl && !sourceUrl.trim()
               ? "请填写来源链接"
