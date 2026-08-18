@@ -41,6 +41,40 @@ export const SOURCE_NEEDS_URL: FeedbackSourceType[] = [
   "third_party",
 ];
 
+export type FeedbackVerdict = "accept" | "reject";
+
+export type FeedbackStatus =
+  | "submitted"
+  | "reviewing"
+  | "accepted"
+  | "partial"
+  | "rejected"
+  | "invalid";
+
+export const STATUS_LABEL: Record<FeedbackStatus, string> = {
+  submitted: "待审核",
+  reviewing: "审核中",
+  accepted: "已采纳",
+  partial: "部分采纳",
+  rejected: "未采纳",
+  invalid: "无效 / 重复",
+};
+
+export type RejectReason =
+  | "conflict_official"
+  | "no_evidence"
+  | "already_latest"
+  | "duplicate"
+  | "spam";
+
+export const REJECT_REASON_LABEL: Record<RejectReason, string> = {
+  conflict_official: "与官方信息不符",
+  no_evidence: "无有效佐证",
+  already_latest: "已是最新值",
+  duplicate: "重复提交",
+  spam: "恶意或无意义内容",
+};
+
 export interface FeedbackItem {
   /** 字段 key */
   field: string;
@@ -51,6 +85,12 @@ export interface FeedbackItem {
   /** 用户建议的正确值 */
   suggested: string;
   issue: FeedbackIssueType;
+  /** 审核裁定 */
+  verdict?: FeedbackVerdict;
+  /** 采纳时最终写入值（可由管理员规范化） */
+  finalValue?: string;
+  /** 驳回原因 */
+  rejectReason?: RejectReason;
 }
 
 export interface NewContactDraft {
@@ -78,10 +118,23 @@ export interface FeedbackTicket {
   sourceUrl?: string;
   sourceNote?: string;
   allowContact: boolean;
-  status: "submitted" | "reviewing" | "accepted" | "rejected";
+  status: FeedbackStatus;
+  submitter?: string;
+  /** 新增关联人物整单裁定 */
+  newContactVerdict?: FeedbackVerdict;
+  newContactRejectReason?: RejectReason;
+  /** 裁定信息 */
+  reward?: number;
+  reviewedAt?: number;
+  reviewer?: string;
+  reviewNote?: string;
+  /** 用户是否已查看裁定结果 */
+  readByUser?: boolean;
+  /** 数据变更是否已被管理员撤销（积分不回收） */
+  revoked?: boolean;
 }
 
-const KEY = "boo:data-feedback:v1";
+const KEY = "boo:data-feedback:v2";
 
 function read(): FeedbackTicket[] {
   if (typeof window === "undefined") return [];
@@ -108,6 +161,11 @@ function persist() {
   listeners.forEach((l) => l());
 }
 
+function subscribe(cb: () => void) {
+  listeners.add(cb);
+  return () => listeners.delete(cb);
+}
+
 export function submitFeedback(
   input: Omit<FeedbackTicket, "id" | "createdAt" | "status">,
 ): FeedbackTicket {
@@ -122,18 +180,165 @@ export function submitFeedback(
   return ticket;
 }
 
+/* -------------------- 积分奖励规则 -------------------- */
+
+/** 关键联系字段（更高奖励） */
+export const KEY_REWARD_FIELDS = ["email", "phone", "whatsapp", "website"];
+export const REWARD_NORMAL_FIELD = 5;
+export const REWARD_KEY_FIELD = 15;
+export const REWARD_NEW_CONTACT = 20;
+export const REWARD_TRUSTED_MULTIPLIER = 1.5;
+export const REWARD_TICKET_CAP = 100;
+export const REWARD_DAILY_CAP = 300;
+
+/** 高可信来源 */
+const TRUSTED_SOURCES: FeedbackSourceType[] = [
+  "official_site",
+  "registry",
+  "contact_confirmed",
+];
+
+function baseRewardOf(t: FeedbackTicket, verdicts: FeedbackItem[], newAccepted: boolean) {
+  let base = 0;
+  for (const it of verdicts) {
+    if (it.verdict !== "accept") continue;
+    base += KEY_REWARD_FIELDS.includes(it.field)
+      ? REWARD_KEY_FIELD
+      : REWARD_NORMAL_FIELD;
+  }
+  if (t.subjectKind === "new_contact" && newAccepted) base += REWARD_NEW_CONTACT;
+  return base;
+}
+
+/** 计算工单奖励：基础分 → 来源加成 → 向下取整 → 单工单/单日上限 */
+export function computeReward(
+  t: FeedbackTicket,
+  items: FeedbackItem[],
+  newAccepted: boolean,
+): { reward: number; capped: boolean } {
+  const base = baseRewardOf(t, items, newAccepted);
+  const trusted =
+    TRUSTED_SOURCES.includes(t.sourceType) &&
+    (t.sourceType === "contact_confirmed" || Boolean(t.sourceUrl));
+  let value = Math.floor(base * (trusted ? REWARD_TRUSTED_MULTIPLIER : 1));
+  let capped = false;
+  if (value > REWARD_TICKET_CAP) {
+    value = REWARD_TICKET_CAP;
+    capped = true;
+  }
+  const todayGranted = rewardGrantedToday();
+  if (todayGranted + value > REWARD_DAILY_CAP) {
+    value = Math.max(0, REWARD_DAILY_CAP - todayGranted);
+    capped = true;
+  }
+  return { reward: value, capped };
+}
+
+function rewardGrantedToday(): number {
+  const start = new Date();
+  start.setHours(0, 0, 0, 0);
+  return store
+    .filter((t) => (t.reviewedAt ?? 0) >= start.getTime())
+    .reduce((s, t) => s + (t.reward ?? 0), 0);
+}
+
+/* -------------------- 审核操作 -------------------- */
+
+export function claimTicket(id: string, reviewer: string) {
+  store = store.map((t) =>
+    t.id === id && t.status === "submitted" ? { ...t, status: "reviewing", reviewer } : t,
+  );
+  persist();
+}
+
+export interface ReviewInput {
+  id: string;
+  reviewer: string;
+  items: FeedbackItem[];
+  newContactVerdict?: FeedbackVerdict;
+  newContactRejectReason?: RejectReason;
+  reviewNote?: string;
+  /** 整单标记无效 */
+  markInvalid?: boolean;
+  reward: number;
+}
+
+export function finalizeReview(input: ReviewInput): FeedbackTicket | undefined {
+  let out: FeedbackTicket | undefined;
+  store = store.map((t) => {
+    if (t.id !== input.id) return t;
+    const acceptedCount =
+      input.items.filter((i) => i.verdict === "accept").length +
+      (t.subjectKind === "new_contact" && input.newContactVerdict === "accept" ? 1 : 0);
+    const total =
+      t.subjectKind === "new_contact" ? 1 : input.items.length;
+    const status: FeedbackStatus = input.markInvalid
+      ? "invalid"
+      : acceptedCount === 0
+        ? "rejected"
+        : acceptedCount === total
+          ? "accepted"
+          : "partial";
+    out = {
+      ...t,
+      items: input.items,
+      newContactVerdict: input.newContactVerdict,
+      newContactRejectReason: input.newContactRejectReason,
+      reviewNote: input.reviewNote,
+      reviewer: input.reviewer,
+      reviewedAt: Date.now(),
+      reward: input.markInvalid ? 0 : input.reward,
+      status,
+      readByUser: false,
+    };
+    return out;
+  });
+  persist();
+  return out;
+}
+
+/** 撤销误采纳：仅回滚数据变更，不回收已发放积分 */
+export function revokeTicket(id: string) {
+  store = store.map((t) => (t.id === id ? { ...t, revoked: true } : t));
+  persist();
+}
+
+export function markTicketsRead(enterpriseId: string) {
+  let changed = false;
+  store = store.map((t) => {
+    if (t.enterpriseId === enterpriseId && isFinalStatus(t.status) && !t.readByUser) {
+      changed = true;
+      return { ...t, readByUser: true };
+    }
+    return t;
+  });
+  if (changed) persist();
+}
+
+export function isFinalStatus(s: FeedbackStatus) {
+  return s === "accepted" || s === "partial" || s === "rejected" || s === "invalid";
+}
+
+/* -------------------- 读取 -------------------- */
+
 /** 该企业下已提交的反馈（含关联人物） */
 export function useFeedbacks(enterpriseId: string): FeedbackTicket[] {
-  useSyncExternalStore(
-    (cb) => {
-      listeners.add(cb);
-      return () => listeners.delete(cb);
-    },
-    () => version,
-    () => version,
-  );
+  useSyncExternalStore(subscribe, () => version, () => version);
   return store.filter((t) => t.enterpriseId === enterpriseId);
 }
+
+/** 全部工单（管理后台） */
+export function useAllFeedbacks(): FeedbackTicket[] {
+  useSyncExternalStore(subscribe, () => version, () => version);
+  return store;
+}
+
+/** 本企业未读裁定结果数（用于企业详情页角标） */
+export function useUnreadFeedbackCount(enterpriseId: string): number {
+  const list = useFeedbacks(enterpriseId);
+  return list.filter((t) => isFinalStatus(t.status) && !t.readByUser).length;
+}
+
 
 /** 可反馈的企业字段 */
 export const ENTERPRISE_FEEDBACK_FIELDS: { key: string; label: string }[] = [
