@@ -164,6 +164,7 @@ function BillingPage() {
         if (tab === "consume" && !consumeKinds.includes(e.kind)) return false;
         else if (tab === "refund" && e.kind !== "refund") return false;
         else if (tab === "recharge" && e.kind !== "recharge") return false;
+        else if (tab === "feedback_reward" && e.kind !== "feedback_reward") return false;
         else if (tab === "expire" || tab === "package_recharge" || tab === "recharge_refund")
           return false;
       }
