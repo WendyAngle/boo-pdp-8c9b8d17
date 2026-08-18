@@ -5,6 +5,8 @@
  * 并说明数据来源以便平台核实。演示实现：工单保存在 localStorage。
  */
 import { useSyncExternalStore } from "react";
+import { recordFeedbackReward } from "@/lib/credits-ledger";
+import { applyEnterpriseFieldOverride } from "@/lib/enterprise-overrides";
 
 export type FeedbackSubjectKind = "enterprise" | "contact" | "new_contact";
 
