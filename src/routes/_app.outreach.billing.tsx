@@ -505,6 +505,12 @@ function BillingPage() {
                   充值退款
                 </span>
               </SelectItem>
+              <SelectItem value="feedback_reward">
+                <span className="inline-flex items-center gap-1.5">
+                  <BadgeCheck className="h-3.5 w-3.5 text-emerald-600" />
+                  数据反馈奖励
+                </span>
+              </SelectItem>
             </SelectContent>
           </Select>
           {(dateFrom || dateTo || tab !== "all") && (
