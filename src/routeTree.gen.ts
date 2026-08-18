@@ -54,6 +54,7 @@ import { Route as AppOutreachAdminManagedEmailRouteImport } from './routes/_app.
 import { Route as AppOutreachAdminInvoiceReviewRouteImport } from './routes/_app.outreach.admin.invoice-review'
 import { Route as AppOutreachAdminEmailProvidersRouteImport } from './routes/_app.outreach.admin.email-providers'
 import { Route as AppOutreachAdminEmailAccountsRouteImport } from './routes/_app.outreach.admin.email-accounts'
+import { Route as AppOutreachAdminDataFeedbackRouteImport } from './routes/_app.outreach.admin.data-feedback'
 import { Route as AppOutreachSocialReachIndexRouteImport } from './routes/_app.outreach.social.reach.index'
 import { Route as AppOutreachSocialProspectingIndexRouteImport } from './routes/_app.outreach.social.prospecting.index'
 import { Route as AppOutreachEnterpriseIdIndexRouteImport } from './routes/_app.outreach.enterprise.$id.index'
@@ -307,6 +308,12 @@ const AppOutreachAdminEmailAccountsRoute =
     path: '/outreach/admin/email-accounts',
     getParentRoute: () => AppRoute,
   } as any)
+const AppOutreachAdminDataFeedbackRoute =
+  AppOutreachAdminDataFeedbackRouteImport.update({
+    id: '/outreach/admin/data-feedback',
+    path: '/outreach/admin/data-feedback',
+    getParentRoute: () => AppRoute,
+  } as any)
 const AppOutreachSocialReachIndexRoute =
   AppOutreachSocialReachIndexRouteImport.update({
     id: '/',
@@ -394,6 +401,7 @@ export interface FileRoutesByFullPath {
   '/outreach/unlocked': typeof AppOutreachUnlockedRoute
   '/outreach/users': typeof AppOutreachUsersRoute
   '/outreach/': typeof AppOutreachIndexRoute
+  '/outreach/admin/data-feedback': typeof AppOutreachAdminDataFeedbackRoute
   '/outreach/admin/email-accounts': typeof AppOutreachAdminEmailAccountsRoute
   '/outreach/admin/email-providers': typeof AppOutreachAdminEmailProvidersRoute
   '/outreach/admin/invoice-review': typeof AppOutreachAdminInvoiceReviewRoute
@@ -449,6 +457,7 @@ export interface FileRoutesByTo {
   '/outreach/unlocked': typeof AppOutreachUnlockedRoute
   '/outreach/users': typeof AppOutreachUsersRoute
   '/outreach': typeof AppOutreachIndexRoute
+  '/outreach/admin/data-feedback': typeof AppOutreachAdminDataFeedbackRoute
   '/outreach/admin/email-accounts': typeof AppOutreachAdminEmailAccountsRoute
   '/outreach/admin/email-providers': typeof AppOutreachAdminEmailProvidersRoute
   '/outreach/admin/invoice-review': typeof AppOutreachAdminInvoiceReviewRoute
@@ -504,6 +513,7 @@ export interface FileRoutesById {
   '/_app/outreach/unlocked': typeof AppOutreachUnlockedRoute
   '/_app/outreach/users': typeof AppOutreachUsersRoute
   '/_app/outreach/': typeof AppOutreachIndexRoute
+  '/_app/outreach/admin/data-feedback': typeof AppOutreachAdminDataFeedbackRoute
   '/_app/outreach/admin/email-accounts': typeof AppOutreachAdminEmailAccountsRoute
   '/_app/outreach/admin/email-providers': typeof AppOutreachAdminEmailProvidersRoute
   '/_app/outreach/admin/invoice-review': typeof AppOutreachAdminInvoiceReviewRoute
@@ -562,6 +572,7 @@ export interface FileRouteTypes {
     | '/outreach/unlocked'
     | '/outreach/users'
     | '/outreach/'
+    | '/outreach/admin/data-feedback'
     | '/outreach/admin/email-accounts'
     | '/outreach/admin/email-providers'
     | '/outreach/admin/invoice-review'
@@ -617,6 +628,7 @@ export interface FileRouteTypes {
     | '/outreach/unlocked'
     | '/outreach/users'
     | '/outreach'
+    | '/outreach/admin/data-feedback'
     | '/outreach/admin/email-accounts'
     | '/outreach/admin/email-providers'
     | '/outreach/admin/invoice-review'
@@ -671,6 +683,7 @@ export interface FileRouteTypes {
     | '/_app/outreach/unlocked'
     | '/_app/outreach/users'
     | '/_app/outreach/'
+    | '/_app/outreach/admin/data-feedback'
     | '/_app/outreach/admin/email-accounts'
     | '/_app/outreach/admin/email-providers'
     | '/_app/outreach/admin/invoice-review'
@@ -1023,6 +1036,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppOutreachAdminEmailAccountsRouteImport
       parentRoute: typeof AppRoute
     }
+    '/_app/outreach/admin/data-feedback': {
+      id: '/_app/outreach/admin/data-feedback'
+      path: '/outreach/admin/data-feedback'
+      fullPath: '/outreach/admin/data-feedback'
+      preLoaderRoute: typeof AppOutreachAdminDataFeedbackRouteImport
+      parentRoute: typeof AppRoute
+    }
     '/_app/outreach/social/reach/': {
       id: '/_app/outreach/social/reach/'
       path: '/'
@@ -1194,6 +1214,7 @@ interface AppRouteChildren {
   AppOutreachUnlockedRoute: typeof AppOutreachUnlockedRoute
   AppOutreachUsersRoute: typeof AppOutreachUsersRoute
   AppOutreachIndexRoute: typeof AppOutreachIndexRoute
+  AppOutreachAdminDataFeedbackRoute: typeof AppOutreachAdminDataFeedbackRoute
   AppOutreachAdminEmailAccountsRoute: typeof AppOutreachAdminEmailAccountsRoute
   AppOutreachAdminEmailProvidersRoute: typeof AppOutreachAdminEmailProvidersRoute
   AppOutreachAdminInvoiceReviewRoute: typeof AppOutreachAdminInvoiceReviewRoute
@@ -1241,6 +1262,7 @@ const AppRouteChildren: AppRouteChildren = {
   AppOutreachUnlockedRoute: AppOutreachUnlockedRoute,
   AppOutreachUsersRoute: AppOutreachUsersRoute,
   AppOutreachIndexRoute: AppOutreachIndexRoute,
+  AppOutreachAdminDataFeedbackRoute: AppOutreachAdminDataFeedbackRoute,
   AppOutreachAdminEmailAccountsRoute: AppOutreachAdminEmailAccountsRoute,
   AppOutreachAdminEmailProvidersRoute: AppOutreachAdminEmailProvidersRoute,
   AppOutreachAdminInvoiceReviewRoute: AppOutreachAdminInvoiceReviewRoute,
