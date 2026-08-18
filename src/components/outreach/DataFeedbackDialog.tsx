@@ -552,21 +552,121 @@ export function DataFeedbackDialog({ enterprise, defaultContactIndex, trigger }:
             允许平台在核实过程中与我联系
           </label>
         </div>
+          </TabsContent>
 
-        <DialogFooter className="gap-2 sm:gap-2">
-          {disabledReason && (
-            <span className="mr-auto self-center text-xs text-muted-foreground">
-              {disabledReason}
-            </span>
-          )}
-          <Button variant="outline" onClick={() => setOpen(false)}>
-            取消
-          </Button>
-          <Button disabled={Boolean(disabledReason)} onClick={onSubmit}>
-            提交反馈
-          </Button>
-        </DialogFooter>
+          <TabsContent value="mine" className="mt-4">
+            <MyFeedbackList tickets={myTickets} />
+          </TabsContent>
+        </Tabs>
+
+        {tab === "submit" ? (
+          <DialogFooter className="gap-2 sm:gap-2">
+            {disabledReason && (
+              <span className="mr-auto self-center text-xs text-muted-foreground">
+                {disabledReason}
+              </span>
+            )}
+            <Button variant="outline" onClick={() => setOpen(false)}>
+              取消
+            </Button>
+            <Button disabled={Boolean(disabledReason)} onClick={onSubmit}>
+              提交反馈
+            </Button>
+          </DialogFooter>
+        ) : (
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setOpen(false)}>
+              关闭
+            </Button>
+          </DialogFooter>
+        )}
       </DialogContent>
     </Dialog>
+  );
+}
+
+function MyFeedbackList({ tickets }: { tickets: FeedbackTicket[] }) {
+  if (tickets.length === 0) {
+    return (
+      <div className="py-14 text-center text-sm text-muted-foreground">
+        您还没有对该企业提交过数据反馈
+      </div>
+    );
+  }
+  return (
+    <div className="space-y-3">
+      {[...tickets]
+        .sort((a, b) => b.createdAt - a.createdAt)
+        .map((t) => (
+          <div key={t.id} className="rounded-lg border p-3 space-y-2">
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="font-mono text-xs text-muted-foreground">{t.id}</span>
+              <Badge variant="secondary" className="font-normal">
+                {t.subjectKind === "enterprise"
+                  ? "企业数据"
+                  : t.subjectKind === "contact"
+                    ? `关联人物 · ${t.contactName ?? ""}`
+                    : "新增关联人物"}
+              </Badge>
+              <span
+                className={
+                  "px-2 py-0.5 rounded-md border text-xs font-medium " +
+                  (t.status === "accepted" || t.status === "partial"
+                    ? "bg-emerald-50 text-emerald-700 border-emerald-200"
+                    : t.status === "rejected" || t.status === "invalid"
+                      ? "bg-rose-50 text-rose-700 border-rose-200"
+                      : "bg-amber-50 text-amber-700 border-amber-200")
+                }
+              >
+                {STATUS_LABEL[t.status]}
+              </span>
+              {Boolean(t.reward) && (
+                <span className="text-xs font-medium text-emerald-600">
+                  +{t.reward} 积分
+                </span>
+              )}
+              <span className="ml-auto text-xs text-muted-foreground tabular-nums">
+                {new Date(t.createdAt).toLocaleString("zh-CN", { hour12: false })}
+              </span>
+            </div>
+
+            <div className="space-y-1 text-xs">
+              {t.subjectKind === "new_contact" ? (
+                <div className="flex items-center gap-2">
+                  <span className="text-muted-foreground">
+                    {t.newContact?.name}
+                    {t.newContact?.title ? ` · ${t.newContact.title}` : ""}
+                  </span>
+                  {t.newContactVerdict === "reject" && t.newContactRejectReason && (
+                    <span className="text-rose-600">
+                      未采纳：{REJECT_REASON_LABEL[t.newContactRejectReason]}
+                    </span>
+                  )}
+                </div>
+              ) : (
+                t.items.map((it, i) => (
+                  <div key={i} className="flex flex-wrap items-center gap-1.5">
+                    <span className="font-medium">{it.label}</span>
+                    <span className="text-muted-foreground break-all">
+                      {it.current || "未提供"} → {it.finalValue ?? it.suggested}
+                    </span>
+                    {it.verdict === "accept" && (
+                      <span className="text-emerald-600">已采纳</span>
+                    )}
+                    {it.verdict === "reject" && (
+                      <span className="text-rose-600">
+                        未采纳
+                        {it.rejectReason
+                          ? `：${REJECT_REASON_LABEL[it.rejectReason]}`
+                          : ""}
+                      </span>
+                    )}
+                  </div>
+                ))
+              )}
+            </div>
+          </div>
+        ))}
+    </div>
   );
 }
