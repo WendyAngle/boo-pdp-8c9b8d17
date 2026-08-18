@@ -644,6 +644,22 @@ export function recordFeedbackReward(input: {
   return entry;
 }
 
+/** 修正指定工单的数据反馈奖励金额（演示数据校正用） */
+export function fixFeedbackRewardAmount(ticketId: string, credits: number) {
+  let changed = false;
+  const next = ledger.map((e) => {
+    if (e.kind === "feedback_reward" && e.detail?.includes(ticketId) && e.cost !== credits) {
+      changed = true;
+      return { ...e, cost: credits };
+    }
+    return e;
+  });
+  if (!changed) return;
+  ledger = next;
+  writeLedger(ledger);
+  emitLedger();
+}
+
 export function useLedger(): LedgerEntry[] {
   useSyncExternalStore(subscribeLedger, getLedgerVersion, getLedgerVersion);
   return ledger;
