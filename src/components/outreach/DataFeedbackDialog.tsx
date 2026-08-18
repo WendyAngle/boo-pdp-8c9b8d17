@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { MessageSquareWarning, Plus, Trash2, Info } from "lucide-react";
+import { MessageSquareWarning, Plus, Trash2, Info, HelpCircle } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import {
@@ -23,11 +23,17 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
 import type { Enterprise } from "@/data/enterprises";
 import {
   CONTACT_FEEDBACK_FIELDS,
   ENTERPRISE_FEEDBACK_FIELDS,
   ISSUE_TYPE_LABEL,
+  NEW_CONTACT_FIELDS,
   SOURCE_NEEDS_URL,
   SOURCE_TYPE_LABEL,
   submitFeedback,
@@ -35,6 +41,7 @@ import {
   type FeedbackItem,
   type FeedbackSourceType,
   type FeedbackSubjectKind,
+  type NewContactDraft,
 } from "@/lib/data-feedback";
 
 interface Props {
