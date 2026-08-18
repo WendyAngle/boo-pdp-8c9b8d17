@@ -492,7 +492,9 @@ export function DataFeedbackDialog({ enterprise, defaultContactIndex, trigger }:
 
           {/* 数据来源 */}
           <section className="space-y-2">
-            <Label className="text-xs text-muted-foreground">数据来源（必填）</Label>
+            <Label className="text-xs text-muted-foreground">
+              数据来源 <span className="text-destructive">*</span>
+            </Label>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
               <Select
                 value={sourceType}
@@ -509,21 +511,31 @@ export function DataFeedbackDialog({ enterprise, defaultContactIndex, trigger }:
                   ))}
                 </SelectContent>
               </Select>
-              <Input
-                className="h-9"
-                value={sourceUrl}
-                maxLength={300}
-                placeholder={needsUrl ? "来源链接（必填），如 https://…" : "来源链接（选填）"}
-                onChange={(ev) => setSourceUrl(ev.target.value)}
+              <div className="space-y-1">
+                <Label className="text-[11px] text-muted-foreground">
+                  来源链接 {needsUrl && <span className="text-destructive">*</span>}
+                </Label>
+                <Input
+                  className="h-8"
+                  value={sourceUrl}
+                  maxLength={300}
+                  placeholder="如 https://…"
+                  onChange={(ev) => setSourceUrl(ev.target.value)}
+                />
+              </div>
+            </div>
+            <div className="space-y-1">
+              <Label className="text-[11px] text-muted-foreground">
+                补充说明 {sourceType === "other" && <span className="text-destructive">*</span>}
+              </Label>
+              <Textarea
+                rows={3}
+                maxLength={500}
+                value={sourceNote}
+                placeholder="如何获取到该信息、核实时间、可佐证的细节等"
+                onChange={(ev) => setSourceNote(ev.target.value)}
               />
             </div>
-            <Textarea
-              rows={3}
-              maxLength={500}
-              value={sourceNote}
-              placeholder="补充说明：如何获取到该信息、核实时间、可佐证的细节等（其他来源必填）"
-              onChange={(ev) => setSourceNote(ev.target.value)}
-            />
             <p className="flex items-start gap-1.5 text-[11px] text-muted-foreground">
               <Info className="mt-0.5 h-3 w-3 shrink-0" />
               提交即表示您确认所提供内容真实合法，平台仅将其用于数据核实与更新。
