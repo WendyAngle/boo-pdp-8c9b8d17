@@ -5,6 +5,8 @@
  * 并说明数据来源以便平台核实。演示实现：工单保存在 localStorage。
  */
 import { useSyncExternalStore } from "react";
+import { recordFeedbackReward } from "@/lib/credits-ledger";
+import { applyEnterpriseFieldOverride } from "@/lib/enterprise-overrides";
 
 export type FeedbackSubjectKind = "enterprise" | "contact" | "new_contact";
 
@@ -385,11 +387,18 @@ export const NEW_CONTACT_FIELDS: {
 
 /* -------------------- 演示数据 -------------------- */
 
-const SEED_FLAG = "boo:data-feedback:seeded:v1";
+const SEED_FLAG = "boo:data-feedback:seeded:v2";
 
 /** 首次进入管理后台时灌入演示工单 */
 export function seedFeedbackDemoIfEmpty(
-  samples: { id: string; name: string; email: string; phone: string; contactName?: string }[],
+  samples: {
+    id: string;
+    name: string;
+    email: string;
+    phone: string;
+    website?: string;
+    contactName?: string;
+  }[],
 ) {
   if (typeof window === "undefined") return;
   try {
@@ -479,7 +488,59 @@ export function seedFeedbackDemoIfEmpty(
       submitter: "莫文蔚",
     });
   }
+  if (a) {
+    const oldSite = a.website || "—";
+    const newSite = `https://www.${(a.name.split(" ")[0] || "demo").toLowerCase()}-global.com`;
+    const reviewedAt = now - 3600_000 * 20;
+    seeds.push({
+      id: "FBDEMO004",
+      createdAt: now - 3600_000 * 30,
+      enterpriseId: a.id,
+      enterpriseName: a.name,
+      subjectKind: "enterprise",
+      items: [
+        {
+          field: "website",
+          label: "企业官网",
+          current: oldSite,
+          suggested: newSite,
+          issue: "outdated",
+          verdict: "accept",
+          finalValue: newSite,
+        },
+      ],
+      sourceType: "official_site",
+      sourceUrl: newSite,
+      sourceNote: "旧域名已跳转至新官网，页脚备案主体一致",
+      allowContact: true,
+      status: "accepted",
+      submitter: "莫文蔚",
+      reviewer: "运营-李珊",
+      reviewedAt,
+      reward: 22,
+      reviewNote: "已核验新官网主体一致，采纳。",
+      readByUser: false,
+    });
+    // 采纳后的数据生效 + 积分奖励入账（与线上审核同事务的演示还原）
+    applyEnterpriseFieldOverride({
+      enterpriseId: a.id,
+      field: "website",
+      label: "企业官网",
+      oldValue: oldSite,
+      newValue: newSite,
+      ticketId: "FBDEMO004",
+      reviewer: "运营-李珊",
+    });
+    recordFeedbackReward({
+      ticketId: "FBDEMO004",
+      enterpriseId: a.id,
+      enterpriseName: a.name,
+      credits: 22,
+      note: "企业官网 · 采纳",
+    });
+  }
   if (!seeds.length) return;
   store = [...seeds, ...store];
   persist();
 }
+
