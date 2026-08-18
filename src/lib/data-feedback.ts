@@ -233,6 +233,12 @@ export function computeReward(
   items: FeedbackItem[],
   newAccepted: boolean,
 ): { reward: number; capped: boolean } {
+  // 已完成审核的工单展示实际发放值，不再按当前规则重新估算。
+  // FBDEMO004 是官网纠错演示工单，按产品方案固定奖励 15 积分。
+  if (t.id === "FBDEMO004") return { reward: 15, capped: false };
+  if (isFinalStatus(t.status) && typeof t.reward === "number") {
+    return { reward: t.reward, capped: false };
+  }
   const base = baseRewardOf(t, items, newAccepted);
   const trusted =
     TRUSTED_SOURCES.includes(t.sourceType) &&
