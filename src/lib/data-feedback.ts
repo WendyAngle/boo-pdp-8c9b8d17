@@ -382,3 +382,104 @@ export const NEW_CONTACT_FIELDS: {
   { key: "whatsapp", label: "WhatsApp" },
   { key: "status", label: "在职状态" },
 ];
+
+/* -------------------- 演示数据 -------------------- */
+
+const SEED_FLAG = "boo:data-feedback:seeded:v1";
+
+/** 首次进入管理后台时灌入演示工单 */
+export function seedFeedbackDemoIfEmpty(
+  samples: { id: string; name: string; email: string; phone: string; contactName?: string }[],
+) {
+  if (typeof window === "undefined") return;
+  try {
+    if (window.localStorage.getItem(SEED_FLAG)) return;
+    window.localStorage.setItem(SEED_FLAG, "1");
+  } catch {
+    return;
+  }
+  if (store.length) return;
+  const now = Date.now();
+  const [a, b, c] = samples;
+  const seeds: FeedbackTicket[] = [];
+  if (a) {
+    seeds.push({
+      id: "FBDEMO001",
+      createdAt: now - 3600_000 * 5,
+      enterpriseId: a.id,
+      enterpriseName: a.name,
+      subjectKind: "enterprise",
+      items: [
+        {
+          field: "email",
+          label: "联系邮箱",
+          current: a.email,
+          suggested: "sales@" + (a.name.split(" ")[0] || "demo").toLowerCase() + ".com",
+          issue: "outdated",
+        },
+        {
+          field: "address",
+          label: "企业地址",
+          current: "—",
+          suggested: "Unit 12, Industrial Park Road, Singapore 609601",
+          issue: "missing",
+        },
+      ],
+      sourceType: "official_site",
+      sourceUrl: "https://example.com/contact",
+      sourceNote: "官网 Contact 页面 2026-08 更新",
+      allowContact: true,
+      status: "submitted",
+      submitter: "莫文蔚",
+    });
+  }
+  if (b) {
+    seeds.push({
+      id: "FBDEMO002",
+      createdAt: now - 3600_000 * 26,
+      enterpriseId: b.id,
+      enterpriseName: b.name,
+      subjectKind: "new_contact",
+      newContact: {
+        name: "David Chen",
+        title: "Procurement Manager",
+        email: "david.chen@example.com",
+        phone: "+65 8123 4567",
+      },
+      items: [],
+      sourceType: "business_card",
+      sourceNote: "2026 年 6 月广交会现场交换名片",
+      allowContact: true,
+      status: "submitted",
+      submitter: "莫文蔚",
+    });
+  }
+  if (c) {
+    seeds.push({
+      id: "FBDEMO003",
+      createdAt: now - 3600_000 * 50,
+      enterpriseId: c.id,
+      enterpriseName: c.name,
+      subjectKind: "contact",
+      contactIndex: 0,
+      contactName: c.contactName ?? "联系人",
+      items: [
+        {
+          field: "status",
+          label: "在职状态（已离职等）",
+          current: "在职",
+          suggested: "已离职",
+          issue: "outdated",
+        },
+      ],
+      sourceType: "contact_confirmed",
+      sourceNote: "邮件退回并由前台电话确认已离职",
+      allowContact: false,
+      status: "submitted",
+      submitter: "莫文蔚",
+    });
+  }
+  if (!seeds.length) return;
+  store = [...seeds, ...store];
+  persist();
+}
