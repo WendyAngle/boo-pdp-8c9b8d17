@@ -163,3 +163,17 @@ export const CONTACT_FEEDBACK_FIELDS: { key: string; label: string }[] = [
   { key: "whatsapp", label: "WhatsApp" },
   { key: "status", label: "在职状态（已离职等）" },
 ];
+
+/** 新增关联人物时可填写的字段 */
+export const NEW_CONTACT_FIELDS: {
+  key: keyof NewContactDraft;
+  label: string;
+  required?: boolean;
+}[] = [
+  { key: "name", label: "联系人姓名", required: true },
+  { key: "title", label: "职位信息" },
+  { key: "email", label: "联系邮箱" },
+  { key: "phone", label: "联系电话" },
+  { key: "whatsapp", label: "WhatsApp" },
+  { key: "status", label: "在职状态" },
+];
