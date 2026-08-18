@@ -49,6 +49,7 @@ import { ListPagination } from "@/components/ListPagination";
 import { formatDateTime } from "@/lib/format-date";
 import { ENTERPRISES } from "@/data/enterprises";
 import { CURRENT_USER } from "@/lib/current-user";
+import { useHydrated } from "@/hooks/use-hydrated";
 import { addCredits } from "@/lib/credits-balance";
 import { recordFeedbackReward } from "@/lib/credits-ledger";
 import {
