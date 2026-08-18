@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { MessageSquareWarning, Plus, Trash2, Info } from "lucide-react";
+import { MessageSquareWarning, Plus, Trash2, Info, HelpCircle } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import {
@@ -23,11 +23,17 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
 import type { Enterprise } from "@/data/enterprises";
 import {
   CONTACT_FEEDBACK_FIELDS,
   ENTERPRISE_FEEDBACK_FIELDS,
   ISSUE_TYPE_LABEL,
+  NEW_CONTACT_FIELDS,
   SOURCE_NEEDS_URL,
   SOURCE_TYPE_LABEL,
   submitFeedback,
@@ -35,6 +41,7 @@ import {
   type FeedbackItem,
   type FeedbackSourceType,
   type FeedbackSubjectKind,
+  type NewContactDraft,
 } from "@/lib/data-feedback";
 
 interface Props {
@@ -54,6 +61,15 @@ interface Draft {
 const ISSUE_TYPES: FeedbackIssueType[] = ["wrong", "outdated", "missing", "invalid"];
 const SOURCE_TYPES = Object.keys(SOURCE_TYPE_LABEL) as FeedbackSourceType[];
 
+const EMPTY_NEW_CONTACT: NewContactDraft = {
+  name: "",
+  title: "",
+  email: "",
+  phone: "",
+  whatsapp: "",
+  status: "",
+};
+
 function enterpriseValue(e: Enterprise, key: string): string {
   const raw = (e as unknown as Record<string, unknown>)[key];
   if (Array.isArray(raw)) return raw.join("、");
@@ -69,15 +85,22 @@ export function DataFeedbackDialog({ enterprise, defaultContactIndex, trigger }:
   const [drafts, setDrafts] = useState<Draft[]>([
     { field: "", issue: "wrong", suggested: "" },
   ]);
+  const [newContact, setNewContact] = useState<NewContactDraft>(EMPTY_NEW_CONTACT);
   const [sourceType, setSourceType] = useState<FeedbackSourceType | "">("");
   const [sourceUrl, setSourceUrl] = useState("");
   const [sourceNote, setSourceNote] = useState("");
   const [allowContact, setAllowContact] = useState(true);
 
   const contact = enterprise.contacts[contactIdx];
-  const fieldDefs = subject === "enterprise" ? ENTERPRISE_FEEDBACK_FIELDS : CONTACT_FEEDBACK_FIELDS;
+  const fieldDefs =
+    subject === "enterprise"
+      ? ENTERPRISE_FEEDBACK_FIELDS
+      : subject === "contact"
+        ? CONTACT_FEEDBACK_FIELDS
+        : NEW_CONTACT_FIELDS;
 
   const currentOf = (key: string): string => {
+    if (subject === "new_contact") return "";
     if (subject === "enterprise") return enterpriseValue(enterprise, key);
     if (!contact) return "";
     const raw = (contact as unknown as Record<string, unknown>)[key];
@@ -88,6 +111,7 @@ export function DataFeedbackDialog({ enterprise, defaultContactIndex, trigger }:
     setSubject(defaultContactIndex === undefined ? "enterprise" : "contact");
     setContactIdx(defaultContactIndex ?? 0);
     setDrafts([{ field: "", issue: "wrong", suggested: "" }]);
+    setNewContact(EMPTY_NEW_CONTACT);
     setSourceType("");
     setSourceUrl("");
     setSourceNote("");
@@ -98,17 +122,32 @@ export function DataFeedbackDialog({ enterprise, defaultContactIndex, trigger }:
 
   const validItems = useMemo<FeedbackItem[]>(
     () =>
-      drafts
-        .filter((d) => d.field)
-        .map((d) => ({
-          field: d.field,
-          label: fieldDefs.find((f) => f.key === d.field)?.label ?? d.field,
-          current: currentOf(d.field),
-          suggested: d.suggested.trim(),
-          issue: d.issue,
-        })),
+      subject === "new_contact"
+        ? []
+        : drafts
+            .filter((d) => d.field)
+            .map((d) => ({
+              field: d.field,
+              label: fieldDefs.find((f) => f.key === d.field)?.label ?? d.field,
+              current: currentOf(d.field),
+              suggested: d.suggested.trim(),
+              issue: d.issue,
+            })),
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [drafts, subject, contactIdx],
+  );
+
+  const newContactFilled = useMemo(
+    () =>
+      subject === "new_contact"
+        ? Boolean(
+            newContact.name.trim() &&
+              (newContact.email?.trim() ||
+                newContact.phone?.trim() ||
+                newContact.whatsapp?.trim()),
+          )
+        : true,
+    [subject, newContact],
   );
 
   const needsUrl = sourceType ? SOURCE_NEEDS_URL.includes(sourceType) : false;
@@ -116,17 +155,30 @@ export function DataFeedbackDialog({ enterprise, defaultContactIndex, trigger }:
     (i) => i.issue !== "invalid" && !i.suggested,
   );
 
-  const disabledReason = !validItems.length
-    ? "请至少选择一个存在问题的字段"
-    : missingSuggested
-      ? "请填写正确值（无效/重复可不填）"
-      : !sourceType
-        ? "请选择数据来源"
-        : needsUrl && !sourceUrl.trim()
-          ? "请填写来源链接"
-          : sourceType === "other" && !sourceNote.trim()
-            ? "请补充说明数据来源"
-            : "";
+  const disabledReason =
+    subject === "new_contact"
+      ? !newContact.name.trim()
+        ? "请填写新增联系人姓名"
+        : !newContactFilled
+          ? "请至少填写联系邮箱、电话或 WhatsApp 中的一项"
+          : !sourceType
+            ? "请选择数据来源"
+            : needsUrl && !sourceUrl.trim()
+              ? "请填写来源链接"
+              : sourceType === "other" && !sourceNote.trim()
+                ? "请补充说明数据来源"
+                : ""
+      : !validItems.length
+        ? "请至少选择一个存在问题的字段"
+        : missingSuggested
+          ? "请填写正确值（无效/重复可不填）"
+          : !sourceType
+            ? "请选择数据来源"
+            : needsUrl && !sourceUrl.trim()
+              ? "请填写来源链接"
+              : sourceType === "other" && !sourceNote.trim()
+                ? "请补充说明数据来源"
+                : "";
 
   const onSubmit = () => {
     if (disabledReason) return;
@@ -136,6 +188,7 @@ export function DataFeedbackDialog({ enterprise, defaultContactIndex, trigger }:
       subjectKind: subject,
       contactIndex: subject === "contact" ? contactIdx : undefined,
       contactName: subject === "contact" ? contact?.name : undefined,
+      newContact: subject === "new_contact" ? newContact : undefined,
       items: validItems,
       sourceType: sourceType as FeedbackSourceType,
       sourceUrl: sourceUrl.trim() || undefined,
@@ -167,9 +220,9 @@ export function DataFeedbackDialog({ enterprise, defaultContactIndex, trigger }:
       </DialogTrigger>
       <DialogContent className="max-w-3xl max-h-[86vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>问题反馈 · 数据纠错</DialogTitle>
+          <DialogTitle>问题反馈 · 数据纠错与补充</DialogTitle>
           <DialogDescription>
-            请指出有问题的字段并提供正确值，同时说明数据来源以便平台核实。核实通过后将更新企业档案。
+            可纠正现有企业/联系人数据，也可补充系统中尚未录入的关联人物。请说明数据来源以便平台核实，核实通过后数据会自动更新。
           </DialogDescription>
         </DialogHeader>
 
@@ -201,6 +254,17 @@ export function DataFeedbackDialog({ enterprise, defaultContactIndex, trigger }:
               >
                 关联人物
               </Button>
+              <Button
+                type="button"
+                size="sm"
+                variant={subject === "new_contact" ? "default" : "outline"}
+                onClick={() => {
+                  setSubject("new_contact");
+                  setNewContact(EMPTY_NEW_CONTACT);
+                }}
+              >
+                新增关联人物
+              </Button>
               {subject === "contact" && (
                 <Select
                   value={String(contactIdx)}
@@ -228,131 +292,199 @@ export function DataFeedbackDialog({ enterprise, defaultContactIndex, trigger }:
             </div>
           </section>
 
-          {/* 问题字段 */}
+          {/* 问题字段 / 新增联系人 */}
           <section className="space-y-2">
             <div className="flex items-center justify-between">
-              <Label className="text-xs text-muted-foreground">
-                问题字段（可添加多条）
-              </Label>
-              <Button
-                type="button"
-                size="sm"
-                variant="ghost"
-                className="h-7 gap-1 text-xs"
-                onClick={() =>
-                  setDrafts((d) => [...d, { field: "", issue: "wrong", suggested: "" }])
-                }
-              >
-                <Plus className="h-3.5 w-3.5" />
-                添加字段
-              </Button>
+              <div className="flex items-center gap-1.5">
+                <Label className="text-xs text-muted-foreground">
+                  {subject === "new_contact"
+                    ? "新增联系人信息"
+                    : "问题字段（可添加多条）"}
+                </Label>
+                {subject !== "new_contact" && (
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon"
+                        className="h-6 w-6 text-muted-foreground hover:text-foreground"
+                        aria-label="问题类型说明"
+                      >
+                        <HelpCircle className="h-3.5 w-3.5" />
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-80 text-sm" side="right">
+                      <div className="space-y-2">
+                        <p className="font-medium">问题类型说明</p>
+                        <ul className="space-y-1.5 text-muted-foreground">
+                          <li>
+                            <span className="font-medium text-foreground">数据错误：</span>
+                            系统当前值与客观事实不符，如邮箱/电话写错、行业分类错误。
+                          </li>
+                          <li>
+                            <span className="font-medium text-foreground">数据过期：</span>
+                            该值曾经可能正确，但已因企业/联系人状态变化而失效，如联系人离职、公司迁址。
+                          </li>
+                          <li>
+                            <span className="font-medium text-foreground">数据缺失：</span>
+                            该字段应当有数据但系统未提供，需补充正确值。
+                          </li>
+                          <li>
+                            <span className="font-medium text-foreground">无效 / 重复：</span>
+                            格式明显不规范，或同一家企业/联系人出现重复记录，主要供运营清理。
+                          </li>
+                        </ul>
+                      </div>
+                    </PopoverContent>
+                  </Popover>
+                )}
+              </div>
+              {subject !== "new_contact" && (
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="ghost"
+                  className="h-7 gap-1 text-xs"
+                  onClick={() =>
+                    setDrafts((d) => [...d, { field: "", issue: "wrong", suggested: "" }])
+                  }
+                >
+                  <Plus className="h-3.5 w-3.5" />
+                  添加字段
+                </Button>
+              )}
             </div>
 
-            <div className="space-y-2">
-              {drafts.map((d, i) => {
-                const cur = d.field ? currentOf(d.field) : "";
-                return (
-                  <div key={i} className="rounded-lg border bg-muted/20 p-3 space-y-2">
-                    <div className="flex flex-wrap items-center gap-2">
-                      <Select
-                        value={d.field}
-                        onValueChange={(v) =>
-                          setDrafts((arr) =>
-                            arr.map((x, k) => (k === i ? { ...x, field: v } : x)),
-                          )
+            {subject === "new_contact" ? (
+              <div className="rounded-lg border bg-muted/20 p-3">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                  {NEW_CONTACT_FIELDS.map((f) => (
+                    <div key={f.key} className="space-y-1">
+                      <Label className="text-[11px] text-muted-foreground">
+                        {f.label}
+                        {f.required && <span className="text-destructive ml-0.5">*</span>}
+                      </Label>
+                      <Input
+                        className="h-8"
+                        value={newContact[f.key] ?? ""}
+                        maxLength={200}
+                        placeholder={f.required ? "必填" : "选填"}
+                        onChange={(ev) =>
+                          setNewContact((prev) => ({ ...prev, [f.key]: ev.target.value }))
                         }
-                      >
-                        <SelectTrigger className="h-8 w-[200px]">
-                          <SelectValue placeholder="选择字段" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {fieldDefs.map((f) => (
-                            <SelectItem
-                              key={f.key}
-                              value={f.key}
-                              disabled={f.key !== d.field && usedFields.includes(f.key)}
-                            >
-                              {f.label}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-
-                      <Select
-                        value={d.issue}
-                        onValueChange={(v) =>
-                          setDrafts((arr) =>
-                            arr.map((x, k) =>
-                              k === i ? { ...x, issue: v as FeedbackIssueType } : x,
-                            ),
-                          )
-                        }
-                      >
-                        <SelectTrigger className="h-8 w-[140px]">
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {ISSUE_TYPES.map((t) => (
-                            <SelectItem key={t} value={t}>
-                              {ISSUE_TYPE_LABEL[t]}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-
-                      {drafts.length > 1 && (
-                        <Button
-                          type="button"
-                          size="icon"
-                          variant="ghost"
-                          className="ml-auto h-8 w-8 text-muted-foreground hover:text-destructive"
-                          onClick={() =>
-                            setDrafts((arr) => arr.filter((_, k) => k !== i))
-                          }
-                          aria-label="删除该条"
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
-                      )}
+                      />
                     </div>
-
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
-                      <div className="space-y-1">
-                        <div className="text-[11px] text-muted-foreground">系统当前值</div>
-                        <div className="min-h-8 rounded-md border border-dashed bg-background/60 px-2.5 py-1.5 text-sm text-muted-foreground break-all">
-                          {d.field ? cur || "未提供" : "—"}
-                        </div>
-                      </div>
-                      <div className="space-y-1">
-                        <div className="text-[11px] text-muted-foreground">
-                          正确值
-                          {d.issue === "invalid" && (
-                            <span className="ml-1 text-muted-foreground/70">（可不填）</span>
-                          )}
-                        </div>
-                        <Input
-                          className="h-8"
-                          value={d.suggested}
-                          maxLength={200}
-                          placeholder={
-                            d.issue === "invalid"
-                              ? "如需说明可在下方备注"
-                              : "请填写您了解到的正确内容"
+                  ))}
+                </div>
+              </div>
+            ) : (
+              <div className="space-y-2">
+                {drafts.map((d, i) => {
+                  const cur = d.field ? currentOf(d.field) : "";
+                  return (
+                    <div key={i} className="rounded-lg border bg-muted/20 p-3 space-y-2">
+                      <div className="flex flex-wrap items-center gap-2">
+                        <Select
+                          value={d.field}
+                          onValueChange={(v) =>
+                            setDrafts((arr) =>
+                              arr.map((x, k) => (k === i ? { ...x, field: v } : x)),
+                            )
                           }
-                          onChange={(ev) =>
+                        >
+                          <SelectTrigger className="h-8 w-[200px]">
+                            <SelectValue placeholder="选择字段" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {fieldDefs.map((f) => (
+                              <SelectItem
+                                key={f.key}
+                                value={f.key}
+                                disabled={f.key !== d.field && usedFields.includes(f.key)}
+                              >
+                                {f.label}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+
+                        <Select
+                          value={d.issue}
+                          onValueChange={(v) =>
                             setDrafts((arr) =>
                               arr.map((x, k) =>
-                                k === i ? { ...x, suggested: ev.target.value } : x,
+                                k === i ? { ...x, issue: v as FeedbackIssueType } : x,
                               ),
                             )
                           }
-                        />
+                        >
+                          <SelectTrigger className="h-8 w-[140px]">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {ISSUE_TYPES.map((t) => (
+                              <SelectItem key={t} value={t}>
+                                {ISSUE_TYPE_LABEL[t]}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+
+                        {drafts.length > 1 && (
+                          <Button
+                            type="button"
+                            size="icon"
+                            variant="ghost"
+                            className="ml-auto h-8 w-8 text-muted-foreground hover:text-destructive"
+                            onClick={() =>
+                              setDrafts((arr) => arr.filter((_, k) => k !== i))
+                            }
+                            aria-label="删除该条"
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        )}
+                      </div>
+
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                        <div className="space-y-1">
+                          <div className="text-[11px] text-muted-foreground">系统当前值</div>
+                          <div className="min-h-8 rounded-md border border-dashed bg-background/60 px-2.5 py-1.5 text-sm text-muted-foreground break-all">
+                            {d.field ? cur || "未提供" : "—"}
+                          </div>
+                        </div>
+                        <div className="space-y-1">
+                          <div className="text-[11px] text-muted-foreground">
+                            正确值
+                            {d.issue === "invalid" && (
+                              <span className="ml-1 text-muted-foreground/70">（可不填）</span>
+                            )}
+                          </div>
+                          <Input
+                            className="h-8"
+                            value={d.suggested}
+                            maxLength={200}
+                            placeholder={
+                              d.issue === "invalid"
+                                ? "如需说明可在下方备注"
+                                : "请填写您了解到的正确内容"
+                            }
+                            onChange={(ev) =>
+                              setDrafts((arr) =>
+                                arr.map((x, k) =>
+                                  k === i ? { ...x, suggested: ev.target.value } : x,
+                                ),
+                              )
+                            }
+                          />
+                        </div>
                       </div>
                     </div>
-                  </div>
-                );
-              })}
-            </div>
+                  );
+                })}
+              </div>
+            )}
           </section>
 
           {/* 数据来源 */}

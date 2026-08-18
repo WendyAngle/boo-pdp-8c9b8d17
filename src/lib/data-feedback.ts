@@ -6,7 +6,7 @@
  */
 import { useSyncExternalStore } from "react";
 
-export type FeedbackSubjectKind = "enterprise" | "contact";
+export type FeedbackSubjectKind = "enterprise" | "contact" | "new_contact";
 
 export type FeedbackIssueType = "wrong" | "outdated" | "missing" | "invalid";
 
@@ -53,6 +53,15 @@ export interface FeedbackItem {
   issue: FeedbackIssueType;
 }
 
+export interface NewContactDraft {
+  name: string;
+  title?: string;
+  email?: string;
+  phone?: string;
+  whatsapp?: string;
+  status?: string;
+}
+
 export interface FeedbackTicket {
   id: string;
   createdAt: number;
@@ -62,6 +71,8 @@ export interface FeedbackTicket {
   /** 关联人物索引与姓名（subjectKind = contact 时） */
   contactIndex?: number;
   contactName?: string;
+  /** 新增关联人物信息（subjectKind = new_contact 时） */
+  newContact?: NewContactDraft;
   items: FeedbackItem[];
   sourceType: FeedbackSourceType;
   sourceUrl?: string;
@@ -151,4 +162,18 @@ export const CONTACT_FEEDBACK_FIELDS: { key: string; label: string }[] = [
   { key: "phone", label: "联系电话" },
   { key: "whatsapp", label: "WhatsApp" },
   { key: "status", label: "在职状态（已离职等）" },
+];
+
+/** 新增关联人物时可填写的字段 */
+export const NEW_CONTACT_FIELDS: {
+  key: keyof NewContactDraft;
+  label: string;
+  required?: boolean;
+}[] = [
+  { key: "name", label: "联系人姓名", required: true },
+  { key: "title", label: "职位信息" },
+  { key: "email", label: "联系邮箱" },
+  { key: "phone", label: "联系电话" },
+  { key: "whatsapp", label: "WhatsApp" },
+  { key: "status", label: "在职状态" },
 ];
