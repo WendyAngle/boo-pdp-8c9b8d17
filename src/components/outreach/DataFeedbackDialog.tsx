@@ -220,9 +220,9 @@ export function DataFeedbackDialog({ enterprise, defaultContactIndex, trigger }:
       </DialogTrigger>
       <DialogContent className="max-w-3xl max-h-[86vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>问题反馈 · 数据纠错</DialogTitle>
+          <DialogTitle>问题反馈 · 数据纠错与补充</DialogTitle>
           <DialogDescription>
-            请指出有问题的字段并提供正确值，同时说明数据来源以便平台核实。核实通过后将更新企业档案。
+            可纠正现有企业/联系人数据，也可补充系统中尚未录入的关联人物。请说明数据来源以便平台核实，核实通过后数据会自动更新。
           </DialogDescription>
         </DialogHeader>
 
