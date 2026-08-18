@@ -292,131 +292,199 @@ export function DataFeedbackDialog({ enterprise, defaultContactIndex, trigger }:
             </div>
           </section>
 
-          {/* 问题字段 */}
+          {/* 问题字段 / 新增联系人 */}
           <section className="space-y-2">
             <div className="flex items-center justify-between">
-              <Label className="text-xs text-muted-foreground">
-                问题字段（可添加多条）
-              </Label>
-              <Button
-                type="button"
-                size="sm"
-                variant="ghost"
-                className="h-7 gap-1 text-xs"
-                onClick={() =>
-                  setDrafts((d) => [...d, { field: "", issue: "wrong", suggested: "" }])
-                }
-              >
-                <Plus className="h-3.5 w-3.5" />
-                添加字段
-              </Button>
+              <div className="flex items-center gap-1.5">
+                <Label className="text-xs text-muted-foreground">
+                  {subject === "new_contact"
+                    ? "新增联系人信息"
+                    : "问题字段（可添加多条）"}
+                </Label>
+                {subject !== "new_contact" && (
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon"
+                        className="h-6 w-6 text-muted-foreground hover:text-foreground"
+                        aria-label="问题类型说明"
+                      >
+                        <HelpCircle className="h-3.5 w-3.5" />
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-80 text-sm" side="right">
+                      <div className="space-y-2">
+                        <p className="font-medium">问题类型说明</p>
+                        <ul className="space-y-1.5 text-muted-foreground">
+                          <li>
+                            <span className="font-medium text-foreground">数据错误：</span>
+                            系统当前值与客观事实不符，如邮箱/电话写错、行业分类错误。
+                          </li>
+                          <li>
+                            <span className="font-medium text-foreground">数据过期：</span>
+                            该值曾经可能正确，但已因企业/联系人状态变化而失效，如联系人离职、公司迁址。
+                          </li>
+                          <li>
+                            <span className="font-medium text-foreground">数据缺失：</span>
+                            该字段应当有数据但系统未提供，需补充正确值。
+                          </li>
+                          <li>
+                            <span className="font-medium text-foreground">无效 / 重复：</span>
+                            格式明显不规范，或同一家企业/联系人出现重复记录，主要供运营清理。
+                          </li>
+                        </ul>
+                      </div>
+                    </PopoverContent>
+                  </Popover>
+                )}
+              </div>
+              {subject !== "new_contact" && (
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="ghost"
+                  className="h-7 gap-1 text-xs"
+                  onClick={() =>
+                    setDrafts((d) => [...d, { field: "", issue: "wrong", suggested: "" }])
+                  }
+                >
+                  <Plus className="h-3.5 w-3.5" />
+                  添加字段
+                </Button>
+              )}
             </div>
 
-            <div className="space-y-2">
-              {drafts.map((d, i) => {
-                const cur = d.field ? currentOf(d.field) : "";
-                return (
-                  <div key={i} className="rounded-lg border bg-muted/20 p-3 space-y-2">
-                    <div className="flex flex-wrap items-center gap-2">
-                      <Select
-                        value={d.field}
-                        onValueChange={(v) =>
-                          setDrafts((arr) =>
-                            arr.map((x, k) => (k === i ? { ...x, field: v } : x)),
-                          )
+            {subject === "new_contact" ? (
+              <div className="rounded-lg border bg-muted/20 p-3">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                  {NEW_CONTACT_FIELDS.map((f) => (
+                    <div key={f.key} className="space-y-1">
+                      <Label className="text-[11px] text-muted-foreground">
+                        {f.label}
+                        {f.required && <span className="text-destructive ml-0.5">*</span>}
+                      </Label>
+                      <Input
+                        className="h-8"
+                        value={newContact[f.key] ?? ""}
+                        maxLength={200}
+                        placeholder={f.required ? "必填" : "选填"}
+                        onChange={(ev) =>
+                          setNewContact((prev) => ({ ...prev, [f.key]: ev.target.value }))
                         }
-                      >
-                        <SelectTrigger className="h-8 w-[200px]">
-                          <SelectValue placeholder="选择字段" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {fieldDefs.map((f) => (
-                            <SelectItem
-                              key={f.key}
-                              value={f.key}
-                              disabled={f.key !== d.field && usedFields.includes(f.key)}
-                            >
-                              {f.label}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-
-                      <Select
-                        value={d.issue}
-                        onValueChange={(v) =>
-                          setDrafts((arr) =>
-                            arr.map((x, k) =>
-                              k === i ? { ...x, issue: v as FeedbackIssueType } : x,
-                            ),
-                          )
-                        }
-                      >
-                        <SelectTrigger className="h-8 w-[140px]">
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {ISSUE_TYPES.map((t) => (
-                            <SelectItem key={t} value={t}>
-                              {ISSUE_TYPE_LABEL[t]}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-
-                      {drafts.length > 1 && (
-                        <Button
-                          type="button"
-                          size="icon"
-                          variant="ghost"
-                          className="ml-auto h-8 w-8 text-muted-foreground hover:text-destructive"
-                          onClick={() =>
-                            setDrafts((arr) => arr.filter((_, k) => k !== i))
-                          }
-                          aria-label="删除该条"
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
-                      )}
+                      />
                     </div>
-
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
-                      <div className="space-y-1">
-                        <div className="text-[11px] text-muted-foreground">系统当前值</div>
-                        <div className="min-h-8 rounded-md border border-dashed bg-background/60 px-2.5 py-1.5 text-sm text-muted-foreground break-all">
-                          {d.field ? cur || "未提供" : "—"}
-                        </div>
-                      </div>
-                      <div className="space-y-1">
-                        <div className="text-[11px] text-muted-foreground">
-                          正确值
-                          {d.issue === "invalid" && (
-                            <span className="ml-1 text-muted-foreground/70">（可不填）</span>
-                          )}
-                        </div>
-                        <Input
-                          className="h-8"
-                          value={d.suggested}
-                          maxLength={200}
-                          placeholder={
-                            d.issue === "invalid"
-                              ? "如需说明可在下方备注"
-                              : "请填写您了解到的正确内容"
+                  ))}
+                </div>
+              </div>
+            ) : (
+              <div className="space-y-2">
+                {drafts.map((d, i) => {
+                  const cur = d.field ? currentOf(d.field) : "";
+                  return (
+                    <div key={i} className="rounded-lg border bg-muted/20 p-3 space-y-2">
+                      <div className="flex flex-wrap items-center gap-2">
+                        <Select
+                          value={d.field}
+                          onValueChange={(v) =>
+                            setDrafts((arr) =>
+                              arr.map((x, k) => (k === i ? { ...x, field: v } : x)),
+                            )
                           }
-                          onChange={(ev) =>
+                        >
+                          <SelectTrigger className="h-8 w-[200px]">
+                            <SelectValue placeholder="选择字段" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {fieldDefs.map((f) => (
+                              <SelectItem
+                                key={f.key}
+                                value={f.key}
+                                disabled={f.key !== d.field && usedFields.includes(f.key)}
+                              >
+                                {f.label}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+
+                        <Select
+                          value={d.issue}
+                          onValueChange={(v) =>
                             setDrafts((arr) =>
                               arr.map((x, k) =>
-                                k === i ? { ...x, suggested: ev.target.value } : x,
+                                k === i ? { ...x, issue: v as FeedbackIssueType } : x,
                               ),
                             )
                           }
-                        />
+                        >
+                          <SelectTrigger className="h-8 w-[140px]">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {ISSUE_TYPES.map((t) => (
+                              <SelectItem key={t} value={t}>
+                                {ISSUE_TYPE_LABEL[t]}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+
+                        {drafts.length > 1 && (
+                          <Button
+                            type="button"
+                            size="icon"
+                            variant="ghost"
+                            className="ml-auto h-8 w-8 text-muted-foreground hover:text-destructive"
+                            onClick={() =>
+                              setDrafts((arr) => arr.filter((_, k) => k !== i))
+                            }
+                            aria-label="删除该条"
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        )}
+                      </div>
+
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                        <div className="space-y-1">
+                          <div className="text-[11px] text-muted-foreground">系统当前值</div>
+                          <div className="min-h-8 rounded-md border border-dashed bg-background/60 px-2.5 py-1.5 text-sm text-muted-foreground break-all">
+                            {d.field ? cur || "未提供" : "—"}
+                          </div>
+                        </div>
+                        <div className="space-y-1">
+                          <div className="text-[11px] text-muted-foreground">
+                            正确值
+                            {d.issue === "invalid" && (
+                              <span className="ml-1 text-muted-foreground/70">（可不填）</span>
+                            )}
+                          </div>
+                          <Input
+                            className="h-8"
+                            value={d.suggested}
+                            maxLength={200}
+                            placeholder={
+                              d.issue === "invalid"
+                                ? "如需说明可在下方备注"
+                                : "请填写您了解到的正确内容"
+                            }
+                            onChange={(ev) =>
+                              setDrafts((arr) =>
+                                arr.map((x, k) =>
+                                  k === i ? { ...x, suggested: ev.target.value } : x,
+                                ),
+                              )
+                            }
+                          />
+                        </div>
                       </div>
                     </div>
-                  </div>
-                );
-              })}
-            </div>
+                  );
+                })}
+              </div>
+            )}
           </section>
 
           {/* 数据来源 */}
