@@ -103,6 +103,15 @@ export function DataFeedbackDialog({ enterprise, defaultContactIndex, trigger }:
   const [sourceUrl, setSourceUrl] = useState("");
   const [sourceNote, setSourceNote] = useState("");
   const [allowContact, setAllowContact] = useState(true);
+  const [tab, setTabRaw] = useState<"submit" | "mine">("submit");
+
+  const myTickets = useFeedbacks(enterprise.id);
+  const unread = useUnreadFeedbackCount(enterprise.id);
+
+  const setTab = (v: "submit" | "mine") => {
+    setTabRaw(v);
+    if (v === "mine") markTicketsRead(enterprise.id);
+  };
 
   const contact = enterprise.contacts[contactIdx];
   const fieldDefs =
