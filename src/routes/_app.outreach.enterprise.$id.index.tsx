@@ -40,6 +40,10 @@ import { WhatsAppReachButton } from "@/components/WhatsAppReachButton";
 import { RecentCommsCapsule } from "@/components/outreach/RecentCommsCapsule";
 import { EnterpriseEnrichButton } from "@/components/outreach/EnterpriseEnrichButton";
 import { applyPatch, useEnrich } from "@/lib/enterprise-enrich";
+import {
+  applyOverrideToEnterprise,
+  useEnterpriseOverride,
+} from "@/lib/enterprise-overrides";
 import { DataFeedbackDialog } from "@/components/outreach/DataFeedbackDialog";
 
 
@@ -72,7 +76,8 @@ export const Route = createFileRoute("/_app/outreach/enterprise/$id/")({
 function EnterpriseDetailPage() {
   const { enterprise: base } = Route.useLoaderData() as { enterprise: Enterprise };
   const enrichRec = useEnrich(base.id);
-  const e = applyPatch(base, enrichRec);
+  const override = useEnterpriseOverride(base.id);
+  const e = applyOverrideToEnterprise(applyPatch(base, enrichRec), override);
   return (
 
     <div className="p-8 space-y-6">

@@ -9,7 +9,8 @@ export type LedgerKind =
   | "ai_generate"
   | "social_account_purchase"
   | "social_add_friend"
-  | "social_dm";
+  | "social_dm"
+  | "feedback_reward";
 export type ViewField =
   | "email"
   | "phone"
@@ -611,6 +612,31 @@ export function recordRecharge(input: {
     detail: `订单 ${input.orderNo} · ¥${input.price}${
       input.bonus > 0 ? ` · 赠 ${input.bonus} 积分` : ""
     }`,
+  };
+  ledger = [entry, ...ledger];
+  writeLedger(ledger);
+  emitLedger();
+  return entry;
+}
+
+/** 数据反馈采纳奖励（收入类流水） */
+export function recordFeedbackReward(input: {
+  ticketId: string;
+  enterpriseId: string;
+  enterpriseName: string;
+  credits: number;
+  note?: string;
+}): LedgerEntry {
+  const entry: LedgerEntry = {
+    id: makeId("fb"),
+    kind: "feedback_reward",
+    cost: input.credits,
+    createdAt: new Date().toISOString(),
+    targetKind: "enterprise",
+    targetId: input.enterpriseId,
+    targetName: input.enterpriseName,
+    userCreated: true,
+    detail: `数据反馈奖励 · 工单 ${input.ticketId}${input.note ? ` · ${input.note}` : ""}`,
   };
   ledger = [entry, ...ledger];
   writeLedger(ledger);

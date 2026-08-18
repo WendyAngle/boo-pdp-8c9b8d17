@@ -111,6 +111,11 @@ export const Route = createFileRoute("/_app/outreach/billing")({
 
 import { formatDateTime as fmtTime } from "@/lib/format-date";
 
+/** 收入类流水（正向记账） */
+function isIncome(e: LedgerEntry) {
+  return e.kind === "refund" || e.kind === "recharge" || e.kind === "feedback_reward";
+}
+
 function BillingPage() {
   const { tab: tabFromUrl } = Route.useSearch();
   useEffect(() => {
@@ -215,7 +220,7 @@ function BillingPage() {
       (a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime(),
     );
     const signed = (e: LedgerEntry) =>
-      e.kind === "refund" || e.kind === "recharge" ? e.cost : -e.cost;
+      isIncome(e) ? e.cost : -e.cost;
     const totalDelta = sorted.reduce((s, e) => s + signed(e), 0);
     let running = balance.balance - totalDelta; // 期初余额
     for (const e of sorted) {
@@ -287,10 +292,12 @@ function BillingPage() {
           ? "服务失败退款"
           : e.kind === "recharge"
             ? "充值"
-            : "消费积分",
+            : e.kind === "feedback_reward"
+              ? "数据反馈奖励"
+              : "消费积分",
         opLabel(e),
         detailText(e),
-        `${e.kind === "refund" || e.kind === "recharge" ? "+" : "-"}${e.cost}`,
+        `${isIncome(e) ? "+" : "-"}${e.cost}`,
         String(balanceMap.get(e.id) ?? ""),
       ]),
     ];
@@ -592,12 +599,12 @@ function BillingPage() {
                   <TableCell
                     className={cn(
                       "font-semibold tabular-nums",
-                      e.kind === "refund" || e.kind === "recharge"
+                      isIncome(e)
                         ? "text-emerald-600"
                         : "text-rose-600",
                     )}
                   >
-                    {e.kind === "refund" || e.kind === "recharge" ? "+" : "-"}
+                    {isIncome(e) ? "+" : "-"}
                     {e.cost.toLocaleString()}
                   </TableCell>
                   <TableCell className="font-mono tabular-nums text-sm">
@@ -796,6 +803,14 @@ function KindBadge({ entry }: { entry: LedgerEntry }) {
       </span>
     );
   }
+  if (entry.kind === "feedback_reward") {
+    return (
+      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md border text-xs font-medium bg-emerald-50 text-emerald-700 border-emerald-200">
+        <BadgeCheck className="h-3 w-3" />
+        数据反馈奖励
+      </span>
+    );
+  }
   // view / reach / ai_generate → 消费积分
   return (
     <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md border text-xs font-medium bg-rose-50 text-rose-700 border-rose-200">
@@ -850,6 +865,14 @@ function FieldCell({ entry }: { entry: LedgerEntry }) {
       <span className="inline-flex items-center gap-1.5 text-xs text-muted-foreground">
         <Sparkles className="h-3.5 w-3.5" />
         <span className="text-foreground">AI 文案生成</span>
+      </span>
+    );
+  }
+  if (entry.kind === "feedback_reward") {
+    return (
+      <span className="inline-flex items-center gap-1.5 text-xs text-muted-foreground">
+        <BadgeCheck className="h-3.5 w-3.5" />
+        <span className="text-foreground">数据反馈采纳</span>
       </span>
     );
   }

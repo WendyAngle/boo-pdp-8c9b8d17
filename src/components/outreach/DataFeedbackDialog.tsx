@@ -30,19 +30,32 @@ import {
 } from "@/components/ui/popover";
 import type { Enterprise } from "@/data/enterprises";
 import {
+  Tabs,
+  TabsContent,
+  TabsList,
+  TabsTrigger,
+} from "@/components/ui/tabs";
+import {
   CONTACT_FEEDBACK_FIELDS,
   ENTERPRISE_FEEDBACK_FIELDS,
   ISSUE_TYPE_LABEL,
+  markTicketsRead,
   NEW_CONTACT_FIELDS,
+  REJECT_REASON_LABEL,
   SOURCE_NEEDS_URL,
   SOURCE_TYPE_LABEL,
+  STATUS_LABEL,
   submitFeedback,
+  useFeedbacks,
+  useUnreadFeedbackCount,
   type FeedbackIssueType,
   type FeedbackItem,
   type FeedbackSourceType,
   type FeedbackSubjectKind,
+  type FeedbackTicket,
   type NewContactDraft,
 } from "@/lib/data-feedback";
+import { CURRENT_USER } from "@/lib/current-user";
 
 interface Props {
   enterprise: Enterprise;
@@ -90,6 +103,15 @@ export function DataFeedbackDialog({ enterprise, defaultContactIndex, trigger }:
   const [sourceUrl, setSourceUrl] = useState("");
   const [sourceNote, setSourceNote] = useState("");
   const [allowContact, setAllowContact] = useState(true);
+  const [tab, setTabRaw] = useState<"submit" | "mine">("submit");
+
+  const myTickets = useFeedbacks(enterprise.id);
+  const unread = useUnreadFeedbackCount(enterprise.id);
+
+  const setTab = (v: "submit" | "mine") => {
+    setTabRaw(v);
+    if (v === "mine") markTicketsRead(enterprise.id);
+  };
 
   const contact = enterprise.contacts[contactIdx];
   const fieldDefs =
@@ -194,6 +216,7 @@ export function DataFeedbackDialog({ enterprise, defaultContactIndex, trigger }:
       sourceUrl: sourceUrl.trim() || undefined,
       sourceNote: sourceNote.trim() || undefined,
       allowContact,
+      submitter: CURRENT_USER.name,
     });
     toast.success("反馈已提交，感谢您的贡献", {
       description: "平台将在 1-3 个工作日内核实，核实通过后数据会自动更新",
@@ -212,9 +235,14 @@ export function DataFeedbackDialog({ enterprise, defaultContactIndex, trigger }:
     >
       <DialogTrigger asChild>
         {trigger ?? (
-          <Button variant="outline" size="sm" className="gap-1.5">
+          <Button variant="outline" size="sm" className="gap-1.5 relative">
             <MessageSquareWarning className="h-4 w-4" />
             问题反馈
+            {unread > 0 && (
+              <span className="absolute -right-1 -top-1 min-w-4 h-4 px-1 rounded-full bg-destructive text-destructive-foreground text-[10px] leading-4 text-center">
+                {unread}
+              </span>
+            )}
           </Button>
         )}
       </DialogTrigger>
@@ -226,6 +254,20 @@ export function DataFeedbackDialog({ enterprise, defaultContactIndex, trigger }:
           </DialogDescription>
         </DialogHeader>
 
+        <Tabs value={tab} onValueChange={(v) => setTab(v as "submit" | "mine")}>
+          <TabsList>
+            <TabsTrigger value="submit">提交反馈</TabsTrigger>
+            <TabsTrigger value="mine" className="gap-1.5">
+              我的反馈
+              {myTickets.length > 0 && (
+                <Badge variant="secondary" className="h-4 px-1 text-[10px] font-normal">
+                  {myTickets.length}
+                </Badge>
+              )}
+            </TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="submit" className="mt-4">
         <div className="space-y-5">
           {/* 反馈对象 */}
           <section className="space-y-2">
@@ -552,21 +594,121 @@ export function DataFeedbackDialog({ enterprise, defaultContactIndex, trigger }:
             允许平台在核实过程中与我联系
           </label>
         </div>
+          </TabsContent>
 
-        <DialogFooter className="gap-2 sm:gap-2">
-          {disabledReason && (
-            <span className="mr-auto self-center text-xs text-muted-foreground">
-              {disabledReason}
-            </span>
-          )}
-          <Button variant="outline" onClick={() => setOpen(false)}>
-            取消
-          </Button>
-          <Button disabled={Boolean(disabledReason)} onClick={onSubmit}>
-            提交反馈
-          </Button>
-        </DialogFooter>
+          <TabsContent value="mine" className="mt-4">
+            <MyFeedbackList tickets={myTickets} />
+          </TabsContent>
+        </Tabs>
+
+        {tab === "submit" ? (
+          <DialogFooter className="gap-2 sm:gap-2">
+            {disabledReason && (
+              <span className="mr-auto self-center text-xs text-muted-foreground">
+                {disabledReason}
+              </span>
+            )}
+            <Button variant="outline" onClick={() => setOpen(false)}>
+              取消
+            </Button>
+            <Button disabled={Boolean(disabledReason)} onClick={onSubmit}>
+              提交反馈
+            </Button>
+          </DialogFooter>
+        ) : (
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setOpen(false)}>
+              关闭
+            </Button>
+          </DialogFooter>
+        )}
       </DialogContent>
     </Dialog>
+  );
+}
+
+function MyFeedbackList({ tickets }: { tickets: FeedbackTicket[] }) {
+  if (tickets.length === 0) {
+    return (
+      <div className="py-14 text-center text-sm text-muted-foreground">
+        您还没有对该企业提交过数据反馈
+      </div>
+    );
+  }
+  return (
+    <div className="space-y-3">
+      {[...tickets]
+        .sort((a, b) => b.createdAt - a.createdAt)
+        .map((t) => (
+          <div key={t.id} className="rounded-lg border p-3 space-y-2">
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="font-mono text-xs text-muted-foreground">{t.id}</span>
+              <Badge variant="secondary" className="font-normal">
+                {t.subjectKind === "enterprise"
+                  ? "企业数据"
+                  : t.subjectKind === "contact"
+                    ? `关联人物 · ${t.contactName ?? ""}`
+                    : "新增关联人物"}
+              </Badge>
+              <span
+                className={
+                  "px-2 py-0.5 rounded-md border text-xs font-medium " +
+                  (t.status === "accepted" || t.status === "partial"
+                    ? "bg-emerald-50 text-emerald-700 border-emerald-200"
+                    : t.status === "rejected" || t.status === "invalid"
+                      ? "bg-rose-50 text-rose-700 border-rose-200"
+                      : "bg-amber-50 text-amber-700 border-amber-200")
+                }
+              >
+                {STATUS_LABEL[t.status]}
+              </span>
+              {Boolean(t.reward) && (
+                <span className="text-xs font-medium text-emerald-600">
+                  +{t.reward} 积分
+                </span>
+              )}
+              <span className="ml-auto text-xs text-muted-foreground tabular-nums">
+                {new Date(t.createdAt).toLocaleString("zh-CN", { hour12: false })}
+              </span>
+            </div>
+
+            <div className="space-y-1 text-xs">
+              {t.subjectKind === "new_contact" ? (
+                <div className="flex items-center gap-2">
+                  <span className="text-muted-foreground">
+                    {t.newContact?.name}
+                    {t.newContact?.title ? ` · ${t.newContact.title}` : ""}
+                  </span>
+                  {t.newContactVerdict === "reject" && t.newContactRejectReason && (
+                    <span className="text-rose-600">
+                      未采纳：{REJECT_REASON_LABEL[t.newContactRejectReason]}
+                    </span>
+                  )}
+                </div>
+              ) : (
+                t.items.map((it, i) => (
+                  <div key={i} className="flex flex-wrap items-center gap-1.5">
+                    <span className="font-medium">{it.label}</span>
+                    <span className="text-muted-foreground break-all">
+                      {it.current || "未提供"} → {it.finalValue ?? it.suggested}
+                    </span>
+                    {it.verdict === "accept" && (
+                      <span className="text-emerald-600">已采纳</span>
+                    )}
+                    {it.verdict === "reject" && (
+                      <span className="text-rose-600">
+                        未采纳
+                        {it.rejectReason
+                          ? `：${REJECT_REASON_LABEL[it.rejectReason]}`
+                          : ""}
+                      </span>
+                    )}
+                  </div>
+                ))
+              )}
+            </div>
+          </div>
+        ))}
+    </div>
   );
 }
