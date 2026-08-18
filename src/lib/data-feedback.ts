@@ -6,7 +6,7 @@
  */
 import { useSyncExternalStore } from "react";
 
-export type FeedbackSubjectKind = "enterprise" | "contact";
+export type FeedbackSubjectKind = "enterprise" | "contact" | "new_contact";
 
 export type FeedbackIssueType = "wrong" | "outdated" | "missing" | "invalid";
 
