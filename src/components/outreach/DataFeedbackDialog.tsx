@@ -460,8 +460,8 @@ export function DataFeedbackDialog({ enterprise, defaultContactIndex, trigger }:
                         <div className="space-y-1">
                           <div className="text-[11px] text-muted-foreground">
                             正确值
-                            {d.issue === "invalid" && (
-                              <span className="ml-1 text-muted-foreground/70">（可不填）</span>
+                            {d.issue !== "invalid" && (
+                              <span className="text-destructive ml-0.5">*</span>
                             )}
                           </div>
                           <Input
