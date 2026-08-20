@@ -1306,12 +1306,42 @@ function MailboxFormDialog({
           <Button variant="ghost" onClick={() => onOpenChange(false)}>
             取消
           </Button>
-          <Button variant="outline" disabled={testing} onClick={() => onSave(true)}>
-            {testing ? <Loader2 className="h-4 w-4 animate-spin" /> : <Zap className="h-4 w-4" />}
-            保存并测试
-          </Button>
-          <Button onClick={() => onSave(false)}>保存</Button>
+          {form.provider === "Outlook" ? (
+            <Button
+              className="bg-[#0078d4] hover:bg-[#005a9e] text-white"
+              onClick={async () => {
+                const err = validate();
+                if (err) {
+                  toast.error(err);
+                  return;
+                }
+                window.open(
+                  "https://login.microsoftonline.com/common/oauth2/v2.0/authorize",
+                  "_blank",
+                  "noopener,noreferrer",
+                );
+                await onSave(false);
+                toast.info("已在新标签页打开 Microsoft 授权，完成后返回本页");
+              }}
+            >
+              <Link2 className="h-4 w-4" />
+              保存并连接 Microsoft
+            </Button>
+          ) : (
+            <>
+              <Button variant="outline" disabled={testing} onClick={() => onSave(true)}>
+                {testing ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  <Zap className="h-4 w-4" />
+                )}
+                保存并测试
+              </Button>
+              <Button onClick={() => onSave(false)}>保存</Button>
+            </>
+          )}
         </DialogFooter>
+
       </DialogContent>
     </Dialog>
   );
