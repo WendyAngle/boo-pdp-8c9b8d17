@@ -112,26 +112,27 @@ export const PROVIDER_GUIDES: Record<MailboxProvider, ProviderGuide> = {
     ]
   },
   Outlook: {
-    credentialName: "OAuth 2.0 授权 (推荐)",
+    credentialName: "OAuth 2.0 授权（唯一方式）",
     steps: [
-      "点击「OAuth 2.0 登录」通过 Microsoft 官方页面授权（最安全）",
-      "若使用传统方式：在 Microsoft 账号安全性页面开启「双重验证」",
-      "进入「其他验证方式 / 应用密码」，创建新的应用密码并复制",
-      "企业账号需管理员在 Exchange 管理中心开启「已通过身份验证的 SMTP」",
+      "在左侧点击「使用 OAuth 2.0 登录」，跳转 Microsoft 官方授权页",
+      "使用要接入的 Outlook / Microsoft 365 邮箱账号登录",
+      "在授权页勾选同意邮件收发（Mail.Send、Mail.Read、offline_access）权限",
+      "授权成功后自动返回本页，凭证由系统托管，无需填写任何密码",
     ],
-    docHint: "Microsoft 账号 → 安全信息 → OAuth 授权 / 应用密码",
+    docHint: "Microsoft 官方授权页（点击左侧按钮自动跳转）",
     notes: [
-      "2024 年起 Microsoft 已基本废弃 Basic Auth，强烈建议使用 OAuth 方式接入",
-      "Microsoft 365 企业版默认关闭 SMTP AUTH，使用应用密码前需管理员单独开启",
+      "Microsoft 已停用 SMTP/IMAP 基本认证，应用密码与登录密码均无法接入，本平台仅支持 OAuth 2.0",
+      "企业账号若提示需要管理员同意，请让 Microsoft 365 管理员在 Entra 管理中心批准该应用授权",
+      "授权令牌会自动续期；若邮箱改密或管理员撤销授权，需点击「重新授权」",
     ],
     imapSteps: [
-      "个人账号：登录 Outlook.com → 设置 → 邮件 → 同步电子邮件，开启 POP/IMAP 访问",
-      "企业账号：管理员在 Microsoft 365 管理中心 → 用户 → 邮箱应用中勾选「IMAP」",
-      "OAuth 授权将同时自动获得 IMAP 收信权限",
+      "OAuth 授权已同时包含收信（IMAP）权限，无需单独开启",
+      "企业账号：管理员在 Microsoft 365 管理中心 → 用户 → 邮箱应用中确认已启用「IMAP」",
+      "开启「接收客户回复」后使用「保存并测试」验证收信通道",
     ],
     imapNotes: [
       "IMAP 服务器：outlook.office365.com，端口 993 (SSL/TLS)",
-      "若 Outlook Desktop 连接不稳，建议检查是否开启了 Exchange 同步方式",
+      "收信与发信共用同一份 OAuth 授权，撤销授权将同时中断收发",
     ]
   },
   腾讯企业邮: {
