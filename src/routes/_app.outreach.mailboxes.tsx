@@ -775,7 +775,7 @@ function MailboxFormDialog({
       imapHost: manualServer ? s.imapHost : preset.imapHost || s.imapHost,
       imapPort: manualServer ? s.imapPort : preset.imapPort,
       imapEncryption: manualServer ? s.imapEncryption : preset.imapEncryption,
-      username: manualServer ? s.username : email || s.username,
+      username: email || s.username,
       dailyLimit: editing ? s.dailyLimit : PROVIDER_DAILY_LIMIT[p],
     }));
   };
@@ -784,7 +784,7 @@ function MailboxFormDialog({
     setForm((s) => ({
       ...s,
       email,
-      username: manualServer ? s.username : email,
+      username: email,
       displayName: nameTouched
         ? s.displayName
         : suggestDisplayName(email, CURRENT_TENANT.name),
@@ -796,7 +796,6 @@ function MailboxFormDialog({
     } else if (d && !d.matched) {
       // 未能识别服务商：保持已选服务商，自动开启手动配置以便用户自行填写 SMTP 参数
       setManualServer(true);
-      setForm((s) => ({ ...s, username: email }));
     }
   };
 
@@ -1018,13 +1017,6 @@ function MailboxFormDialog({
                 <div className="text-xs font-medium">发信 · SMTP</div>
                 {manualServer ? (
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <Field label="登录用户名" required>
-                      <Input
-                        value={form.username}
-                        onChange={(e) => update("username", e.target.value)}
-                        placeholder="多数情况与邮箱地址一致"
-                      />
-                    </Field>
                     <Field label="SMTP 服务器" required>
                       <Input
                         value={form.smtpHost}
