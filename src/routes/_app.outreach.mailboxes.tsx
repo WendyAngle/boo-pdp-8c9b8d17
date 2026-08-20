@@ -115,6 +115,14 @@ export const Route = createFileRoute("/_app/outreach/mailboxes")({
   component: MailboxesPage,
 });
 
+/** 收信通道摘要：仅作为明细展示，不再作为独立状态标签 */
+function receiveSummary(m: Mailbox) {
+  if (!m.receiveEnabled) return "未开启";
+  if (m.receiveStatus === "收信正常") return m.imapHost || "已连通";
+  if (m.receiveStatus === "收信异常") return "连接异常，请重新测试";
+  return "待测试";
+}
+
 function usabilityBadgeCls(s: MailboxUsability) {
   if (s === "可用") return "bg-emerald-100 text-emerald-700 border-emerald-200";
   if (s === "待验证") return "bg-amber-100 text-amber-700 border-amber-200";
