@@ -811,7 +811,7 @@ function MailboxFormDialog({
       if (!(form.imapPort > 0 && form.imapPort < 65536)) return "IMAP 端口无效";
     }
     if (!form.username.trim()) return "请输入登录用户名";
-    if (!form.password.trim()) return form.provider === "Outlook" ? "请通过 OAuth 授权或填写应用密码" : `请输入${guide.credentialName}`;
+    if (!form.password.trim()) return form.provider === "Outlook" ? "请先完成 OAuth 2.0 授权" : `请输入${guide.credentialName}`;
     if (form.dailyLimit < 1) return "日发上限至少为 1";
     return null;
   };
