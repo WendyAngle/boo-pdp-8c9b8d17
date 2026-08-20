@@ -286,7 +286,7 @@ export function useUsableMailboxes(): Mailbox[] {
 }
 
 export function getDefaultUsableMailbox(list: Mailbox[]): Mailbox | undefined {
-  return list.find((m) => m.isDefault && m.status === "正常") ?? list.find((m) => m.status === "正常");
+  return list.find((m) => m.isDefault && isMailboxUsable(m)) ?? list.find(isMailboxUsable);
 }
 
 export function createMailbox(input: Omit<Mailbox, "id" | "createdAt" | "sentToday">): Mailbox {
