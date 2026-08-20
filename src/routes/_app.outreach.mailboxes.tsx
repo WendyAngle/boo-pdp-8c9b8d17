@@ -143,8 +143,8 @@ function MailboxesPage() {
 
   const filtered = useMemo(() => {
     return data.filter((m) => {
-      // 成员视角：仅展示启用中的企业邮箱（只读）
-      if (!isAdmin && m.status !== "正常") return false;
+      // 成员视角：仅展示「可用」的企业邮箱（只读）
+      if (!isAdmin && !isMailboxUsable(m)) return false;
       if (
         keyword &&
         !`${m.email} ${m.displayName} ${m.username}`
@@ -152,7 +152,7 @@ function MailboxesPage() {
           .includes(keyword.toLowerCase())
       )
         return false;
-      if (statusFilter !== "all" && m.status !== statusFilter) return false;
+      if (statusFilter !== "all" && getMailboxUsability(m).state !== statusFilter) return false;
       if (providerFilter !== "all" && m.provider !== providerFilter) return false;
       return true;
     });
@@ -160,12 +160,13 @@ function MailboxesPage() {
 
 
   const stats = useMemo(() => {
-    const c = (s: MailboxStatus) => data.filter((m) => m.status === s).length;
+    const c = (s: MailboxUsability) =>
+      data.filter((m) => getMailboxUsability(m).state === s).length;
     return {
       total: data.length,
-      normal: c("正常"),
-      disabled: c("停用"),
-      error: c("异常"),
+      usable: c("可用"),
+      pending: c("待验证"),
+      unavailable: c("异常") + c("已停用"),
     };
   }, [data]);
 
