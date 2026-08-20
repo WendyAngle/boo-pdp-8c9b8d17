@@ -274,9 +274,9 @@ function MailboxesPage() {
       {/* Stats */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         <StatCard icon={<MailboxIcon className="h-5 w-5" />} label="邮箱总数" value={stats.total} tone="primary" />
-        <StatCard icon={<CheckCircle2 className="h-5 w-5" />} label="正常" value={stats.normal} tone="emerald" />
-        <StatCard icon={<Ban className="h-5 w-5" />} label="停用" value={stats.disabled} tone="muted" />
-        <StatCard icon={<AlertCircle className="h-5 w-5" />} label="异常" value={stats.error} tone="rose" />
+        <StatCard icon={<CheckCircle2 className="h-5 w-5" />} label="可用（已启用 + 测试通过）" value={stats.usable} tone="emerald" />
+        <StatCard icon={<AlertCircle className="h-5 w-5" />} label="待验证" value={stats.pending} tone="amber" />
+        <StatCard icon={<Ban className="h-5 w-5" />} label="不可用（异常 / 已停用）" value={stats.unavailable} tone="muted" />
       </div>
 
       {/* Filter */}
