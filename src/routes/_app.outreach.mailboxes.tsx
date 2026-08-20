@@ -297,7 +297,7 @@ function MailboxesPage() {
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="all">全部状态</SelectItem>
-              {STATUSES.map((s) => (
+              {USABILITY_STATES.map((s) => (
                 <SelectItem key={s} value={s}>
                   {s}
                 </SelectItem>
