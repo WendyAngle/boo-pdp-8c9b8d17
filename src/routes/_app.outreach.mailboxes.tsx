@@ -451,6 +451,7 @@ function MailboxCard({
   onToggleStatus: () => void;
 }) {
   const pct = Math.min(100, Math.round((m.sentToday / Math.max(1, m.dailyLimit)) * 100));
+  const usability = getMailboxUsability(m);
   return (
     <Card className="p-5 hover:shadow-md transition-shadow">
       <div className="flex items-start gap-3">
