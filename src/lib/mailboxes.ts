@@ -252,9 +252,37 @@ export function useMailboxes(): Mailbox[] {
   );
 }
 
+/* ---------- 统一可用性状态（对外唯一口径） ----------
+ * 业务规则：邮箱需「已启用 + 发信连接测试通过」才可用于发信。
+ * 底层三要素（启用、测试结果、收信通道）不再各自成为一个状态标签，
+ * 而是收敛为一个主状态 + 明细说明。
+ */
+export type MailboxUsability = "可用" | "待验证" | "异常" | "已停用";
+
+export interface MailboxUsabilityInfo {
+  state: MailboxUsability;
+  usable: boolean;
+  /** 状态说明 / 下一步动作提示 */
+  hint: string;
+}
+
+export function getMailboxUsability(m: Mailbox): MailboxUsabilityInfo {
+  if (m.status === "停用")
+    return { state: "已停用", usable: false, hint: "已被管理员停用，不参与邮件触达" };
+  if (m.status === "异常")
+    return { state: "异常", usable: false, hint: "上次发信测试失败，请检查账号配置后重新测试" };
+  if (!m.lastTestedAt)
+    return { state: "待验证", usable: false, hint: "尚未通过发信测试，点击「测试连接」完成验证后可用" };
+  return { state: "可用", usable: true, hint: "已启用且发信测试通过，可用于邮件触达" };
+}
+
+export function isMailboxUsable(m: Mailbox): boolean {
+  return getMailboxUsability(m).usable;
+}
+
 export function useUsableMailboxes(): Mailbox[] {
   const all = useMailboxes();
-  return all.filter((m) => m.status === "正常");
+  return all.filter(isMailboxUsable);
 }
 
 export function getDefaultUsableMailbox(list: Mailbox[]): Mailbox | undefined {
