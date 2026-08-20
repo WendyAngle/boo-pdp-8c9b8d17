@@ -75,6 +75,9 @@ import {
   type MailboxProvider,
   type MailboxEncryption,
   type MailboxStatus,
+  getMailboxUsability,
+  isMailboxUsable,
+  type MailboxUsability,
 } from "@/lib/mailboxes";
 import {
   detectProvider,
@@ -104,7 +107,7 @@ const FORM_PROVIDERS: MailboxProvider[] = [
   "阿里企业邮",
   "网易企业邮",
 ];
-const STATUSES: MailboxStatus[] = ["正常", "停用", "异常"];
+const USABILITY_STATES: MailboxUsability[] = ["可用", "待验证", "异常", "已停用"];
 const ENCRYPTIONS: MailboxEncryption[] = ["SSL", "TLS", "STARTTLS", "NONE"];
 
 export const Route = createFileRoute("/_app/outreach/mailboxes")({
@@ -112,17 +115,19 @@ export const Route = createFileRoute("/_app/outreach/mailboxes")({
   component: MailboxesPage,
 });
 
-function statusBadgeCls(s: MailboxStatus) {
-  if (s === "正常") return "bg-emerald-100 text-emerald-700 border-emerald-200";
-  if (s === "异常") return "bg-rose-100 text-rose-700 border-rose-200";
-  return "bg-muted text-muted-foreground border-border";
+/** 收信通道摘要：仅作为明细展示，不再作为独立状态标签 */
+function receiveSummary(m: Mailbox) {
+  if (!m.receiveEnabled) return "未开启";
+  if (m.receiveStatus === "收信正常") return m.imapHost || "已连通";
+  if (m.receiveStatus === "收信异常") return "连接异常，请重新测试";
+  return "待测试";
 }
 
-function receiveBadgeCls(s: Mailbox["receiveStatus"]) {
-  if (s === "收信正常") return "bg-sky-100 text-sky-700 border-sky-200";
-  if (s === "收信异常") return "bg-rose-100 text-rose-700 border-rose-200";
-  if (s === "未开启收信") return "bg-muted text-muted-foreground border-border";
-  return "bg-amber-100 text-amber-700 border-amber-200";
+function usabilityBadgeCls(s: MailboxUsability) {
+  if (s === "可用") return "bg-emerald-100 text-emerald-700 border-emerald-200";
+  if (s === "待验证") return "bg-amber-100 text-amber-700 border-amber-200";
+  if (s === "异常") return "bg-rose-100 text-rose-700 border-rose-200";
+  return "bg-muted text-muted-foreground border-border";
 }
 
 function formatDateTime(iso?: string) {
@@ -146,8 +151,8 @@ function MailboxesPage() {
 
   const filtered = useMemo(() => {
     return data.filter((m) => {
-      // 成员视角：仅展示启用中的企业邮箱（只读）
-      if (!isAdmin && m.status !== "正常") return false;
+      // 成员视角：仅展示「可用」的企业邮箱（只读）
+      if (!isAdmin && !isMailboxUsable(m)) return false;
       if (
         keyword &&
         !`${m.email} ${m.displayName} ${m.username}`
@@ -155,7 +160,7 @@ function MailboxesPage() {
           .includes(keyword.toLowerCase())
       )
         return false;
-      if (statusFilter !== "all" && m.status !== statusFilter) return false;
+      if (statusFilter !== "all" && getMailboxUsability(m).state !== statusFilter) return false;
       if (providerFilter !== "all" && m.provider !== providerFilter) return false;
       return true;
     });
@@ -163,12 +168,13 @@ function MailboxesPage() {
 
 
   const stats = useMemo(() => {
-    const c = (s: MailboxStatus) => data.filter((m) => m.status === s).length;
+    const c = (s: MailboxUsability) =>
+      data.filter((m) => getMailboxUsability(m).state === s).length;
     return {
       total: data.length,
-      normal: c("正常"),
-      disabled: c("停用"),
-      error: c("异常"),
+      usable: c("可用"),
+      pending: c("待验证"),
+      unavailable: c("异常") + c("已停用"),
     };
   }, [data]);
 
@@ -190,9 +196,9 @@ function MailboxesPage() {
   };
 
   const onToggleStatus = (m: Mailbox) => {
-    if (m.status === "正常") {
-      const normals = data.filter((x) => x.status === "正常").length;
-      if (m.isDefault && normals === 1) {
+    if (m.status !== "停用") {
+      const usables = data.filter(isMailboxUsable).length;
+      if (m.isDefault && usables === 1) {
         toast.error("当前为唯一可用的默认邮箱，停用前请先新增并设置其他邮箱为默认");
         return;
       }
@@ -200,13 +206,15 @@ function MailboxesPage() {
       toast.success(`已停用 ${m.email}`);
     } else {
       setMailboxStatus(m.id, "正常");
-      toast.success(`已启用 ${m.email}`);
+      // 启用后需重新通过测试方可使用
+      if (!m.lastTestedAt) toast.success(`已启用 ${m.email}，请测试连接后使用`);
+      else toast.success(`已启用 ${m.email}`);
     }
   };
 
   const onSetDefault = (m: Mailbox) => {
-    if (m.status !== "正常") {
-      toast.error("仅「正常」状态的邮箱可设为默认");
+    if (!isMailboxUsable(m)) {
+      toast.error("仅「可用」状态的邮箱可设为默认（需已启用且测试通过）");
       return;
     }
     setDefaultMailbox(m.id);
@@ -276,9 +284,9 @@ function MailboxesPage() {
       {/* Stats */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         <StatCard icon={<MailboxIcon className="h-5 w-5" />} label="邮箱总数" value={stats.total} tone="primary" />
-        <StatCard icon={<CheckCircle2 className="h-5 w-5" />} label="正常" value={stats.normal} tone="emerald" />
-        <StatCard icon={<Ban className="h-5 w-5" />} label="停用" value={stats.disabled} tone="muted" />
-        <StatCard icon={<AlertCircle className="h-5 w-5" />} label="异常" value={stats.error} tone="rose" />
+        <StatCard icon={<CheckCircle2 className="h-5 w-5" />} label="可用（已启用 + 测试通过）" value={stats.usable} tone="emerald" />
+        <StatCard icon={<AlertCircle className="h-5 w-5" />} label="待验证" value={stats.pending} tone="amber" />
+        <StatCard icon={<Ban className="h-5 w-5" />} label="不可用（异常 / 已停用）" value={stats.unavailable} tone="muted" />
       </div>
 
       {/* Filter */}
@@ -299,7 +307,7 @@ function MailboxesPage() {
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="all">全部状态</SelectItem>
-              {STATUSES.map((s) => (
+              {USABILITY_STATES.map((s) => (
                 <SelectItem key={s} value={s}>
                   {s}
                 </SelectItem>
@@ -409,13 +417,14 @@ function StatCard({
   icon: React.ReactNode;
   label: string;
   value: number;
-  tone: "primary" | "emerald" | "rose" | "muted";
+  tone: "primary" | "emerald" | "rose" | "muted" | "amber";
 }) {
   const toneCls = {
     primary: "bg-primary/10 text-primary",
     emerald: "bg-emerald-100 text-emerald-700",
     rose: "bg-rose-100 text-rose-700",
     muted: "bg-muted text-muted-foreground",
+    amber: "bg-amber-100 text-amber-700",
   }[tone];
   return (
     <Card className="p-5">
@@ -452,6 +461,7 @@ function MailboxCard({
   onToggleStatus: () => void;
 }) {
   const pct = Math.min(100, Math.round((m.sentToday / Math.max(1, m.dailyLimit)) * 100));
+  const usability = getMailboxUsability(m);
   return (
     <Card className="p-5 hover:shadow-md transition-shadow">
       <div className="flex items-start gap-3">
@@ -467,15 +477,19 @@ function MailboxCard({
                 默认
               </Badge>
             )}
-            <Badge variant="outline" className={statusBadgeCls(m.status)}>
-              {m.status}
-            </Badge>
-            <Badge variant="outline" className="text-[10px]">企业邮箱</Badge>
-            <Badge variant="outline" className={receiveBadgeCls(m.receiveStatus)}>
-              {m.receiveStatus}
+            <Badge variant="outline" className={usabilityBadgeCls(usability.state)}>
+              {usability.state}
             </Badge>
           </div>
           <div className="text-xs text-muted-foreground mt-0.5 truncate">{m.displayName}</div>
+          <div className="text-[11px] text-muted-foreground mt-1 flex items-start gap-1">
+            {usability.usable ? (
+              <CheckCircle2 className="h-3.5 w-3.5 shrink-0 mt-px text-emerald-600" />
+            ) : (
+              <AlertCircle className="h-3.5 w-3.5 shrink-0 mt-px text-amber-600" />
+            )}
+            <span>{usability.hint}</span>
+          </div>
         </div>
       </div>
 
@@ -488,15 +502,15 @@ function MailboxCard({
         />
         <Meta
           icon={<MailboxIcon className="h-3.5 w-3.5" />}
-          label="SMTP"
+          label="发信（SMTP）"
           value={m.smtpHost || "—"}
           mono
         />
         <Meta
           icon={<MailboxIcon className="h-3.5 w-3.5" />}
-          label="IMAP"
-          value={m.receiveEnabled ? m.imapHost || "—" : "未开启"}
-          mono
+          label="收信（IMAP）"
+          value={receiveSummary(m)}
+          mono={m.receiveEnabled && m.receiveStatus === "收信正常"}
         />
         <Meta
           icon={<Activity className="h-3.5 w-3.5" />}
@@ -543,7 +557,7 @@ function MailboxCard({
                 size="sm"
                 variant="ghost"
                 onClick={onSetDefault}
-                disabled={m.isDefault || m.status !== "正常"}
+                disabled={m.isDefault || !usability.usable}
               >
                 {m.isDefault ? <Star className="h-4 w-4 fill-amber-500 text-amber-500" /> : <StarOff className="h-4 w-4" />}
               </Button>
@@ -565,13 +579,13 @@ function MailboxCard({
               <Button
                 size="sm"
                 variant="ghost"
-                className={m.status === "正常" ? "text-muted-foreground" : "text-emerald-600"}
+                className={m.status !== "停用" ? "text-muted-foreground" : "text-emerald-600"}
                 onClick={onToggleStatus}
               >
                 <Power className="h-4 w-4" />
               </Button>
             </TooltipTrigger>
-            <TooltipContent>{m.status === "正常" ? "停用" : "启用"}</TooltipContent>
+            <TooltipContent>{m.status !== "停用" ? "停用" : "启用"}</TooltipContent>
           </Tooltip>
           <Tooltip>
             <TooltipTrigger asChild>
@@ -1178,25 +1192,22 @@ function MailboxFormDialog({
                   />
                 </div>
                 {editing ? (
-                  <Field label="状态">
+                  <Field label="启用状态">
                     <Select
-                      value={form.status}
+                      value={form.status === "停用" ? "停用" : "正常"}
                       onValueChange={(v) => update("status", v as MailboxStatus)}
                     >
                       <SelectTrigger>
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
-                        {STATUSES.map((s) => (
-                          <SelectItem key={s} value={s}>
-                            {s}
-                          </SelectItem>
-                        ))}
+                        <SelectItem value="正常">启用</SelectItem>
+                        <SelectItem value="停用">停用</SelectItem>
                       </SelectContent>
                     </Select>
                   </Field>
                 ) : (
-                  <AutoField label="状态" value="正常（新增后默认启用）" />
+                  <AutoField label="启用状态" value="启用（保存后需测试通过方可使用）" />
                 )}
                 <div className="flex items-center gap-3 md:col-span-2">
                   <Switch
