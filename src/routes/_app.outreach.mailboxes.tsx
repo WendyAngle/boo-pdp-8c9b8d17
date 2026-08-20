@@ -21,6 +21,7 @@ import {
   Loader2,
   Building2,
   HelpCircle,
+  Link2,
 } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -811,7 +812,7 @@ function MailboxFormDialog({
       if (!(form.imapPort > 0 && form.imapPort < 65536)) return "IMAP 端口无效";
     }
     if (!form.username.trim()) return "请输入登录用户名";
-    if (!form.password.trim()) return form.provider === "Outlook" ? "请先完成 OAuth 2.0 授权" : `请输入${guide.credentialName}`;
+    if (form.provider !== "Outlook" && !form.password.trim()) return `请输入${guide.credentialName}`;
     if (form.dailyLimit < 1) return "日发上限至少为 1";
     return null;
   };
@@ -837,7 +838,7 @@ function MailboxFormDialog({
         imapEncryption: form.imapEncryption,
         receiveStatus: form.receiveEnabled ? "未测试" : "未开启收信",
         username: form.username,
-        password: form.password,
+        password: form.provider === "Outlook" ? "OAUTH2_TOKEN_DEMO" : form.password,
         signature: form.signature,
         dailyLimit: form.dailyLimit,
         status: form.status,
@@ -858,7 +859,7 @@ function MailboxFormDialog({
         imapEncryption: form.imapEncryption,
         receiveStatus: form.receiveEnabled ? "未测试" : "未开启收信",
         username: form.username,
-        password: form.password,
+        password: form.provider === "Outlook" ? "OAUTH2_TOKEN_DEMO" : form.password,
         signature: form.signature,
         dailyLimit: form.dailyLimit,
         status: form.status,
@@ -887,7 +888,7 @@ function MailboxFormDialog({
           <DialogTitle>{editing ? "编辑邮箱" : "新增企业邮箱"}</DialogTitle>
           <DialogDescription>
             {form.provider === "Outlook" 
-              ? "Outlook 仅支持 OAuth 2.0 授权登录，无需应用密码；授权后服务器参数自动填充，完成后建议「保存并测试」验证连通性。"
+              ? "填写邮箱地址后连接 Microsoft 账户，系统将通过 OAuth2 授权并使用 Microsoft Graph API 发信与收信。"
               : `只需填写「邮箱地址 + ${guide.credentialName}」，发信（SMTP）与收信（IMAP）参数由系统按域名自动识别；完成后建议「保存并测试」分别验证两条通道的连通性。`}
           </DialogDescription>
         </DialogHeader>
@@ -932,45 +933,17 @@ function MailboxFormDialog({
                   </div>
                 </Field>
                 {form.provider === "Outlook" ? (
-                  <Field label="身份验证方式" required>
-                    {form.password === "OAUTH2_TOKEN_DEMO" ? (
-                      <div className="rounded-md border border-emerald-200 bg-emerald-50/60 p-2.5 flex items-start gap-2">
-                        <ShieldCheck className="h-4 w-4 text-emerald-600 mt-0.5 shrink-0" />
-                        <div className="flex-1 text-[11px] text-foreground/80">
-                          已完成 Microsoft OAuth 2.0 授权，发信与收信共用该授权，无需填写密码。
-                        </div>
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="sm"
-                          className="h-6 px-2 text-[11px] shrink-0"
-                          onClick={() => update("password", "")}
-                        >
-                          重新授权
-                        </Button>
+                  <div className="rounded-md border border-sky-200 bg-sky-50/70 p-3 flex items-start gap-2.5 self-end">
+                    <Link2 className="h-4 w-4 text-[#0078d4] mt-0.5 shrink-0" />
+                    <div className="space-y-1">
+                      <div className="text-sm font-semibold text-[#0f4c81]">
+                        使用 Microsoft OAuth2
                       </div>
-                    ) : (
-                      <div className="flex flex-col gap-2">
-                        <Button
-                          type="button"
-                          className="w-full bg-[#0078d4] hover:bg-[#005a9e] text-white flex items-center justify-center gap-2"
-                          onClick={() => {
-                            toast.info("演示：正在跳转 Microsoft OAuth 2.0 授权页面...");
-                            setTimeout(() => {
-                              update("password", "OAUTH2_TOKEN_DEMO");
-                              toast.success("Outlook OAuth 授权成功，已获取 Access Token");
-                            }, 1500);
-                          }}
-                        >
-                          <ShieldCheck className="h-4 w-4" />
-                          使用 OAuth 2.0 登录
-                        </Button>
-                        <div className="text-[11px] text-muted-foreground">
-                          Microsoft 已停用 SMTP 基本认证，本平台仅支持 OAuth 2.0 授权接入。
-                        </div>
+                      <div className="text-[11px] leading-relaxed text-muted-foreground">
+                        无需填写邮箱密码或应用密码，保存后将前往 Microsoft 完成授权。
                       </div>
-                    )}
-                  </Field>
+                    </div>
+                  </div>
                 ) : (
                   <Field label={`${guide.credentialName}`} required>
                     <Input
@@ -981,6 +954,7 @@ function MailboxFormDialog({
                     />
                   </Field>
                 )}
+
 
                 <Field label="显示名称" required>
                   <Input
@@ -1306,12 +1280,42 @@ function MailboxFormDialog({
           <Button variant="ghost" onClick={() => onOpenChange(false)}>
             取消
           </Button>
-          <Button variant="outline" disabled={testing} onClick={() => onSave(true)}>
-            {testing ? <Loader2 className="h-4 w-4 animate-spin" /> : <Zap className="h-4 w-4" />}
-            保存并测试
-          </Button>
-          <Button onClick={() => onSave(false)}>保存</Button>
+          {form.provider === "Outlook" ? (
+            <Button
+              className="bg-[#0078d4] hover:bg-[#005a9e] text-white"
+              onClick={async () => {
+                const err = validate();
+                if (err) {
+                  toast.error(err);
+                  return;
+                }
+                window.open(
+                  "https://login.microsoftonline.com/common/oauth2/v2.0/authorize",
+                  "_blank",
+                  "noopener,noreferrer",
+                );
+                await onSave(false);
+                toast.info("已在新标签页打开 Microsoft 授权，完成后返回本页");
+              }}
+            >
+              <Link2 className="h-4 w-4" />
+              保存并连接 Microsoft
+            </Button>
+          ) : (
+            <>
+              <Button variant="outline" disabled={testing} onClick={() => onSave(true)}>
+                {testing ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  <Zap className="h-4 w-4" />
+                )}
+                保存并测试
+              </Button>
+              <Button onClick={() => onSave(false)}>保存</Button>
+            </>
+          )}
         </DialogFooter>
+
       </DialogContent>
     </Dialog>
   );
