@@ -579,13 +579,13 @@ function MailboxCard({
               <Button
                 size="sm"
                 variant="ghost"
-                className={m.status === "正常" ? "text-muted-foreground" : "text-emerald-600"}
+                className={m.status !== "停用" ? "text-muted-foreground" : "text-emerald-600"}
                 onClick={onToggleStatus}
               >
                 <Power className="h-4 w-4" />
               </Button>
             </TooltipTrigger>
-            <TooltipContent>{m.status === "正常" ? "停用" : "启用"}</TooltipContent>
+            <TooltipContent>{m.status !== "停用" ? "停用" : "启用"}</TooltipContent>
           </Tooltip>
           <Tooltip>
             <TooltipTrigger asChild>
