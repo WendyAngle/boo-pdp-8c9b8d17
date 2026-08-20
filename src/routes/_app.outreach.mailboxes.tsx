@@ -766,12 +766,12 @@ function MailboxFormDialog({
     setForm((s) => ({
       ...s,
       provider: p,
-      smtpHost: manualServer ? s.smtpHost : preset.smtpHost || s.smtpHost,
-      smtpPort: manualServer ? s.smtpPort : preset.smtpPort,
-      encryption: manualServer ? s.encryption : preset.encryption,
-      imapHost: manualServer ? s.imapHost : preset.imapHost || s.imapHost,
-      imapPort: manualServer ? s.imapPort : preset.imapPort,
-      imapEncryption: manualServer ? s.imapEncryption : preset.imapEncryption,
+      smtpHost: preset.smtpHost || s.smtpHost,
+      smtpPort: preset.smtpPort,
+      encryption: preset.encryption,
+      imapHost: preset.imapHost || s.imapHost,
+      imapPort: preset.imapPort,
+      imapEncryption: preset.imapEncryption,
       username: email || s.username,
       dailyLimit: editing ? s.dailyLimit : PROVIDER_DAILY_LIMIT[p],
     }));
@@ -790,9 +790,6 @@ function MailboxFormDialog({
     setDetect(d);
     if (d && d.matched) {
       applyProvider(d.provider, email);
-    } else if (d && !d.matched) {
-      // 未能识别服务商：保持已选服务商，自动开启手动配置以便用户自行填写 SMTP 参数
-      setManualServer(true);
     }
   };
 
