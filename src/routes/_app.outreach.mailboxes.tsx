@@ -1003,51 +1003,42 @@ function MailboxFormDialog({
               {/* 发信 SMTP */}
               <div className="mt-3 rounded-lg border p-3 space-y-3">
                 <div className="text-xs font-medium">发信 · SMTP</div>
-                {manualServer ? (
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <Field label="SMTP 服务器" required>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <Field label="SMTP 服务器" required>
+                    <Input
+                      value={form.smtpHost}
+                      onChange={(e) => update("smtpHost", e.target.value)}
+                      placeholder="smtp.example.com"
+                      className="font-mono"
+                    />
+                  </Field>
+                  <div className="grid grid-cols-2 gap-3">
+                    <Field label="端口" required>
                       <Input
-                        value={form.smtpHost}
-                        onChange={(e) => update("smtpHost", e.target.value)}
-                        placeholder="smtp.example.com"
-                        className="font-mono"
+                        type="number"
+                        value={form.smtpPort}
+                        onChange={(e) => update("smtpPort", Number(e.target.value))}
                       />
                     </Field>
-                    <div className="grid grid-cols-2 gap-3">
-                      <Field label="端口" required>
-                        <Input
-                          type="number"
-                          value={form.smtpPort}
-                          onChange={(e) => update("smtpPort", Number(e.target.value))}
-                        />
-                      </Field>
-                      <Field label="加密方式">
-                        <Select
-                          value={form.encryption}
-                          onValueChange={(v) => update("encryption", v as MailboxEncryption)}
-                        >
-                          <SelectTrigger>
-                            <SelectValue />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {ENCRYPTIONS.map((e) => (
-                              <SelectItem key={e} value={e}>
-                                {e}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                      </Field>
-                    </div>
+                    <Field label="加密方式">
+                      <Select
+                        value={form.encryption}
+                        onValueChange={(v) => update("encryption", v as MailboxEncryption)}
+                      >
+                        <SelectTrigger>
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {ENCRYPTIONS.map((e) => (
+                            <SelectItem key={e} value={e}>
+                              {e}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </Field>
                   </div>
-                ) : (
-                  <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-                    <AutoField label="服务商" value={form.provider} />
-                    <AutoField label="SMTP 服务器" value={form.smtpHost || "—"} mono />
-                    <AutoField label="端口 / 加密" value={`${form.smtpPort} · ${form.encryption}`} mono />
-                    <AutoField label="登录用户名" value={form.username || "—"} mono />
-                  </div>
-                )}
+                </div>
               </div>
 
               {/* 收信 IMAP */}
