@@ -557,7 +557,7 @@ function MailboxCard({
                 size="sm"
                 variant="ghost"
                 onClick={onSetDefault}
-                disabled={m.isDefault || m.status !== "正常"}
+                disabled={m.isDefault || !usability.usable}
               >
                 {m.isDefault ? <Star className="h-4 w-4 fill-amber-500 text-amber-500" /> : <StarOff className="h-4 w-4" />}
               </Button>
