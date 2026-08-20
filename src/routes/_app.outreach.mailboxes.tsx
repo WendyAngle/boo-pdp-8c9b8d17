@@ -21,6 +21,7 @@ import {
   Loader2,
   Building2,
   HelpCircle,
+  Link2,
 } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -811,7 +812,7 @@ function MailboxFormDialog({
       if (!(form.imapPort > 0 && form.imapPort < 65536)) return "IMAP 端口无效";
     }
     if (!form.username.trim()) return "请输入登录用户名";
-    if (!form.password.trim()) return form.provider === "Outlook" ? "请先完成 OAuth 2.0 授权" : `请输入${guide.credentialName}`;
+    if (form.provider !== "Outlook" && !form.password.trim()) return `请输入${guide.credentialName}`;
     if (form.dailyLimit < 1) return "日发上限至少为 1";
     return null;
   };
@@ -837,7 +838,7 @@ function MailboxFormDialog({
         imapEncryption: form.imapEncryption,
         receiveStatus: form.receiveEnabled ? "未测试" : "未开启收信",
         username: form.username,
-        password: form.password,
+        password: form.provider === "Outlook" ? "OAUTH2_TOKEN_DEMO" : form.password,
         signature: form.signature,
         dailyLimit: form.dailyLimit,
         status: form.status,
@@ -858,7 +859,7 @@ function MailboxFormDialog({
         imapEncryption: form.imapEncryption,
         receiveStatus: form.receiveEnabled ? "未测试" : "未开启收信",
         username: form.username,
-        password: form.password,
+        password: form.provider === "Outlook" ? "OAUTH2_TOKEN_DEMO" : form.password,
         signature: form.signature,
         dailyLimit: form.dailyLimit,
         status: form.status,
@@ -887,7 +888,7 @@ function MailboxFormDialog({
           <DialogTitle>{editing ? "编辑邮箱" : "新增企业邮箱"}</DialogTitle>
           <DialogDescription>
             {form.provider === "Outlook" 
-              ? "Outlook 仅支持 OAuth 2.0 授权登录，无需应用密码；授权后服务器参数自动填充，完成后建议「保存并测试」验证连通性。"
+              ? "填写邮箱地址后连接 Microsoft 账户，系统将通过 OAuth2 授权并使用 Microsoft Graph API 发信与收信。"
               : `只需填写「邮箱地址 + ${guide.credentialName}」，发信（SMTP）与收信（IMAP）参数由系统按域名自动识别；完成后建议「保存并测试」分别验证两条通道的连通性。`}
           </DialogDescription>
         </DialogHeader>
