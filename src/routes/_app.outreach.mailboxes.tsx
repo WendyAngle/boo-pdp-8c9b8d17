@@ -107,7 +107,7 @@ const FORM_PROVIDERS: MailboxProvider[] = [
   "阿里企业邮",
   "网易企业邮",
 ];
-const STATUSES: MailboxStatus[] = ["正常", "停用", "异常"];
+const USABILITY_STATES: MailboxUsability[] = ["可用", "待验证", "异常", "已停用"];
 const ENCRYPTIONS: MailboxEncryption[] = ["SSL", "TLS", "STARTTLS", "NONE"];
 
 export const Route = createFileRoute("/_app/outreach/mailboxes")({
