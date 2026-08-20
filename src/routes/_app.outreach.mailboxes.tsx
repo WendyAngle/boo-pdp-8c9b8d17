@@ -115,17 +115,11 @@ export const Route = createFileRoute("/_app/outreach/mailboxes")({
   component: MailboxesPage,
 });
 
-function statusBadgeCls(s: MailboxStatus) {
-  if (s === "正常") return "bg-emerald-100 text-emerald-700 border-emerald-200";
+function usabilityBadgeCls(s: MailboxUsability) {
+  if (s === "可用") return "bg-emerald-100 text-emerald-700 border-emerald-200";
+  if (s === "待验证") return "bg-amber-100 text-amber-700 border-amber-200";
   if (s === "异常") return "bg-rose-100 text-rose-700 border-rose-200";
   return "bg-muted text-muted-foreground border-border";
-}
-
-function receiveBadgeCls(s: Mailbox["receiveStatus"]) {
-  if (s === "收信正常") return "bg-sky-100 text-sky-700 border-sky-200";
-  if (s === "收信异常") return "bg-rose-100 text-rose-700 border-rose-200";
-  if (s === "未开启收信") return "bg-muted text-muted-foreground border-border";
-  return "bg-amber-100 text-amber-700 border-amber-200";
 }
 
 function formatDateTime(iso?: string) {
