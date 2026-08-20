@@ -76,8 +76,6 @@ export interface ProviderGuide {
   credentialName: string;
   /** 获取步骤 */
   steps: string[];
-  /** 官方文档入口（文案，不做跳转） */
-  docHint: string;
   /** 常见坑 */
   notes: string[];
   /** 开启收信（IMAP）的步骤 */
@@ -85,6 +83,7 @@ export interface ProviderGuide {
   /** 收信相关注意事项 */
   imapNotes: string[];
 }
+
 
 export const PROVIDER_GUIDES: Record<MailboxProvider, ProviderGuide> = {
   Gmail: {
@@ -95,7 +94,6 @@ export const PROVIDER_GUIDES: Record<MailboxProvider, ProviderGuide> = {
       "应用选择「邮件」，设备选择「其他」并填写 Boo 平台",
       "复制生成的 16 位密码，粘贴到「授权密码」（注意去掉空格）",
     ],
-    docHint: "Google 账号 → 安全性 → 应用专用密码",
     notes: [
       "普通登录密码无法用于 SMTP，必须使用应用专用密码",
       "未开启两步验证时看不到应用专用密码入口",
@@ -119,7 +117,6 @@ export const PROVIDER_GUIDES: Record<MailboxProvider, ProviderGuide> = {
       "在授权页勾选同意邮件收发（Mail.Send、Mail.Read、offline_access）权限",
       "授权成功后自动返回本页，凭证由系统托管，无需填写任何密码",
     ],
-    docHint: "Microsoft 官方授权页（点击左侧按钮自动跳转）",
     notes: [
       "Microsoft 已停用 SMTP/IMAP 基本认证，应用密码与登录密码均无法接入，本平台仅支持 OAuth 2.0",
       "企业账号若提示需要管理员同意，请让 Microsoft 365 管理员在 Entra 管理中心批准该应用授权",
@@ -143,7 +140,6 @@ export const PROVIDER_GUIDES: Record<MailboxProvider, ProviderGuide> = {
       "在「客户端专用密码」中生成一个新密码（需管理员允许）",
       "复制专用密码，粘贴到「授权密码」",
     ],
-    docHint: "腾讯企业邮 → 设置 → 收发信设置 → 客户端专用密码",
     notes: ["若管理员开启了「安全登录」，需先在企业管理后台放开客户端登录"],
     imapSteps: [
       "登录 exmail.qq.com → 设置 → 收发信设置",
@@ -163,7 +159,6 @@ export const PROVIDER_GUIDES: Record<MailboxProvider, ProviderGuide> = {
       "如企业启用了客户端独立密码，请在此生成后使用",
       "将密码粘贴到「授权密码」",
     ],
-    docHint: "阿里企业邮 → 设置 → 账户与安全 → 客户端设置",
     notes: [
       "SMTP 服务器：smtp.qiye.aliyun.com，端口 465（SSL）",
       "旧版地址 smtp.mxhichina.com 仍可用，官方建议改用新版 qiye.aliyun.com",
@@ -186,7 +181,6 @@ export const PROVIDER_GUIDES: Record<MailboxProvider, ProviderGuide> = {
       "开启「SMTP 服务」并生成客户端授权码",
       "复制授权码，粘贴到「授权密码」",
     ],
-    docHint: "网易企业邮 → 设置 → 客户端设置 → 授权码",
     notes: ["网易企业邮 SMTP SSL 端口为 465（部分企业为 994），以后台展示为准"],
     imapSteps: [
       "登录 qiye.163.com → 设置 → 客户端设置",
@@ -206,7 +200,6 @@ export const PROVIDER_GUIDES: Record<MailboxProvider, ProviderGuide> = {
       "获取该邮箱的 SMTP 认证用户名与密码（多数与邮箱地址一致）",
       "填写完成后使用「保存并测试」验证连通性",
     ],
-    docHint: "向企业邮件管理员索取 SMTP 配置说明",
     notes: [
       "常用端口：465（SSL）、587（STARTTLS）、25（不加密，多数云厂商已封禁）",
       "服务器需允许平台出口 IP 访问，否则测试会超时",

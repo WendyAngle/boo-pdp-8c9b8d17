@@ -1237,9 +1237,6 @@ function MailboxFormDialog({
                 </li>
               ))}
             </ol>
-            <div className="rounded-md border bg-background p-2.5 text-[11px] text-muted-foreground">
-              入口位置：{guide.docHint}
-            </div>
             <div className="space-y-1.5">
               <div className="text-xs font-medium">注意事项</div>
               {guide.notes.map((n, i) => (
