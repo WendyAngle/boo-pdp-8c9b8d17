@@ -1176,25 +1176,22 @@ function MailboxFormDialog({
                   />
                 </div>
                 {editing ? (
-                  <Field label="状态">
+                  <Field label="启用状态">
                     <Select
-                      value={form.status}
+                      value={form.status === "停用" ? "停用" : "正常"}
                       onValueChange={(v) => update("status", v as MailboxStatus)}
                     >
                       <SelectTrigger>
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
-                        {STATUSES.map((s) => (
-                          <SelectItem key={s} value={s}>
-                            {s}
-                          </SelectItem>
-                        ))}
+                        <SelectItem value="正常">启用</SelectItem>
+                        <SelectItem value="停用">停用</SelectItem>
                       </SelectContent>
                     </Select>
                   </Field>
                 ) : (
-                  <AutoField label="状态" value="正常（新增后默认启用）" />
+                  <AutoField label="启用状态" value="启用（保存后需测试通过方可使用）" />
                 )}
                 <div className="flex items-center gap-3 md:col-span-2">
                   <Switch
