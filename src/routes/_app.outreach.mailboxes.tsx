@@ -932,45 +932,17 @@ function MailboxFormDialog({
                   </div>
                 </Field>
                 {form.provider === "Outlook" ? (
-                  <Field label="身份验证方式" required>
-                    {form.password === "OAUTH2_TOKEN_DEMO" ? (
-                      <div className="rounded-md border border-emerald-200 bg-emerald-50/60 p-2.5 flex items-start gap-2">
-                        <ShieldCheck className="h-4 w-4 text-emerald-600 mt-0.5 shrink-0" />
-                        <div className="flex-1 text-[11px] text-foreground/80">
-                          已完成 Microsoft OAuth 2.0 授权，发信与收信共用该授权，无需填写密码。
-                        </div>
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="sm"
-                          className="h-6 px-2 text-[11px] shrink-0"
-                          onClick={() => update("password", "")}
-                        >
-                          重新授权
-                        </Button>
+                  <div className="rounded-md border border-sky-200 bg-sky-50/70 p-3 flex items-start gap-2.5 self-end">
+                    <Link2 className="h-4 w-4 text-[#0078d4] mt-0.5 shrink-0" />
+                    <div className="space-y-1">
+                      <div className="text-sm font-semibold text-[#0f4c81]">
+                        使用 Microsoft OAuth2
                       </div>
-                    ) : (
-                      <div className="flex flex-col gap-2">
-                        <Button
-                          type="button"
-                          className="w-full bg-[#0078d4] hover:bg-[#005a9e] text-white flex items-center justify-center gap-2"
-                          onClick={() => {
-                            toast.info("演示：正在跳转 Microsoft OAuth 2.0 授权页面...");
-                            setTimeout(() => {
-                              update("password", "OAUTH2_TOKEN_DEMO");
-                              toast.success("Outlook OAuth 授权成功，已获取 Access Token");
-                            }, 1500);
-                          }}
-                        >
-                          <ShieldCheck className="h-4 w-4" />
-                          使用 OAuth 2.0 登录
-                        </Button>
-                        <div className="text-[11px] text-muted-foreground">
-                          Microsoft 已停用 SMTP 基本认证，本平台仅支持 OAuth 2.0 授权接入。
-                        </div>
+                      <div className="text-[11px] leading-relaxed text-muted-foreground">
+                        无需填写邮箱密码或应用密码，保存后将前往 Microsoft 完成授权。
                       </div>
-                    )}
-                  </Field>
+                    </div>
+                  </div>
                 ) : (
                   <Field label={`${guide.credentialName}`} required>
                     <Input
@@ -981,6 +953,7 @@ function MailboxFormDialog({
                     />
                   </Field>
                 )}
+
 
                 <Field label="显示名称" required>
                   <Input
