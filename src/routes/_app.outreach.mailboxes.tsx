@@ -75,6 +75,9 @@ import {
   type MailboxProvider,
   type MailboxEncryption,
   type MailboxStatus,
+  getMailboxUsability,
+  isMailboxUsable,
+  type MailboxUsability,
 } from "@/lib/mailboxes";
 import {
   detectProvider,
