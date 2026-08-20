@@ -975,17 +975,11 @@ function MailboxFormDialog({
             </StepBlock>
 
 
-            {/* 第 2 步：自动识别 */}
+            {/* 第 2 步：服务器配置 */}
             <StepBlock
               index={2}
               title="服务器配置（发信 / 收信）"
-              desc="系统根据邮箱域名自动识别 SMTP 与 IMAP 参数，通常无需修改。"
-              action={
-                <div className="flex items-center gap-2">
-                  <Label className="text-[11px] text-muted-foreground">手动调整</Label>
-                  <Switch checked={manualServer} onCheckedChange={(v) => setManualServer(!!v)} />
-                </div>
-              }
+              desc="系统根据邮箱域名自动识别 SMTP 与 IMAP 参数，可手动修正。"
             >
               <div
                 className={`rounded-md border p-3 flex items-start gap-2 ${
