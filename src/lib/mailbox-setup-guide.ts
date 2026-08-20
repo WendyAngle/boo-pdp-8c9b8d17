@@ -76,8 +76,6 @@ export interface ProviderGuide {
   credentialName: string;
   /** 获取步骤 */
   steps: string[];
-  /** 官方文档入口（文案，不做跳转） */
-  docHint: string;
   /** 常见坑 */
   notes: string[];
   /** 开启收信（IMAP）的步骤 */
@@ -85,6 +83,7 @@ export interface ProviderGuide {
   /** 收信相关注意事项 */
   imapNotes: string[];
 }
+
 
 export const PROVIDER_GUIDES: Record<MailboxProvider, ProviderGuide> = {
   Gmail: {
