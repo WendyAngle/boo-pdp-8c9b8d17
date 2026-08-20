@@ -784,7 +784,7 @@ function MailboxFormDialog({
     setForm((s) => ({
       ...s,
       email,
-      username: manualServer ? s.username : email,
+      username: email,
       displayName: nameTouched
         ? s.displayName
         : suggestDisplayName(email, CURRENT_TENANT.name),
@@ -796,7 +796,6 @@ function MailboxFormDialog({
     } else if (d && !d.matched) {
       // 未能识别服务商：保持已选服务商，自动开启手动配置以便用户自行填写 SMTP 参数
       setManualServer(true);
-      setForm((s) => ({ ...s, username: email }));
     }
   };
 
