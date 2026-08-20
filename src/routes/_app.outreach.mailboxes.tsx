@@ -655,12 +655,7 @@ function ScopeSection({
           {icon}
         </div>
         <div>
-          <div className="text-base font-semibold flex items-center gap-2">
-            {title}
-            <Badge variant="outline" className="h-5 px-1.5 text-[10px]">
-              {count}
-            </Badge>
-          </div>
+          <div className="text-base font-semibold">{title}</div>
           <div className="text-xs text-muted-foreground">{subtitle}</div>
         </div>
         {canAdd && (
