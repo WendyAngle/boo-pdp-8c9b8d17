@@ -407,13 +407,14 @@ function StatCard({
   icon: React.ReactNode;
   label: string;
   value: number;
-  tone: "primary" | "emerald" | "rose" | "muted";
+  tone: "primary" | "emerald" | "rose" | "muted" | "amber";
 }) {
   const toneCls = {
     primary: "bg-primary/10 text-primary",
     emerald: "bg-emerald-100 text-emerald-700",
     rose: "bg-rose-100 text-rose-700",
     muted: "bg-muted text-muted-foreground",
+    amber: "bg-amber-100 text-amber-700",
   }[tone];
   return (
     <Card className="p-5">
