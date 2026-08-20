@@ -1017,13 +1017,6 @@ function MailboxFormDialog({
                 <div className="text-xs font-medium">发信 · SMTP</div>
                 {manualServer ? (
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <Field label="登录用户名" required>
-                      <Input
-                        value={form.username}
-                        onChange={(e) => update("username", e.target.value)}
-                        placeholder="多数情况与邮箱地址一致"
-                      />
-                    </Field>
                     <Field label="SMTP 服务器" required>
                       <Input
                         value={form.smtpHost}
