@@ -887,7 +887,7 @@ function MailboxFormDialog({
           <DialogTitle>{editing ? "编辑邮箱" : "新增企业邮箱"}</DialogTitle>
           <DialogDescription>
             {form.provider === "Outlook" 
-              ? "推荐使用 OAuth 2.0 现代认证方式，安全且无需手动配置服务器参数；完成后建议「保存并测试」验证连通性。"
+              ? "Outlook 仅支持 OAuth 2.0 授权登录，无需应用密码；授权后服务器参数自动填充，完成后建议「保存并测试」验证连通性。"
               : `只需填写「邮箱地址 + ${guide.credentialName}」，发信（SMTP）与收信（IMAP）参数由系统按域名自动识别；完成后建议「保存并测试」分别验证两条通道的连通性。`}
           </DialogDescription>
         </DialogHeader>
