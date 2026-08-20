@@ -721,8 +721,6 @@ function MailboxFormDialog({
 }) {
   const [form, setForm] = useState<FormState>(emptyForm());
   const [testing, setTesting] = useState(false);
-  /** 是否手动覆盖服务器参数 */
-  const [manualServer, setManualServer] = useState(false);
   /** 是否已手动改过显示名（改过后不再自动覆盖） */
   const [nameTouched, setNameTouched] = useState(false);
   const [detect, setDetect] = useState<DetectResult | null>(null);
@@ -732,10 +730,9 @@ function MailboxFormDialog({
   const [lastKey, setLastKey] = useState<string>("");
   if (open && lastKey !== editingKey) {
     setLastKey(editingKey);
-    setManualServer(!!editing);
     setNameTouched(!!editing);
     setDetect(editing ? null : null);
-    
+
     setForm(
       editing
         ? {
