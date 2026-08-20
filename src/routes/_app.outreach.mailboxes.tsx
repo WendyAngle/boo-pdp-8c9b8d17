@@ -1066,7 +1066,7 @@ function MailboxFormDialog({
                       未开启收信：该邮箱在会话模块将标注「仅发信，不同步回复」，客户回信需自行到邮箱查看。
                     </div>
                   </div>
-                ) : manualServer ? (
+                ) : (
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <Field label="IMAP 服务器" required>
                       <Input
@@ -1105,17 +1105,6 @@ function MailboxFormDialog({
                     <div className="md:col-span-2 text-[11px] text-muted-foreground">
                       收信与发信共用同一份「{guide.credentialName}」，无需额外获取凭证。
                     </div>
-                  </div>
-                ) : (
-                  <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-                    <AutoField label="IMAP 服务器" value={form.imapHost || "—"} mono />
-                    <AutoField
-                      label="端口 / 加密"
-                      value={`${form.imapPort} · ${form.imapEncryption}`}
-                      mono
-                    />
-                    <AutoField label="登录用户名" value={form.username || "—"} mono />
-                    <AutoField label="凭证" value={form.password === "OAUTH2_TOKEN_DEMO" ? "OAuth 2.0" : `同${guide.credentialName}`} />
                   </div>
                 )}
               </div>
