@@ -196,9 +196,9 @@ function MailboxesPage() {
   };
 
   const onToggleStatus = (m: Mailbox) => {
-    if (m.status === "正常") {
-      const normals = data.filter((x) => x.status === "正常").length;
-      if (m.isDefault && normals === 1) {
+    if (m.status !== "停用") {
+      const usables = data.filter(isMailboxUsable).length;
+      if (m.isDefault && usables === 1) {
         toast.error("当前为唯一可用的默认邮箱，停用前请先新增并设置其他邮箱为默认");
         return;
       }
@@ -206,13 +206,15 @@ function MailboxesPage() {
       toast.success(`已停用 ${m.email}`);
     } else {
       setMailboxStatus(m.id, "正常");
-      toast.success(`已启用 ${m.email}`);
+      // 启用后需重新通过测试方可使用
+      if (!m.lastTestedAt) toast.success(`已启用 ${m.email}，请测试连接后使用`);
+      else toast.success(`已启用 ${m.email}`);
     }
   };
 
   const onSetDefault = (m: Mailbox) => {
-    if (m.status !== "正常") {
-      toast.error("仅「正常」状态的邮箱可设为默认");
+    if (!isMailboxUsable(m)) {
+      toast.error("仅「可用」状态的邮箱可设为默认（需已启用且测试通过）");
       return;
     }
     setDefaultMailbox(m.id);
