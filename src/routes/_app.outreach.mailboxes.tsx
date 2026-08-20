@@ -775,7 +775,7 @@ function MailboxFormDialog({
       imapHost: manualServer ? s.imapHost : preset.imapHost || s.imapHost,
       imapPort: manualServer ? s.imapPort : preset.imapPort,
       imapEncryption: manualServer ? s.imapEncryption : preset.imapEncryption,
-      username: manualServer ? s.username : email || s.username,
+      username: email || s.username,
       dailyLimit: editing ? s.dailyLimit : PROVIDER_DAILY_LIMIT[p],
     }));
   };
