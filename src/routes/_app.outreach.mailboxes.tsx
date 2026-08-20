@@ -466,15 +466,19 @@ function MailboxCard({
                 默认
               </Badge>
             )}
-            <Badge variant="outline" className={statusBadgeCls(m.status)}>
-              {m.status}
-            </Badge>
-            <Badge variant="outline" className="text-[10px]">企业邮箱</Badge>
-            <Badge variant="outline" className={receiveBadgeCls(m.receiveStatus)}>
-              {m.receiveStatus}
+            <Badge variant="outline" className={usabilityBadgeCls(usability.state)}>
+              {usability.state}
             </Badge>
           </div>
           <div className="text-xs text-muted-foreground mt-0.5 truncate">{m.displayName}</div>
+          <div className="text-[11px] text-muted-foreground mt-1 flex items-start gap-1">
+            {usability.usable ? (
+              <CheckCircle2 className="h-3.5 w-3.5 shrink-0 mt-px text-emerald-600" />
+            ) : (
+              <AlertCircle className="h-3.5 w-3.5 shrink-0 mt-px text-amber-600" />
+            )}
+            <span>{usability.hint}</span>
+          </div>
         </div>
       </div>
 
@@ -487,15 +491,15 @@ function MailboxCard({
         />
         <Meta
           icon={<MailboxIcon className="h-3.5 w-3.5" />}
-          label="SMTP"
+          label="发信（SMTP）"
           value={m.smtpHost || "—"}
           mono
         />
         <Meta
           icon={<MailboxIcon className="h-3.5 w-3.5" />}
-          label="IMAP"
-          value={m.receiveEnabled ? m.imapHost || "—" : "未开启"}
-          mono
+          label="收信（IMAP）"
+          value={receiveSummary(m)}
+          mono={m.receiveEnabled && m.receiveStatus === "收信正常"}
         />
         <Meta
           icon={<Activity className="h-3.5 w-3.5" />}
