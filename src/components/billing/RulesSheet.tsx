@@ -38,7 +38,11 @@ type Rule = {
   icon: React.ReactNode;
   title: string;
   cost: number;
+  /** 覆盖右上角价格徽标文案（用于浮动定价场景） */
+  costLabel?: string;
   desc: string;
+  /** 卡片底部附加内容（如地区 / 渠道价目表） */
+  extra?: React.ReactNode;
 };
 
 const UNLOCK_RULES: Rule[] = [
