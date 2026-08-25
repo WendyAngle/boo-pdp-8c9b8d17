@@ -209,14 +209,18 @@ function RuleCard({
   icon,
   title,
   cost,
+  costLabel,
   desc,
   tone,
+  extra,
 }: {
   icon: React.ReactNode;
   title: string;
   cost: number;
+  costLabel?: string;
   desc: string;
   tone: Tone;
+  extra?: React.ReactNode;
 }) {
   const tones = {
     sky: "bg-sky-50 text-sky-700 ring-sky-200",
