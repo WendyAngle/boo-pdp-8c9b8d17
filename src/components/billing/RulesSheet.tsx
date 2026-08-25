@@ -11,6 +11,7 @@ import {
   Undo2,
   Gift,
   ShieldAlert,
+  Users,
 } from "lucide-react";
 import {
   COST_VIEW_EMAIL,
@@ -22,16 +23,7 @@ import {
   COST_REACH_SOCIAL_WHATSAPP,
   COST_SOCIAL_ACCOUNT_PURCHASE,
 } from "@/lib/credits-ledger";
-import { Users, ChevronDown } from "lucide-react";
-import { useState } from "react";
-import {
-  SMS_RATES,
-  SMS_RATE_MIN,
-  SMS_RATE_MAX,
-  SMS_RATE_FALLBACK,
-  SMS_CHANNEL_LABEL,
-  bestSmsRate,
-} from "@/lib/sms-credit-rates";
+import { SMS_RATE_MIN, SMS_RATE_MAX } from "@/lib/sms-credit-rates";
 import {
   Dialog,
   DialogContent,
@@ -93,7 +85,6 @@ const REACH_RULES: Rule[] = [
     cost: COST_REACH_SMS,
     costLabel: `${SMS_RATE_MIN}~${SMS_RATE_MAX} 积分/条`,
     desc: "短信为浮动计费：按接收号码所在地区与实际发送渠道扣点，系统默认自动路由到该地区扣点更低的渠道；发送前会展示本次预估扣点，按实际提交成功的号码计费。若电话未解锁，将自动解锁并合并扣费。",
-    extra: <SmsRateTable />,
   },
   {
     tone: "amber",
@@ -257,75 +248,6 @@ function RuleCard({
   );
 }
 
-function SmsRateTable() {
-  const [open, setOpen] = useState(false);
-  return (
-    <div className="rounded-lg ring-1 ring-border bg-muted/30 overflow-hidden">
-      <button
-        type="button"
-        onClick={() => setOpen((v) => !v)}
-        className="w-full flex items-center gap-2 px-3 py-2 text-xs font-medium hover:bg-muted/60 transition-colors"
-      >
-        <span>查看各地区 / 渠道扣点明细</span>
-        <span className="text-muted-foreground font-normal">
-          · 共 {SMS_RATES.length} 个已开通地区
-        </span>
-        <ChevronDown
-          className={`ml-auto h-3.5 w-3.5 text-muted-foreground transition-transform ${open ? "rotate-180" : ""}`}
-        />
-      </button>
-      {open ? (
-        <div className="border-t">
-          <div className="max-h-[240px] overflow-y-auto">
-            <table className="w-full text-xs">
-              <thead className="sticky top-0 bg-muted/80 backdrop-blur text-muted-foreground">
-                <tr>
-                  <th className="text-left font-medium px-3 py-1.5">国家 / 地区</th>
-                  <th className="text-right font-medium px-3 py-1.5">PaaSoo</th>
-                  <th className="text-right font-medium px-3 py-1.5">EngageLab</th>
-                  <th className="text-right font-medium px-3 py-1.5">默认路由</th>
-                </tr>
-              </thead>
-              <tbody>
-                {SMS_RATES.map((r) => {
-                  const best = bestSmsRate(r);
-                  return (
-                    <tr key={r.code} className="border-t border-border/60">
-                      <td className="px-3 py-1.5 whitespace-nowrap">
-                        {r.name} <span className="text-muted-foreground">{r.code}</span>
-                      </td>
-                      <td
-                        className={`px-3 py-1.5 text-right tabular-nums ${best.channel === "paasoo" ? "font-semibold text-foreground" : "text-muted-foreground"}`}
-                      >
-                        {r.paasoo}
-                      </td>
-                      <td
-                        className={`px-3 py-1.5 text-right tabular-nums ${best.channel === "engagelab" ? "font-semibold text-foreground" : "text-muted-foreground"}`}
-                      >
-                        {r.engagelab}
-                      </td>
-                      <td className="px-3 py-1.5 text-right whitespace-nowrap">
-                        <span className="inline-flex items-baseline gap-1 rounded-md bg-emerald-50 text-emerald-700 ring-1 ring-emerald-200 px-1.5 py-0.5">
-                          <span className="text-[10px]">{SMS_CHANNEL_LABEL[best.channel]}</span>
-                          <span className="font-semibold tabular-nums">{best.cost}</span>
-                        </span>
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          </div>
-          <p className="border-t px-3 py-2 text-[11px] text-muted-foreground leading-relaxed">
-            单位：积分 / 条（70 个字符以内的单条短信；含中文或超长内容将按长短信拆分，按条数叠加计费）。
-            默认按扣点更低的渠道自动路由；若指定渠道或该渠道下发受限，则按实际使用渠道扣点。
-            未在上表中的地区按兜底扣点 {SMS_RATE_FALLBACK} 积分/条计费，最低 {SMS_RATE_MIN}、最高 {SMS_RATE_MAX} 积分/条。
-          </p>
-        </div>
-      ) : null}
-    </div>
-  );
-}
 
 
 function PolicySection() {
