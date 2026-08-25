@@ -93,7 +93,6 @@ const REACH_RULES: Rule[] = [
     cost: COST_REACH_SMS,
     costLabel: `${SMS_RATE_MIN}~${SMS_RATE_MAX} 积分/条`,
     desc: "短信为浮动计费：按接收号码所在地区与实际发送渠道扣点，系统默认自动路由到该地区扣点更低的渠道；发送前会展示本次预估扣点，按实际提交成功的号码计费。若电话未解锁，将自动解锁并合并扣费。",
-    extra: <SmsRateTable />,
   },
   {
     tone: "amber",
