@@ -235,7 +235,11 @@ function RuleCard({
           {icon}
         </span>
         <div className="font-medium text-sm">{title}</div>
-        {cost <= 0 ? (
+        {costLabel ? (
+          <span className="ml-auto inline-flex items-baseline gap-0.5 rounded-md bg-rose-50 text-rose-600 ring-1 ring-rose-200 px-2 py-0.5">
+            <span className="text-sm font-semibold tabular-nums">{costLabel}</span>
+          </span>
+        ) : cost <= 0 ? (
           <span className="ml-auto inline-flex items-baseline rounded-md bg-emerald-50 text-emerald-700 ring-1 ring-emerald-200 px-2 py-0.5">
             <span className="text-sm font-semibold">免费</span>
           </span>
