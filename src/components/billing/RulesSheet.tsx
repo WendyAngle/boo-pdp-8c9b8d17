@@ -22,7 +22,16 @@ import {
   COST_REACH_SOCIAL_WHATSAPP,
   COST_SOCIAL_ACCOUNT_PURCHASE,
 } from "@/lib/credits-ledger";
-import { Users } from "lucide-react";
+import { Users, ChevronDown } from "lucide-react";
+import { useState } from "react";
+import {
+  SMS_RATES,
+  SMS_RATE_MIN,
+  SMS_RATE_MAX,
+  SMS_RATE_FALLBACK,
+  SMS_CHANNEL_LABEL,
+  bestSmsRate,
+} from "@/lib/sms-credit-rates";
 import {
   Dialog,
   DialogContent,
