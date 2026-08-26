@@ -33,6 +33,7 @@ import {
   Users,
   Info,
   CheckCircle2,
+  UserPlus,
 } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { UnlockedPanel } from "@/components/favorites/UnlockedPanel";
@@ -514,7 +515,7 @@ function FavoritesPage() {
         break;
     }
     return list;
-  }, [all, kind, trimmed, date, sort, reachFilter, reachedMap]);
+  }, [all, kind, trimmed, date, sort, reachFilter, reachedMap, connectFilter, connectMap]);
 
   const allSelected =
     filtered.length > 0 && filtered.every((r) => selected.has(r.id));
@@ -725,6 +726,22 @@ function FavoritesPage() {
             </SelectContent>
           </Select>
           <Select
+            value={connectFilter}
+            onValueChange={(v) => setConnectFilter(v as "all" | ConnectLabel)}
+          >
+            <SelectTrigger className="h-9 w-[160px]">
+              <UserPlus className="h-3.5 w-3.5 mr-1" />
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">全部社媒关系</SelectItem>
+              <SelectItem value="未建立">未建立</SelectItem>
+              <SelectItem value="请求中">请求中</SelectItem>
+              <SelectItem value="已建立">已建立</SelectItem>
+              <SelectItem value="未通过">未通过</SelectItem>
+            </SelectContent>
+          </Select>
+          <Select
             value={sort}
             onValueChange={(v) => {
               const next = v as SortKey;
@@ -747,7 +764,7 @@ function FavoritesPage() {
               <SelectItem value="kind">按类型分组</SelectItem>
             </SelectContent>
           </Select>
-          {(date || keyword || kind !== "all" || reachFilter !== "all") && (
+          {(date || keyword || kind !== "all" || reachFilter !== "all" || connectFilter !== "all") && (
             <Button
               variant="ghost"
               size="sm"
@@ -756,6 +773,7 @@ function FavoritesPage() {
                 setKeyword("");
                 setKind("all");
                 setReachFilter("all");
+                setConnectFilter("all");
               }}
             >
               <X className="h-4 w-4 mr-1" />
