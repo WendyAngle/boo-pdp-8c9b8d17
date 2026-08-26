@@ -619,8 +619,17 @@ export function BatchSocialConnectDialog({
               )}
             </div>
             <div className="text-[11px] text-muted-foreground">
-              可执行 <b className="text-foreground">{executable.length}</b> 条 · 已跳过{" "}
-              {skipped} 条（已建立 / 请求中 / 冷却期）
+              可执行 <b className="text-foreground">{executable.length}</b> 条
+              {establishedFiltered > 0 && (
+                <>
+                  · 已自动过滤 <b className="text-foreground">{establishedFiltered}</b> 条已建立关系
+                </>
+              )}
+              {skipped > 0 && (
+                <>
+                  · 已跳过 <b className="text-foreground">{skipped}</b> 条（请求中 / 冷却期）
+                </>
+              )}
             </div>
 
           </div>
