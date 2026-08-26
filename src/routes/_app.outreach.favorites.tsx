@@ -358,6 +358,33 @@ function FavoritesPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [socialEligible, myVars]);
 
+  /** 社媒关系候选（加好友 / 关注）：按收藏对象解析社媒身份 */
+  const connectMap = useConnectMap();
+  const connectCandidates = useMemo<ConnectCandidate[]>(
+    () =>
+      selectedRecords
+        .filter((r) => r.kind === "enterprise" || r.kind === "contact")
+        .map((r) => {
+          const entId =
+            r.kind === "enterprise"
+              ? r.refId
+              : (r.parentRef?.id ?? r.refId.split(":")[0]);
+          const idx = r.kind === "contact" ? (r.refId.split(":")[1] ?? "0") : undefined;
+          return {
+            favoriteId: r.id,
+            name: r.title,
+            enterpriseName: r.parentRef?.name,
+            targetKind: r.kind as "enterprise" | "contact",
+            targetId: r.kind === "enterprise" ? r.refId : `${entId}:${idx}`,
+            parentRef: r.parentRef
+              ? { id: r.parentRef.id, name: r.parentRef.name }
+              : undefined,
+            identities: identitiesOfFavorite(r),
+          };
+        })
+        .filter((c) => c.identities.length > 0),
+    [selectedRecords],
+  );
 
 
 
