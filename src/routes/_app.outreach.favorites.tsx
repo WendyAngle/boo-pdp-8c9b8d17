@@ -174,6 +174,9 @@ function FavoritesPage() {
   const [reachFilter, setReachFilter] = useState<"all" | "reached" | "unreached">(
     "all",
   );
+  /** 社媒关系筛选（未建立 / 请求中 / 已建立 / 未通过） */
+  const [connectFilter, setConnectFilter] = useState<"all" | ConnectLabel>("all");
+
 
   const [keyword, setKeyword] = useState("");
   const [date, setDate] = useState<Date | undefined>(undefined);
