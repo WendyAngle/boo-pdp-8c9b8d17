@@ -124,7 +124,6 @@ export function BatchSocialConnectDialog({
     setAdding(false);
     setIncludePages(true);
     setWarmup(false);
-    setPacing("normal");
     setAssign("auto");
     setPickedAccounts([]);
   }, [open]);
