@@ -109,7 +109,7 @@ export function BatchSocialConnectDialog({
   });
   const [includePages, setIncludePages] = useState(true);
   const [warmup, setWarmup] = useState(false);
-  const [pacing, setPacing] = useState<Pacing>("normal");
+  const pacing: Pacing = "normal";
   const [assign, setAssign] = useState<"auto" | "manual">("auto");
   const [pickedAccounts, setPickedAccounts] = useState<string[]>([]);
   const [unlockAllOpen, setUnlockAllOpen] = useState(false);
