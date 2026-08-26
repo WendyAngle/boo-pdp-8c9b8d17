@@ -738,65 +738,6 @@ export function BatchSocialConnectDialog({
               </div>
             </div>
 
-            <section className="space-y-2">
-              <div className="flex items-center justify-between">
-                <Label className="text-sm font-medium flex items-center gap-2">
-                  通过后自动招呼语（选填）
-                  {aiUsed && (
-                    <Badge variant="secondary" className="gap-1 bg-amber-100 text-amber-800">
-                      <Sparkles className="h-3 w-3" />
-                      AI 已生成 · 可手动调整
-                    </Badge>
-                  )}
-                </Label>
-                <Button
-                  size="sm"
-                  variant="outline"
-                  className="h-7 gap-1"
-                  disabled={aiLoading}
-                  onClick={handleAiGenerate}
-                >
-                  {aiLoading ? (
-                    <Loader2 className="h-3.5 w-3.5 animate-spin text-primary" />
-                  ) : (
-                    <Sparkles className="h-3.5 w-3.5 text-primary" />
-                  )}
-                  {aiLoading ? "生成中…" : aiUsed ? "AI 重新生成" : "AI 生成文案"}
-                </Button>
-              </div>
-              <div className="rounded-md border border-sky-200 bg-sky-50 p-2 text-[11px] text-sky-800 flex items-start gap-1.5">
-                <Info className="mt-0.5 h-3.5 w-3.5 shrink-0" />
-                <span>
-                  Facebook / TikTok 均不支持随请求发送附言，招呼语将在
-                  <b className="mx-0.5">关系建立后</b>
-                  自动发出并生成私信任务；文案请避免链接与价格承诺。
-                </span>
-              </div>
-              <div className="grid gap-0 lg:grid-cols-2 lg:divide-x rounded-md border overflow-hidden">
-                <div className="space-y-2 p-3">
-                  <div className="flex h-8 items-center">
-                    <Label className="text-xs text-muted-foreground">中文原文</Label>
-                  </div>
-                  <Textarea
-                    rows={7}
-                    maxLength={1000}
-                    value={greet}
-                    onChange={(e) => setGreet(e.target.value)}
-                    placeholder="您好 {联系人名}，我是 {我的公司} 的……"
-                  />
-                </div>
-                <TargetLangSection
-                  source={greet}
-                  lang={targetLang}
-                  onLangChange={setTargetLang}
-                  value={greetTranslated}
-                  onChange={setGreetTranslated}
-                  rows={7}
-                  kindLabel="招呼语"
-                  bare
-                />
-              </div>
-            </section>
           </div>
         )}
 
