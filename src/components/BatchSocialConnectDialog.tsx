@@ -1,8 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import {
   UserPlus,
-  Sparkles,
-  Loader2,
   ServerCog,
   Info,
   Unlock,
@@ -14,7 +12,6 @@ import {
   ShieldAlert,
   Trash2,
 } from "lucide-react";
-import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
 
 import {
@@ -29,7 +26,6 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Switch } from "@/components/ui/switch";
 import {
@@ -52,11 +48,7 @@ import {
 } from "@/lib/credits-ledger";
 import { useSocialAccounts, regionLabel } from "@/data/social-accounts";
 import { computeHealth, healthToneClass } from "@/lib/social-account-health";
-import { useLeadProfile } from "@/lib/lead-profile";
-import { useCurrentUser } from "@/lib/current-user";
 import { useMyInfoGuard } from "@/lib/my-info-guard";
-import { generateAiContent } from "@/lib/api/ai-compose.functions";
-import { TargetLangSection } from "@/components/outreach/TargetLangSection";
 import { addProspectingTask } from "@/lib/social-tasks";
 import {
   ACTION_LABEL,
@@ -93,7 +85,7 @@ const PACING_META: Record<Pacing, { label: string; perDay: number; desc: string 
   fast: { label: "激进", perDay: 8, desc: "每账号 8 条/天 · 间隔 3~10 分钟，受账号额度钳制" },
 };
 
-const STEPS = ["平台与对象", "动作与招呼语", "执行账号与节奏"];
+const STEPS = ["平台与对象", "动作设置", "执行账号与节奏"];
 
 export function BatchSocialConnectDialog({
   open,
@@ -107,10 +99,7 @@ export function BatchSocialConnectDialog({
   const accounts = useSocialAccounts();
   const connectMap = useConnectMap();
   const ledger = useLedger();
-  const profile = useLeadProfile();
-  const user = useCurrentUser();
   const myInfo = useMyInfoGuard();
-  const callGenerate = useServerFn(generateAiContent);
 
   const [step, setStep] = useState(0);
   const [platforms, setPlatforms] = useState<ConnectPlatform[]>(["Facebook", "TikTok"]);
@@ -124,11 +113,6 @@ export function BatchSocialConnectDialog({
   });
   const [includePages, setIncludePages] = useState(true);
   const [warmup, setWarmup] = useState(false);
-  const [greet, setGreet] = useState("");
-  const [greetTranslated, setGreetTranslated] = useState("");
-  const [targetLang, setTargetLang] = useState("en");
-  const [aiUsed, setAiUsed] = useState(false);
-  const [aiLoading, setAiLoading] = useState(false);
   const [pacing, setPacing] = useState<Pacing>("normal");
   const [assign, setAssign] = useState<"auto" | "manual">("auto");
   const [pickedAccounts, setPickedAccounts] = useState<string[]>([]);
@@ -144,10 +128,6 @@ export function BatchSocialConnectDialog({
     setAdding(false);
     setIncludePages(true);
     setWarmup(false);
-    setGreet("");
-    setGreetTranslated("");
-    setTargetLang("en");
-    setAiUsed(false);
     setPacing("normal");
     setAssign("auto");
     setPickedAccounts([]);
@@ -289,8 +269,6 @@ export function BatchSocialConnectDialog({
   const estDays =
     dailyCapacity > 0 ? Math.max(1, Math.ceil(executable.length / dailyCapacity)) : 0;
 
-  const greetSend = (greetTranslated.trim() || greet).trim();
-
   // ---- 解锁
   function unlockRow(r: Judged) {
     performReachAutoUnlocks({
@@ -311,36 +289,6 @@ export function BatchSocialConnectDialog({
     setUnlockAllAck(false);
   }
 
-  async function handleAiGenerate() {
-    if (aiLoading) return;
-    if (!myInfo.ensure()) return;
-    setAiLoading(true);
-    try {
-      const res = await callGenerate({
-        data: {
-          channel: "social",
-          platform: "Facebook",
-          scene: "开发信",
-          tone: "friendly",
-          language: "zh",
-          languageName: "中文",
-          myCompany: profile.companyName,
-          myName: user.name,
-          literal: true,
-        },
-      });
-      if (res.content) setGreet(myInfo.fillAll(res.content));
-      setAiUsed(true);
-      toast.success("AI 已生成通过后招呼语");
-    } catch (e) {
-      toast.error("AI 生成失败", {
-        description: e instanceof Error ? e.message : String(e),
-      });
-    } finally {
-      setAiLoading(false);
-    }
-  }
-
   function submit() {
     if (executable.length === 0) return;
     const platform = executable[0]!.identity.platform;
@@ -352,7 +300,6 @@ export function BatchSocialConnectDialog({
       keywords: [],
       targetCap: executable.length,
       accountIds: execAccounts.map((a) => a.id),
-      greetOnAccept: greetSend || undefined,
       frozenCredits: connectCost,
       source: "收藏中心",
       action: "connect",
