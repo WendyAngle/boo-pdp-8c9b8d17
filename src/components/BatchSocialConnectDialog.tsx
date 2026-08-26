@@ -197,8 +197,12 @@ export function BatchSocialConnectDialog({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [visibleRows, connectMap, includePages, ledger]);
 
-  const finalRows = judged;
-
+  /** 平台与对象列表：自动过滤掉已建立关系的数据（参考批量邮件过滤无邮箱） */
+  const finalRows = useMemo(
+    () => judged.filter((r) => r.label !== "已建立"),
+    [judged],
+  );
+  const establishedFiltered = judged.length - finalRows.length;
 
   const executable = useMemo(
     () => finalRows.filter((r) => !r.blocked && !excluded.has(r.key)),
