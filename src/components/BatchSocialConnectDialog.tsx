@@ -601,17 +601,8 @@ export function BatchSocialConnectDialog({
                             {r.blocked}
                           </span>
                         )}
-                        {lowNeedConfirm && (
-                          <button
-                            type="button"
-                            className="rounded border border-amber-300 bg-amber-50 px-1.5 py-0.5 text-[11px] text-amber-800 hover:bg-amber-100"
-                            onClick={() =>
-                              setConfirmedLow((prev) => new Set(prev).add(r.key))
-                            }
-                          >
-                            确认可执行
-                          </button>
-                        )}
+
+
                         {r.locked && !r.blocked && (
                           <button
                             type="button"
