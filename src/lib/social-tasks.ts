@@ -17,11 +17,14 @@ export interface ProspectingTarget {
   id: string;
   name: string;
   handle: string;
+  /** 平台侧数字账号 ID，如 Facebook 的 61585883769059 */
+  socialId?: string;
   kind: SocialTargetKind;
   status: TargetStatus;
   requestedAt?: string;
   acceptedAt?: string;
 }
+
 
 export interface ProspectingTask {
   id: string;
