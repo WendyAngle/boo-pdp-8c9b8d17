@@ -726,8 +726,7 @@ export function BatchSocialConnectDialog({
                         </Badge>
 
                         <span className="ml-auto text-[11px] text-muted-foreground">
-                          代理 {regionLabel(a.proxyRegion)} · 今日剩余{" "}
-                          {Math.max(0, limit - (a.friendSentToday ?? 0))} 条
+                          今日剩余 {Math.max(0, limit - (a.friendSentToday ?? 0))} 条
                         </span>
                       </div>
                     );
