@@ -804,7 +804,9 @@ function FavoritesPage() {
                 收藏目标企业或其关联人物，收藏后才能在本页发起批量触达。
               </li>
               <li>
-                勾选收藏对象 → 选择触达方式（邮件 / 短信 / WhatsApp / 社媒）→ 生成触达任务。
+                勾选收藏对象 → 选择触达方式（邮件 / 短信 / WhatsApp / 社媒）→ 生成触达任务；社媒建议先
+                <span className="text-foreground font-medium mx-1">批量社媒加好友</span>
+                建立关系，再发私信，送达率更高、账号更安全。
               </li>
               <li>
                 同一对象在同一触达方式下
@@ -930,6 +932,14 @@ function FavoritesPage() {
               className="gap-1.5 border-primary/30 text-primary hover:bg-primary/10 hover:text-primary"
               onClick={() => {
                 if (selected.size > 0 && !guardBatch(socialEligible, "社媒")) return;
+                const notConnected = connectCandidates.filter(
+                  (c) => favoriteConnectLabel(connectMap, all.find((r) => r.id === c.favoriteId)!) !== "已建立",
+                ).length;
+                if (notConnected > 0) {
+                  toast.info(`${notConnected} 个目标尚未建立社媒关系`, {
+                    description: "未加好友直接私信送达率较低，建议先使用「批量社媒加好友」。",
+                  });
+                }
                 setBatchPlatformOpen(true);
               }}
               title="批量社媒私信"
