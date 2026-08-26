@@ -175,7 +175,7 @@ export function BatchSocialConnectDialog({
       const rec = connectMap[recordId(r.identity.platform, r.identity.handle)];
       const action = actionOf(r.identity.platform, r.identity.accountType);
       let blocked = blockedReason(rec);
-      if (!blocked && r.identity.confidence === "low") blocked = "身份可信度低，请确认后执行";
+      
       if (!blocked && action === "follow" && r.identity.accountType === "page" && !includePages)
         blocked = "已关闭主页关注";
       let locked = false;
