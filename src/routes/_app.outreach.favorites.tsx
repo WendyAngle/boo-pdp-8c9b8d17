@@ -1048,12 +1048,6 @@ function FavoritesPage() {
         recipients={smsRecipients}
         totalSelected={selectedRecords.length}
       />
-      <BatchSocialDialog
-        open={batchSocialOpen}
-        onOpenChange={setBatchSocialOpen}
-        platform="WhatsApp"
-        candidates={waCandidates}
-      />
       <BatchSocialPlatformDialog
         open={batchPlatformOpen}
         onOpenChange={setBatchPlatformOpen}
