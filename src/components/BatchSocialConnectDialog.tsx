@@ -754,25 +754,11 @@ export function BatchSocialConnectDialog({
                 <Gauge className="h-3.5 w-3.5" />
                 执行节奏
               </Label>
-              <div className="grid gap-2 sm:grid-cols-3">
-                {(Object.keys(PACING_META) as Pacing[]).map((p) => (
-                  <button
-                    key={p}
-                    type="button"
-                    onClick={() => setPacing(p)}
-                    className={cn(
-                      "rounded-md border p-2.5 text-left text-xs",
-                      pacing === p
-                        ? "border-primary bg-primary/5 ring-1 ring-primary/30"
-                        : "hover:bg-muted/40",
-                    )}
-                  >
-                    <div className="font-medium">{PACING_META[p].label}</div>
-                    <div className="text-[11px] text-muted-foreground mt-0.5">
-                      {PACING_META[p].desc}
-                    </div>
-                  </button>
-                ))}
+              <div className="rounded-md border border-primary bg-primary/5 p-2.5 text-left text-xs ring-1 ring-primary/30">
+                <div className="font-medium">{PACING_META[pacing].label}</div>
+                <div className="text-[11px] text-muted-foreground mt-0.5">
+                  {PACING_META[pacing].desc}
+                </div>
               </div>
               {clamped && (
                 <div className="rounded-md border border-amber-200 bg-amber-50 p-2 text-[11px] text-amber-800 flex items-start gap-1.5">
