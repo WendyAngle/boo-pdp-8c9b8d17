@@ -46,7 +46,7 @@ import {
   performReachAutoUnlocks,
   useLedger,
 } from "@/lib/credits-ledger";
-import { useSocialAccounts, regionLabel } from "@/data/social-accounts";
+import { useSocialAccounts } from "@/data/social-accounts";
 import { addProspectingTask } from "@/lib/social-tasks";
 import {
   ACTION_LABEL,
