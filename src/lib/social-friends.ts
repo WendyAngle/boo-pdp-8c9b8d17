@@ -30,6 +30,7 @@ export function deriveFriends(tasks: ProspectingTask[]): SocialFriend[] {
         targetId: tg.id,
         name: tg.name,
         handle: tg.handle,
+        socialId: tg.socialId,
         platform,
         accountId,
         sourceTaskId: t.id,
@@ -37,6 +38,7 @@ export function deriveFriends(tasks: ProspectingTask[]): SocialFriend[] {
         acceptedAt: tg.acceptedAt,
         kind: tg.kind,
       });
+
     }
   }
   return out;
