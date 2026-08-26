@@ -200,6 +200,7 @@ function FavoritesPage() {
   const [batchSenderId, setBatchSenderId] = useState("");
   const [batchSocialOpen, setBatchSocialOpen] = useState(false);
   const [batchPlatformOpen, setBatchPlatformOpen] = useState(false);
+  const [batchConnectOpen, setBatchConnectOpen] = useState(false);
   const [aiCallOpen, setAiCallOpen] = useState(false);
 
   const [calOpen, setCalOpen] = useState(false);
@@ -906,6 +907,26 @@ function FavoritesPage() {
             <Button
               variant="outline"
               size="sm"
+              disabled={selected.size === 0}
+              className="gap-1.5 border-primary/30 text-primary hover:bg-primary/10 hover:text-primary disabled:opacity-50"
+              onClick={() => {
+                if (connectCandidates.length === 0) {
+                  toast.warning("所选对象暂无可用社媒身份", {
+                    description:
+                      "可在企业详情点击「更新企业数据」补全社媒资料，或在弹窗中手动添加目标。",
+                  });
+                  return;
+                }
+                setBatchConnectOpen(true);
+              }}
+              title="先加好友 / 关注建立关系，再发私信送达率更高"
+            >
+              <UserPlus className="h-4 w-4" />
+              批量社媒加好友
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
               className="gap-1.5 border-primary/30 text-primary hover:bg-primary/10 hover:text-primary"
               onClick={() => {
                 if (selected.size > 0 && !guardBatch(socialEligible, "社媒")) return;
@@ -958,6 +979,7 @@ function FavoritesPage() {
               selected={selected.has(r.id)}
               onToggleSelect={() => toggleOne(r.id)}
               reached={reachedOf(r)}
+              connectLabel={favoriteConnectLabel(connectMap, r)}
 
             />
           ))}
@@ -1032,6 +1054,11 @@ function FavoritesPage() {
           // 但如果希望联动，可以调用 setSelected 等逻辑
         }}
       />
+      <BatchSocialConnectDialog
+        open={batchConnectOpen}
+        onOpenChange={setBatchConnectOpen}
+        candidates={connectCandidates}
+      />
       <AiVoiceCallDialog
         open={aiCallOpen}
         onOpenChange={setAiCallOpen}
@@ -1047,11 +1074,13 @@ function FavoriteCard({
   selected,
   onToggleSelect,
   reached,
+  connectLabel,
 }: {
   record: FavoriteRecord;
   selected: boolean;
   onToggleSelect: () => void;
   reached: ReachMethod[];
+  connectLabel?: ConnectLabel | null;
 }) {
 
   const meta = KIND_META[record.kind];
@@ -1150,6 +1179,21 @@ function FavoriteCard({
                 {REACH_METHOD_LABEL[m]}
               </Badge>
             ))}
+          </div>
+        )}
+        {connectLabel && (
+          <div className="mt-1.5 flex items-center gap-1">
+            <span className="inline-flex items-center gap-1 text-[10px] text-muted-foreground">
+              <UserPlus className="h-3 w-3" />
+              社媒关系
+            </span>
+            <Badge
+              variant="outline"
+              className={cn("text-[10px] h-4 px-1.5", LABEL_TONE[connectLabel])}
+              title="Facebook 个人号加好友 / 主页与 TikTok 关注"
+            >
+              {connectLabel}
+            </Badge>
           </div>
         )}
         <FavoriteMeta record={record} />
