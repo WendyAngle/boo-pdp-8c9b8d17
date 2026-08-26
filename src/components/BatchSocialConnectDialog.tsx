@@ -391,7 +391,7 @@ export function BatchSocialConnectDialog({
               <Label className="text-xs font-medium">平台</Label>
               {CONNECT_PLATFORMS.map((p) => {
                 const on = platforms.includes(p);
-                const count = rows.filter((r) => r.identity.platform === p).length;
+                const count = finalRows.filter((r) => r.identity.platform === p).length;
                 return (
                   <button
                     key={p}
