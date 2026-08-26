@@ -47,7 +47,6 @@ import {
   useLedger,
 } from "@/lib/credits-ledger";
 import { useSocialAccounts, regionLabel } from "@/data/social-accounts";
-import { computeHealth } from "@/lib/social-account-health";
 import { addProspectingTask } from "@/lib/social-tasks";
 import {
   ACTION_LABEL,
