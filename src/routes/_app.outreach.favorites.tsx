@@ -103,6 +103,17 @@ import {
   SOCIAL_PLATFORM_METHODS,
   type ReachMethod,
 } from "@/lib/favorite-reached";
+import {
+  BatchSocialConnectDialog,
+  type ConnectCandidate,
+} from "@/components/BatchSocialConnectDialog";
+import {
+  useConnectMap,
+  identitiesOfFavorite,
+  favoriteConnectLabel,
+  LABEL_TONE,
+  type ConnectLabel,
+} from "@/lib/social-connect";
 
 
 
