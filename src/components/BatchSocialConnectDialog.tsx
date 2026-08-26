@@ -363,7 +363,7 @@ export function BatchSocialConnectDialog({
             </Badge>
           </DialogTitle>
           <DialogDescription className="text-xs">
-            先建立关系再发私信，送达率更高、账号更安全。Facebook 个人号走「加好友」（平台不支持附言），主页与 TikTok 走「关注」。
+            先建立关系再发私信，送达率更高、账号更安全。Facebook 个人号走「加好友」，主页与 TikTok 走「关注」。
           </DialogDescription>
         </DialogHeader>
 
