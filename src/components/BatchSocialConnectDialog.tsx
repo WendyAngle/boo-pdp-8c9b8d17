@@ -576,16 +576,8 @@ export function BatchSocialConnectDialog({
                       <Badge variant="secondary" className="h-4 px-1 text-[10px]">
                         {r.identity.accountType === "page" ? "主页" : "个人号"}
                       </Badge>
-                      <Badge
-                        variant="outline"
-                        className={cn(
-                          "h-4 px-1 text-[10px]",
-                          r.identity.confidence === "low" &&
-                            "border-amber-300 bg-amber-50 text-amber-700",
-                        )}
-                      >
-                        可信度{CONFIDENCE_LABEL[r.identity.confidence]}
-                      </Badge>
+
+
                       <Badge
                         variant="outline"
                         className={cn("h-4 px-1 text-[10px]", LABEL_TONE[r.label])}
