@@ -197,8 +197,12 @@ export function BatchSocialConnectDialog({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [visibleRows, connectMap, includePages, ledger]);
 
-  const finalRows = judged;
-
+  /** 平台与对象列表：自动过滤掉已建立关系的数据（参考批量邮件过滤无邮箱） */
+  const finalRows = useMemo(
+    () => judged.filter((r) => r.label !== "已建立"),
+    [judged],
+  );
+  const establishedFiltered = judged.length - finalRows.length;
 
   const executable = useMemo(
     () => finalRows.filter((r) => !r.blocked && !excluded.has(r.key)),
@@ -387,7 +391,7 @@ export function BatchSocialConnectDialog({
               <Label className="text-xs font-medium">平台</Label>
               {CONNECT_PLATFORMS.map((p) => {
                 const on = platforms.includes(p);
-                const count = rows.filter((r) => r.identity.platform === p).length;
+                const count = finalRows.filter((r) => r.identity.platform === p).length;
                 return (
                   <button
                     key={p}
@@ -567,12 +571,14 @@ export function BatchSocialConnectDialog({
                       </Badge>
 
 
-                      <Badge
-                        variant="outline"
-                        className={cn("h-4 px-1 text-[10px]", LABEL_TONE[r.label])}
-                      >
-                        {r.label}
-                      </Badge>
+                      {r.label !== "未建立" && (
+                        <Badge
+                          variant="outline"
+                          className={cn("h-4 px-1 text-[10px]", LABEL_TONE[r.label])}
+                        >
+                          {r.label}
+                        </Badge>
+                      )}
                       <span className="text-[11px] text-muted-foreground">
                         {ACTION_LABEL[r.action]}
                       </span>
@@ -613,8 +619,17 @@ export function BatchSocialConnectDialog({
               )}
             </div>
             <div className="text-[11px] text-muted-foreground">
-              可执行 <b className="text-foreground">{executable.length}</b> 条 · 已跳过{" "}
-              {skipped} 条（已建立 / 请求中 / 冷却期）
+              可执行 <b className="text-foreground">{executable.length}</b> 条
+              {establishedFiltered > 0 && (
+                <>
+                  · 已自动过滤 <b className="text-foreground">{establishedFiltered}</b> 条已建立关系
+                </>
+              )}
+              {skipped > 0 && (
+                <>
+                  · 已跳过 <b className="text-foreground">{skipped}</b> 条（请求中 / 冷却期）
+                </>
+              )}
             </div>
 
           </div>
