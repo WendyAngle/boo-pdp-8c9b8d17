@@ -694,13 +694,14 @@ export function BatchSocialConnectDialog({
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="auto">自动分配（按健康度）</SelectItem>
-                    <SelectItem value="manual">手动指定账号</SelectItem>
+                    <SelectItem value="auto">自动分配</SelectItem>
+                    <SelectItem value="manual">手动指定</SelectItem>
                   </SelectContent>
                 </Select>
                 <span className="text-[11px] text-muted-foreground">
-                  健康度 &lt; 50 或风控 / 被封 / 养号中的账号已自动移出执行池
+                  自动分配优先使用今日剩余额度多、状态正常的账号；风控 / 被封 / 养号中的账号已自动移出执行池
                 </span>
+
               </div>
               <div className="rounded-md border divide-y max-h-[200px] overflow-y-auto">
                 {pool.length === 0 ? (
