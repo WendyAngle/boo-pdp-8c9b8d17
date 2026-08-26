@@ -526,7 +526,6 @@ function AllFriendsDialog({
   onClose,
 }: {
   friends: SocialFriend[];
-  accounts: SocialAccount[];
   onClose: () => void;
 }) {
   const [kw, setKw] = useState("");
