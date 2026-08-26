@@ -222,14 +222,18 @@ export function BatchSocialConnectDialog({
         (a) =>
           a.status === "正常" &&
           platforms.includes(a.platform as ConnectPlatform) &&
-          computeHealth(a).score >= 50,
+          (a.dailyFriendLimit ?? 5) - (a.friendSentToday ?? 0) > 0,
       ),
     [poolAll, platforms],
   );
   const execAccounts = useMemo(
     () =>
       assign === "auto"
-        ? [...pool].sort((a, b) => computeHealth(b).score - computeHealth(a).score)
+        ? [...pool].sort(
+            (a, b) =>
+              Math.max(0, (b.dailyFriendLimit ?? 5) - (b.friendSentToday ?? 0)) -
+              Math.max(0, (a.dailyFriendLimit ?? 5) - (a.friendSentToday ?? 0)),
+          )
         : pool.filter((a) => pickedAccounts.includes(a.id)),
     [assign, pool, pickedAccounts],
   );
