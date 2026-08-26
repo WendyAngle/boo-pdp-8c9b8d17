@@ -33,6 +33,7 @@ import {
   Users,
   Info,
   CheckCircle2,
+  UserPlus,
 } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { UnlockedPanel } from "@/components/favorites/UnlockedPanel";
@@ -103,6 +104,17 @@ import {
   SOCIAL_PLATFORM_METHODS,
   type ReachMethod,
 } from "@/lib/favorite-reached";
+import {
+  BatchSocialConnectDialog,
+  type ConnectCandidate,
+} from "@/components/BatchSocialConnectDialog";
+import {
+  useConnectMap,
+  identitiesOfFavorite,
+  favoriteConnectLabel,
+  LABEL_TONE,
+  type ConnectLabel,
+} from "@/lib/social-connect";
 
 
 
@@ -163,6 +175,9 @@ function FavoritesPage() {
   const [reachFilter, setReachFilter] = useState<"all" | "reached" | "unreached">(
     "all",
   );
+  /** 社媒关系筛选（未建立 / 请求中 / 已建立 / 未通过） */
+  const [connectFilter, setConnectFilter] = useState<"all" | ConnectLabel>("all");
+
 
   const [keyword, setKeyword] = useState("");
   const [date, setDate] = useState<Date | undefined>(undefined);
@@ -185,6 +200,7 @@ function FavoritesPage() {
   const [batchSenderId, setBatchSenderId] = useState("");
   const [batchSocialOpen, setBatchSocialOpen] = useState(false);
   const [batchPlatformOpen, setBatchPlatformOpen] = useState(false);
+  const [batchConnectOpen, setBatchConnectOpen] = useState(false);
   const [aiCallOpen, setAiCallOpen] = useState(false);
 
   const [calOpen, setCalOpen] = useState(false);
@@ -344,6 +360,33 @@ function FavoritesPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [socialEligible, myVars]);
 
+  /** 社媒关系候选（加好友 / 关注）：按收藏对象解析社媒身份 */
+  const connectMap = useConnectMap();
+  const connectCandidates = useMemo<ConnectCandidate[]>(
+    () =>
+      selectedRecords
+        .filter((r) => r.kind === "enterprise" || r.kind === "contact")
+        .map((r) => {
+          const entId =
+            r.kind === "enterprise"
+              ? r.refId
+              : (r.parentRef?.id ?? r.refId.split(":")[0]);
+          const idx = r.kind === "contact" ? (r.refId.split(":")[1] ?? "0") : undefined;
+          return {
+            favoriteId: r.id,
+            name: r.title,
+            enterpriseName: r.parentRef?.name,
+            targetKind: r.kind as "enterprise" | "contact",
+            targetId: r.kind === "enterprise" ? r.refId : `${entId}:${idx}`,
+            parentRef: r.parentRef
+              ? { id: r.parentRef.id, name: r.parentRef.name }
+              : undefined,
+            identities: identitiesOfFavorite(r),
+          };
+        })
+        .filter((c) => c.identities.length > 0),
+    [selectedRecords],
+  );
 
 
 
@@ -420,6 +463,9 @@ function FavoritesPage() {
         if (reachFilter === "reached" && !done) return false;
         if (reachFilter === "unreached" && done) return false;
       }
+      if (connectFilter !== "all") {
+        if (favoriteConnectLabel(connectMap, r) !== connectFilter) return false;
+      }
       if (dKey && !r.createdAt.startsWith(dKey)) return false;
 
       if (trimmed) {
@@ -470,7 +516,7 @@ function FavoritesPage() {
         break;
     }
     return list;
-  }, [all, kind, trimmed, date, sort, reachFilter, reachedMap]);
+  }, [all, kind, trimmed, date, sort, reachFilter, reachedMap, connectFilter, connectMap]);
 
   const allSelected =
     filtered.length > 0 && filtered.every((r) => selected.has(r.id));
@@ -681,6 +727,22 @@ function FavoritesPage() {
             </SelectContent>
           </Select>
           <Select
+            value={connectFilter}
+            onValueChange={(v) => setConnectFilter(v as "all" | ConnectLabel)}
+          >
+            <SelectTrigger className="h-9 w-[160px]">
+              <UserPlus className="h-3.5 w-3.5 mr-1" />
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">全部社媒关系</SelectItem>
+              <SelectItem value="未建立">未建立</SelectItem>
+              <SelectItem value="请求中">请求中</SelectItem>
+              <SelectItem value="已建立">已建立</SelectItem>
+              <SelectItem value="未通过">未通过</SelectItem>
+            </SelectContent>
+          </Select>
+          <Select
             value={sort}
             onValueChange={(v) => {
               const next = v as SortKey;
@@ -703,7 +765,7 @@ function FavoritesPage() {
               <SelectItem value="kind">按类型分组</SelectItem>
             </SelectContent>
           </Select>
-          {(date || keyword || kind !== "all" || reachFilter !== "all") && (
+          {(date || keyword || kind !== "all" || reachFilter !== "all" || connectFilter !== "all") && (
             <Button
               variant="ghost"
               size="sm"
@@ -712,6 +774,7 @@ function FavoritesPage() {
                 setKeyword("");
                 setKind("all");
                 setReachFilter("all");
+                setConnectFilter("all");
               }}
             >
               <X className="h-4 w-4 mr-1" />
@@ -741,7 +804,9 @@ function FavoritesPage() {
                 收藏目标企业或其关联人物，收藏后才能在本页发起批量触达。
               </li>
               <li>
-                勾选收藏对象 → 选择触达方式（邮件 / 短信 / WhatsApp / 社媒）→ 生成触达任务。
+                勾选收藏对象 → 选择触达方式（邮件 / 短信 / WhatsApp / 社媒）→ 生成触达任务；社媒建议先
+                <span className="text-foreground font-medium mx-1">批量社媒加好友</span>
+                建立关系，再发私信，送达率更高、账号更安全。
               </li>
               <li>
                 同一对象在同一触达方式下
@@ -844,9 +909,37 @@ function FavoritesPage() {
             <Button
               variant="outline"
               size="sm"
+              disabled={selected.size === 0}
+              className="gap-1.5 border-primary/30 text-primary hover:bg-primary/10 hover:text-primary disabled:opacity-50"
+              onClick={() => {
+                if (connectCandidates.length === 0) {
+                  toast.warning("所选对象暂无可用社媒身份", {
+                    description:
+                      "可在企业详情点击「更新企业数据」补全社媒资料，或在弹窗中手动添加目标。",
+                  });
+                  return;
+                }
+                setBatchConnectOpen(true);
+              }}
+              title="先加好友 / 关注建立关系，再发私信送达率更高"
+            >
+              <UserPlus className="h-4 w-4" />
+              批量社媒加好友
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
               className="gap-1.5 border-primary/30 text-primary hover:bg-primary/10 hover:text-primary"
               onClick={() => {
                 if (selected.size > 0 && !guardBatch(socialEligible, "社媒")) return;
+                const notConnected = connectCandidates.filter(
+                  (c) => favoriteConnectLabel(connectMap, all.find((r) => r.id === c.favoriteId)!) !== "已建立",
+                ).length;
+                if (notConnected > 0) {
+                  toast.info(`${notConnected} 个目标尚未建立社媒关系`, {
+                    description: "未加好友直接私信送达率较低，建议先使用「批量社媒加好友」。",
+                  });
+                }
                 setBatchPlatformOpen(true);
               }}
               title="批量社媒私信"
@@ -896,6 +989,7 @@ function FavoritesPage() {
               selected={selected.has(r.id)}
               onToggleSelect={() => toggleOne(r.id)}
               reached={reachedOf(r)}
+              connectLabel={favoriteConnectLabel(connectMap, r)}
 
             />
           ))}
@@ -970,6 +1064,11 @@ function FavoritesPage() {
           // 但如果希望联动，可以调用 setSelected 等逻辑
         }}
       />
+      <BatchSocialConnectDialog
+        open={batchConnectOpen}
+        onOpenChange={setBatchConnectOpen}
+        candidates={connectCandidates}
+      />
       <AiVoiceCallDialog
         open={aiCallOpen}
         onOpenChange={setAiCallOpen}
@@ -985,11 +1084,13 @@ function FavoriteCard({
   selected,
   onToggleSelect,
   reached,
+  connectLabel,
 }: {
   record: FavoriteRecord;
   selected: boolean;
   onToggleSelect: () => void;
   reached: ReachMethod[];
+  connectLabel?: ConnectLabel | null;
 }) {
 
   const meta = KIND_META[record.kind];
@@ -1088,6 +1189,21 @@ function FavoriteCard({
                 {REACH_METHOD_LABEL[m]}
               </Badge>
             ))}
+          </div>
+        )}
+        {connectLabel && (
+          <div className="mt-1.5 flex items-center gap-1">
+            <span className="inline-flex items-center gap-1 text-[10px] text-muted-foreground">
+              <UserPlus className="h-3 w-3" />
+              社媒关系
+            </span>
+            <Badge
+              variant="outline"
+              className={cn("text-[10px] h-4 px-1.5", LABEL_TONE[connectLabel])}
+              title="Facebook 个人号加好友 / 主页与 TikTok 关注"
+            >
+              {connectLabel}
+            </Badge>
           </div>
         )}
         <FavoriteMeta record={record} />

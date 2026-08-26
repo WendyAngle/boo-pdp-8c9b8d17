@@ -21,7 +21,7 @@ export function deriveFriends(tasks: ProspectingTask[]): SocialFriend[] {
     const platform: SocialTaskPlatform = t.platform[0] ?? "Facebook";
     const accountId = t.accountIds[0] ?? "";
     for (const tg of t.targets) {
-      if (tg.status !== "accepted") continue;
+      if (tg.status !== "accepted" && tg.status !== "following") continue;
       out.push({
         id: `${t.id}:${tg.id}`,
         targetId: tg.id,

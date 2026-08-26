@@ -57,6 +57,8 @@ const STATUS_META: Record<TargetStatus, { label: string; tone: string; icon: Rea
   pending: { label: "待请求", tone: "bg-slate-100 text-slate-700 border-slate-200", icon: <Clock className="h-3 w-3" /> },
   requested: { label: "已请求", tone: "bg-sky-50 text-sky-700 border-sky-200", icon: <Clock className="h-3 w-3" /> },
   accepted: { label: "已通过", tone: "bg-emerald-50 text-emerald-700 border-emerald-200", icon: <CheckCircle2 className="h-3 w-3" /> },
+  following: { label: "已关注", tone: "bg-emerald-50 text-emerald-700 border-emerald-200", icon: <CheckCircle2 className="h-3 w-3" /> },
+  expired: { label: "已过期", tone: "bg-slate-100 text-slate-600 border-slate-300", icon: <Clock className="h-3 w-3" /> },
   rejected: { label: "已拒绝", tone: "bg-rose-50 text-rose-700 border-rose-200", icon: <XCircle className="h-3 w-3" /> },
   failed: { label: "失败", tone: "bg-amber-50 text-amber-700 border-amber-200", icon: <AlertTriangle className="h-3 w-3" /> },
 };

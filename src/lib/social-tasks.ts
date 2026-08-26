@@ -4,7 +4,14 @@ export type SocialTaskPlatform = "Facebook" | "TikTok";
 export type SocialTargetKind = "enterprise" | "user" | "post" | "comment" | "group";
 
 export type ProspectingStatus = "queued" | "running" | "completed" | "paused";
-export type TargetStatus = "pending" | "requested" | "accepted" | "rejected" | "failed";
+export type TargetStatus =
+  | "pending"
+  | "requested"
+  | "accepted"
+  | "following"
+  | "rejected"
+  | "expired"
+  | "failed";
 
 export interface ProspectingTarget {
   id: string;
@@ -26,6 +33,12 @@ export interface ProspectingTask {
   targetCap: number;
   accountIds: string[];
   greetOnAccept?: string;
+  /** 关系动作：加好友 / 关注（收藏中心「批量社媒加好友」为 connect） */
+  action?: "friend" | "follow" | "connect";
+  /** 执行节奏档位 */
+  pacing?: "safe" | "normal" | "fast";
+  /** 任务来源（如：收藏中心 / 关键词搜索） */
+  source?: string;
   status: ProspectingStatus;
   createdAt: string;
   frozenCredits: number;
