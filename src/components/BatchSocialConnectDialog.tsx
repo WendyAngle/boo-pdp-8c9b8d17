@@ -47,11 +47,10 @@ import {
   useLedger,
 } from "@/lib/credits-ledger";
 import { useSocialAccounts, regionLabel } from "@/data/social-accounts";
-import { computeHealth, healthToneClass } from "@/lib/social-account-health";
+import { computeHealth } from "@/lib/social-account-health";
 import { addProspectingTask } from "@/lib/social-tasks";
 import {
   ACTION_LABEL,
-  CONFIDENCE_LABEL,
   CONNECT_PLATFORMS,
   LABEL_TONE,
   actionOf,
@@ -175,7 +174,7 @@ export function BatchSocialConnectDialog({
       const rec = connectMap[recordId(r.identity.platform, r.identity.handle)];
       const action = actionOf(r.identity.platform, r.identity.accountType);
       let blocked = blockedReason(rec);
-      if (!blocked && r.identity.confidence === "low") blocked = "身份可信度低，请确认后执行";
+      
       if (!blocked && action === "follow" && r.identity.accountType === "page" && !includePages)
         blocked = "已关闭主页关注";
       let locked = false;
@@ -199,21 +198,8 @@ export function BatchSocialConnectDialog({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [visibleRows, connectMap, includePages, ledger]);
 
-  /** 低可信项可由用户手动确认放行 */
-  const [confirmedLow, setConfirmedLow] = useState<Set<string>>(new Set());
-  useEffect(() => {
-    if (open) setConfirmedLow(new Set());
-  }, [open]);
+  const finalRows = judged;
 
-  const finalRows = useMemo(
-    () =>
-      judged.map((j) =>
-        j.blocked === "身份可信度低，请确认后执行" && confirmedLow.has(j.key)
-          ? { ...j, blocked: null }
-          : j,
-      ),
-    [judged, confirmedLow],
-  );
 
   const executable = useMemo(
     () => finalRows.filter((r) => !r.blocked && !excluded.has(r.key)),
@@ -532,7 +518,7 @@ export function BatchSocialConnectDialog({
               ) : (
                 finalRows.map((r) => {
                   const checked = !r.blocked && !excluded.has(r.key);
-                  const lowNeedConfirm = r.identity.confidence === "low" && r.blocked;
+                  
                   return (
                     <div
                       key={r.key}
@@ -576,16 +562,8 @@ export function BatchSocialConnectDialog({
                       <Badge variant="secondary" className="h-4 px-1 text-[10px]">
                         {r.identity.accountType === "page" ? "主页" : "个人号"}
                       </Badge>
-                      <Badge
-                        variant="outline"
-                        className={cn(
-                          "h-4 px-1 text-[10px]",
-                          r.identity.confidence === "low" &&
-                            "border-amber-300 bg-amber-50 text-amber-700",
-                        )}
-                      >
-                        可信度{CONFIDENCE_LABEL[r.identity.confidence]}
-                      </Badge>
+
+
                       <Badge
                         variant="outline"
                         className={cn("h-4 px-1 text-[10px]", LABEL_TONE[r.label])}
@@ -601,17 +579,8 @@ export function BatchSocialConnectDialog({
                             {r.blocked}
                           </span>
                         )}
-                        {lowNeedConfirm && (
-                          <button
-                            type="button"
-                            className="rounded border border-amber-300 bg-amber-50 px-1.5 py-0.5 text-[11px] text-amber-800 hover:bg-amber-100"
-                            onClick={() =>
-                              setConfirmedLow((prev) => new Set(prev).add(r.key))
-                            }
-                          >
-                            确认可执行
-                          </button>
-                        )}
+
+
                         {r.locked && !r.blocked && (
                           <button
                             type="button"
@@ -642,8 +611,9 @@ export function BatchSocialConnectDialog({
             </div>
             <div className="text-[11px] text-muted-foreground">
               可执行 <b className="text-foreground">{executable.length}</b> 条 · 已跳过{" "}
-              {skipped} 条（已建立 / 请求中 / 冷却期 / 低可信未确认）
+              {skipped} 条（已建立 / 请求中 / 冷却期）
             </div>
+
           </div>
         )}
 
@@ -694,13 +664,14 @@ export function BatchSocialConnectDialog({
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="auto">自动分配（按健康度）</SelectItem>
-                    <SelectItem value="manual">手动指定账号</SelectItem>
+                    <SelectItem value="auto">自动分配</SelectItem>
+                    <SelectItem value="manual">手动指定</SelectItem>
                   </SelectContent>
                 </Select>
                 <span className="text-[11px] text-muted-foreground">
-                  健康度 &lt; 50 或风控 / 被封 / 养号中的账号已自动移出执行池
+                  自动分配优先使用今日剩余额度多、状态正常的账号；风控 / 被封 / 养号中的账号已自动移出执行池
                 </span>
+
               </div>
               <div className="rounded-md border divide-y max-h-[200px] overflow-y-auto">
                 {pool.length === 0 ? (
@@ -709,7 +680,7 @@ export function BatchSocialConnectDialog({
                   </div>
                 ) : (
                   pool.map((a) => {
-                    const h = computeHealth(a);
+                    
                     const limit = Math.min(PACING_META[pacing].perDay, a.dailyFriendLimit ?? 5);
                     return (
                       <div key={a.id} className="flex items-center gap-2 px-3 py-2 text-xs">
@@ -732,12 +703,10 @@ export function BatchSocialConnectDialog({
                         <Badge variant="outline" className="h-4 px-1 text-[10px]">
                           {a.platform}
                         </Badge>
-                        <Badge
-                          variant="outline"
-                          className={cn("h-4 px-1 text-[10px]", healthToneClass(h.band))}
-                        >
-                          健康度 {h.score}
+                        <Badge variant="outline" className="h-4 px-1 text-[10px]">
+                          {a.status}
                         </Badge>
+
                         <span className="ml-auto text-[11px] text-muted-foreground">
                           代理 {regionLabel(a.proxyRegion)} · 今日剩余{" "}
                           {Math.max(0, limit - (a.friendSentToday ?? 0))} 条
