@@ -642,8 +642,9 @@ export function BatchSocialConnectDialog({
             </div>
             <div className="text-[11px] text-muted-foreground">
               可执行 <b className="text-foreground">{executable.length}</b> 条 · 已跳过{" "}
-              {skipped} 条（已建立 / 请求中 / 冷却期 / 低可信未确认）
+              {skipped} 条（已建立 / 请求中 / 冷却期）
             </div>
+
           </div>
         )}
 
