@@ -710,7 +710,7 @@ export function BatchSocialConnectDialog({
                   </div>
                 ) : (
                   pool.map((a) => {
-                    const h = computeHealth(a);
+                    
                     const limit = Math.min(PACING_META[pacing].perDay, a.dailyFriendLimit ?? 5);
                     return (
                       <div key={a.id} className="flex items-center gap-2 px-3 py-2 text-xs">
