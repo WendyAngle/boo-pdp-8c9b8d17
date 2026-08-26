@@ -7,6 +7,8 @@ export interface SocialFriend {
   targetId: string;
   name: string;
   handle: string;
+  /** 平台侧数字账号 ID，如 Facebook 的 61585883769059 */
+  socialId?: string;
   platform: SocialTaskPlatform;
   accountId: string;
   sourceTaskId: string;
@@ -14,6 +16,7 @@ export interface SocialFriend {
   acceptedAt?: string;
   kind: "enterprise" | "user" | "post" | "comment" | "group";
 }
+
 
 export function deriveFriends(tasks: ProspectingTask[]): SocialFriend[] {
   const out: SocialFriend[] = [];
@@ -27,6 +30,7 @@ export function deriveFriends(tasks: ProspectingTask[]): SocialFriend[] {
         targetId: tg.id,
         name: tg.name,
         handle: tg.handle,
+        socialId: tg.socialId,
         platform,
         accountId,
         sourceTaskId: t.id,
@@ -34,6 +38,7 @@ export function deriveFriends(tasks: ProspectingTask[]): SocialFriend[] {
         acceptedAt: tg.acceptedAt,
         kind: tg.kind,
       });
+
     }
   }
   return out;

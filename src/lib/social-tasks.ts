@@ -17,11 +17,14 @@ export interface ProspectingTarget {
   id: string;
   name: string;
   handle: string;
+  /** 平台侧数字账号 ID，如 Facebook 的 61585883769059 */
+  socialId?: string;
   kind: SocialTargetKind;
   status: TargetStatus;
   requestedAt?: string;
   acceptedAt?: string;
 }
+
 
 export interface ProspectingTask {
   id: string;
@@ -69,9 +72,10 @@ export interface DmTask {
   sends: DmSend[];
 }
 
-const PROS_KEY = "boo:social-prospecting:v2";
+const PROS_KEY = "boo:social-prospecting:v3";
 const DM_KEY = "boo:social-dm:v2";
-const SEED_FLAG = "boo:social-tasks:v2:seeded";
+const SEED_FLAG = "boo:social-tasks:v3:seeded";
+
 
 function readArr<T>(key: string): T[] {
   if (typeof window === "undefined") return [];
@@ -114,12 +118,13 @@ function seed() {
       frozenCredits: 1500,
       usedCredits: 850,
       targets: [
-        { id: "t1", name: "Northwind Steel", handle: "@northwind.steel", kind: "enterprise", status: "accepted", requestedAt: daysAgo(1), acceptedAt: daysAgo(0.5) },
-        { id: "t2", name: "Mike O'Brien", handle: "@mike.obrien.buyer", kind: "user", status: "accepted", requestedAt: daysAgo(1), acceptedAt: daysAgo(0.4) },
-        { id: "t3", name: "Contoso Metals", handle: "@contoso.metals", kind: "enterprise", status: "requested", requestedAt: daysAgo(1) },
-        { id: "t4", name: "Sarah Lee", handle: "@sarah.lee.pm", kind: "user", status: "rejected", requestedAt: daysAgo(1) },
-        { id: "t5", name: "SteelMart LLC", handle: "@steelmart", kind: "enterprise", status: "pending" },
-        { id: "t6", name: "David Chen", handle: "@david.chen.trade", kind: "user", status: "failed", requestedAt: daysAgo(1) },
+        { id: "t1", name: "Northwind Steel", handle: "@northwind.steel", socialId: "61585883769059", kind: "enterprise", status: "accepted", requestedAt: daysAgo(1), acceptedAt: daysAgo(0.5) },
+        { id: "t2", name: "Mike O'Brien", handle: "@mike.obrien.buyer", socialId: "61585883769060", kind: "user", status: "accepted", requestedAt: daysAgo(1), acceptedAt: daysAgo(0.4) },
+        { id: "t3", name: "Contoso Metals", handle: "@contoso.metals", socialId: "61585883769061", kind: "enterprise", status: "requested", requestedAt: daysAgo(1) },
+        { id: "t4", name: "Sarah Lee", handle: "@sarah.lee.pm", socialId: "61585883769062", kind: "user", status: "rejected", requestedAt: daysAgo(1) },
+        { id: "t5", name: "SteelMart LLC", handle: "@steelmart", socialId: "61585883769063", kind: "enterprise", status: "pending" },
+        { id: "t6", name: "David Chen", handle: "@david.chen.trade", socialId: "61585883769064", kind: "user", status: "failed", requestedAt: daysAgo(1) },
+
       ],
     },
     {
