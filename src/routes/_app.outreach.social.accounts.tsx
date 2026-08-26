@@ -481,9 +481,10 @@ function FriendsDialog({
               <TableHeader>
                 <TableRow>
                   <TableHead className="w-[100px]">平台</TableHead>
-                  <TableHead>账号</TableHead>
+                  <TableHead>账号ID</TableHead>
                   <TableHead>显示名</TableHead>
                 </TableRow>
+
               </TableHeader>
               <TableBody>
                 {pageData.map((f) => (
