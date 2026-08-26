@@ -524,7 +524,6 @@ function FriendsDialog({
 
 function AllFriendsDialog({
   friends,
-  accounts,
   onClose,
 }: {
   friends: SocialFriend[];
@@ -536,22 +535,15 @@ function AllFriendsDialog({
   const [page, setPage] = useState(1);
   const pageSize = 10;
 
-  const accountById = useMemo(() => {
-    const m = new Map<string, SocialAccount>();
-    accounts.forEach((a) => m.set(a.id, a));
-    return m;
-  }, [accounts]);
-
   const filtered = useMemo(() => {
     const k = kw.trim().toLowerCase();
     return friends.filter((f) => {
       if (platform !== "all" && f.platform !== platform) return false;
       if (!k) return true;
-      const owner = accountById.get(f.accountId);
-      const hay = `${f.handle ?? ""} ${f.name ?? ""} ${owner?.handle ?? ""} ${owner?.displayName ?? ""}`.toLowerCase();
+      const hay = `${f.handle ?? ""} ${f.name ?? ""}`.toLowerCase();
       return hay.includes(k);
     });
-  }, [friends, kw, platform, accountById]);
+  }, [friends, kw, platform]);
 
   const pageData = useMemo(
     () => filtered.slice((page - 1) * pageSize, page * pageSize),
@@ -560,7 +552,7 @@ function AllFriendsDialog({
 
   return (
     <Dialog open onOpenChange={(o) => !o && onClose()}>
-      <DialogContent className="max-w-3xl max-h-[80vh] overflow-y-auto">
+      <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <UserCheck className="h-5 w-5 text-primary" />
@@ -581,7 +573,7 @@ function AllFriendsDialog({
                 setKw(e.target.value);
                 setPage(1);
               }}
-              placeholder="按好友账号 / 显示名 / 所属账号搜索"
+              placeholder="按账号 / 显示名搜索"
               className="h-8 pl-8 text-xs"
             />
             {kw && (
@@ -619,46 +611,30 @@ function AllFriendsDialog({
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead className="w-[110px]">平台</TableHead>
+                  <TableHead className="w-[100px]">平台</TableHead>
                   <TableHead>账号</TableHead>
                   <TableHead>显示名</TableHead>
-                  <TableHead className="w-[200px]">所属账号</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {pageData.map((f) => {
-                  const owner = accountById.get(f.accountId);
-                  return (
-                    <TableRow key={f.id}>
-                      <TableCell>
-                        <span className="inline-flex items-center gap-1.5 text-xs font-medium">
-                          {f.platform === "Facebook" ? (
-                            <Facebook className="h-3.5 w-3.5 text-sky-600" />
-                          ) : f.platform === "TikTok" ? (
-                            <Music2 className="h-3.5 w-3.5 text-rose-600" />
-                          ) : (
-                            <CheckCircle2 className="h-3.5 w-3.5 text-emerald-600" />
-                          )}
-                          {f.platform}
-                        </span>
-                      </TableCell>
-                      <TableCell className="font-mono text-xs">{f.handle || "—"}</TableCell>
-                      <TableCell className="text-sm">{f.name || "—"}</TableCell>
-                      <TableCell className="text-xs">
-                        {owner ? (
-                          <span className="inline-flex flex-col">
-                            <span className="font-mono">{owner.handle}</span>
-                            {owner.displayName && (
-                              <span className="text-[11px] text-muted-foreground">{owner.displayName}</span>
-                            )}
-                          </span>
+                {pageData.map((f) => (
+                  <TableRow key={f.id}>
+                    <TableCell>
+                      <span className="inline-flex items-center gap-1.5 text-xs font-medium">
+                        {f.platform === "Facebook" ? (
+                          <Facebook className="h-3.5 w-3.5 text-sky-600" />
+                        ) : f.platform === "TikTok" ? (
+                          <Music2 className="h-3.5 w-3.5 text-rose-600" />
                         ) : (
-                          <span className="text-muted-foreground">—</span>
+                          <CheckCircle2 className="h-3.5 w-3.5 text-emerald-600" />
                         )}
-                      </TableCell>
-                    </TableRow>
-                  );
-                })}
+                        {f.platform}
+                      </span>
+                    </TableCell>
+                    <TableCell className="font-mono text-xs">{f.handle || "—"}</TableCell>
+                    <TableCell className="text-sm">{f.name || "—"}</TableCell>
+                  </TableRow>
+                ))}
               </TableBody>
             </Table>
             <div className="pb-1 pt-3">
