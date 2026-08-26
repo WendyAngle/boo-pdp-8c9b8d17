@@ -571,12 +571,14 @@ export function BatchSocialConnectDialog({
                       </Badge>
 
 
-                      <Badge
-                        variant="outline"
-                        className={cn("h-4 px-1 text-[10px]", LABEL_TONE[r.label])}
-                      >
-                        {r.label}
-                      </Badge>
+                      {r.label !== "未建立" && (
+                        <Badge
+                          variant="outline"
+                          className={cn("h-4 px-1 text-[10px]", LABEL_TONE[r.label])}
+                        >
+                          {r.label}
+                        </Badge>
+                      )}
                       <span className="text-[11px] text-muted-foreground">
                         {ACTION_LABEL[r.action]}
                       </span>
