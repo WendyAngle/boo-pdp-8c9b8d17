@@ -532,7 +532,7 @@ export function BatchSocialConnectDialog({
               ) : (
                 finalRows.map((r) => {
                   const checked = !r.blocked && !excluded.has(r.key);
-                  const lowNeedConfirm = r.identity.confidence === "low" && r.blocked;
+                  
                   return (
                     <div
                       key={r.key}
