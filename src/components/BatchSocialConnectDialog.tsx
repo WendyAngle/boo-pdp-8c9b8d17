@@ -77,11 +77,9 @@ export interface ConnectCandidate {
   identities: SocialIdentity[];
 }
 
-type Pacing = "safe" | "normal" | "fast";
+type Pacing = "normal";
 const PACING_META: Record<Pacing, { label: string; perDay: number; desc: string }> = {
-  safe: { label: "保守", perDay: 3, desc: "每账号 3 条/天 · 间隔 15~40 分钟，封号风险最低" },
   normal: { label: "标准", perDay: 5, desc: "每账号 5 条/天 · 间隔 8~20 分钟（推荐）" },
-  fast: { label: "激进", perDay: 8, desc: "每账号 8 条/天 · 间隔 3~10 分钟，受账号额度钳制" },
 };
 
 const STEPS = ["平台与对象", "动作设置", "执行账号与节奏"];
