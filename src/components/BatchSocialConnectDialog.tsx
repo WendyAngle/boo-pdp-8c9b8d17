@@ -199,21 +199,8 @@ export function BatchSocialConnectDialog({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [visibleRows, connectMap, includePages, ledger]);
 
-  /** 低可信项可由用户手动确认放行 */
-  const [confirmedLow, setConfirmedLow] = useState<Set<string>>(new Set());
-  useEffect(() => {
-    if (open) setConfirmedLow(new Set());
-  }, [open]);
+  const finalRows = judged;
 
-  const finalRows = useMemo(
-    () =>
-      judged.map((j) =>
-        j.blocked === "身份可信度低，请确认后执行" && confirmedLow.has(j.key)
-          ? { ...j, blocked: null }
-          : j,
-      ),
-    [judged, confirmedLow],
-  );
 
   const executable = useMemo(
     () => finalRows.filter((r) => !r.blocked && !excluded.has(r.key)),
