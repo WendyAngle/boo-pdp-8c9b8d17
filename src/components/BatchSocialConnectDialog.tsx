@@ -48,7 +48,6 @@ import {
 } from "@/lib/credits-ledger";
 import { useSocialAccounts, regionLabel } from "@/data/social-accounts";
 import { computeHealth, healthToneClass } from "@/lib/social-account-health";
-import { useMyInfoGuard } from "@/lib/my-info-guard";
 import { addProspectingTask } from "@/lib/social-tasks";
 import {
   ACTION_LABEL,
@@ -99,7 +98,6 @@ export function BatchSocialConnectDialog({
   const accounts = useSocialAccounts();
   const connectMap = useConnectMap();
   const ledger = useLedger();
-  const myInfo = useMyInfoGuard();
 
   const [step, setStep] = useState(0);
   const [platforms, setPlatforms] = useState<ConnectPlatform[]>(["Facebook", "TikTok"]);
