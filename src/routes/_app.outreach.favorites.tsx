@@ -461,6 +461,9 @@ function FavoritesPage() {
         if (reachFilter === "reached" && !done) return false;
         if (reachFilter === "unreached" && done) return false;
       }
+      if (connectFilter !== "all") {
+        if (favoriteConnectLabel(connectMap, r) !== connectFilter) return false;
+      }
       if (dKey && !r.createdAt.startsWith(dKey)) return false;
 
       if (trimmed) {
