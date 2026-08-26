@@ -47,11 +47,10 @@ import {
   useLedger,
 } from "@/lib/credits-ledger";
 import { useSocialAccounts, regionLabel } from "@/data/social-accounts";
-import { computeHealth, healthToneClass } from "@/lib/social-account-health";
+import { computeHealth } from "@/lib/social-account-health";
 import { addProspectingTask } from "@/lib/social-tasks";
 import {
   ACTION_LABEL,
-  CONFIDENCE_LABEL,
   CONNECT_PLATFORMS,
   LABEL_TONE,
   actionOf,
