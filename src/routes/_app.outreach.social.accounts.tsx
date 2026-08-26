@@ -423,9 +423,11 @@ function FriendsDialog({
     if (!k) return friends;
     return friends.filter(
       (f) =>
+        (f.socialId ?? "").toLowerCase().includes(k) ||
         (f.handle ?? "").toLowerCase().includes(k) ||
         (f.name ?? "").toLowerCase().includes(k),
     );
+
   }, [friends, kw]);
 
   const pageData = useMemo(
@@ -501,7 +503,8 @@ function FriendsDialog({
                         {f.platform}
                       </span>
                     </TableCell>
-                    <TableCell className="font-mono text-xs">{f.handle || "—"}</TableCell>
+                    <TableCell className="font-mono text-xs">{f.socialId || f.handle || "—"}</TableCell>
+
                     <TableCell className="text-sm">{f.name || "—"}</TableCell>
                   </TableRow>
                 ))}
@@ -539,8 +542,9 @@ function AllFriendsDialog({
     return friends.filter((f) => {
       if (platform !== "all" && f.platform !== platform) return false;
       if (!k) return true;
-      const hay = `${f.handle ?? ""} ${f.name ?? ""}`.toLowerCase();
+      const hay = `${f.socialId ?? ""} ${f.handle ?? ""} ${f.name ?? ""}`.toLowerCase();
       return hay.includes(k);
+
     });
   }, [friends, kw, platform]);
 
@@ -611,9 +615,10 @@ function AllFriendsDialog({
               <TableHeader>
                 <TableRow>
                   <TableHead className="w-[100px]">平台</TableHead>
-                  <TableHead>账号</TableHead>
+                  <TableHead>账号ID</TableHead>
                   <TableHead>显示名</TableHead>
                 </TableRow>
+
               </TableHeader>
               <TableBody>
                 {pageData.map((f) => (
@@ -630,7 +635,7 @@ function AllFriendsDialog({
                         {f.platform}
                       </span>
                     </TableCell>
-                    <TableCell className="font-mono text-xs">{f.handle || "—"}</TableCell>
+                    <TableCell className="font-mono text-xs">{f.socialId || f.handle || "—"}</TableCell>
                     <TableCell className="text-sm">{f.name || "—"}</TableCell>
                   </TableRow>
                 ))}
