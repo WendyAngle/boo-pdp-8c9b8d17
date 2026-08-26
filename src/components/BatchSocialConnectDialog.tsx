@@ -733,12 +733,10 @@ export function BatchSocialConnectDialog({
                         <Badge variant="outline" className="h-4 px-1 text-[10px]">
                           {a.platform}
                         </Badge>
-                        <Badge
-                          variant="outline"
-                          className={cn("h-4 px-1 text-[10px]", healthToneClass(h.band))}
-                        >
-                          健康度 {h.score}
+                        <Badge variant="outline" className="h-4 px-1 text-[10px]">
+                          {a.status}
                         </Badge>
+
                         <span className="ml-auto text-[11px] text-muted-foreground">
                           代理 {regionLabel(a.proxyRegion)} · 今日剩余{" "}
                           {Math.max(0, limit - (a.friendSentToday ?? 0))} 条
