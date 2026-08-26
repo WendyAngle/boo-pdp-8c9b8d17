@@ -77,11 +77,9 @@ export interface ConnectCandidate {
   identities: SocialIdentity[];
 }
 
-type Pacing = "safe" | "normal" | "fast";
+type Pacing = "normal";
 const PACING_META: Record<Pacing, { label: string; perDay: number; desc: string }> = {
-  safe: { label: "保守", perDay: 3, desc: "每账号 3 条/天 · 间隔 15~40 分钟，封号风险最低" },
   normal: { label: "标准", perDay: 5, desc: "每账号 5 条/天 · 间隔 8~20 分钟（推荐）" },
-  fast: { label: "激进", perDay: 8, desc: "每账号 8 条/天 · 间隔 3~10 分钟，受账号额度钳制" },
 };
 
 const STEPS = ["平台与对象", "动作设置", "执行账号与节奏"];
@@ -111,7 +109,7 @@ export function BatchSocialConnectDialog({
   });
   const [includePages, setIncludePages] = useState(true);
   const [warmup, setWarmup] = useState(false);
-  const [pacing, setPacing] = useState<Pacing>("normal");
+  const pacing: Pacing = "normal";
   const [assign, setAssign] = useState<"auto" | "manual">("auto");
   const [pickedAccounts, setPickedAccounts] = useState<string[]>([]);
   const [unlockAllOpen, setUnlockAllOpen] = useState(false);
@@ -126,7 +124,6 @@ export function BatchSocialConnectDialog({
     setAdding(false);
     setIncludePages(true);
     setWarmup(false);
-    setPacing("normal");
     setAssign("auto");
     setPickedAccounts([]);
   }, [open]);
@@ -757,25 +754,11 @@ export function BatchSocialConnectDialog({
                 <Gauge className="h-3.5 w-3.5" />
                 执行节奏
               </Label>
-              <div className="grid gap-2 sm:grid-cols-3">
-                {(Object.keys(PACING_META) as Pacing[]).map((p) => (
-                  <button
-                    key={p}
-                    type="button"
-                    onClick={() => setPacing(p)}
-                    className={cn(
-                      "rounded-md border p-2.5 text-left text-xs",
-                      pacing === p
-                        ? "border-primary bg-primary/5 ring-1 ring-primary/30"
-                        : "hover:bg-muted/40",
-                    )}
-                  >
-                    <div className="font-medium">{PACING_META[p].label}</div>
-                    <div className="text-[11px] text-muted-foreground mt-0.5">
-                      {PACING_META[p].desc}
-                    </div>
-                  </button>
-                ))}
+              <div className="rounded-md border border-primary bg-primary/5 p-2.5 text-left text-xs ring-1 ring-primary/30">
+                <div className="font-medium">{PACING_META[pacing].label}</div>
+                <div className="text-[11px] text-muted-foreground mt-0.5">
+                  {PACING_META[pacing].desc}
+                </div>
               </div>
               {clamped && (
                 <div className="rounded-md border border-amber-200 bg-amber-50 p-2 text-[11px] text-amber-800 flex items-start gap-1.5">
