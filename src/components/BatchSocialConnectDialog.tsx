@@ -657,7 +657,7 @@ export function BatchSocialConnectDialog({
                   Facebook
                 </div>
                 <div className="text-[11px] text-muted-foreground">
-                  个人号 {executable.filter((r) => r.identity.platform === "Facebook" && r.action === "friend").length} 个 → 加好友（平台不支持附言）；
+                  个人号 {executable.filter((r) => r.identity.platform === "Facebook" && r.action === "friend").length} 个 → 加好友；
                   主页 {finalRows.filter((r) => r.identity.platform === "Facebook" && r.identity.accountType === "page").length} 个 → 关注
                 </div>
                 <label className="flex items-center justify-between text-[11px]">
