@@ -541,6 +541,13 @@ export function BatchSocialPlatformDialog({
 
             {/* 目标列表滚动展示 */}
 
+            {notConnectedCount > 0 && (
+              <div className="mt-3 inline-flex items-center gap-1 text-[11px] text-muted-foreground">
+                <Info className="h-3 w-3" />
+                已自动过滤 {notConnectedCount} 个未建立社媒关系的目标，请先在「批量社媒加好友 / 关注」中建立关系
+              </div>
+            )}
+
             {lockedJobKeys.size > 0 && (
               <div className="mt-3 flex items-center justify-between gap-2 text-[11px] text-muted-foreground">
                 <span className="inline-flex items-center gap-1">
@@ -566,8 +573,9 @@ export function BatchSocialPlatformDialog({
             <div className="mt-3 max-h-52 overflow-y-auto rounded-md border bg-background divide-y">
               {allAccountJobs.length === 0 ? (
                 <div className="text-center py-6 text-xs text-muted-foreground">
-                  暂无待执行任务，请添加或从外部选择目标。
+                  暂无可私信目标：仅"已建立社媒关系"的目标可发送私信，可手动添加目标。
                 </div>
+
               ) : (
                 allAccountJobs.map((j) => {
                   const checked = !removedJobKeys.has(j.key);
