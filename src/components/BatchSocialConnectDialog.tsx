@@ -77,7 +77,7 @@ export interface ConnectCandidate {
 
 type Pacing = "normal";
 const PACING_META: Record<Pacing, { label: string; perDay: number; desc: string }> = {
-  normal: { label: "标准", perDay: 5, desc: "每账号 5 条/天 · 间隔 8~20 分钟（推荐）" },
+  normal: { label: "标准", perDay: 5, desc: "每账号 5 条/天 · 超出部分自动顺延次日 09:00 执行" },
 };
 
 const STEPS = ["平台与对象", "动作设置", "执行账号与节奏"];
@@ -225,8 +225,7 @@ export function BatchSocialConnectDialog({
       poolAll.filter(
         (a) =>
           a.status === "正常" &&
-          platforms.includes(a.platform as ConnectPlatform) &&
-          (a.dailyFriendLimit ?? 5) - (a.friendSentToday ?? 0) > 0,
+          platforms.includes(a.platform as ConnectPlatform),
       ),
     [poolAll, platforms],
   );

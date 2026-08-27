@@ -64,11 +64,11 @@ import { useConnectMap } from "@/lib/social-connect";
 export type ReachPlatform = "Facebook" | "TikTok";
 export const REACH_PLATFORMS: ReachPlatform[] = ["Facebook", "TikTok"];
 
-/** 单日单账号触达上限 */
+/** 单日单账号私信上限 */
 export const DAILY_PER_ACCOUNT = 5;
 
 /** 执行节奏说明（私信仅保留标准档） */
-const PACING_DESC = `标准 · 每账号 ${DAILY_PER_ACCOUNT} 条/天（私信 + 加友合计）· 超出部分自动顺延次日 09:00 执行`;
+const PACING_DESC = `标准 · 每账号 ${DAILY_PER_ACCOUNT} 条/天 · 超出部分自动顺延次日 09:00 执行`;
 
 /** 社媒目标候选人（收藏 → 社媒收件人） */
 export interface PlatformCandidate extends Recipient {
@@ -77,12 +77,12 @@ export interface PlatformCandidate extends Recipient {
   handles: Partial<Record<ReachPlatform, string>>;
 }
 
-/** 账号当日已触达次数（私信 + 加友） */
+/** 账号当日已发送私信数 */
 export function accountTouchesToday(a: SocialAccount): number {
-  return (a.dmSentToday ?? a.sentToday ?? 0) + (a.friendSentToday ?? 0);
+  return a.dmSentToday ?? a.sentToday ?? 0;
 }
 
-/** 可用执行账号：状态正常 且 当日触达次数未超过 5 */
+/** 可用执行账号：状态正常（平台匹配） */
 export function usableExecAccounts(
   list: SocialAccount[],
   platform: ReachPlatform | "all",
@@ -90,8 +90,7 @@ export function usableExecAccounts(
   return list.filter(
     (a) =>
       a.status === "正常" &&
-      (platform === "all" || a.platform === platform) &&
-      accountTouchesToday(a) < DAILY_PER_ACCOUNT,
+      (platform === "all" || a.platform === platform),
   );
 }
 
@@ -215,15 +214,14 @@ export function BatchSocialPlatformDialog({
     () => Array.from(new Set(jobs.map((j) => j.platform))),
     [jobs],
   );
-  /** 今日仍有剩余额度的可用执行账号（状态正常 + 平台匹配） */
+  /** 可用执行账号（状态正常 + 平台匹配） */
   const pool = useMemo(
     () =>
       accounts.filter(
         (a) =>
           a.status === "正常" &&
           (involvedPlatforms.length === 0 ||
-            involvedPlatforms.includes(a.platform as ReachPlatform)) &&
-          accountTouchesToday(a) < DAILY_PER_ACCOUNT,
+            involvedPlatforms.includes(a.platform as ReachPlatform)),
       ),
     [accounts, involvedPlatforms],
   );
