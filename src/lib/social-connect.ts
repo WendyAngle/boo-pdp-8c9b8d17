@@ -302,6 +302,12 @@ export function simulateProgress(ids: string[], delayMs = 6000) {
   }, delayMs);
 }
 
+/** 批量写入 / 覆盖关系记录（用于演示数据初始化） */
+export function upsertConnectRecords(records: ConnectRecord[]) {
+  for (const rec of records) cache[rec.id] = rec;
+  emit();
+}
+
 export function resetConnectRecords() {
   cache = {};
   emit();
