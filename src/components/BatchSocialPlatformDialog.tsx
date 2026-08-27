@@ -11,6 +11,8 @@ import {
   Trash2,
   Facebook,
   Music2,
+  Check,
+  Gauge,
 } from "lucide-react";
 
 import { useServerFn } from "@tanstack/react-start";
@@ -65,6 +67,9 @@ export const REACH_PLATFORMS: ReachPlatform[] = ["Facebook", "TikTok"];
 /** 单日单账号触达上限 */
 export const DAILY_PER_ACCOUNT = 5;
 
+/** 执行节奏说明（私信仅保留标准档） */
+const PACING_DESC = `标准 · 每账号 ${DAILY_PER_ACCOUNT} 条/天（私信 + 加友合计）· 超出部分自动顺延次日 09:00 执行`;
+
 /** 社媒目标候选人（收藏 → 社媒收件人） */
 export interface PlatformCandidate extends Recipient {
   enterpriseId?: string;
@@ -99,6 +104,8 @@ export interface BatchSocialPlatformDialogProps {
   onCandidatesChange?: (newList: PlatformCandidate[]) => void;
 }
 
+const STEPS = ["平台与对象", "撰写内容", "执行账号与节奏"];
+
 export function BatchSocialPlatformDialog({
   open,
   onOpenChange,
@@ -112,6 +119,7 @@ export function BatchSocialPlatformDialog({
   const ledger = useLedger();
   const callGenerate = useServerFn(generateAiContent);
 
+  const [step, setStep] = useState(0);
   const [content, setContent] = useState("");
   const [aiUsed, setAiUsed] = useState(false);
   const [aiLoading, setAiLoading] = useState(false);
@@ -125,16 +133,22 @@ export function BatchSocialPlatformDialog({
   const [isAdding, setIsAdding] = useState(false);
   const [newTarget, setNewTarget] = useState({ name: "", handle: "", platform: "Facebook" as ReachPlatform });
 
+  // 执行账号分配方式
+  const [assign, setAssign] = useState<"auto" | "manual">("auto");
+  const [pickedAccounts, setPickedAccounts] = useState<string[]>([]);
+
   useEffect(() => {
     if (!open) return;
+    setStep(0);
     setContent("");
     setAiUsed(false);
-    
     setTargetLang("en");
     setTranslated("");
     setInternalCandidates(initialCandidates);
     setRemovedJobKeys(new Set());
     setIsAdding(false);
+    setAssign("auto");
+    setPickedAccounts([]);
   }, [open, initialCandidates]);
 
   const allCandidates = internalCandidates;
@@ -185,7 +199,6 @@ export function BatchSocialPlatformDialog({
   /** 因未建立社媒关系被自动过滤的数量 */
   const notConnectedCount = rawAccountJobs.length - allAccountJobs.length;
 
-
   // 内部维护的已删除 Job Keys (针对单一账号的删除)
   const [removedJobKeys, setRemovedJobKeys] = useState<Set<string>>(new Set());
 
@@ -196,28 +209,45 @@ export function BatchSocialPlatformDialog({
 
   const jobs = filteredJobs;
 
-
-
-
-
-  /** 状态正常的执行账号（用于展示数量） */
-  const normalAccounts = useMemo(
-    () => accounts.filter((a) => a.status === "正常"),
-    [accounts],
+  // ---- 执行账号池
+  /** 任务涉及的平台集合 */
+  const involvedPlatforms = useMemo(
+    () => Array.from(new Set(jobs.map((j) => j.platform))),
+    [jobs],
   );
-  /** 今日仍有剩余额度的可用执行账号 */
-  const usable = useMemo(
-    () => normalAccounts.filter((a) => accountTouchesToday(a) < DAILY_PER_ACCOUNT),
-    [normalAccounts],
+  /** 今日仍有剩余额度的可用执行账号（状态正常 + 平台匹配） */
+  const pool = useMemo(
+    () =>
+      accounts.filter(
+        (a) =>
+          a.status === "正常" &&
+          (involvedPlatforms.length === 0 ||
+            involvedPlatforms.includes(a.platform as ReachPlatform)) &&
+          accountTouchesToday(a) < DAILY_PER_ACCOUNT,
+      ),
+    [accounts, involvedPlatforms],
+  );
+  /** 实际执行账号：自动分配按剩余额度降序，手动指定按勾选 */
+  const execAccounts = useMemo(
+    () =>
+      assign === "auto"
+        ? [...pool].sort(
+            (a, b) =>
+              Math.max(0, DAILY_PER_ACCOUNT - accountTouchesToday(b)) -
+              Math.max(0, DAILY_PER_ACCOUNT - accountTouchesToday(a)),
+          )
+        : pool.filter((a) => pickedAccounts.includes(a.id)),
+    [assign, pool, pickedAccounts],
   );
   const capacity = useMemo(
     () =>
-      normalAccounts.reduce(
+      execAccounts.reduce(
         (s, a) => s + Math.max(0, DAILY_PER_ACCOUNT - accountTouchesToday(a)),
         0,
       ),
-    [normalAccounts],
+    [execAccounts],
   );
+  const estDays = capacity > 0 ? Math.max(1, Math.ceil(jobs.length / capacity)) : 0;
 
   const targetCount = jobs.length;
   /** 今日可执行条数，其余顺延次日 */
@@ -253,7 +283,6 @@ export function BatchSocialPlatformDialog({
   /** 仅统计已勾选（实际执行）的待解锁条数 */
   const viewCostTotal = jobs.filter((j) => lockedJobKeys.has(j.key)).length * unitView;
 
-
   function unlockJob(j: Job) {
     performReachAutoUnlocks({
       targetKind: j.candidate.targetKind,
@@ -272,8 +301,7 @@ export function BatchSocialPlatformDialog({
   const [unlockAllAck, setUnlockAllAck] = useState(false);
   function unlockAll() {
     const targets = jobs.filter((j) => lockedJobKeys.has(j.key));
-    targets.forEach(unlockJob0);
-    function unlockJob0(j: Job) {
+    targets.forEach((j) => {
       performReachAutoUnlocks({
         targetKind: j.candidate.targetKind,
         targetId: j.candidate.targetId,
@@ -282,7 +310,7 @@ export function BatchSocialPlatformDialog({
         detail: j.handle,
         fields: [{ field: "social", subKey: j.platform }],
       });
-    }
+    });
     setUnlockAllOpen(false);
     setUnlockAllAck(false);
     toast.success(`已解锁 ${targets.length} 个社媒账号明文`, {
@@ -295,15 +323,23 @@ export function BatchSocialPlatformDialog({
   /** 实际发送内容：有译文则发译文 */
   const sendContent = (translated.trim() || content).trim();
 
-  const canSend = targetCount > 0 && sendContent.length > 0;
+  const canSend = targetCount > 0 && sendContent.length > 0 && execAccounts.length > 0;
 
-  const disabledReason = !canSend
-    ? targetCount === 0
+  const stepValid =
+    step === 0
+      ? targetCount > 0
+      : step === 1
+        ? sendContent.length > 0
+        : execAccounts.length > 0;
+
+  const footerHint =
+    step === 0 && targetCount === 0
       ? "请先添加发送目标"
-      : !sendContent
+      : step === 1 && !sendContent
         ? "请填写实际发送内容"
-        : "请补全必填项"
-    : "";
+        : step === 2 && execAccounts.length === 0
+          ? "请先选择执行账号"
+          : "";
 
   /** 次日 09:00 起继续执行 */
   function nextDayStart(): string {
@@ -424,7 +460,6 @@ export function BatchSocialPlatformDialog({
     toast.success("已删除手动添加的目标");
   }
 
-
   async function handleAiGenerate() {
     if (aiLoading) return;
     if (!myInfo.ensure()) return;
@@ -459,7 +494,7 @@ export function BatchSocialPlatformDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-6xl max-h-[92vh] overflow-y-auto">
+      <DialogContent className="max-w-5xl max-h-[92vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Users className="h-5 w-5 text-primary" />
@@ -471,111 +506,133 @@ export function BatchSocialPlatformDialog({
           <DialogDescription className="text-xs">
             仅向"已建立社媒关系"（好友已通过 / 已关注）的目标发送私信，未建立关系的目标已自动过滤；超出当日额度的部分自动顺延至次日。
           </DialogDescription>
-
         </DialogHeader>
 
-
-        <div className="space-y-5">
-          {/* 分组统计与目标展示 */}
-          <section className="rounded-md border bg-muted/30 p-3 space-y-3">
-            <div className="flex items-center justify-between">
-              <Label className="text-xs font-medium">
-                待执行任务列表
-              </Label>
-              <Button
-                variant="ghost"
-                size="sm"
-                className="h-6 text-[11px] text-primary"
-                onClick={() => setIsAdding(!isAdding)}
+        {/* 步骤条 */}
+        <div className="flex items-center gap-2">
+          {STEPS.map((s, i) => (
+            <div key={s} className="flex items-center gap-2">
+              <div
+                className={cn(
+                  "flex items-center gap-1.5 rounded-full border px-3 py-1 text-xs",
+                  i === step
+                    ? "border-primary bg-primary/10 text-primary font-medium"
+                    : i < step
+                      ? "border-emerald-200 bg-emerald-50 text-emerald-700"
+                      : "text-muted-foreground",
+                )}
               >
-                {isAdding ? "取消添加" : "手动添加目标"}
-              </Button>
+                <span className="inline-flex h-4 w-4 items-center justify-center rounded-full border text-[10px]">
+                  {i < step ? <Check className="h-3 w-3" /> : i + 1}
+                </span>
+                {s}
+              </div>
+              {i < STEPS.length - 1 && <div className="h-px w-6 bg-border" />}
+            </div>
+          ))}
+        </div>
+
+        {/* Step 1：平台与对象 */}
+        {step === 0 && (
+          <div className="space-y-4">
+            <div className="flex items-center gap-3 flex-wrap">
+              <Label className="text-xs font-medium">待执行目标</Label>
+              {REACH_PLATFORMS.map((p) => {
+                const count = allAccountJobs.filter((j) => j.platform === p).length;
+                if (count === 0) return null;
+                return (
+                  <span
+                    key={p}
+                    className={cn(
+                      "inline-flex items-center gap-1.5 rounded-md border px-2.5 py-1 text-xs",
+                      p === "Facebook"
+                        ? "border-sky-200 bg-sky-50 text-sky-700"
+                        : "border-violet-200 bg-violet-50 text-violet-700",
+                    )}
+                  >
+                    {p === "Facebook" ? (
+                      <Facebook className="h-3.5 w-3.5" />
+                    ) : (
+                      <Music2 className="h-3.5 w-3.5" />
+                    )}
+                    {p} · {count}
+                  </span>
+                );
+              })}
+              <div className="ml-auto flex items-center gap-2">
+                {lockedJobKeys.size > 0 && (
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="h-7 gap-1 text-[11px]"
+                    onClick={() => {
+                      setUnlockAllAck(false);
+                      setUnlockAllOpen(true);
+                    }}
+                  >
+                    <Unlock className="h-3.5 w-3.5" />
+                    批量解锁（{lockedJobKeys.size} 条 · {lockedJobKeys.size * unitView} 积分）
+                  </Button>
+                )}
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  className="h-7 text-[11px] text-primary"
+                  onClick={() => setIsAdding(!isAdding)}
+                >
+                  {isAdding ? "取消添加" : "手动添加目标"}
+                </Button>
+              </div>
             </div>
 
             {isAdding && (
-              <div className="space-y-3 border-b pb-3 mb-2">
-                <div className="grid grid-cols-3 gap-2">
-                  <div className="space-y-1">
-                    <Label className="text-[10px] text-muted-foreground">人名/企业名</Label>
-                    <Input
-                      size={1}
-                      className="h-7 text-xs"
-                      placeholder="例如: John Doe"
-                      value={newTarget.name}
-                      onChange={(e) => setNewTarget({ ...newTarget, name: e.target.value })}
-                    />
-                  </div>
-                  <div className="space-y-1">
-                    <Label className="text-[10px] text-muted-foreground">平台</Label>
-                    <Select
-                      value={newTarget.platform}
-                      onValueChange={(v) => setNewTarget({ ...newTarget, platform: v as ReachPlatform })}
-                    >
-                      <SelectTrigger className="h-7 text-xs">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="Facebook">Facebook</SelectItem>
-                        <SelectItem value="TikTok">TikTok</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <div className="space-y-1">
-                    <Label className="text-[10px] text-muted-foreground">账号/主页链接</Label>
-                    <Input
-                      size={1}
-                      className="h-7 text-xs"
-                      placeholder="handle 或 URL"
-                      value={newTarget.handle}
-                      onChange={(e) => setNewTarget({ ...newTarget, handle: e.target.value })}
-                    />
-                  </div>
+              <div className="grid grid-cols-4 gap-2 rounded-md border bg-muted/30 p-3">
+                <div className="space-y-1">
+                  <Label className="text-[10px] text-muted-foreground">人名/企业名</Label>
+                  <Input
+                    className="h-7 text-xs"
+                    placeholder="例如: John Doe"
+                    value={newTarget.name}
+                    onChange={(e) => setNewTarget({ ...newTarget, name: e.target.value })}
+                  />
                 </div>
-                <div className="flex justify-end">
-                  <Button size="sm" className="h-7 text-[11px]" onClick={handleAddExtra}>
-                    添加至列表
+                <div className="space-y-1">
+                  <Label className="text-[10px] text-muted-foreground">平台</Label>
+                  <Select
+                    value={newTarget.platform}
+                    onValueChange={(v) => setNewTarget({ ...newTarget, platform: v as ReachPlatform })}
+                  >
+                    <SelectTrigger className="h-7 text-xs">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="Facebook">Facebook</SelectItem>
+                      <SelectItem value="TikTok">TikTok</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-1">
+                  <Label className="text-[10px] text-muted-foreground">账号/主页链接</Label>
+                  <Input
+                    className="h-7 text-xs"
+                    placeholder="handle 或 URL"
+                    value={newTarget.handle}
+                    onChange={(e) => setNewTarget({ ...newTarget, handle: e.target.value })}
+                  />
+                </div>
+                <div className="flex items-end">
+                  <Button size="sm" className="h-7 w-full text-xs" onClick={handleAddExtra}>
+                    添加
                   </Button>
                 </div>
               </div>
             )}
 
-            {/* 目标列表滚动展示 */}
-
-            {notConnectedCount > 0 && (
-              <div className="mt-3 inline-flex items-center gap-1 text-[11px] text-muted-foreground">
-                <Info className="h-3 w-3" />
-                已自动过滤 {notConnectedCount} 个未建立社媒关系的目标，请先在「批量社媒加好友 / 关注」中建立关系
-              </div>
-            )}
-
-            {lockedJobKeys.size > 0 && (
-              <div className="mt-3 flex items-center justify-between gap-2 text-[11px] text-muted-foreground">
-                <span className="inline-flex items-center gap-1">
-                  <Info className="h-3 w-3" />
-                  {lockedJobKeys.size} 个账号未解锁，默认脱敏展示；发送后自动解锁
-                </span>
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  className="h-7 text-xs"
-                  onClick={() => {
-                    setUnlockAllAck(false);
-                    setUnlockAllOpen(true);
-                  }}
-                >
-                  <Unlock className="h-3.5 w-3.5 mr-1" />
-                  全部解锁 · -{lockedJobKeys.size * unitView}
-                </Button>
-              </div>
-            )}
-
-            <div className="mt-3 max-h-52 overflow-y-auto rounded-md border bg-background divide-y">
+            <div className="rounded-md border divide-y max-h-[320px] overflow-y-auto">
               {allAccountJobs.length === 0 ? (
-                <div className="text-center py-6 text-xs text-muted-foreground">
-                  暂无可私信目标：仅"已建立社媒关系"的目标可发送私信，可手动添加目标。
+                <div className="p-6 text-center text-xs text-muted-foreground">
+                  暂无可私信目标：仅"已建立社媒关系"的目标可发送私信，请先在「批量社媒加好友 / 关注」中建立关系，或手动添加目标。
                 </div>
-
               ) : (
                 allAccountJobs.map((j) => {
                   const checked = !removedJobKeys.has(j.key);
@@ -584,13 +641,13 @@ export function BatchSocialPlatformDialog({
                   return (
                     <div
                       key={j.key}
-                      className="flex items-center gap-2.5 px-3 py-2 hover:bg-muted/40"
+                      className="flex items-center gap-2.5 px-3 py-2 text-xs hover:bg-muted/40"
                     >
                       <Checkbox
                         checked={checked}
                         onCheckedChange={(v) => toggleJob(j.key, v === true)}
                       />
-                      <span className="text-xs font-medium truncate max-w-[160px]">
+                      <span className="font-medium truncate max-w-[150px]">
                         {j.candidate.name}
                       </span>
                       <span
@@ -642,46 +699,25 @@ export function BatchSocialPlatformDialog({
               )}
             </div>
 
-          </section>
-
-          {/* 可用执行账号 */}
-          <div
-            className={cn(
-              "flex h-9 items-center justify-between rounded-md border px-3 text-xs",
-              normalAccounts.length === 0
-                ? "border-amber-200 bg-amber-50 text-amber-800"
-                : "bg-muted/40 text-muted-foreground",
-            )}
-          >
-            <span className="flex items-center gap-1">
-              <ServerCog className="h-3.5 w-3.5" />
-              可用执行账号
-              <span className="text-foreground font-semibold mx-0.5">
-                {normalAccounts.length}
-              </span>
-              个 · 今日可触达
-              <span className="text-foreground font-semibold mx-0.5">
-                {capacity}
-              </span>
-              次
-            </span>
-            <span className="text-[11px]">单账号 {DAILY_PER_ACCOUNT} 次/天</span>
-          </div>
-
-          {overLimit && (
-            <div className="rounded-md border border-amber-200 bg-amber-50 p-2 text-xs text-amber-800 flex items-start gap-1.5">
-              <Info className="mt-0.5 h-3.5 w-3.5 shrink-0" />
-              <span>
-                目标 {targetCount} 条超出今日可触达额度：系统今日先执行{" "}
-                <b>{todayCount}</b> 条，剩余 <b>{deferredCount}</b>{" "}
-                条将自动顺延至<b>明日 09:00</b>继续执行，无需重复提交；积分按目标总数
-                {targetCount} 条一次性扣除。
-              </span>
+            <div className="text-[11px] text-muted-foreground">
+              待执行 <b className="text-foreground">{jobs.length}</b> 条
+              {notConnectedCount > 0 && (
+                <>
+                  · 已自动过滤 <b className="text-foreground">{notConnectedCount}</b> 个未建立社媒关系的目标
+                </>
+              )}
+              {lockedJobKeys.size > 0 && (
+                <>
+                  · <b className="text-foreground">{lockedJobKeys.size}</b> 个账号未解锁，默认脱敏展示，发送后自动解锁
+                </>
+              )}
             </div>
-          )}
+          </div>
+        )}
 
-          {/* 撰写内容 */}
-          <section className="space-y-3">
+        {/* Step 2：撰写内容 */}
+        {step === 1 && (
+          <div className="space-y-3">
             <div className="flex items-center justify-between">
               <Label className="text-sm font-medium flex items-center gap-2">
                 撰写内容
@@ -719,9 +755,9 @@ export function BatchSocialPlatformDialog({
 
             <div className="grid gap-0 lg:grid-cols-2 lg:divide-x rounded-md border overflow-hidden">
               <div className="space-y-2 p-3">
-              <div className="flex h-8 items-center">
-                <Label className="text-xs text-muted-foreground">中文原文</Label>
-              </div>
+                <div className="flex h-8 items-center">
+                  <Label className="text-xs text-muted-foreground">中文原文</Label>
+                </div>
                 <Textarea
                   value={content}
                   onChange={(e) => setContent(e.target.value)}
@@ -746,55 +782,165 @@ export function BatchSocialPlatformDialog({
                 bare
               />
             </div>
-          </section>
+          </div>
+        )}
 
-          {/* 费用 */}
-          <section className="rounded-md border border-rose-200 bg-rose-50 p-3 text-xs space-y-1">
-            <div className="flex justify-between">
-              <span className="text-muted-foreground">
-                发送费用（{targetCount} 条 × {unit} 积分）
-              </span>
-              <span className="font-medium">{sendTotal} 积分</span>
+        {/* Step 3：执行账号与节奏 */}
+        {step === 2 && (
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <Label className="text-xs font-medium">执行账号</Label>
+              <div className="flex items-center gap-2">
+                <Select value={assign} onValueChange={(v) => setAssign(v as "auto" | "manual")}>
+                  <SelectTrigger className="h-8 w-[180px] text-xs">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="auto">自动分配</SelectItem>
+                    <SelectItem value="manual">手动指定</SelectItem>
+                  </SelectContent>
+                </Select>
+                <span className="text-[11px] text-muted-foreground">
+                  自动分配优先使用今日剩余额度多、状态正常的账号；风控 / 被封 / 养号中的账号已自动移出执行池
+                </span>
+              </div>
+              <div className="rounded-md border divide-y max-h-[200px] overflow-y-auto">
+                {pool.length === 0 ? (
+                  <div className="p-4 text-center text-xs text-amber-700 bg-amber-50">
+                    暂无可用执行账号，请前往「我的账号」补充或恢复账号后再试。
+                  </div>
+                ) : (
+                  pool.map((a) => (
+                    <div key={a.id} className="flex items-center gap-2 px-3 py-2 text-xs">
+                      {assign === "manual" ? (
+                        <Checkbox
+                          checked={pickedAccounts.includes(a.id)}
+                          onCheckedChange={(v) =>
+                            setPickedAccounts((prev) =>
+                              v === true
+                                ? [...prev, a.id]
+                                : prev.filter((x) => x !== a.id),
+                            )
+                          }
+                        />
+                      ) : (
+                        <Check className="h-3.5 w-3.5 text-emerald-600" />
+                      )}
+                      <span className="font-medium">{a.displayName}</span>
+                      <span className="text-muted-foreground">{a.handle}</span>
+                      <Badge variant="outline" className="h-4 px-1 text-[10px]">
+                        {a.platform}
+                      </Badge>
+                      <Badge variant="outline" className="h-4 px-1 text-[10px]">
+                        {a.status}
+                      </Badge>
+                      <span className="ml-auto text-[11px] text-muted-foreground">
+                        今日剩余 {Math.max(0, DAILY_PER_ACCOUNT - accountTouchesToday(a))} 条
+                      </span>
+                    </div>
+                  ))
+                )}
+              </div>
             </div>
-            {deferredCount > 0 && (
-              <div className="text-[11px] text-amber-700">
-                其中 {deferredCount} 条顺延至明日 09:00 执行
+
+            <div className="space-y-2">
+              <Label className="text-xs font-medium flex items-center gap-1.5">
+                <Gauge className="h-3.5 w-3.5" />
+                执行节奏
+              </Label>
+              <div className="rounded-md border border-primary bg-primary/5 p-2.5 text-left text-xs ring-1 ring-primary/30">
+                <div className="font-medium">标准</div>
+                <div className="text-[11px] text-muted-foreground mt-0.5">
+                  {PACING_DESC}
+                </div>
+              </div>
+            </div>
+
+            <div
+              className={cn(
+                "flex h-9 items-center justify-between rounded-md border px-3 text-xs",
+                execAccounts.length === 0
+                  ? "border-amber-200 bg-amber-50 text-amber-800"
+                  : "bg-muted/40 text-muted-foreground",
+              )}
+            >
+              <span className="flex items-center gap-1">
+                <ServerCog className="h-3.5 w-3.5" />
+                执行账号
+                <b className="text-foreground mx-0.5">{execAccounts.length}</b> 个 · 今日可执行
+                <b className="text-foreground mx-0.5">{capacity}</b> 条
+              </span>
+              <span className="text-[11px]">
+                预计 {estDays || "—"} 天完成 {targetCount} 条
+              </span>
+            </div>
+
+            {overLimit && (
+              <div className="rounded-md border border-amber-200 bg-amber-50 p-2 text-xs text-amber-800 flex items-start gap-1.5">
+                <Info className="mt-0.5 h-3.5 w-3.5 shrink-0" />
+                <span>
+                  目标 {targetCount} 条超出今日可触达额度：系统今日先执行{" "}
+                  <b>{todayCount}</b> 条，剩余 <b>{deferredCount}</b>{" "}
+                  条将自动顺延至<b>明日 09:00</b>继续执行，无需重复提交；积分按目标总数
+                  {targetCount} 条一次性扣除。
+                </span>
               </div>
             )}
-            {viewCostTotal > 0 && (
+
+            <section className="rounded-md border border-rose-200 bg-rose-50 p-3 text-xs space-y-1">
               <div className="flex justify-between">
                 <span className="text-muted-foreground">
-                  发送后解锁社媒账号（{lockedJobKeys.size} 个未解锁 × {unitView} 积分，永久生效）
+                  发送费用（{targetCount} 条 × {unit} 积分）
                 </span>
-                <span className="font-medium">{viewCostTotal} 积分</span>
+                <span className="font-medium">{sendTotal} 积分</span>
               </div>
-            )}
-            <div className="flex justify-between border-t border-rose-200/70 pt-1">
-              <span className="font-semibold text-rose-700">合计</span>
-              <span className="font-semibold text-rose-700">{grandTotal} 积分</span>
-            </div>
-            {viewCostTotal > 0 && (
-              <div className="text-[11px] text-rose-700/80 pt-0.5">
-                触达完成后，对应社媒账号将永久解锁，后续查看/再次触达不再收取查看费。
+              {deferredCount > 0 && (
+                <div className="text-[11px] text-amber-700">
+                  其中 {deferredCount} 条顺延至明日 09:00 执行
+                </div>
+              )}
+              {viewCostTotal > 0 && (
+                <div className="flex justify-between">
+                  <span className="text-muted-foreground">
+                    发送后解锁社媒账号（{lockedJobKeys.size} 个未解锁 × {unitView} 积分，永久生效）
+                  </span>
+                  <span className="font-medium">{viewCostTotal} 积分</span>
+                </div>
+              )}
+              <div className="flex justify-between border-t border-rose-200/70 pt-1">
+                <span className="font-semibold text-rose-700">合计</span>
+                <span className="font-semibold text-rose-700">{grandTotal} 积分</span>
               </div>
-            )}
-          </section>
-        </div>
+              {viewCostTotal > 0 && (
+                <div className="text-[11px] text-rose-700/80 pt-0.5">
+                  触达完成后，对应社媒账号将永久解锁，后续查看/再次触达不再收取查看费。
+                </div>
+              )}
+            </section>
+          </div>
+        )}
 
         <DialogFooter className="items-center sm:justify-between">
-          <div className="text-xs text-muted-foreground">{disabledReason}</div>
+          <div className="text-xs text-muted-foreground">{footerHint}</div>
           <div className="flex gap-2">
-            <Button variant="outline" onClick={() => onOpenChange(false)}>
-              取消
-            </Button>
-            <Button onClick={handleSend} disabled={!canSend} className="bg-primary">
-              <Send className="h-4 w-4" />
-              确认发送（-{grandTotal}）
-            </Button>
+            {step > 0 && (
+              <Button variant="outline" onClick={() => setStep((s) => s - 1)}>
+                上一步
+              </Button>
+            )}
+            {step < 2 ? (
+              <Button disabled={!stepValid} onClick={() => setStep((s) => s + 1)}>
+                下一步
+              </Button>
+            ) : (
+              <Button onClick={handleSend} disabled={!canSend} className="bg-primary">
+                <Send className="h-4 w-4" />
+                确认发送（-{grandTotal}）
+              </Button>
+            )}
           </div>
         </DialogFooter>
       </DialogContent>
-
 
       {/* 全部解锁 · 二次确认 */}
       <Dialog open={unlockAllOpen} onOpenChange={setUnlockAllOpen}>
@@ -829,6 +975,5 @@ export function BatchSocialPlatformDialog({
         </DialogContent>
       </Dialog>
     </Dialog>
-
   );
 }
