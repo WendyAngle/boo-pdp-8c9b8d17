@@ -254,6 +254,14 @@ export function addDmTask(t: Omit<DmTask, "id" | "createdAt" | "status" | "sends
   return task;
 }
 
+/** 以固定 id 写入 / 覆盖拓客任务（演示数据初始化用） */
+export function upsertProspectingTask(task: ProspectingTask) {
+  prosCache = [task, ...prosCache.filter((t) => t.id !== task.id)];
+  writeArr(PROS_KEY, prosCache);
+  emitPros();
+  return task;
+}
+
 /** 非 hook 快照：供 inbox-store 等模块在渲染外读取拓客任务 */
 export function getProspectingTasksSnapshot(): ProspectingTask[] {
   return prosCache;
