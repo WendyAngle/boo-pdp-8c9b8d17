@@ -448,19 +448,26 @@ export function chargeSocialAddFriend(input: {
   targetName: string;
   detail?: string;
   taskId?: string;
+  /** 演示数据可指定发生时间 */
+  createdAt?: string;
+  targetKind?: TargetKind;
+  targetId?: string;
+  parentRef?: { id: string; name: string };
 }): LedgerEntry {
   const entry: LedgerEntry = {
     id: makeId("saf"),
     kind: "social_add_friend",
     cost: COST_SOCIAL_ADD_FRIEND,
-    createdAt: new Date().toISOString(),
-    targetKind: "contact",
-    targetId: input.taskId ?? "—",
+    createdAt: input.createdAt ?? new Date().toISOString(),
+    targetKind: input.targetKind ?? "contact",
+    targetId: input.targetId ?? input.taskId ?? "—",
     targetName: input.targetName,
+    parentRef: input.parentRef,
     platform: input.platform,
     channel: "social",
     detail: input.detail ?? `${input.platform} 加友请求`,
   };
+
   ledger = [entry, ...ledger];
   writeLedger(ledger);
   emitLedger();
