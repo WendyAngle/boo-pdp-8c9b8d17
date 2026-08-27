@@ -146,8 +146,15 @@ export function BatchSocialPlatformDialog({
     handle: string;
   };
 
-  /** 将 candidates 展平为具体的账号任务列表 */
-  const allAccountJobs = useMemo<Job[]>(() => {
+  /** 关系状态：仅"已建立"（已通过好友 / 已关注）目标可私信 */
+  const connectMap = useConnectMap();
+  const isConnected = (platform: ReachPlatform, handle: string) => {
+    const st = connectMap[`${platform}:${handle}`]?.state;
+    return st === "accepted" || st === "following";
+  };
+
+  /** 展开出的全部账号任务（含未建立关系的，用于统计过滤数量） */
+  const rawAccountJobs = useMemo<Job[]>(() => {
     const out: Job[] = [];
     for (const c of allCandidates) {
       for (const p of REACH_PLATFORMS) {
@@ -163,6 +170,20 @@ export function BatchSocialPlatformDialog({
     }
     return out;
   }, [allCandidates]);
+
+  /** 将 candidates 展平为具体的账号任务列表（自动过滤未建立社媒关系的目标） */
+  const allAccountJobs = useMemo<Job[]>(
+    () =>
+      rawAccountJobs.filter(
+        (j) => j.candidate.targetId === "manual" || isConnected(j.platform, j.handle),
+      ),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [rawAccountJobs, connectMap],
+  );
+
+  /** 因未建立社媒关系被自动过滤的数量 */
+  const notConnectedCount = rawAccountJobs.length - allAccountJobs.length;
+
 
   // 内部维护的已删除 Job Keys (针对单一账号的删除)
   const [removedJobKeys, setRemovedJobKeys] = useState<Set<string>>(new Set());
