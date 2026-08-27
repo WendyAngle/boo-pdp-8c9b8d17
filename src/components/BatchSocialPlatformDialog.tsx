@@ -57,6 +57,7 @@ import { ComposeFormatHint } from "@/components/outreach/ComposeFormatHint";
 import { generateAiContent } from "@/lib/api/ai-compose.functions";
 import { TargetLangSection } from "@/components/outreach/TargetLangSection";
 import { useMyInfoGuard } from "@/lib/my-info-guard";
+import { useConnectMap } from "@/lib/social-connect";
 
 export type ReachPlatform = "Facebook" | "TikTok";
 export const REACH_PLATFORMS: ReachPlatform[] = ["Facebook", "TikTok"];
@@ -468,8 +469,9 @@ export function BatchSocialPlatformDialog({
             </Badge>
           </DialogTitle>
           <DialogDescription className="text-xs">
-            向下列目标分发私信，可手动添加或删除；超出当日额度的部分自动顺延至次日。
+            仅向"已建立社媒关系"（好友已通过 / 已关注）的目标发送私信，未建立关系的目标已自动过滤；超出当日额度的部分自动顺延至次日。
           </DialogDescription>
+
         </DialogHeader>
 
 
