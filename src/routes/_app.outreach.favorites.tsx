@@ -115,6 +115,7 @@ import {
   LABEL_TONE,
   type ConnectLabel,
 } from "@/lib/social-connect";
+import { seedDemoSocialConnectsIfEmpty } from "@/lib/social-connect-demo";
 
 
 
@@ -170,7 +171,9 @@ function FavoritesPage() {
   const all = useFavorites();
   useEffect(() => {
     seedDemoFavoritesIfEmpty();
+    seedDemoSocialConnectsIfEmpty();
   }, []);
+
   const [kind, setKind] = useState<KindFilter>("all");
   const [reachFilter, setReachFilter] = useState<"all" | "reached" | "unreached">(
     "all",
