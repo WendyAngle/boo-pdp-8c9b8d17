@@ -57,6 +57,7 @@ import { ComposeFormatHint } from "@/components/outreach/ComposeFormatHint";
 import { generateAiContent } from "@/lib/api/ai-compose.functions";
 import { TargetLangSection } from "@/components/outreach/TargetLangSection";
 import { useMyInfoGuard } from "@/lib/my-info-guard";
+import { useConnectMap } from "@/lib/social-connect";
 
 export type ReachPlatform = "Facebook" | "TikTok";
 export const REACH_PLATFORMS: ReachPlatform[] = ["Facebook", "TikTok"];
@@ -146,8 +147,15 @@ export function BatchSocialPlatformDialog({
     handle: string;
   };
 
-  /** 将 candidates 展平为具体的账号任务列表 */
-  const allAccountJobs = useMemo<Job[]>(() => {
+  /** 关系状态：仅"已建立"（已通过好友 / 已关注）目标可私信 */
+  const connectMap = useConnectMap();
+  const isConnected = (platform: ReachPlatform, handle: string) => {
+    const st = connectMap[`${platform}:${handle}`]?.state;
+    return st === "accepted" || st === "following";
+  };
+
+  /** 展开出的全部账号任务（含未建立关系的，用于统计过滤数量） */
+  const rawAccountJobs = useMemo<Job[]>(() => {
     const out: Job[] = [];
     for (const c of allCandidates) {
       for (const p of REACH_PLATFORMS) {
@@ -163,6 +171,20 @@ export function BatchSocialPlatformDialog({
     }
     return out;
   }, [allCandidates]);
+
+  /** 将 candidates 展平为具体的账号任务列表（自动过滤未建立社媒关系的目标） */
+  const allAccountJobs = useMemo<Job[]>(
+    () =>
+      rawAccountJobs.filter(
+        (j) => j.candidate.targetId === "manual" || isConnected(j.platform, j.handle),
+      ),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [rawAccountJobs, connectMap],
+  );
+
+  /** 因未建立社媒关系被自动过滤的数量 */
+  const notConnectedCount = rawAccountJobs.length - allAccountJobs.length;
+
 
   // 内部维护的已删除 Job Keys (针对单一账号的删除)
   const [removedJobKeys, setRemovedJobKeys] = useState<Set<string>>(new Set());
@@ -447,8 +469,9 @@ export function BatchSocialPlatformDialog({
             </Badge>
           </DialogTitle>
           <DialogDescription className="text-xs">
-            向下列目标分发私信，可手动添加或删除；超出当日额度的部分自动顺延至次日。
+            仅向"已建立社媒关系"（好友已通过 / 已关注）的目标发送私信，未建立关系的目标已自动过滤；超出当日额度的部分自动顺延至次日。
           </DialogDescription>
+
         </DialogHeader>
 
 
@@ -518,6 +541,13 @@ export function BatchSocialPlatformDialog({
 
             {/* 目标列表滚动展示 */}
 
+            {notConnectedCount > 0 && (
+              <div className="mt-3 inline-flex items-center gap-1 text-[11px] text-muted-foreground">
+                <Info className="h-3 w-3" />
+                已自动过滤 {notConnectedCount} 个未建立社媒关系的目标，请先在「批量社媒加好友 / 关注」中建立关系
+              </div>
+            )}
+
             {lockedJobKeys.size > 0 && (
               <div className="mt-3 flex items-center justify-between gap-2 text-[11px] text-muted-foreground">
                 <span className="inline-flex items-center gap-1">
@@ -543,8 +573,9 @@ export function BatchSocialPlatformDialog({
             <div className="mt-3 max-h-52 overflow-y-auto rounded-md border bg-background divide-y">
               {allAccountJobs.length === 0 ? (
                 <div className="text-center py-6 text-xs text-muted-foreground">
-                  暂无待执行任务，请添加或从外部选择目标。
+                  暂无可私信目标：仅"已建立社媒关系"的目标可发送私信，可手动添加目标。
                 </div>
+
               ) : (
                 allAccountJobs.map((j) => {
                   const checked = !removedJobKeys.has(j.key);
