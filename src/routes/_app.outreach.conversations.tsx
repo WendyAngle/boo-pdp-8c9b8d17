@@ -250,8 +250,6 @@ function InboxPage() {
       list = list.filter((t) => scoreIntent(t).band === intent);
     if (friend !== "all") {
       list = list.filter((t) => {
-        const applied = Boolean(t.isFriend || t.friendPending || t.friendRemoved);
-        if (friend === "applied") return applied;
         if (friend === "pending") return Boolean(t.friendPending);
         if (friend === "removed") return Boolean(t.friendRemoved);
         // accepted：好友申请已通过且未被解除
