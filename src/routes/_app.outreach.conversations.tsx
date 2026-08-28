@@ -427,7 +427,6 @@ function InboxPage() {
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="all">好友关系：全部</SelectItem>
-              <SelectItem value="applied">已申请加好友</SelectItem>
               <SelectItem value="accepted">对方已通过</SelectItem>
               <SelectItem value="pending">对方待通过</SelectItem>
               <SelectItem value="removed">对方已解除</SelectItem>
