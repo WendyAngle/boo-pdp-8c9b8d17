@@ -423,8 +423,8 @@ export function CreateReachTaskDialog({
           </DialogTitle>
           <DialogDescription className="text-xs">
             {platform === "Facebook"
-              ? "由系统按推广产品与关键词自动寻找目标账号并发出加好友请求。"
-              : "由系统按推广产品与关键词自动寻找目标账号并发送私信。"}
+              ? "由系统按推广产品与关键词自动寻找目标账号并发出加好友请求。目标来源：系统按关键词自动搜索。"
+              : "由系统按推广产品与关键词自动寻找目标账号并发送私信。目标来源：系统按关键词自动搜索。"}
           </DialogDescription>
         </DialogHeader>
 
